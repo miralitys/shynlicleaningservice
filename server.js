@@ -84,7 +84,42 @@ function sanitizeHtml(html) {
   return cleaned;
 }
 
-async function sendFile(res, absolutePath, statusCode = 200) {
+async function warmHtmlCache(routes) {
+  const htmlCache = new Map();
+  const filesToWarm = new Set([...Object.values(routes), NOT_FOUND_PAGE]);
+
+  let warmedCount = 0;
+  for (const file of filesToWarm) {
+    const absolutePath = path.join(SITE_DIR, file);
+    if (!isSafePath(SITE_DIR, absolutePath)) continue;
+
+    try {
+      const stats = await fsp.stat(absolutePath);
+      if (!stats.isFile()) continue;
+
+      const rawHtml = await fsp.readFile(absolutePath, "utf8");
+      htmlCache.set(absolutePath, sanitizeHtml(rawHtml));
+      warmedCount += 1;
+    } catch {
+      // Missing optional pages are ignored; route handling already has fallbacks.
+    }
+  }
+
+  return { htmlCache, warmedCount };
+}
+
+async function getHtmlFromCache(absolutePath, htmlCache) {
+  if (htmlCache.has(absolutePath)) {
+    return htmlCache.get(absolutePath);
+  }
+
+  const rawHtml = await fsp.readFile(absolutePath, "utf8");
+  const cleanedHtml = sanitizeHtml(rawHtml);
+  htmlCache.set(absolutePath, cleanedHtml);
+  return cleanedHtml;
+}
+
+async function sendFile(res, absolutePath, htmlCache, statusCode = 200) {
   if (!isSafePath(SITE_DIR, absolutePath)) {
     res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
     res.end("Forbidden");
@@ -107,8 +142,7 @@ async function sendFile(res, absolutePath, statusCode = 200) {
     };
 
     if (ext === ".html") {
-      const rawHtml = await fsp.readFile(absolutePath, "utf8");
-      const cleanedHtml = sanitizeHtml(rawHtml);
+      const cleanedHtml = await getHtmlFromCache(absolutePath, htmlCache);
       res.writeHead(statusCode, baseHeaders);
       res.end(cleanedHtml);
       return;
@@ -134,6 +168,7 @@ async function loadRoutes() {
 
 async function main() {
   const routes = await loadRoutes();
+  const { htmlCache, warmedCount } = await warmHtmlCache(routes);
 
   const server = http.createServer(async (req, res) => {
     try {
@@ -148,19 +183,19 @@ async function main() {
         isSafePath(SITE_DIR, directAssetPath) &&
         fs.existsSync(directAssetPath)
       ) {
-        await sendFile(res, directAssetPath);
+        await sendFile(res, directAssetPath, htmlCache);
         return;
       }
 
       const mappedFile = routes[normalizedPath];
       if (mappedFile) {
-        await sendFile(res, path.join(SITE_DIR, mappedFile));
+        await sendFile(res, path.join(SITE_DIR, mappedFile), htmlCache);
         return;
       }
 
       const notFoundPath = path.join(SITE_DIR, NOT_FOUND_PAGE);
       if (fs.existsSync(notFoundPath)) {
-        await sendFile(res, notFoundPath, 404);
+        await sendFile(res, notFoundPath, htmlCache, 404);
         return;
       }
 
@@ -175,6 +210,7 @@ async function main() {
   server.listen(PORT, HOST, () => {
     console.log(`Server started on http://${HOST}:${PORT}`);
     console.log(`Loaded routes: ${Object.keys(routes).length}`);
+    console.log(`Warmed HTML cache entries: ${warmedCount}`);
   });
 }
 
