@@ -92,6 +92,23 @@ function normalizeRoute(rawPath) {
   return p;
 }
 
+function isFingerprintLikeAsset(absolutePath) {
+  const name = path.basename(absolutePath);
+  return /(?:^|[._-])[a-f0-9]{8,}(?:[._-]|$)/i.test(name);
+}
+
+function getCacheControlHeader(absolutePath, ext) {
+  if (ext === ".html") {
+    return "public, max-age=60, stale-while-revalidate=300";
+  }
+
+  let staticPolicy = "public, max-age=31536000";
+  if (isFingerprintLikeAsset(absolutePath)) {
+    staticPolicy += ", immutable";
+  }
+  return staticPolicy;
+}
+
 function isSafePath(baseDir, filePath) {
   const resolvedBase = path.resolve(baseDir) + path.sep;
   const resolvedPath = path.resolve(filePath);
@@ -240,7 +257,7 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
     const ext = path.extname(absolutePath).toLowerCase();
     const contentType = CONTENT_TYPES[ext] || "application/octet-stream";
     const baseHeaders = {
-      "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=604800",
+      "Cache-Control": getCacheControlHeader(absolutePath, ext),
       "Content-Type": contentType,
     };
 
