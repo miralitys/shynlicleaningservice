@@ -36,6 +36,25 @@ const CONTENT_TYPES = {
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg"]);
 const NEGOTIATED_IMAGE_VARY = "Accept, Sec-CH-Width, Viewport-Width, DPR";
 
+function getRequestDurationMs(startTimeNs) {
+  return Number(process.hrtime.bigint() - startTimeNs) / 1e6;
+}
+
+function toServerTimingHeader(startTimeNs, cacheHit) {
+  const durationMs = getRequestDurationMs(startTimeNs);
+  const durationToken = Math.max(0, durationMs).toFixed(2);
+  const cacheToken = cacheHit ? "hit" : "miss";
+  return `app;dur=${durationToken}, cache;desc="${cacheToken}"`;
+}
+
+function writeHeadWithTiming(res, statusCode, headers, startTimeNs, cacheHit) {
+  const enrichedHeaders = {
+    ...headers,
+    "Server-Timing": toServerTimingHeader(startTimeNs, cacheHit),
+  };
+  res.writeHead(statusCode, enrichedHeaders);
+}
+
 function resolveSitePath(relativeOrAbsolutePath) {
   const trimmed = String(relativeOrAbsolutePath || "").replace(/^\/+/, "");
   return path.resolve(SITE_DIR, trimmed);
@@ -367,18 +386,40 @@ async function warmHtmlCache(runtimeIndex) {
 
 async function getHtmlFromCache(absolutePath, htmlCache, fileMeta) {
   if (htmlCache.has(absolutePath)) {
-    return htmlCache.get(absolutePath);
+    return {
+      entry: htmlCache.get(absolutePath),
+      cacheHit: true,
+    };
   }
 
   const rawHtml = await fsp.readFile(absolutePath, "utf8");
   const htmlEntry = buildHtmlCacheEntry(sanitizeHtml(rawHtml), fileMeta);
   htmlCache.set(absolutePath, htmlEntry);
-  return htmlEntry;
+  return {
+    entry: htmlEntry,
+    cacheHit: false,
+  };
 }
 
-async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusCode = 200) {
+async function sendFile(
+  req,
+  res,
+  absolutePath,
+  htmlCache,
+  runtimeIndex,
+  requestContext,
+  requestStartNs,
+  statusCode = 200
+) {
   if (!isSafePath(SITE_DIR, absolutePath)) {
-    res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
+    requestContext.cacheHit = false;
+    writeHeadWithTiming(
+      res,
+      403,
+      { "Content-Type": "text/plain; charset=utf-8" },
+      requestStartNs,
+      requestContext.cacheHit
+    );
     res.end("Forbidden");
     return;
   }
@@ -393,7 +434,14 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
 
   const fileMeta = runtimeIndex.fileMetaByPath.get(filePathToServe);
   if (!fileMeta) {
-    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    requestContext.cacheHit = false;
+    writeHeadWithTiming(
+      res,
+      404,
+      { "Content-Type": "text/plain; charset=utf-8" },
+      requestStartNs,
+      requestContext.cacheHit
+    );
     res.end("Not found");
     return;
   }
@@ -414,7 +462,9 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
     }
 
     if (ext === ".html") {
-      const htmlEntry = await getHtmlFromCache(absolutePath, htmlCache, fileMeta);
+      const htmlResult = await getHtmlFromCache(absolutePath, htmlCache, fileMeta);
+      const htmlEntry = htmlResult.entry;
+      requestContext.cacheHit = htmlResult.cacheHit;
       const headers = {
         ...baseHeaders,
         "Accept-CH": "Width, Viewport-Width, DPR",
@@ -423,12 +473,13 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
       };
 
       if (statusCode === 200 && isNotModified(req.headers, htmlEntry.etag, htmlEntry.mtimeMs)) {
-        res.writeHead(304, headers);
+        requestContext.cacheHit = true;
+        writeHeadWithTiming(res, 304, headers, requestStartNs, requestContext.cacheHit);
         res.end();
         return;
       }
 
-      res.writeHead(statusCode, headers);
+      writeHeadWithTiming(res, statusCode, headers, requestStartNs, requestContext.cacheHit);
       res.end(htmlEntry.body);
       return;
     }
@@ -440,15 +491,24 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
     };
 
     if (statusCode === 200 && isNotModified(req.headers, fileMeta.etag, fileMeta.mtimeMs)) {
-      res.writeHead(304, headers);
+      requestContext.cacheHit = true;
+      writeHeadWithTiming(res, 304, headers, requestStartNs, requestContext.cacheHit);
       res.end();
       return;
     }
 
-    res.writeHead(statusCode, headers);
+    requestContext.cacheHit = false;
+    writeHeadWithTiming(res, statusCode, headers, requestStartNs, requestContext.cacheHit);
     fs.createReadStream(filePathToServe).pipe(res);
   } catch {
-    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    requestContext.cacheHit = false;
+    writeHeadWithTiming(
+      res,
+      404,
+      { "Content-Type": "text/plain; charset=utf-8" },
+      requestStartNs,
+      requestContext.cacheHit
+    );
     res.end("Not found");
   }
 }
@@ -469,10 +529,29 @@ async function main() {
   const { htmlCache, warmedCount } = await warmHtmlCache(runtimeIndex);
 
   const server = http.createServer(async (req, res) => {
+    const requestStartNs = process.hrtime.bigint();
+    const requestContext = {
+      cacheHit: false,
+      route: "/",
+    };
+
+    res.on("finish", () => {
+      const durationMs = getRequestDurationMs(requestStartNs);
+      const logLine = {
+        ts: new Date().toISOString(),
+        route: requestContext.route,
+        status: res.statusCode,
+        duration_ms: Number(durationMs.toFixed(2)),
+        cache_hit: requestContext.cacheHit,
+      };
+      console.log(JSON.stringify(logLine));
+    });
+
     try {
       const reqUrl = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
       const pathname = decodeURIComponent(reqUrl.pathname);
       const normalizedPath = normalizeRoute(pathname);
+      requestContext.route = normalizedPath;
 
       const directAssetPath = resolveSitePath(pathname);
       if (
@@ -481,25 +560,64 @@ async function main() {
         isSafePath(SITE_DIR, directAssetPath) &&
         runtimeIndex.existingFiles.has(directAssetPath)
       ) {
-        await sendFile(req, res, directAssetPath, htmlCache, runtimeIndex);
+        await sendFile(
+          req,
+          res,
+          directAssetPath,
+          htmlCache,
+          runtimeIndex,
+          requestContext,
+          requestStartNs
+        );
         return;
       }
 
       const mappedFilePath = runtimeIndex.routeFileByPath.get(normalizedPath);
       if (mappedFilePath) {
-        await sendFile(req, res, mappedFilePath, htmlCache, runtimeIndex);
+        await sendFile(
+          req,
+          res,
+          mappedFilePath,
+          htmlCache,
+          runtimeIndex,
+          requestContext,
+          requestStartNs
+        );
         return;
       }
 
       if (runtimeIndex.notFoundExists) {
-        await sendFile(req, res, runtimeIndex.notFoundAbsolutePath, htmlCache, runtimeIndex, 404);
+        await sendFile(
+          req,
+          res,
+          runtimeIndex.notFoundAbsolutePath,
+          htmlCache,
+          runtimeIndex,
+          requestContext,
+          requestStartNs,
+          404
+        );
         return;
       }
 
-      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      requestContext.cacheHit = false;
+      writeHeadWithTiming(
+        res,
+        404,
+        { "Content-Type": "text/plain; charset=utf-8" },
+        requestStartNs,
+        requestContext.cacheHit
+      );
       res.end("Page not found");
     } catch {
-      res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+      requestContext.cacheHit = false;
+      writeHeadWithTiming(
+        res,
+        500,
+        { "Content-Type": "text/plain; charset=utf-8" },
+        requestStartNs,
+        requestContext.cacheHit
+      );
       res.end("Internal server error");
     }
   });
