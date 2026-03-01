@@ -54,6 +54,28 @@ function sanitizeHtml(html) {
     .replace(/<!-- Tilda copyright\. Don't remove this line -->[\s\S]*?(?=<!-- Stat -->)/g, "")
     .replace(/data-tilda-export="yes"/g, 'data-export-source="tilda"');
 
+  // Ensure footer logo always leads to homepage.
+  cleaned = cleaned.replace(
+    /(<div class='t396__elem[^>]*data-elem-id='1475160083840'[^>]*>[\s\S]*?<a class='tn-atom') href="https:\/\/www\.google\.com"/g,
+    '$1 href="/"'
+  );
+
+  // Remove footer social icon elements (Nextdoor, Thumbtack, Yelp, Facebook, Instagram).
+  const footerSocialElemIds = [
+    "1475160165682", // Nextdoor / home icon
+    "1475160189796", // Thumbtack
+    "1475160204612", // Yelp
+    "1475160356604", // Facebook
+    "1475160346203", // Instagram
+  ];
+  for (const elemId of footerSocialElemIds) {
+    const blockPattern = new RegExp(
+      `<div class='t396__elem[^>]*data-elem-id='${elemId}'[^>]*>[\\s\\S]*?<\\/div>\\s*<\\/div>`,
+      "g"
+    );
+    cleaned = cleaned.replace(blockPattern, "");
+  }
+
   // Fix relative asset paths on nested routes like /services/*.
   if (!/<base\s+href=/i.test(cleaned)) {
     cleaned = cleaned.replace(/<head>/i, '<head><base href="/" />');
