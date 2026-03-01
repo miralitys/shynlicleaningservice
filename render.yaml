@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: shynlicleaningservice
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
