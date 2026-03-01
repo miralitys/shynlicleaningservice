@@ -100,16 +100,25 @@ function isFingerprintLikeAsset(absolutePath) {
   return /(?:^|[._-])[a-f0-9]{8,}(?:[._-]|$)/i.test(name);
 }
 
-function getCacheControlHeader(absolutePath, ext) {
+function getCachePolicy(absolutePath, ext) {
   if (ext === ".html") {
-    return "public, max-age=60, stale-while-revalidate=300";
+    return {
+      browser: "public, max-age=60, stale-while-revalidate=300",
+      edge: "public, s-maxage=600, stale-while-revalidate=300, stale-if-error=86400",
+    };
   }
 
-  let staticPolicy = "public, max-age=31536000";
+  let browserPolicy = "public, max-age=31536000";
+  let edgePolicy = "public, s-maxage=31536000, stale-while-revalidate=86400, stale-if-error=604800";
   if (isFingerprintLikeAsset(absolutePath)) {
-    staticPolicy += ", immutable";
+    browserPolicy += ", immutable";
+    edgePolicy += ", immutable";
   }
-  return staticPolicy;
+
+  return {
+    browser: browserPolicy,
+    edge: edgePolicy,
+  };
 }
 
 function parseClientHintNumber(rawValue) {
@@ -392,8 +401,11 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
   try {
     const ext = path.extname(filePathToServe).toLowerCase();
     const contentType = CONTENT_TYPES[ext] || "application/octet-stream";
+    const cachePolicy = getCachePolicy(filePathToServe, ext);
     const baseHeaders = {
-      "Cache-Control": getCacheControlHeader(filePathToServe, ext),
+      "Cache-Control": cachePolicy.browser,
+      "CDN-Cache-Control": cachePolicy.edge,
+      "Cloudflare-CDN-Cache-Control": cachePolicy.edge,
       "Content-Type": contentType,
     };
 
