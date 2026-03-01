@@ -2,6 +2,7 @@
 "use strict";
 
 const http = require("http");
+const crypto = require("crypto");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
@@ -35,6 +36,53 @@ const CONTENT_TYPES = {
 function resolveSitePath(relativeOrAbsolutePath) {
   const trimmed = String(relativeOrAbsolutePath || "").replace(/^\/+/, "");
   return path.resolve(SITE_DIR, trimmed);
+}
+
+function toWeakEtagFromStat(size, mtimeMs) {
+  return `W/"${size.toString(16)}-${Math.trunc(mtimeMs).toString(16)}"`;
+}
+
+function toWeakEtagFromString(content) {
+  const sizeHex = Buffer.byteLength(content, "utf8").toString(16);
+  const hash = crypto.createHash("sha1").update(content).digest("hex").slice(0, 16);
+  return `W/"${sizeHex}-${hash}"`;
+}
+
+function normalizeEtagToken(token) {
+  return token.trim().replace(/^W\//, "");
+}
+
+function hasMatchingEtag(ifNoneMatchValue, currentEtag) {
+  if (!ifNoneMatchValue || !currentEtag) return false;
+  if (ifNoneMatchValue.trim() === "*") return true;
+  const current = normalizeEtagToken(currentEtag);
+  return ifNoneMatchValue
+    .split(",")
+    .map((token) => normalizeEtagToken(token))
+    .some((token) => token === current);
+}
+
+function isNotModified(reqHeaders, etag, mtimeMs) {
+  const ifNoneMatch = reqHeaders["if-none-match"];
+  if (ifNoneMatch) {
+    return hasMatchingEtag(ifNoneMatch, etag);
+  }
+
+  const ifModifiedSince = reqHeaders["if-modified-since"];
+  if (!ifModifiedSince) return false;
+  const since = Date.parse(ifModifiedSince);
+  if (!Number.isFinite(since)) return false;
+  return Math.trunc(mtimeMs / 1000) <= Math.trunc(since / 1000);
+}
+
+function buildHtmlCacheEntry(sanitizedHtml, fileMeta) {
+  const mtimeMs = fileMeta?.mtimeMs ?? Date.now();
+  return {
+    body: sanitizedHtml,
+    etag: toWeakEtagFromString(sanitizedHtml),
+    lastModified: fileMeta?.lastModified ?? new Date(mtimeMs).toUTCString(),
+    mtimeMs,
+  };
 }
 
 function normalizeRoute(rawPath) {
@@ -91,6 +139,7 @@ function sanitizeHtml(html) {
 
 async function buildRuntimeIndex(routes) {
   const existingFiles = new Set();
+  const fileMetaByPath = new Map();
 
   async function walk(dir) {
     const entries = await fsp.readdir(dir, { withFileTypes: true });
@@ -101,7 +150,15 @@ async function buildRuntimeIndex(routes) {
       if (entry.isDirectory()) {
         await walk(absolutePath);
       } else if (entry.isFile()) {
-        existingFiles.add(path.resolve(absolutePath));
+        const resolvedPath = path.resolve(absolutePath);
+        const stats = await fsp.stat(resolvedPath);
+        existingFiles.add(resolvedPath);
+        fileMetaByPath.set(resolvedPath, {
+          size: stats.size,
+          mtimeMs: stats.mtimeMs,
+          lastModified: stats.mtime.toUTCString(),
+          etag: toWeakEtagFromStat(stats.size, stats.mtimeMs),
+        });
       }
     }
   }
@@ -119,6 +176,7 @@ async function buildRuntimeIndex(routes) {
   const notFoundAbsolutePath = resolveSitePath(NOT_FOUND_PAGE);
   return {
     existingFiles,
+    fileMetaByPath,
     notFoundAbsolutePath,
     notFoundExists: existingFiles.has(notFoundAbsolutePath),
     routeFileByPath,
@@ -139,7 +197,11 @@ async function warmHtmlCache(runtimeIndex) {
 
     try {
       const rawHtml = await fsp.readFile(absolutePath, "utf8");
-      htmlCache.set(absolutePath, sanitizeHtml(rawHtml));
+      const sanitizedHtml = sanitizeHtml(rawHtml);
+      htmlCache.set(
+        absolutePath,
+        buildHtmlCacheEntry(sanitizedHtml, runtimeIndex.fileMetaByPath.get(absolutePath))
+      );
       warmedCount += 1;
     } catch {
       // Missing optional pages are ignored; route handling already has fallbacks.
@@ -149,32 +211,32 @@ async function warmHtmlCache(runtimeIndex) {
   return { htmlCache, warmedCount };
 }
 
-async function getHtmlFromCache(absolutePath, htmlCache) {
+async function getHtmlFromCache(absolutePath, htmlCache, fileMeta) {
   if (htmlCache.has(absolutePath)) {
     return htmlCache.get(absolutePath);
   }
 
   const rawHtml = await fsp.readFile(absolutePath, "utf8");
-  const cleanedHtml = sanitizeHtml(rawHtml);
-  htmlCache.set(absolutePath, cleanedHtml);
-  return cleanedHtml;
+  const htmlEntry = buildHtmlCacheEntry(sanitizeHtml(rawHtml), fileMeta);
+  htmlCache.set(absolutePath, htmlEntry);
+  return htmlEntry;
 }
 
-async function sendFile(res, absolutePath, htmlCache, statusCode = 200) {
+async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusCode = 200) {
   if (!isSafePath(SITE_DIR, absolutePath)) {
     res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
     res.end("Forbidden");
     return;
   }
 
-  try {
-    const stats = await fsp.stat(absolutePath);
-    if (!stats.isFile()) {
-      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end("Not found");
-      return;
-    }
+  const fileMeta = runtimeIndex.fileMetaByPath.get(absolutePath);
+  if (!fileMeta) {
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    res.end("Not found");
+    return;
+  }
 
+  try {
     const ext = path.extname(absolutePath).toLowerCase();
     const contentType = CONTENT_TYPES[ext] || "application/octet-stream";
     const baseHeaders = {
@@ -183,13 +245,37 @@ async function sendFile(res, absolutePath, htmlCache, statusCode = 200) {
     };
 
     if (ext === ".html") {
-      const cleanedHtml = await getHtmlFromCache(absolutePath, htmlCache);
-      res.writeHead(statusCode, baseHeaders);
-      res.end(cleanedHtml);
+      const htmlEntry = await getHtmlFromCache(absolutePath, htmlCache, fileMeta);
+      const headers = {
+        ...baseHeaders,
+        ETag: htmlEntry.etag,
+        "Last-Modified": htmlEntry.lastModified,
+      };
+
+      if (statusCode === 200 && isNotModified(req.headers, htmlEntry.etag, htmlEntry.mtimeMs)) {
+        res.writeHead(304, headers);
+        res.end();
+        return;
+      }
+
+      res.writeHead(statusCode, headers);
+      res.end(htmlEntry.body);
       return;
     }
 
-    res.writeHead(statusCode, baseHeaders);
+    const headers = {
+      ...baseHeaders,
+      ETag: fileMeta.etag,
+      "Last-Modified": fileMeta.lastModified,
+    };
+
+    if (statusCode === 200 && isNotModified(req.headers, fileMeta.etag, fileMeta.mtimeMs)) {
+      res.writeHead(304, headers);
+      res.end();
+      return;
+    }
+
+    res.writeHead(statusCode, headers);
     fs.createReadStream(absolutePath).pipe(res);
   } catch {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
@@ -225,18 +311,18 @@ async function main() {
         isSafePath(SITE_DIR, directAssetPath) &&
         runtimeIndex.existingFiles.has(directAssetPath)
       ) {
-        await sendFile(res, directAssetPath, htmlCache);
+        await sendFile(req, res, directAssetPath, htmlCache, runtimeIndex);
         return;
       }
 
       const mappedFilePath = runtimeIndex.routeFileByPath.get(normalizedPath);
       if (mappedFilePath) {
-        await sendFile(res, mappedFilePath, htmlCache);
+        await sendFile(req, res, mappedFilePath, htmlCache, runtimeIndex);
         return;
       }
 
       if (runtimeIndex.notFoundExists) {
-        await sendFile(res, runtimeIndex.notFoundAbsolutePath, htmlCache, 404);
+        await sendFile(req, res, runtimeIndex.notFoundAbsolutePath, htmlCache, runtimeIndex, 404);
         return;
       }
 
