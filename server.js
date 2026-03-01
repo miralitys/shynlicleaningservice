@@ -32,6 +32,11 @@ const CONTENT_TYPES = {
   ".xml": "application/xml; charset=utf-8",
 };
 
+function resolveSitePath(relativeOrAbsolutePath) {
+  const trimmed = String(relativeOrAbsolutePath || "").replace(/^\/+/, "");
+  return path.resolve(SITE_DIR, trimmed);
+}
+
 function normalizeRoute(rawPath) {
   let p = rawPath || "/";
   if (!p.startsWith("/")) p = `/${p}`;
@@ -84,19 +89,55 @@ function sanitizeHtml(html) {
   return cleaned;
 }
 
-async function warmHtmlCache(routes) {
+async function buildRuntimeIndex(routes) {
+  const existingFiles = new Set();
+
+  async function walk(dir) {
+    const entries = await fsp.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      // Runtime file index is for served content only.
+      if (entry.name === ".git" || entry.name === "node_modules") continue;
+      const absolutePath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolutePath);
+      } else if (entry.isFile()) {
+        existingFiles.add(path.resolve(absolutePath));
+      }
+    }
+  }
+
+  await walk(SITE_DIR);
+
+  const routeFileByPath = new Map();
+  for (const [routePath, routeFile] of Object.entries(routes)) {
+    const absolutePath = resolveSitePath(routeFile);
+    if (existingFiles.has(absolutePath)) {
+      routeFileByPath.set(routePath, absolutePath);
+    }
+  }
+
+  const notFoundAbsolutePath = resolveSitePath(NOT_FOUND_PAGE);
+  return {
+    existingFiles,
+    notFoundAbsolutePath,
+    notFoundExists: existingFiles.has(notFoundAbsolutePath),
+    routeFileByPath,
+  };
+}
+
+async function warmHtmlCache(runtimeIndex) {
   const htmlCache = new Map();
-  const filesToWarm = new Set([...Object.values(routes), NOT_FOUND_PAGE]);
+  const filesToWarm = new Set([
+    ...runtimeIndex.routeFileByPath.values(),
+    runtimeIndex.notFoundAbsolutePath,
+  ]);
 
   let warmedCount = 0;
-  for (const file of filesToWarm) {
-    const absolutePath = path.join(SITE_DIR, file);
+  for (const absolutePath of filesToWarm) {
     if (!isSafePath(SITE_DIR, absolutePath)) continue;
+    if (!runtimeIndex.existingFiles.has(absolutePath)) continue;
 
     try {
-      const stats = await fsp.stat(absolutePath);
-      if (!stats.isFile()) continue;
-
       const rawHtml = await fsp.readFile(absolutePath, "utf8");
       htmlCache.set(absolutePath, sanitizeHtml(rawHtml));
       warmedCount += 1;
@@ -168,7 +209,8 @@ async function loadRoutes() {
 
 async function main() {
   const routes = await loadRoutes();
-  const { htmlCache, warmedCount } = await warmHtmlCache(routes);
+  const runtimeIndex = await buildRuntimeIndex(routes);
+  const { htmlCache, warmedCount } = await warmHtmlCache(runtimeIndex);
 
   const server = http.createServer(async (req, res) => {
     try {
@@ -176,26 +218,25 @@ async function main() {
       const pathname = decodeURIComponent(reqUrl.pathname);
       const normalizedPath = normalizeRoute(pathname);
 
-      const directAssetPath = path.join(SITE_DIR, pathname);
+      const directAssetPath = resolveSitePath(pathname);
       if (
         pathname !== "/" &&
         path.extname(pathname) &&
         isSafePath(SITE_DIR, directAssetPath) &&
-        fs.existsSync(directAssetPath)
+        runtimeIndex.existingFiles.has(directAssetPath)
       ) {
         await sendFile(res, directAssetPath, htmlCache);
         return;
       }
 
-      const mappedFile = routes[normalizedPath];
-      if (mappedFile) {
-        await sendFile(res, path.join(SITE_DIR, mappedFile), htmlCache);
+      const mappedFilePath = runtimeIndex.routeFileByPath.get(normalizedPath);
+      if (mappedFilePath) {
+        await sendFile(res, mappedFilePath, htmlCache);
         return;
       }
 
-      const notFoundPath = path.join(SITE_DIR, NOT_FOUND_PAGE);
-      if (fs.existsSync(notFoundPath)) {
-        await sendFile(res, notFoundPath, htmlCache, 404);
+      if (runtimeIndex.notFoundExists) {
+        await sendFile(res, runtimeIndex.notFoundAbsolutePath, htmlCache, 404);
         return;
       }
 
@@ -210,6 +251,7 @@ async function main() {
   server.listen(PORT, HOST, () => {
     console.log(`Server started on http://${HOST}:${PORT}`);
     console.log(`Loaded routes: ${Object.keys(routes).length}`);
+    console.log(`Indexed files: ${runtimeIndex.existingFiles.size}`);
     console.log(`Warmed HTML cache entries: ${warmedCount}`);
   });
 }
