@@ -15,6 +15,7 @@ const ROUTES_PATH = path.join(SITE_DIR, "routes.json");
 const NOT_FOUND_PAGE = "page113047926.html";
 
 const CONTENT_TYPES = {
+  ".avif": "image/avif",
   ".css": "text/css; charset=utf-8",
   ".gif": "image/gif",
   ".html": "text/html; charset=utf-8",
@@ -32,6 +33,8 @@ const CONTENT_TYPES = {
   ".woff2": "font/woff2",
   ".xml": "application/xml; charset=utf-8",
 };
+const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg"]);
+const NEGOTIATED_IMAGE_VARY = "Accept, Sec-CH-Width, Viewport-Width, DPR";
 
 function resolveSitePath(relativeOrAbsolutePath) {
   const trimmed = String(relativeOrAbsolutePath || "").replace(/^\/+/, "");
@@ -109,6 +112,120 @@ function getCacheControlHeader(absolutePath, ext) {
   return staticPolicy;
 }
 
+function parseClientHintNumber(rawValue) {
+  if (!rawValue) return null;
+  const normalized = String(rawValue).replace(/"/g, "").trim();
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function getTargetImageWidth(headers) {
+  const widthHint =
+    parseClientHintNumber(headers["sec-ch-width"]) ||
+    parseClientHintNumber(headers["viewport-width"]);
+  if (!widthHint) return null;
+
+  const dpr = parseClientHintNumber(headers["dpr"]) || parseClientHintNumber(headers["sec-ch-dpr"]) || 1;
+  return Math.max(1, Math.round(widthHint * dpr));
+}
+
+function getPreferredImageCodecs(acceptHeader) {
+  const accept = String(acceptHeader || "").toLowerCase();
+  const codecs = [];
+  if (accept.includes("image/avif")) codecs.push("avif");
+  if (accept.includes("image/webp")) codecs.push("webp");
+  return codecs;
+}
+
+function findExistingOriginalImagePath(existingFiles, stemPath) {
+  for (const ext of [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG"]) {
+    const candidate = `${stemPath}${ext}`;
+    if (existingFiles.has(candidate)) return candidate;
+  }
+  return null;
+}
+
+function buildImageVariantIndex(existingFiles) {
+  const imageVariantsByOriginal = new Map();
+
+  for (const absolutePath of existingFiles) {
+    const codecExt = path.extname(absolutePath).toLowerCase();
+    if (codecExt !== ".avif" && codecExt !== ".webp") continue;
+
+    const withoutCodec = absolutePath.slice(0, -codecExt.length);
+    let stem = withoutCodec;
+    let width = null;
+    const widthMatch = /\.w(\d+)$/.exec(withoutCodec);
+    if (widthMatch) {
+      width = Number.parseInt(widthMatch[1], 10);
+      stem = withoutCodec.slice(0, widthMatch.index);
+    }
+
+    const originalPath = findExistingOriginalImagePath(existingFiles, stem);
+    if (!originalPath) continue;
+
+    let variants = imageVariantsByOriginal.get(originalPath);
+    if (!variants) {
+      variants = {
+        avif: { full: null, widths: [] },
+        webp: { full: null, widths: [] },
+      };
+      imageVariantsByOriginal.set(originalPath, variants);
+    }
+
+    const codec = codecExt.slice(1);
+    if (width) {
+      variants[codec].widths.push({ width, path: absolutePath });
+    } else {
+      variants[codec].full = absolutePath;
+    }
+  }
+
+  for (const variants of imageVariantsByOriginal.values()) {
+    variants.avif.widths.sort((a, b) => a.width - b.width);
+    variants.webp.widths.sort((a, b) => a.width - b.width);
+  }
+
+  return imageVariantsByOriginal;
+}
+
+function selectWidthVariant(widthVariants, targetWidth) {
+  if (!widthVariants.length) return null;
+  for (const variant of widthVariants) {
+    if (variant.width >= targetWidth) return variant.path;
+  }
+  return widthVariants[widthVariants.length - 1].path;
+}
+
+function selectNegotiatedImagePath(req, originalPath, runtimeIndex) {
+  const ext = path.extname(originalPath).toLowerCase();
+  if (!IMAGE_EXTENSIONS.has(ext)) return null;
+
+  const variants = runtimeIndex.imageVariantsByOriginal.get(originalPath);
+  if (!variants) return null;
+
+  const preferredCodecs = getPreferredImageCodecs(req.headers.accept);
+  if (!preferredCodecs.length) return null;
+
+  const targetWidth = getTargetImageWidth(req.headers);
+  for (const codec of preferredCodecs) {
+    const variantSet = variants[codec];
+    if (!variantSet) continue;
+
+    if (targetWidth) {
+      const widthMatch = selectWidthVariant(variantSet.widths, targetWidth);
+      if (widthMatch) return widthMatch;
+    }
+
+    if (variantSet.full) return variantSet.full;
+    if (variantSet.widths.length > 0) {
+      return variantSet.widths[variantSet.widths.length - 1].path;
+    }
+  }
+
+  return null;
+}
+
 function isSafePath(baseDir, filePath) {
   const resolvedBase = path.resolve(baseDir) + path.sep;
   const resolvedPath = path.resolve(filePath);
@@ -122,7 +239,17 @@ function sanitizeHtml(html) {
       ""
     )
     .replace(/<!-- Tilda copyright\. Don't remove this line -->[\s\S]*?(?=<!-- Stat -->)/g, "")
-    .replace(/data-tilda-export="yes"/g, 'data-export-source="tilda"');
+    .replace(/data-tilda-export="yes"/g, 'data-export-source="tilda"')
+    .replace(/<!--\s*Form export deps:[\s\S]*?-->/g, "")
+    .replace(/<script[^>]+src="js\/tilda-animation-sbs-1\.0\.min\.js"[^>]*><\/script>/g, "");
+
+  const hasForms = /data-elem-type='form'|class="t-form"|tn-atom__form/.test(cleaned);
+  if (!hasForms) {
+    cleaned = cleaned
+      .replace(/<link[^>]+href="css\/tilda-forms-1\.0\.min\.css"[^>]*>/g, "")
+      .replace(/<script[^>]+src="js\/tilda-forms-1\.0\.min\.js"[^>]*><\/script>/g, "")
+      .replace(/<script[^>]+src="js\/tilda-zero-forms-1\.0\.min\.js"[^>]*><\/script>/g, "");
+  }
 
   // Ensure footer logo always leads to homepage.
   cleaned = cleaned.replace(
@@ -194,6 +321,7 @@ async function buildRuntimeIndex(routes) {
   return {
     existingFiles,
     fileMetaByPath,
+    imageVariantsByOriginal: buildImageVariantIndex(existingFiles),
     notFoundAbsolutePath,
     notFoundExists: existingFiles.has(notFoundAbsolutePath),
     routeFileByPath,
@@ -246,7 +374,15 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
     return;
   }
 
-  const fileMeta = runtimeIndex.fileMetaByPath.get(absolutePath);
+  let filePathToServe = absolutePath;
+  if (statusCode === 200) {
+    const negotiatedPath = selectNegotiatedImagePath(req, absolutePath, runtimeIndex);
+    if (negotiatedPath) {
+      filePathToServe = negotiatedPath;
+    }
+  }
+
+  const fileMeta = runtimeIndex.fileMetaByPath.get(filePathToServe);
   if (!fileMeta) {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     res.end("Not found");
@@ -254,17 +390,22 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
   }
 
   try {
-    const ext = path.extname(absolutePath).toLowerCase();
+    const ext = path.extname(filePathToServe).toLowerCase();
     const contentType = CONTENT_TYPES[ext] || "application/octet-stream";
     const baseHeaders = {
-      "Cache-Control": getCacheControlHeader(absolutePath, ext),
+      "Cache-Control": getCacheControlHeader(filePathToServe, ext),
       "Content-Type": contentType,
     };
+
+    if (filePathToServe !== absolutePath) {
+      baseHeaders.Vary = NEGOTIATED_IMAGE_VARY;
+    }
 
     if (ext === ".html") {
       const htmlEntry = await getHtmlFromCache(absolutePath, htmlCache, fileMeta);
       const headers = {
         ...baseHeaders,
+        "Accept-CH": "Width, Viewport-Width, DPR",
         ETag: htmlEntry.etag,
         "Last-Modified": htmlEntry.lastModified,
       };
@@ -293,7 +434,7 @@ async function sendFile(req, res, absolutePath, htmlCache, runtimeIndex, statusC
     }
 
     res.writeHead(statusCode, headers);
-    fs.createReadStream(absolutePath).pipe(res);
+    fs.createReadStream(filePathToServe).pipe(res);
   } catch {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     res.end("Not found");
@@ -355,6 +496,7 @@ async function main() {
     console.log(`Server started on http://${HOST}:${PORT}`);
     console.log(`Loaded routes: ${Object.keys(routes).length}`);
     console.log(`Indexed files: ${runtimeIndex.existingFiles.size}`);
+    console.log(`Indexed image variant sets: ${runtimeIndex.imageVariantsByOriginal.size}`);
     console.log(`Warmed HTML cache entries: ${warmedCount}`);
   });
 }
