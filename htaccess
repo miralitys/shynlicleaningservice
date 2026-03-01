@@ -1,0 +1,183 @@
+ErrorDocument 403 /page113047926.html
+ErrorDocument 404 /page113047926.html
+
+DirectoryIndex page110934856.html
+
+RewriteEngine On
+
+RewriteCond %{HTTP:X-Forwarded-Proto} =http
+RewriteRule ^(.*)$ https://shynlicleaningservice\.com/$1 [R=301,L]
+
+RewriteCond %{HTTP:X-Forwarded-Proto} =https
+RewriteCond %{HTTP_HOST} ^www\.shynlicleaningservice.com [NC]
+RewriteRule ^(.*)$ https://shynlicleaningservice\.com/$1 [R=301,L]
+
+RewriteCond %{REQUEST_FILENAME} /robots.txt
+RewriteCond "%{DOCUMENT_ROOT}/robots_%{HTTP_HOST}.txt" -f
+RewriteRule ^(.*)$ robots_%{HTTP_HOST}.txt [NC,L]
+RewriteRule ^addison$ page110524796.html [NC]
+RewriteRule ^addison/$ page110524796.html [NC]
+
+RewriteRule ^aurora$ page110920356.html [NC]
+RewriteRule ^aurora/$ page110920356.html [NC]
+
+RewriteRule ^home-simple$ page108488156.html [NC]
+RewriteRule ^home-simple/$ page108488156.html [NC]
+
+RewriteRule ^home-calculator$ page110230356.html [NC]
+RewriteRule ^home-calculator/$ page110230356.html [NC]
+
+RewriteRule ^bartlett$ page111297646.html [NC]
+RewriteRule ^bartlett/$ page111297646.html [NC]
+
+RewriteRule ^about-us$ page109184776.html [NC]
+RewriteRule ^about-us/$ page109184776.html [NC]
+
+RewriteRule ^batavia$ page111301556.html [NC]
+RewriteRule ^batavia/$ page111301556.html [NC]
+
+RewriteRule ^services/regular-cleaning$ page109653016.html [NC]
+RewriteRule ^services/regular-cleaning/$ page109653016.html [NC]
+
+RewriteRule ^bolingbrook$ page111302756.html [NC]
+RewriteRule ^bolingbrook/$ page111302756.html [NC]
+
+RewriteRule ^services/deep-cleaning$ page109721366.html [NC]
+RewriteRule ^services/deep-cleaning/$ page109721366.html [NC]
+
+RewriteRule ^burrridge$ page111303116.html [NC]
+RewriteRule ^burrridge/$ page111303116.html [NC]
+
+RewriteRule ^carolstream$ page111303466.html [NC]
+RewriteRule ^carolstream/$ page111303466.html [NC]
+
+RewriteRule ^services/move-in-move-out-cleaning$ page109993436.html [NC]
+RewriteRule ^services/move-in-move-out-cleaning/$ page109993436.html [NC]
+
+RewriteRule ^clarendonhills$ page111303756.html [NC]
+RewriteRule ^clarendonhills/$ page111303756.html [NC]
+
+RewriteRule ^darien$ page111304216.html [NC]
+RewriteRule ^darien/$ page111304216.html [NC]
+
+RewriteRule ^services/airbnb-cleaning$ page110326416.html [NC]
+RewriteRule ^services/airbnb-cleaning/$ page110326416.html [NC]
+
+RewriteRule ^downersgrove$ page111304546.html [NC]
+RewriteRule ^downersgrove/$ page111304546.html [NC]
+
+RewriteRule ^services/commercial-cleaning$ page110512356.html [NC]
+RewriteRule ^services/commercial-cleaning/$ page110512356.html [NC]
+
+RewriteRule ^elmhurst$ page111639506.html [NC]
+RewriteRule ^elmhurst/$ page111639506.html [NC]
+
+RewriteRule ^service-areas$ page108912616.html [NC]
+RewriteRule ^service-areas/$ page108912616.html [NC]
+
+RewriteRule ^geneva$ page111639596.html [NC]
+RewriteRule ^geneva/$ page111639596.html [NC]
+
+RewriteRule ^pricing$ page110278596.html [NC]
+RewriteRule ^pricing/$ page110278596.html [NC]
+
+RewriteRule ^contacts$ page109085526.html [NC]
+RewriteRule ^contacts/$ page109085526.html [NC]
+
+RewriteRule ^glenellyn$ page111639666.html [NC]
+RewriteRule ^glenellyn/$ page111639666.html [NC]
+
+RewriteRule ^faq$ page109088646.html [NC]
+RewriteRule ^faq/$ page109088646.html [NC]
+
+RewriteRule ^hinsdale$ page111639736.html [NC]
+RewriteRule ^hinsdale/$ page111639736.html [NC]
+
+RewriteRule ^blog$ page108872586.html [NC]
+RewriteRule ^blog/$ page108872586.html [NC]
+
+RewriteRule ^itasca$ page111640026.html [NC]
+RewriteRule ^itasca/$ page111640026.html [NC]
+
+RewriteRule ^homerglen$ page111640086.html [NC]
+RewriteRule ^homerglen/$ page111640086.html [NC]
+
+RewriteRule ^lemont$ page111640146.html [NC]
+RewriteRule ^lemont/$ page111640146.html [NC]
+
+RewriteRule ^lisle$ page111640226.html [NC]
+RewriteRule ^lisle/$ page111640226.html [NC]
+
+RewriteRule ^lockport$ page111640286.html [NC]
+RewriteRule ^lockport/$ page111640286.html [NC]
+
+RewriteRule ^lombard$ page111942956.html [NC]
+RewriteRule ^lombard/$ page111942956.html [NC]
+
+RewriteRule ^montgomery$ page111640476.html [NC]
+RewriteRule ^montgomery/$ page111640476.html [NC]
+
+RewriteRule ^naperville$ page111640686.html [NC]
+RewriteRule ^naperville/$ page111640686.html [NC]
+
+RewriteRule ^oakbrook$ page111640746.html [NC]
+RewriteRule ^oakbrook/$ page111640746.html [NC]
+
+RewriteRule ^oswego$ page111640796.html [NC]
+RewriteRule ^oswego/$ page111640796.html [NC]
+
+RewriteRule ^plainfield$ page111640836.html [NC]
+RewriteRule ^plainfield/$ page111640836.html [NC]
+
+RewriteRule ^romeoville$ page111640886.html [NC]
+RewriteRule ^romeoville/$ page111640886.html [NC]
+
+RewriteRule ^stcharles$ page111640956.html [NC]
+RewriteRule ^stcharles/$ page111640956.html [NC]
+
+RewriteRule ^streamwood$ page111641016.html [NC]
+RewriteRule ^streamwood/$ page111641016.html [NC]
+
+RewriteRule ^villapark$ page111641126.html [NC]
+RewriteRule ^villapark/$ page111641126.html [NC]
+
+RewriteRule ^warrenville$ page111641216.html [NC]
+RewriteRule ^warrenville/$ page111641216.html [NC]
+
+RewriteRule ^wayne$ page111641256.html [NC]
+RewriteRule ^wayne/$ page111641256.html [NC]
+
+RewriteRule ^westchicago$ page111641356.html [NC]
+RewriteRule ^westchicago/$ page111641356.html [NC]
+
+RewriteRule ^westmont$ page111641416.html [NC]
+RewriteRule ^westmont/$ page111641416.html [NC]
+
+RewriteRule ^wheaton$ page111641466.html [NC]
+RewriteRule ^wheaton/$ page111641466.html [NC]
+
+RewriteRule ^willowbrook$ page111641546.html [NC]
+RewriteRule ^willowbrook/$ page111641546.html [NC]
+
+RewriteRule ^winfield$ page111641576.html [NC]
+RewriteRule ^winfield/$ page111641576.html [NC]
+
+RewriteRule ^wooddale$ page111641666.html [NC]
+RewriteRule ^wooddale/$ page111641666.html [NC]
+
+RewriteRule ^woodridge$ page111641796.html [NC]
+RewriteRule ^woodridge/$ page111641796.html [NC]
+
+RewriteRule ^quote$ page111975906.html [NC]
+RewriteRule ^quote/$ page111975906.html [NC]
+
+RewriteRule ^services/post-construction-cleaning$ page113041806.html [NC]
+RewriteRule ^services/post-construction-cleaning/$ page113041806.html [NC]
+
+RewriteRule ^oauth/callback$ page113305246.html [NC]
+RewriteRule ^oauth/callback/$ page113305246.html [NC]
+
+RewriteRule ^terms-of-service$ page122965736.html [NC]
+RewriteRule ^terms-of-service/$ page122965736.html [NC]
+
+

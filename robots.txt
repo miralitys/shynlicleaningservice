@@ -1,0 +1,18 @@
+User-Agent: *
+Disallow: /page108872146.html
+Disallow: /page111975906.html
+Disallow: /quote
+Disallow: /page113047926.html
+Disallow: /tilda/form*
+Disallow: /tilda/rec*
+Disallow: /tilda/click*
+Disallow: /tilda/scroll*
+Disallow: /tilda/popup*
+Disallow: /tilda/cart*
+Disallow: /tilda/product*
+Disallow: /tilda/event*
+Disallow:
+
+
+Sitemap: https://shynlicleaningservice.com/sitemap.xml
+Sitemap: https://shynlicleaningservice.com/sitemap-feeds.xml
