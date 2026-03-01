@@ -46,13 +46,20 @@ function isSafePath(baseDir, filePath) {
 }
 
 function sanitizeHtml(html) {
-  return html
+  let cleaned = html
     .replace(
       /<script src="https:\/\/neo\.tildacdn\.com\/js\/tilda-fallback-1\.0\.min\.js"[^>]*><\/script>/g,
       ""
     )
     .replace(/<!-- Tilda copyright\. Don't remove this line -->[\s\S]*?(?=<!-- Stat -->)/g, "")
     .replace(/data-tilda-export="yes"/g, 'data-export-source="tilda"');
+
+  // Fix relative asset paths on nested routes like /services/*.
+  if (!/<base\s+href=/i.test(cleaned)) {
+    cleaned = cleaned.replace(/<head>/i, '<head><base href="/" />');
+  }
+
+  return cleaned;
 }
 
 async function sendFile(res, absolutePath, statusCode = 200) {
@@ -153,4 +160,3 @@ main().catch((err) => {
   console.error("Failed to start server:", err);
   process.exit(1);
 });
-
