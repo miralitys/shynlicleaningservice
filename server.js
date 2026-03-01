@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
+const { monitorEventLoopDelay } = require("perf_hooks");
 const { URL } = require("url");
 
 const HOST = process.env.HOST || "0.0.0.0";
@@ -35,9 +36,181 @@ const CONTENT_TYPES = {
 };
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg"]);
 const NEGOTIATED_IMAGE_VARY = "Accept, Sec-CH-Width, Viewport-Width, DPR";
+const REQUEST_LOG_BUFFER_LIMIT = Number(process.env.REQUEST_LOG_BUFFER_LIMIT || 4000);
+const REQUEST_LOG_FLUSH_INTERVAL_MS = Number(process.env.REQUEST_LOG_FLUSH_INTERVAL_MS || 250);
+const PERF_WINDOW_MS = Number(process.env.PERF_WINDOW_MS || 5 * 60 * 1000);
+const PERF_SUMMARY_INTERVAL_MS = Number(process.env.PERF_SUMMARY_INTERVAL_MS || 60 * 1000);
+const PERF_MAX_SAMPLES = Number(process.env.PERF_MAX_SAMPLES || 40000);
+const ALERT_P95_MS = Number(process.env.ALERT_P95_MS || 500);
+const ALERT_P99_MS = Number(process.env.ALERT_P99_MS || 1000);
+const ALERT_5XX_RATE = Number(process.env.ALERT_5XX_RATE || 0.01);
+const ALERT_EVENT_LOOP_P95_MS = Number(process.env.ALERT_EVENT_LOOP_P95_MS || 100);
 
 function getRequestDurationMs(startTimeNs) {
   return Number(process.hrtime.bigint() - startTimeNs) / 1e6;
+}
+
+function roundNumber(value, digits = 2) {
+  if (!Number.isFinite(value)) return 0;
+  return Number(value.toFixed(digits));
+}
+
+function percentileFromSorted(sortedValues, percentile) {
+  if (!sortedValues.length) return 0;
+  const clamped = Math.max(0, Math.min(100, percentile));
+  const index = Math.ceil((clamped / 100) * sortedValues.length) - 1;
+  return sortedValues[Math.max(0, Math.min(sortedValues.length - 1, index))];
+}
+
+function createBufferedLogger() {
+  const queue = [];
+  let droppedCount = 0;
+  let flushing = false;
+
+  function flush() {
+    if (flushing || queue.length === 0) return;
+    flushing = true;
+
+    const chunk = queue.splice(0, queue.length).join("\n");
+    const dropped = droppedCount;
+    droppedCount = 0;
+    let output = `${chunk}\n`;
+    if (dropped > 0) {
+      output += `${JSON.stringify({
+        ts: new Date().toISOString(),
+        type: "request_log_drop",
+        dropped,
+      })}\n`;
+    }
+
+    process.stdout.write(output, () => {
+      flushing = false;
+      if (queue.length > 0) {
+        setImmediate(flush);
+      }
+    });
+  }
+
+  const flushTimer = setInterval(flush, REQUEST_LOG_FLUSH_INTERVAL_MS);
+  flushTimer.unref();
+
+  return {
+    log(entry) {
+      const line = typeof entry === "string" ? entry : JSON.stringify(entry);
+      if (queue.length >= REQUEST_LOG_BUFFER_LIMIT) {
+        droppedCount += 1;
+        return;
+      }
+      queue.push(line);
+      if (!flushing) {
+        setImmediate(flush);
+      }
+    },
+    close() {
+      clearInterval(flushTimer);
+      flush();
+    },
+  };
+}
+
+function createRequestPerfWindow() {
+  const samples = [];
+
+  function trim(nowMs) {
+    while (samples.length > 0 && nowMs - samples[0].ts > PERF_WINDOW_MS) {
+      samples.shift();
+    }
+    if (samples.length > PERF_MAX_SAMPLES) {
+      samples.splice(0, samples.length - PERF_MAX_SAMPLES);
+    }
+  }
+
+  return {
+    record(statusCode, durationMs) {
+      const nowMs = Date.now();
+      samples.push({ ts: nowMs, statusCode, durationMs });
+      trim(nowMs);
+    },
+    snapshot() {
+      const nowMs = Date.now();
+      trim(nowMs);
+
+      const total = samples.length;
+      if (total === 0) {
+        return {
+          window_ms: PERF_WINDOW_MS,
+          total_requests: 0,
+          p50_ms: 0,
+          p95_ms: 0,
+          p99_ms: 0,
+          status_5xx: 0,
+          status_5xx_rate: 0,
+        };
+      }
+
+      const durations = samples.map((s) => s.durationMs).sort((a, b) => a - b);
+      let status5xx = 0;
+      for (const sample of samples) {
+        if (sample.statusCode >= 500) status5xx += 1;
+      }
+
+      return {
+        window_ms: PERF_WINDOW_MS,
+        total_requests: total,
+        p50_ms: roundNumber(percentileFromSorted(durations, 50)),
+        p95_ms: roundNumber(percentileFromSorted(durations, 95)),
+        p99_ms: roundNumber(percentileFromSorted(durations, 99)),
+        status_5xx: status5xx,
+        status_5xx_rate: roundNumber(status5xx / total, 4),
+      };
+    },
+  };
+}
+
+function createEventLoopStats() {
+  const histogram = monitorEventLoopDelay({ resolution: 20 });
+  histogram.enable();
+
+  function readSnapshot(reset = false) {
+    if (histogram.count === 0) {
+      if (reset) histogram.reset();
+      return { min_ms: 0, mean_ms: 0, p95_ms: 0, p99_ms: 0, max_ms: 0 };
+    }
+
+    const snapshot = {
+      min_ms: roundNumber(histogram.min / 1e6),
+      mean_ms: roundNumber(histogram.mean / 1e6),
+      p95_ms: roundNumber(histogram.percentile(95) / 1e6),
+      p99_ms: roundNumber(histogram.percentile(99) / 1e6),
+      max_ms: roundNumber(histogram.max / 1e6),
+    };
+    if (reset) histogram.reset();
+    return snapshot;
+  }
+
+  return {
+    readSnapshot,
+    close() {
+      histogram.disable();
+    },
+  };
+}
+
+function getPerfAlertReasons(requestSnapshot, eventLoopSnapshot) {
+  const reasons = [];
+  if (requestSnapshot.total_requests > 0 && requestSnapshot.p95_ms >= ALERT_P95_MS) {
+    reasons.push(`p95_ms >= ${ALERT_P95_MS}`);
+  }
+  if (requestSnapshot.total_requests > 0 && requestSnapshot.p99_ms >= ALERT_P99_MS) {
+    reasons.push(`p99_ms >= ${ALERT_P99_MS}`);
+  }
+  if (requestSnapshot.total_requests > 0 && requestSnapshot.status_5xx_rate >= ALERT_5XX_RATE) {
+    reasons.push(`status_5xx_rate >= ${ALERT_5XX_RATE}`);
+  }
+  if (eventLoopSnapshot.p95_ms >= ALERT_EVENT_LOOP_P95_MS) {
+    reasons.push(`event_loop_p95_ms >= ${ALERT_EVENT_LOOP_P95_MS}`);
+  }
+  return reasons;
 }
 
 function toServerTimingHeader(startTimeNs, cacheHit) {
@@ -279,28 +452,6 @@ function sanitizeHtml(html) {
       .replace(/<script[^>]+src="js\/tilda-zero-forms-1\.0\.min\.js"[^>]*><\/script>/g, "");
   }
 
-  // Ensure footer logo always leads to homepage.
-  cleaned = cleaned.replace(
-    /(<div class='t396__elem[^>]*data-elem-id='1475160083840'[^>]*>[\s\S]*?<a class='tn-atom') href="https:\/\/www\.google\.com"/g,
-    '$1 href="/"'
-  );
-
-  // Remove footer social icon elements (Nextdoor, Thumbtack, Yelp, Facebook, Instagram).
-  const footerSocialElemIds = [
-    "1475160165682", // Nextdoor / home icon
-    "1475160189796", // Thumbtack
-    "1475160204612", // Yelp
-    "1475160356604", // Facebook
-    "1475160346203", // Instagram
-  ];
-  for (const elemId of footerSocialElemIds) {
-    const blockPattern = new RegExp(
-      `<div class='t396__elem[^>]*data-elem-id='${elemId}'[^>]*>[\\s\\S]*?<\\/div>\\s*<\\/div>`,
-      "g"
-    );
-    cleaned = cleaned.replace(blockPattern, "");
-  }
-
   // Fix relative asset paths on nested routes like /services/*.
   if (!/<base\s+href=/i.test(cleaned)) {
     cleaned = cleaned.replace(/<head>/i, '<head><base href="/" />');
@@ -527,6 +678,39 @@ async function main() {
   const routes = await loadRoutes();
   const runtimeIndex = await buildRuntimeIndex(routes);
   const { htmlCache, warmedCount } = await warmHtmlCache(runtimeIndex);
+  const requestLogger = createBufferedLogger();
+  const requestPerfWindow = createRequestPerfWindow();
+  const eventLoopStats = createEventLoopStats();
+
+  const perfSummaryTimer = setInterval(() => {
+    const requestSnapshot = requestPerfWindow.snapshot();
+    const eventLoopSnapshot = eventLoopStats.readSnapshot(true);
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "perf_summary",
+      request: requestSnapshot,
+      event_loop: eventLoopSnapshot,
+    });
+
+    const reasons = getPerfAlertReasons(requestSnapshot, eventLoopSnapshot);
+    if (reasons.length > 0) {
+      requestLogger.log({
+        ts: new Date().toISOString(),
+        type: "perf_alert",
+        level: "warn",
+        reasons,
+        thresholds: {
+          p95_ms: ALERT_P95_MS,
+          p99_ms: ALERT_P99_MS,
+          status_5xx_rate: ALERT_5XX_RATE,
+          event_loop_p95_ms: ALERT_EVENT_LOOP_P95_MS,
+        },
+        request: requestSnapshot,
+        event_loop: eventLoopSnapshot,
+      });
+    }
+  }, PERF_SUMMARY_INTERVAL_MS);
+  perfSummaryTimer.unref();
 
   const server = http.createServer(async (req, res) => {
     const requestStartNs = process.hrtime.bigint();
@@ -537,6 +721,7 @@ async function main() {
 
     res.on("finish", () => {
       const durationMs = getRequestDurationMs(requestStartNs);
+      requestPerfWindow.record(res.statusCode, durationMs);
       const logLine = {
         ts: new Date().toISOString(),
         route: requestContext.route,
@@ -544,7 +729,7 @@ async function main() {
         duration_ms: Number(durationMs.toFixed(2)),
         cache_hit: requestContext.cacheHit,
       };
-      console.log(JSON.stringify(logLine));
+      requestLogger.log(logLine);
     });
 
     try {
@@ -552,6 +737,38 @@ async function main() {
       const pathname = decodeURIComponent(reqUrl.pathname);
       const normalizedPath = normalizeRoute(pathname);
       requestContext.route = normalizedPath;
+
+      if (normalizedPath === "/__perf") {
+        requestContext.cacheHit = false;
+        const perfBody = JSON.stringify(
+          {
+            ts: new Date().toISOString(),
+            request: requestPerfWindow.snapshot(),
+            event_loop: eventLoopStats.readSnapshot(false),
+            thresholds: {
+              p95_ms: ALERT_P95_MS,
+              p99_ms: ALERT_P99_MS,
+              status_5xx_rate: ALERT_5XX_RATE,
+              event_loop_p95_ms: ALERT_EVENT_LOOP_P95_MS,
+            },
+          },
+          null,
+          2
+        );
+
+        writeHeadWithTiming(
+          res,
+          200,
+          {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store",
+          },
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        res.end(perfBody);
+        return;
+      }
 
       const directAssetPath = resolveSitePath(pathname);
       if (
@@ -621,6 +838,37 @@ async function main() {
       res.end("Internal server error");
     }
   });
+
+  let shuttingDown = false;
+  function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    clearInterval(perfSummaryTimer);
+    eventLoopStats.close();
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "shutdown",
+      signal,
+    });
+
+    server.close(() => {
+      requestLogger.close();
+      process.exit(0);
+    });
+
+    const forceExitTimer = setTimeout(() => {
+      requestLogger.log({
+        ts: new Date().toISOString(),
+        type: "force_exit",
+      });
+      requestLogger.close();
+      process.exit(1);
+    }, 5000);
+    forceExitTimer.unref();
+  }
+
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
 
   server.listen(PORT, HOST, () => {
     console.log(`Server started on http://${HOST}:${PORT}`);

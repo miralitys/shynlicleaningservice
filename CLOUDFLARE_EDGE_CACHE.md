@@ -16,6 +16,14 @@ This project now sends edge-friendly cache headers from origin:
 2. DNS points to Render custom domain endpoint.
 3. Use custom domain (`shynlicleaningservice.com`) for traffic. `onrender.com` is not cached by Cloudflare.
 
+If you still see `cf-cache-status: DYNAMIC`, verify all of these:
+
+1. Request goes to your custom domain, not `*.onrender.com`.
+2. Cloudflare proxy is enabled (orange cloud) for the DNS record.
+3. Cache Rules are enabled and ordered exactly as below.
+4. Development Mode is OFF in Cloudflare.
+5. No bypass rule above your cache rules.
+
 ## 2) Recommended Cache Rules (Cloudflare Dashboard)
 
 Order matters: keep rules in this order.
@@ -45,6 +53,12 @@ Order matters: keep rules in this order.
 
 4. Optional bypass for admin/preview paths
    - If needed, add explicit bypass for any private paths.
+
+5. Bypass diagnostics endpoint
+   - Expression:
+     - host equals `shynlicleaningservice.com`
+     - and URI path equals `/__perf`
+   - Action: `Bypass cache`
 
 ## 3) Release Invalidation
 

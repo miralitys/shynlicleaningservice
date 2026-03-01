@@ -27,7 +27,28 @@ node server.js
 PORT=8080 node server.js
 ```
 
+## Мониторинг производительности
+- Диагностика в рантайме: `GET /__perf` (JSON с `p50/p95/p99`, `5xx rate`, `event loop delay`).
+- В логи пишутся:
+  - `type: "perf_summary"` каждые `60s` (по умолчанию).
+  - `type: "perf_alert"` при превышении порогов.
+
+Настройка порогов через ENV:
+```bash
+ALERT_P95_MS=500 \
+ALERT_P99_MS=1000 \
+ALERT_5XX_RATE=0.01 \
+ALERT_EVENT_LOOP_P95_MS=100 \
+node server.js
+```
+
+Интервал/окно метрик:
+```bash
+PERF_SUMMARY_INTERVAL_MS=60000 \
+PERF_WINDOW_MS=300000 \
+node server.js
+```
+
 ## Важно по заявкам
 - На странице `/quote` есть прямая интеграция с LeadConnector (GHL) через API ключ в клиентском JS.
 - Рекомендуется вынести API-ключ на backend и затем выпустить новый ключ.
-
