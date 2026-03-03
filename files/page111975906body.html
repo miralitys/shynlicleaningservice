@@ -1491,6 +1491,9 @@
         apiKey: 'pit-98e2f804-1252-4a5e-b54c-a5a899ace19e',
         locationId: 'H3JoUqRWLxub6eauiC3S',
         pipelineId: 'YOUR_PIPELINE_ID_HERE',
+        pipelineStageId: 'YOUR_PIPELINE_STAGE_ID_HERE',
+        pipelineName: 'Pipelines Main',
+        pipelineStageName: 'New Lead',
         apiUrl: 'https://services.leadconnectorhq.com'
     };
 
@@ -2145,6 +2148,214 @@ END:VCALENDAR`;
         return null;
     }
 
+    function normalizeText(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function getConfiguredValue(value, placeholderPrefix) {
+        if (!value || typeof value !== 'string') return '';
+        const trimmed = value.trim();
+        if (!trimmed) return '';
+        if (placeholderPrefix && trimmed.startsWith(placeholderPrefix)) return '';
+        return trimmed;
+    }
+
+    function extractPipelinesFromResponse(data) {
+        const pipelines = [];
+        const queue = [data];
+        const seen = new Set();
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            if (!current || typeof current !== 'object' || seen.has(current)) continue;
+            seen.add(current);
+
+            if (Array.isArray(current)) {
+                current.forEach(item => queue.push(item));
+                continue;
+            }
+
+            const pipelineId = current.id || current._id || current.pipelineId;
+            const pipelineName = current.name || current.pipelineName || current.title || current.label;
+            const hasStages = Array.isArray(current.stages) || Array.isArray(current.pipelineStages) || Array.isArray(current.stageList);
+            if (pipelineId && pipelineName && hasStages) pipelines.push(current);
+
+            Object.values(current).forEach(value => {
+                if (value && typeof value === 'object') queue.push(value);
+            });
+        }
+
+        return pipelines;
+    }
+
+    function extractStagesFromPipeline(pipeline) {
+        const candidates = [pipeline && pipeline.stages, pipeline && pipeline.pipelineStages, pipeline && pipeline.stageList];
+        for (const list of candidates) {
+            if (!Array.isArray(list) || list.length === 0) continue;
+            const stages = list
+                .map(stage => ({
+                    id: stage.id || stage._id || stage.stageId || stage.pipelineStageId,
+                    name: stage.name || stage.stageName || stage.title || stage.label
+                }))
+                .filter(stage => stage.id || stage.name);
+            if (stages.length > 0) return stages;
+        }
+        return [];
+    }
+
+    function findStageIdByName(stages, stageName) {
+        if (!Array.isArray(stages) || stages.length === 0) return '';
+        const normalizedStageName = normalizeText(stageName);
+        if (!normalizedStageName) return stages[0].id || '';
+        const exact = stages.find(stage => normalizeText(stage.name) === normalizedStageName);
+        if (exact && exact.id) return exact.id;
+        const partial = stages.find(stage => normalizeText(stage.name).includes(normalizedStageName));
+        if (partial && partial.id) return partial.id;
+        return stages[0].id || '';
+    }
+
+    async function getPipelineAndStageIds(locationId) {
+        const configuredPipelineId = getConfiguredValue(GHL_CONFIG.pipelineId, 'YOUR_');
+        const configuredStageId = getConfiguredValue(GHL_CONFIG.pipelineStageId, 'YOUR_');
+        if (configuredPipelineId && configuredStageId) {
+            return { pipelineId: configuredPipelineId, pipelineStageId: configuredStageId };
+        }
+
+        const headers = {
+            'Authorization': `Bearer ${GHL_CONFIG.apiKey}`,
+            'Content-Type': 'application/json',
+            'Version': '2021-07-28'
+        };
+        const targetPipelineName = GHL_CONFIG.pipelineName || 'Pipelines Main';
+        const targetStageName = GHL_CONFIG.pipelineStageName || 'New Lead';
+        const query = `locationId=${encodeURIComponent(locationId)}`;
+        const endpoints = [
+            `${GHL_CONFIG.apiUrl}/opportunities/pipelines?${query}`,
+            `${GHL_CONFIG.apiUrl}/opportunities/pipelines/?${query}`,
+            `${GHL_CONFIG.apiUrl}/pipelines?${query}`,
+            `${GHL_CONFIG.apiUrl}/pipelines/?${query}`
+        ];
+
+        let pipelines = [];
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint, { method: 'GET', headers });
+                if (!response.ok) continue;
+                const data = await response.json();
+                const extracted = extractPipelinesFromResponse(data);
+                if (extracted.length > 0) {
+                    pipelines = extracted;
+                    break;
+                }
+            } catch (error) {}
+        }
+
+        let selectedPipeline = null;
+        if (configuredPipelineId) {
+            selectedPipeline = pipelines.find(p => (p.id || p._id || p.pipelineId) === configuredPipelineId) || null;
+        }
+        if (!selectedPipeline && pipelines.length > 0) {
+            const normalizedTargetName = normalizeText(targetPipelineName);
+            selectedPipeline =
+                pipelines.find(p => normalizeText(p.name || p.pipelineName || p.title || p.label) === normalizedTargetName) ||
+                pipelines.find(p => normalizeText(p.name || p.pipelineName || p.title || p.label).includes(normalizedTargetName)) ||
+                pipelines[0];
+        }
+
+        const pipelineId = configuredPipelineId || (selectedPipeline && (selectedPipeline.id || selectedPipeline._id || selectedPipeline.pipelineId)) || '';
+        if (!pipelineId) return null;
+
+        let stages = selectedPipeline ? extractStagesFromPipeline(selectedPipeline) : [];
+        if (!stages.length) {
+            const detailsEndpoints = [
+                `${GHL_CONFIG.apiUrl}/opportunities/pipelines/${encodeURIComponent(pipelineId)}?${query}`,
+                `${GHL_CONFIG.apiUrl}/opportunities/pipelines/${encodeURIComponent(pipelineId)}`,
+                `${GHL_CONFIG.apiUrl}/pipelines/${encodeURIComponent(pipelineId)}?${query}`,
+                `${GHL_CONFIG.apiUrl}/pipelines/${encodeURIComponent(pipelineId)}`
+            ];
+            for (const endpoint of detailsEndpoints) {
+                try {
+                    const response = await fetch(endpoint, { method: 'GET', headers });
+                    if (!response.ok) continue;
+                    const data = await response.json();
+                    const extractedPipelines = extractPipelinesFromResponse(data);
+                    if (extractedPipelines.length > 0) {
+                        stages = extractStagesFromPipeline(extractedPipelines[0]);
+                    } else {
+                        stages = extractStagesFromPipeline(data);
+                    }
+                    if (stages.length > 0) break;
+                } catch (error) {}
+            }
+        }
+
+        const pipelineStageId = configuredStageId || findStageIdByName(stages, targetStageName);
+        if (!pipelineStageId) return { pipelineId, pipelineStageId: '' };
+        return { pipelineId, pipelineStageId };
+    }
+
+    async function createOpportunityForContact(contactId, contactData, calculatorData, locationId) {
+        if (!contactId || !isAPIConfigured()) return { success: false, skipped: true, message: 'Missing contact id' };
+        try {
+            const pipelineConfig = await getPipelineAndStageIds(locationId);
+            if (!pipelineConfig || !pipelineConfig.pipelineId || !pipelineConfig.pipelineStageId) {
+                console.warn('Pipeline/stage не найдены, opportunity не создана');
+                return { success: false, skipped: true, message: 'Pipeline or stage not found' };
+            }
+
+            const total = Number(calculatorData.totalPrice);
+            const monetaryValue = Number.isFinite(total) ? Math.max(0, Math.round(total)) : 0;
+            const opportunityName = [
+                'Website Quote',
+                contactData.fullName || '',
+                calculatorData.serviceType ? `(${calculatorData.serviceType})` : ''
+            ].filter(Boolean).join(' ').trim();
+
+            const payloadBase = {
+                locationId,
+                contactId,
+                pipelineId: pipelineConfig.pipelineId,
+                name: opportunityName || `Website Quote - ${contactId}`,
+                monetaryValue,
+                source: 'Website Calculator'
+            };
+            const payloadVariants = [
+                { ...payloadBase, pipelineStageId: pipelineConfig.pipelineStageId, status: 'open' },
+                { ...payloadBase, stageId: pipelineConfig.pipelineStageId, status: 'open' },
+                { ...payloadBase, pipelineStageId: pipelineConfig.pipelineStageId, status: 'Open' }
+            ];
+            const endpoints = [
+                `${GHL_CONFIG.apiUrl}/opportunities/`,
+                `${GHL_CONFIG.apiUrl}/opportunities`,
+                `${GHL_CONFIG.apiUrl}/pipelines/${encodeURIComponent(pipelineConfig.pipelineId)}/opportunities/`,
+                `${GHL_CONFIG.apiUrl}/pipelines/${encodeURIComponent(pipelineConfig.pipelineId)}/opportunities`
+            ];
+            const headers = {
+                'Authorization': `Bearer ${GHL_CONFIG.apiKey}`,
+                'Content-Type': 'application/json',
+                'Version': '2021-07-28'
+            };
+
+            for (const endpoint of endpoints) {
+                for (const payload of payloadVariants) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify(payload)
+                        });
+                        if (response.ok) return await response.json();
+                    } catch (error) {}
+                }
+            }
+
+            return { success: false, message: 'Failed to create opportunity' };
+        } catch (error) {
+            console.error('Ошибка createOpportunityForContact:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
     async function createNoteForContact(contactId, contactData, calculatorData) {
         if (!contactId || !isAPIConfigured()) return;
         try {
@@ -2302,6 +2513,7 @@ END:VCALENDAR`;
                     });
                 } catch (e) {}
                 await createNoteForContact(contactId, contactData, calculatorData);
+                await createOpportunityForContact(contactId, contactData, calculatorData, locationId);
             }
             return result;
         } catch (error) {
