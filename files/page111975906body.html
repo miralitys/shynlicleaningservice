@@ -1402,6 +1402,36 @@
     }
 
     @media (max-width: 640px) {
+        #totalSection {
+            top: calc(env(safe-area-inset-top, 0px) + 8px);
+            width: calc(100% - 24px);
+            max-width: none;
+            min-width: 0;
+            padding: 8px 12px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(139, 38, 53, 0.28);
+        }
+
+        #totalSection.sticky-active {
+            padding: 8px 12px;
+            box-shadow: 0 8px 20px rgba(139, 38, 53, 0.32);
+        }
+
+        #totalSection::before {
+            display: none;
+        }
+
+        .total-label {
+            font-size: 10px;
+            letter-spacing: 0.35px;
+            margin-bottom: 2px;
+        }
+
+        .total-price {
+            font-size: 20px;
+            line-height: 1.1;
+        }
+
         .form-section,
         .calculator-section {
             padding: 30px 20px;
