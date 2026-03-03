@@ -1303,6 +1303,23 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
+    .btn-pay {
+        background: #8B2635;
+        border: none;
+    }
+
+    .btn-pay:hover {
+        background: #7a1f2d;
+        box-shadow: 0 4px 12px rgba(139, 38, 53, 0.35);
+    }
+
+    .btn-pay:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
     .service-price.included {
         color: #2d7a4f;
         font-style: italic;
@@ -1427,12 +1444,12 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
                             maxlength="2000"
                             rows="5"></textarea> <div class="character-counter"> <span id="characterCount">0</span>/2000
                         </div> </div> </div> <div class="form-actions"> <button type="button" class="btn btn-primary" id="chooseAddressBtn"> <span class="btn-text">Continue to Address</span> </button> </div> </form> </div> </div> <div class="total-section" id="totalSection" style="display: none;"> <div class="total-wrapper"> <div class="total-label">Estimated Cost:</div> <div class="total-price" id="totalPrice">$0</div> </div> </div> <div id="addressSection" class="date-time-section" style="display: none;"> <div class="date-time-wrapper"> <h2>Enter Your Address</h2> <p class="subtitle">Please provide the address where the cleaning service will be performed</p> <form id="addressForm"> <div class="form-group"> <label for="addressInput">Street Address *</label> <input type="text" id="addressInput" name="address" placeholder="Start typing your address..." required autocomplete="off"> <p class="form-hint">Start typing and select your address from the suggestions</p> </div> <div class="form-group" style="display: none;" id="addressDetailsGroup"> <label for="addressLine2">Apartment, suite, etc. (optional)</label> <input type="text" id="addressLine2" name="addressLine2" placeholder="Apt, suite, unit, building, floor, etc."> </div> <div class="form-group" style="display: none;" id="cityStateGroup"> <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px;"> <div> <label for="city">City</label> <input type="text" id="city" name="city" readonly> </div> <div> <label for="state">State</label> <input type="text" id="state" name="state" readonly> </div> <div> <label for="zipCode">ZIP Code</label> <input type="text" id="zipCode" name="zipCode" readonly> </div> </div> </div> <input type="hidden" id="fullAddress" name="fullAddress"> <input type="hidden" id="latitude" name="latitude"> <input type="hidden" id="longitude" name="longitude"> <div class="form-actions"> <button type="button" class="btn btn-secondary" id="backToCalculatorFromAddressBtn">Back</button> <button type="button" class="btn btn-primary" id="continueToDateTimeBtn" disabled> <span class="btn-text">Continue to Date & Time</span> </button> </div> </form> </div> </div> <div id="dateTimeSection" class="date-time-section" style="display: none;"> <div class="date-time-wrapper"> <h2>Choose Date and Time</h2> <p class="subtitle">Select your preferred date and time for the cleaning service</p> <form id="dateTimeForm"> <div class="calculator-group"> <h3>Select Date</h3> <div class="input-group"> <input type="date" id="selectedDate" name="selectedDate" required min="" class="date-input"> </div> </div> <div class="calculator-group"> <h3>Select Time</h3> <div class="input-group"> <label>Available Time Slots</label> <div class="time-slots"> <button type="button" class="time-slot" data-time="09:00">9:00 AM</button> <button type="button" class="time-slot" data-time="10:00">10:00 AM</button> <button type="button" class="time-slot" data-time="11:00">11:00 AM</button> <button type="button" class="time-slot" data-time="12:00">12:00 PM</button> <button type="button" class="time-slot" data-time="13:00">1:00 PM</button> <button type="button" class="time-slot" data-time="14:00">2:00 PM</button> <button type="button" class="time-slot" data-time="15:00">3:00 PM</button> <button type="button" class="time-slot" data-time="16:00">4:00 PM</button> </div> <input type="hidden" id="selectedTime" name="selectedTime" required> </div> </div> <div class="consent-section"> <label class="consent-checkbox-label"> <input type="checkbox" id="consentCheckbox" name="consent" required class="consent-checkbox"> <span class="consent-text">
-                            By checking this box, I consent to receive marketing and promotional text messages from Shynli Cleaning Service at the phone number I have provided above. Message and data rates may apply. Message frequency varies. Reply HELP for help and STOP to stop. I consent to the <a href="/terms-of-service" class="consent-link">Terms of Service</a> and <a href="/privacy-policy" class="consent-link">Privacy Policy</a>.
+                            By checking this box, I consent to receive marketing and promotional text messages from Shynli Cleaning Service at the phone number I have provided above. Message and data rates may apply. Message frequency varies. Reply HELP for help and STOP to stop. I consent to the <a href="/terms-of-service" class="consent-link" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="/privacy-policy" class="consent-link" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                         </span> </label> </div> <div class="form-actions"> <button type="button" class="btn btn-secondary" id="backToAddressBtn">Back</button> <button type="submit" class="btn btn-primary" id="submitCalculatorBtn" disabled> <span class="btn-text">Submit Request</span> <span class="btn-loader" style="display: none;">Sending...</span> </button> </div> </form> </div> </div> <div id="successMessage" class="success-message" style="display: none;"> <div class="success-content"> <div class="success-icon">✓</div> <h2>Thank You!</h2> <p>Your request has been successfully submitted. We will contact you shortly.</p> <div class="order-summary" id="orderSummary"> <div class="summary-item"> <span class="summary-label">Service:</span> <span class="summary-value" id="summaryService">-</span> </div> <div class="summary-item"> <span class="summary-label">Date:</span> <span class="summary-value" id="summaryDate">-</span> </div> <div class="summary-item"> <span class="summary-label">Arrival time:</span> <span class="summary-value" id="summaryArrivalTime">-</span> </div> <div class="summary-item summary-total"> <span class="summary-label">Total:</span> <span class="summary-value" id="summaryTotal">$0</span> </div> </div> <div class="calendar-buttons"> <a href="#" id="addToCalendarBtn" class="btn btn-calendar btn-google" target="_blank"> <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;"> <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/> </svg>
                     Google Calendar
                 </a> <a href="#" id="addToAppleCalendarBtn" class="btn btn-calendar btn-apple" download="cleaning-appointment.ics"> <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;"> <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/> </svg>
                     Apple Calendar
-                </a> </div> </div> </div> </div> <!-- nominify end --> </div> </div> </div> </div> <div id="rec1812677593" class="r t-rec" style=" " data-animationappear="off" data-record-type="131"> <!-- T123 --> <div class="t123"> <div class="t-container_100 "> <div class="t-width t-width_100 "> <!-- nominify begin --> <script>
+                </a> <button type="button" id="payNowBtn" class="btn btn-calendar btn-pay" disabled>Pay Now</button> </div> </div> </div> </div> <!-- nominify end --> </div> </div> </div> </div> <div id="rec1812677593" class="r t-rec" style=" " data-animationappear="off" data-record-type="131"> <!-- T123 --> <div class="t123"> <div class="t-container_100 "> <div class="t-width t-width_100 "> <!-- nominify begin --> <script>
     // Google Places API ключ
     const GOOGLE_PLACES_API_KEY = 'AIzaSyDyWkkTl2dov2AbEBcEg1RCZi1lh9o8rDI';
     
@@ -1532,8 +1549,10 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
     const successMessage = document.getElementById('successMessage');
     const totalPriceElement = document.getElementById('totalPrice');
     const submitCalculatorBtn = document.getElementById('submitCalculatorBtn');
+    const payNowBtn = document.getElementById('payNowBtn');
 
     let contactData = {};
+    let latestCheckoutData = null;
 
     function parseDisplayedPrice(text) {
         const raw = String(text || '').trim();
@@ -1544,6 +1563,64 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
             : numeric.replace(',', '.');
         const parsed = parseFloat(normalized);
         return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function setPayNowLoading(isLoading) {
+        if (!payNowBtn) return;
+        payNowBtn.disabled = isLoading || !latestCheckoutData || !(latestCheckoutData.calculatorData && latestCheckoutData.calculatorData.totalPrice > 0);
+        payNowBtn.textContent = isLoading ? 'Redirecting...' : 'Pay Now';
+    }
+
+    function buildStripeCheckoutPayload() {
+        if (!latestCheckoutData || !latestCheckoutData.calculatorData) return null;
+        const calculatorData = latestCheckoutData.calculatorData;
+        const serviceTypeNames = {
+            'regular': 'Regular Cleaning',
+            'deep': 'Deep Cleaning',
+            'moving': 'Move In/Move Out Clean'
+        };
+        return {
+            amount: calculatorData.totalPrice || 0,
+            serviceType: calculatorData.serviceType || 'regular',
+            serviceName: serviceTypeNames[calculatorData.serviceType] || 'Cleaning Service',
+            selectedDate: calculatorData.selectedDate || '',
+            selectedTime: calculatorData.selectedTime || '',
+            fullAddress: calculatorData.fullAddress || calculatorData.address || '',
+            customerName: (latestCheckoutData.contactData && latestCheckoutData.contactData.fullName) || '',
+            customerPhone: (latestCheckoutData.contactData && latestCheckoutData.contactData.phone) || ''
+        };
+    }
+
+    async function startStripeCheckout() {
+        if (!latestCheckoutData || !latestCheckoutData.calculatorData) {
+            alert('Please submit the request form first.');
+            return;
+        }
+        const payload = buildStripeCheckoutPayload();
+        if (!payload || !payload.amount || payload.amount <= 0) {
+            alert('Unable to start payment: invalid amount.');
+            return;
+        }
+
+        setPayNowLoading(true);
+        try {
+            const response = await fetch('/api/stripe/checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.url) {
+                throw new Error(result.error || 'Unable to create payment session');
+            }
+            window.location.href = result.url;
+        } catch (error) {
+            console.error('Stripe checkout error:', error);
+            alert('Could not start payment. Please try again in a minute.');
+            setPayNowLoading(false);
+        }
     }
 
     function updateOrderSummary(calculatorData) {
@@ -1584,6 +1661,10 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
         }
         if (summaryTotal) {
             summaryTotal.textContent = '$' + (calculatorData.totalPrice || 0).toLocaleString('en-US');
+        }
+        if (payNowBtn) {
+            payNowBtn.disabled = !(calculatorData.totalPrice > 0);
+            payNowBtn.textContent = `Pay Now ($${(calculatorData.totalPrice || 0).toLocaleString('en-US')})`;
         }
         if (addToCalendarBtn && calculatorData.selectedDate && calculatorData.selectedTime) {
             addToCalendarBtn.href = generateGoogleCalendarUrl(calculatorData, serviceTypeNames[calculatorData.serviceType] || 'Cleaning Service');
@@ -2389,6 +2470,7 @@ END:VCALENDAR`;
             address: completeAddress, fullAddress, addressLine2, city, state, zipCode
         };
         contactData = { fullName: document.getElementById('fullName').value, phone: document.getElementById('phone').value };
+        latestCheckoutData = { contactData, calculatorData };
         try {
             await submitCalculatorToGHL(contactData, calculatorData);
         } catch (err) { console.error(err); }
@@ -2431,6 +2513,10 @@ END:VCALENDAR`;
         initStickyTotal();
         updateServicePrices();
         calculateTotal();
+        if (payNowBtn) {
+            payNowBtn.addEventListener('click', startStripeCheckout);
+            setPayNowLoading(false);
+        }
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'CALC_WIDGET_DATA') {
                 const data = event.data.data;
