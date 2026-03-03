@@ -45,6 +45,22 @@ const ALERT_P95_MS = Number(process.env.ALERT_P95_MS || 500);
 const ALERT_P99_MS = Number(process.env.ALERT_P99_MS || 1000);
 const ALERT_5XX_RATE = Number(process.env.ALERT_5XX_RATE || 0.01);
 const ALERT_EVENT_LOOP_P95_MS = Number(process.env.ALERT_EVENT_LOOP_P95_MS || 100);
+const STRIPE_CHECKOUT_ENDPOINT = "/api/stripe/checkout-session";
+const MAX_JSON_BODY_BYTES = Number(process.env.MAX_JSON_BODY_BYTES || 64 * 1024);
+const STRIPE_MIN_AMOUNT_CENTS = Number(process.env.STRIPE_MIN_AMOUNT_CENTS || 50);
+const STRIPE_MAX_AMOUNT_CENTS = Number(process.env.STRIPE_MAX_AMOUNT_CENTS || 200000);
+
+let stripeClient = null;
+
+function getStripeClient() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) return null;
+  if (stripeClient) return stripeClient;
+  // Lazy load keeps server start resilient even if Stripe is not configured yet.
+  const Stripe = require("stripe");
+  stripeClient = new Stripe(secretKey);
+  return stripeClient;
+}
 
 function getRequestDurationMs(startTimeNs) {
   return Number(process.hrtime.bigint() - startTimeNs) / 1e6;
@@ -226,6 +242,84 @@ function writeHeadWithTiming(res, statusCode, headers, startTimeNs, cacheHit) {
     "Server-Timing": toServerTimingHeader(startTimeNs, cacheHit),
   };
   res.writeHead(statusCode, enrichedHeaders);
+}
+
+function writeJsonWithTiming(res, statusCode, payload, startTimeNs, cacheHit) {
+  writeHeadWithTiming(
+    res,
+    statusCode,
+    {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+    startTimeNs,
+    cacheHit
+  );
+  res.end(JSON.stringify(payload));
+}
+
+function getRequestOrigin(req) {
+  const host = req.headers["x-forwarded-host"] || req.headers.host || `localhost:${PORT}`;
+  const forwardedProtoRaw = req.headers["x-forwarded-proto"];
+  const forwardedProto = Array.isArray(forwardedProtoRaw)
+    ? forwardedProtoRaw[0]
+    : String(forwardedProtoRaw || "").split(",")[0].trim();
+  const protocol = forwardedProto || (req.socket.encrypted ? "https" : "http");
+  return `${protocol}://${host}`;
+}
+
+function normalizeString(value, maxLength = 500) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function toAmountCents(amountValue) {
+  const parsed = Number(amountValue);
+  if (!Number.isFinite(parsed)) return NaN;
+  return Math.round(parsed * 100);
+}
+
+async function readJsonBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    let settled = false;
+    let payloadTooLarge = false;
+    const chunks = [];
+
+    function safeReject(error) {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    }
+
+    function safeResolve(value) {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    }
+
+    req.on("data", (chunk) => {
+      if (payloadTooLarge) return;
+      size += chunk.length;
+      if (size > maxBytes) {
+        payloadTooLarge = true;
+        safeReject(new Error("Payload too large"));
+        return;
+      }
+      chunks.push(chunk);
+    });
+
+    req.on("end", () => {
+      if (payloadTooLarge) return;
+      try {
+        const rawBody = Buffer.concat(chunks).toString("utf8");
+        safeResolve(rawBody ? JSON.parse(rawBody) : {});
+      } catch {
+        safeReject(new Error("Invalid JSON"));
+      }
+    });
+
+    req.on("error", (err) => safeReject(err));
+  });
 }
 
 function resolveSitePath(relativeOrAbsolutePath) {
@@ -664,6 +758,137 @@ async function sendFile(
   }
 }
 
+async function handleStripeCheckoutRequest(req, res, requestStartNs, requestContext, requestLogger) {
+  requestContext.cacheHit = false;
+
+  if (req.method !== "POST") {
+    writeHeadWithTiming(
+      res,
+      405,
+      {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+        Allow: "POST",
+      },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    res.end(JSON.stringify({ error: "Method not allowed" }));
+    return;
+  }
+
+  const stripe = getStripeClient();
+  if (!stripe) {
+    writeJsonWithTiming(
+      res,
+      503,
+      { error: "Payments are temporarily unavailable. Stripe is not configured." },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  let body;
+  try {
+    body = await readJsonBody(req, MAX_JSON_BODY_BYTES);
+  } catch (error) {
+    const isLarge = String(error && error.message).toLowerCase().includes("payload");
+    writeJsonWithTiming(
+      res,
+      isLarge ? 413 : 400,
+      { error: isLarge ? "Request payload is too large" : "Invalid request body" },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  const amountCents = toAmountCents(body.amount ?? body.totalPrice);
+  if (
+    !Number.isFinite(amountCents) ||
+    amountCents < STRIPE_MIN_AMOUNT_CENTS ||
+    amountCents > STRIPE_MAX_AMOUNT_CENTS
+  ) {
+    writeJsonWithTiming(
+      res,
+      400,
+      {
+        error: `Invalid amount. Allowed range is ${STRIPE_MIN_AMOUNT_CENTS / 100} to ${
+          STRIPE_MAX_AMOUNT_CENTS / 100
+        } USD.`,
+      },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  const origin = getRequestOrigin(req);
+  const successUrl = process.env.STRIPE_SUCCESS_URL || `${origin}/quote?payment=success`;
+  const cancelUrl = process.env.STRIPE_CANCEL_URL || `${origin}/quote?payment=cancelled`;
+  const serviceName = normalizeString(body.serviceName || "Cleaning Service", 120);
+  const customerEmail = normalizeString(body.customerEmail, 320);
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail);
+
+  const metadata = {
+    service_type: normalizeString(body.serviceType || "", 100),
+    selected_date: normalizeString(body.selectedDate || "", 100),
+    selected_time: normalizeString(body.selectedTime || "", 100),
+    customer_name: normalizeString(body.customerName || "", 250),
+    customer_phone: normalizeString(body.customerPhone || "", 80),
+    full_address: normalizeString(body.fullAddress || body.address || "", 500),
+  };
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: amountCents,
+            product_data: {
+              name: serviceName,
+              description: "Cleaning service booking",
+            },
+          },
+        },
+      ],
+      phone_number_collection: { enabled: true },
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata,
+      ...(isValidEmail ? { customer_email: customerEmail } : {}),
+    });
+
+    writeJsonWithTiming(
+      res,
+      200,
+      {
+        url: session.url,
+        id: session.id,
+      },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+  } catch (error) {
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "stripe_checkout_error",
+      message: error && error.message ? error.message : "Unknown Stripe error",
+    });
+    writeJsonWithTiming(
+      res,
+      502,
+      { error: "Failed to create Stripe checkout session" },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+  }
+}
+
 async function loadRoutes() {
   const raw = await fsp.readFile(ROUTES_PATH, "utf8");
   const parsed = JSON.parse(raw);
@@ -767,6 +992,11 @@ async function main() {
           requestContext.cacheHit
         );
         res.end(perfBody);
+        return;
+      }
+
+      if (normalizedPath === STRIPE_CHECKOUT_ENDPOINT) {
+        await handleStripeCheckoutRequest(req, res, requestStartNs, requestContext, requestLogger);
         return;
       }
 
