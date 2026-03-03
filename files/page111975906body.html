@@ -1750,6 +1750,45 @@ END:VCALENDAR`;
         });
     }
 
+    function formatQuotePhone(value) {
+        let digits = String(value || '').replace(/\D/g, '');
+        if (!digits) return '';
+        if (digits.length === 10) digits = '1' + digits;
+        if (digits.length > 11) digits = digits.slice(-11);
+        if (!digits.startsWith('1')) return '';
+
+        let formatted = '+' + digits.substring(0, 1);
+        if (digits.length > 1) formatted += ' (' + digits.substring(1, 4);
+        if (digits.length >= 4) formatted += ') ' + digits.substring(4, 7);
+        if (digits.length >= 7) formatted += '-' + digits.substring(7, 11);
+        return formatted;
+    }
+
+    function applyPrefilledContactData() {
+        const nameInput = document.getElementById('fullName');
+        const phoneInput = document.getElementById('phone');
+        if (!nameInput || !phoneInput) return;
+
+        const params = new URLSearchParams(window.location.search);
+        const queryName = (params.get('name') || '').trim();
+        const queryPhone = (params.get('phone') || '').trim();
+        const storedName = (sessionStorage.getItem('homeWidgetName') || '').trim();
+        const storedPhone = (sessionStorage.getItem('homeWidgetPhone') || '').trim();
+
+        const prefilledName = queryName || storedName;
+        const prefilledPhone = formatQuotePhone(queryPhone || storedPhone);
+
+        if (prefilledName && !nameInput.value.trim()) {
+            nameInput.value = prefilledName;
+        }
+        if (prefilledPhone && !phoneInput.value.trim()) {
+            phoneInput.value = prefilledPhone;
+        }
+        if (nameInput.value.trim() || phoneInput.value.trim()) {
+            checkPhoneAndShowCalculator(phoneInput.value);
+        }
+    }
+
     function checkPhoneAndShowCalculator(phoneValue) {
         const phoneDigits = phoneValue.replace(/\D/g, '');
         const fullName = document.getElementById('fullName').value.trim();
@@ -2726,6 +2765,7 @@ END:VCALENDAR`;
         if (calculatorSection) { calculatorSection.style.display = 'none'; calculatorSection.classList.remove('visible'); }
         if (totalSection) totalSection.style.display = 'none';
         initPhoneMask();
+        applyPrefilledContactData();
         initOptionButtons();
         initToggles();
         initServiceCarousel();
