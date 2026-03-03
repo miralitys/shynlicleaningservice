@@ -1451,9 +1451,18 @@
     // Google Places API ключ
     const GOOGLE_PLACES_API_KEY = 'AIzaSyDyWkkTl2dov2AbEBcEg1RCZi1lh9o8rDI';
     
+    window.__quoteAutocompleteInitPending = false;
+    window.__quoteGooglePlacesReady = function() {
+        if (typeof window.initAutocomplete === 'function') {
+            window.initAutocomplete();
+            return;
+        }
+        window.__quoteAutocompleteInitPending = true;
+    };
+    
     if (GOOGLE_PLACES_API_KEY !== 'YOUR_GOOGLE_API_KEY_HERE') {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_PLACES_API_KEY}&libraries=places&loading=async&callback=initAutocomplete`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_PLACES_API_KEY}&libraries=places&loading=async&callback=__quoteGooglePlacesReady`;
         script.async = true;
         script.defer = true;
         script.onerror = function() {
@@ -2595,6 +2604,11 @@ END:VCALENDAR`;
                 else cb.disabled = true;
             });
         }
+    }
+    window.initAutocomplete = initAutocomplete;
+    if (window.__quoteAutocompleteInitPending) {
+        window.__quoteAutocompleteInitPending = false;
+        initAutocomplete();
     }
 
     function handlePlaceSelect(place) {
