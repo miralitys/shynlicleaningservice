@@ -527,6 +527,61 @@ function isSafePath(baseDir, filePath) {
   return resolvedPath === path.resolve(baseDir) || resolvedPath.startsWith(resolvedBase);
 }
 
+const FULL_CARD_CLICK_SCRIPT = `<script id="full-card-click-handler">
+(() => {
+  if (window.__fullCardClickHandlerBound) return;
+  window.__fullCardClickHandlerBound = true;
+
+  const interactiveSelector = "a, button, input, select, textarea, label";
+
+  function openLink(link, event) {
+    if (event && (event.metaKey || event.ctrlKey)) {
+      window.open(link.href, "_blank", "noopener");
+      return;
+    }
+    window.location.href = link.href;
+  }
+
+  function initCardLinks() {
+    const groups = document.querySelectorAll(".tn-group[data-group-type-value='physical']");
+    groups.forEach((group) => {
+      if (group.dataset.fullCardLinkBound === "1") return;
+
+      const cardLink = Array.from(group.querySelectorAll("a.tn-atom[href]")).find((link) => {
+        const text = (link.textContent || "").replace(/\\s+/g, " ").trim().toLowerCase();
+        return text.includes("learn more");
+      });
+
+      if (!cardLink) return;
+
+      group.dataset.fullCardLinkBound = "1";
+      group.style.cursor = "pointer";
+      group.setAttribute("role", "link");
+      if (!group.hasAttribute("tabindex")) group.setAttribute("tabindex", "0");
+
+      group.addEventListener("click", (event) => {
+        if (event.defaultPrevented) return;
+        if (event.target.closest(interactiveSelector)) return;
+        openLink(cardLink, event);
+      });
+
+      group.addEventListener("keydown", (event) => {
+        if (event.target !== group) return;
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        openLink(cardLink, event);
+      });
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCardLinks);
+  } else {
+    initCardLinks();
+  }
+})();
+</script>`;
+
 function sanitizeHtml(html) {
   let cleaned = html
     .replace(
@@ -549,6 +604,10 @@ function sanitizeHtml(html) {
   // Fix relative asset paths on nested routes like /services/*.
   if (!/<base\s+href=/i.test(cleaned)) {
     cleaned = cleaned.replace(/<head>/i, '<head><base href="/" />');
+  }
+
+  if (!/id="full-card-click-handler"/.test(cleaned) && /<body[\s>]/i.test(cleaned)) {
+    cleaned = cleaned.replace(/<\/body>/i, `${FULL_CARD_CLICK_SCRIPT}</body>`);
   }
 
   return cleaned;
