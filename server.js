@@ -588,6 +588,7 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
   window.__mobileStickyCtaBound = true;
 
   const PHONE = "+16308127077";
+  const EXCLUDED_PATHS = new Set(["/quote"]);
 
   function hideLegacyStickyCtas() {
     const isMobile = window.matchMedia("(max-width: 960px)").matches;
@@ -624,6 +625,8 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
   }
 
   function initStickyCta() {
+    const currentPath = (window.location && window.location.pathname) || "";
+    if (EXCLUDED_PATHS.has(currentPath)) return;
     if (document.getElementById("mobileStickyCta")) return;
 
     const style = document.createElement("style");
