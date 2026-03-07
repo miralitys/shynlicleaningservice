@@ -589,6 +589,40 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 
   const PHONE = "+16308127077";
 
+  function hideLegacyStickyCtas() {
+    const isMobile = window.matchMedia("(max-width: 960px)").matches;
+    if (!isMobile) return;
+
+    const ourBar = document.getElementById("mobileStickyCta");
+    const nodes = document.querySelectorAll("a,button");
+    nodes.forEach((node) => {
+      if (!node || node === ourBar || (ourBar && ourBar.contains(node))) return;
+      if (!(node instanceof HTMLElement)) return;
+
+      const text = (node.textContent || "").trim().toLowerCase();
+      const href = node.getAttribute("href") || "";
+      const looksLikeCta =
+        text.includes("book now") ||
+        text.includes("call us") ||
+        href === "/quote" ||
+        href === "tel:+16308127077";
+      if (!looksLikeCta) return;
+
+      const target = node.closest(".t396__elem,.t-btn,.t-btnflex,.t-rec,.t228,.tmenu-mobile") || node;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.id === "mobileStickyCta" || (ourBar && ourBar.contains(target))) return;
+
+      const style = window.getComputedStyle(target);
+      const rect = target.getBoundingClientRect();
+      const isFloating = style.position === "fixed" || style.position === "sticky";
+      const isBottomArea = rect.top > window.innerHeight * 0.55;
+      if (!isFloating || !isBottomArea) return;
+
+      target.style.setProperty("display", "none", "important");
+      target.setAttribute("data-legacy-mobile-cta-hidden", "true");
+    });
+  }
+
   function initStickyCta() {
     if (document.getElementById("mobileStickyCta")) return;
 
@@ -642,6 +676,12 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
       <a class="cta-call" href="tel:\${PHONE}">Call Us</a>
     \`;
     document.body.appendChild(wrap);
+
+    hideLegacyStickyCtas();
+    const observer = new MutationObserver(() => hideLegacyStickyCtas());
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("resize", hideLegacyStickyCtas, { passive: true });
+    window.addEventListener("scroll", hideLegacyStickyCtas, { passive: true });
   }
 
   if (document.readyState === "loading") {
