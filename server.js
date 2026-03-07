@@ -593,6 +593,12 @@ function sanitizeHtml(html) {
     .replace(/<!--\s*Form export deps:[\s\S]*?-->/g, "")
     .replace(/<script[^>]+src="js\/tilda-animation-sbs-1\.0\.min\.js"[^>]*><\/script>/g, "");
 
+  // Make header "Call Us" tappable as a phone link across pages.
+  cleaned = cleaned.replace(
+    /<strong>📞<\/strong>\s*Call Us/g,
+    '<a href="tel:+16308127077" style="color: inherit; text-decoration: none;"><strong>📞</strong> Call Us</a>'
+  );
+
   const hasForms = /data-elem-type='form'|class="t-form"|tn-atom__form/.test(cleaned);
   if (!hasForms) {
     cleaned = cleaned
