@@ -595,7 +595,7 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
     if (!isMobile) return;
 
     const ourBar = document.getElementById("mobileStickyCta");
-    const nodes = document.querySelectorAll("a,button");
+    const nodes = document.querySelectorAll("a,button,div,span");
     nodes.forEach((node) => {
       if (!node || node === ourBar || (ourBar && ourBar.contains(node))) return;
       if (!(node instanceof HTMLElement)) return;
@@ -604,6 +604,8 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
       const href = node.getAttribute("href") || "";
       const looksLikeCta =
         text.includes("book now") ||
+        text.includes("book your cleaning") ||
+        text.includes("order services") ||
         text.includes("call us") ||
         href === "/quote" ||
         href === "tel:+16308127077";
@@ -621,6 +623,31 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 
       target.style.setProperty("display", "none", "important");
       target.setAttribute("data-legacy-mobile-cta-hidden", "true");
+    });
+
+    const fixedNodes = document.querySelectorAll("body *");
+    fixedNodes.forEach((el) => {
+      if (!(el instanceof HTMLElement)) return;
+      if (el.id === "mobileStickyCta" || (ourBar && ourBar.contains(el))) return;
+      if (el.hasAttribute("data-legacy-mobile-cta-hidden")) return;
+
+      const text = (el.textContent || "").trim().toLowerCase();
+      if (
+        !text.includes("book now") &&
+        !text.includes("call us") &&
+        !text.includes("book your cleaning") &&
+        !text.includes("order services")
+      ) {
+        return;
+      }
+
+      const style = window.getComputedStyle(el);
+      if (style.position !== "fixed" && style.position !== "sticky") return;
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= window.innerHeight * 0.55) return;
+
+      el.style.setProperty("display", "none", "important");
+      el.setAttribute("data-legacy-mobile-cta-hidden", "true");
     });
   }
 
@@ -685,6 +712,9 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
     observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("resize", hideLegacyStickyCtas, { passive: true });
     window.addEventListener("scroll", hideLegacyStickyCtas, { passive: true });
+    setTimeout(hideLegacyStickyCtas, 300);
+    setTimeout(hideLegacyStickyCtas, 1000);
+    setTimeout(hideLegacyStickyCtas, 2000);
   }
 
   if (document.readyState === "loading") {
