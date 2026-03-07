@@ -659,7 +659,9 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
     const style = document.createElement("style");
     style.textContent = \`
       @media (max-width: 960px) {
-        body { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+        body.has-mobile-sticky-cta {
+          padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+        }
         #mobileStickyCta {
           position: fixed;
           left: 10px;
@@ -670,6 +672,15 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
           grid-template-columns: 1fr 1fr;
           gap: 10px;
           pointer-events: auto;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(12px);
+          transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+        }
+        #mobileStickyCta.is-visible {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
         }
         #mobileStickyCta a {
           display: inline-flex;
@@ -707,14 +718,36 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
     \`;
     document.body.appendChild(wrap);
 
+    function updateCtaVisibility() {
+      const isMobile = window.matchMedia("(max-width: 960px)").matches;
+      if (!isMobile) {
+        wrap.classList.remove("is-visible");
+        document.body.classList.remove("has-mobile-sticky-cta");
+        return;
+      }
+
+      // Show CTA only after user scrolls roughly one full screen ("second scroll and below").
+      const shouldShow = window.scrollY > window.innerHeight * 0.95;
+      wrap.classList.toggle("is-visible", shouldShow);
+      document.body.classList.toggle("has-mobile-sticky-cta", shouldShow);
+    }
+
     hideLegacyStickyCtas();
+    updateCtaVisibility();
     const observer = new MutationObserver(() => hideLegacyStickyCtas());
     observer.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener("resize", hideLegacyStickyCtas, { passive: true });
-    window.addEventListener("scroll", hideLegacyStickyCtas, { passive: true });
+    window.addEventListener("resize", () => {
+      hideLegacyStickyCtas();
+      updateCtaVisibility();
+    }, { passive: true });
+    window.addEventListener("scroll", () => {
+      hideLegacyStickyCtas();
+      updateCtaVisibility();
+    }, { passive: true });
     setTimeout(hideLegacyStickyCtas, 300);
     setTimeout(hideLegacyStickyCtas, 1000);
     setTimeout(hideLegacyStickyCtas, 2000);
+    setTimeout(updateCtaVisibility, 300);
   }
 
   if (document.readyState === "loading") {
