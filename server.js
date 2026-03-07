@@ -582,6 +582,76 @@ const FULL_CARD_CLICK_SCRIPT = `<script id="full-card-click-handler">
 })();
 </script>`;
 
+const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
+(() => {
+  if (window.__mobileStickyCtaBound) return;
+  window.__mobileStickyCtaBound = true;
+
+  const PHONE = "+16308127077";
+
+  function initStickyCta() {
+    if (document.getElementById("mobileStickyCta")) return;
+
+    const style = document.createElement("style");
+    style.textContent = \`
+      @media (max-width: 960px) {
+        body { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+        #mobileStickyCta {
+          position: fixed;
+          left: 10px;
+          right: 10px;
+          bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+          z-index: 10050;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          pointer-events: auto;
+        }
+        #mobileStickyCta a {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: 48px;
+          border-radius: 999px;
+          text-decoration: none;
+          font-family: Montserrat, Arial, sans-serif;
+          font-size: 15px;
+          font-weight: 600;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+        }
+        #mobileStickyCta .cta-book {
+          background: #9e435a;
+          color: #ffffff;
+        }
+        #mobileStickyCta .cta-call {
+          background: #faf9f6;
+          color: #9e435a;
+          border: 1px solid #9e435a;
+        }
+      }
+      @media (min-width: 961px) {
+        #mobileStickyCta { display: none !important; }
+      }
+    \`;
+    document.head.appendChild(style);
+
+    const wrap = document.createElement("div");
+    wrap.id = "mobileStickyCta";
+    wrap.innerHTML = \`
+      <a class="cta-book" href="/quote">Book Now</a>
+      <a class="cta-call" href="tel:\${PHONE}">Call Us</a>
+    \`;
+    document.body.appendChild(wrap);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initStickyCta);
+  } else {
+    initStickyCta();
+  }
+})();
+</script>`;
+
 function sanitizeHtml(html) {
   let cleaned = html
     .replace(
@@ -613,7 +683,10 @@ function sanitizeHtml(html) {
   }
 
   if (!/id="full-card-click-handler"/.test(cleaned) && /<body[\s>]/i.test(cleaned)) {
-    cleaned = cleaned.replace(/<\/body>/i, `${FULL_CARD_CLICK_SCRIPT}</body>`);
+    cleaned = cleaned.replace(
+      /<\/body>/i,
+      `${FULL_CARD_CLICK_SCRIPT}${MOBILE_STICKY_CTA_SCRIPT}</body>`
+    );
   }
 
   return cleaned;
