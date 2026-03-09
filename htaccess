@@ -15,14 +15,12 @@ RewriteRule ^(.*)$ https://shynlicleaningservice\.com/$1 [R=301,L]
 RewriteCond %{REQUEST_FILENAME} /robots.txt
 RewriteCond "%{DOCUMENT_ROOT}/robots_%{HTTP_HOST}.txt" -f
 RewriteRule ^(.*)$ robots_%{HTTP_HOST}.txt [NC,L]
+RewriteRule ^home-simple/?$ https://shynlicleaningservice.com/ [R=301,L]
 RewriteRule ^addison$ page110524796.html [NC]
 RewriteRule ^addison/$ page110524796.html [NC]
 
 RewriteRule ^aurora$ page110920356.html [NC]
 RewriteRule ^aurora/$ page110920356.html [NC]
-
-RewriteRule ^home-simple$ page108488156.html [NC]
-RewriteRule ^home-simple/$ page108488156.html [NC]
 
 RewriteRule ^home-calculator$ page110230356.html [NC]
 RewriteRule ^home-calculator/$ page110230356.html [NC]
@@ -179,5 +177,4 @@ RewriteRule ^oauth/callback/$ page113305246.html [NC]
 
 RewriteRule ^terms-of-service$ page122965736.html [NC]
 RewriteRule ^terms-of-service/$ page122965736.html [NC]
-
 

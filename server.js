@@ -14,6 +14,55 @@ const PORT = Number(process.env.PORT || 3000);
 const SITE_DIR = __dirname;
 const ROUTES_PATH = path.join(SITE_DIR, "routes.json");
 const NOT_FOUND_PAGE = "page113047926.html";
+const SITE_ORIGIN = "https://shynlicleaningservice.com";
+const REDIRECT_ROUTES = new Map([["/home-simple", "/"]]);
+const NOINDEX_ROUTES = new Set(["/home-calculator", "/oauth/callback", "/quote"]);
+const BREADCRUMB_LABELS = new Map([
+  ["/about-us", "About Us"],
+  ["/blog", "Blog"],
+  ["/cancellation-policy", "Cancellation Policy"],
+  ["/contacts", "Contact Us"],
+  ["/faq", "FAQ"],
+  ["/home-calculator", "Home Calculator"],
+  ["/oauth/callback", "OAuth Callback"],
+  ["/pricing", "Pricing"],
+  ["/privacy-policy", "Privacy Policy"],
+  ["/quote", "Quote"],
+  ["/service-areas", "Service Areas"],
+  ["/terms-of-service", "Terms of Service"],
+  ["/services", "Services"],
+]);
+const ROUTE_META_OVERRIDES = {
+  "/": {
+    ogTitle: "Professional Home Cleaning Services | Shynli Cleaning",
+    ogDescription:
+      "Trusted local house cleaning in Chicago suburbs with upfront pricing, flexible scheduling, and insured cleaners.",
+  },
+  "/home-calculator": {
+    title: "Instant House Cleaning Cost Calculator | Shynli Cleaning",
+    description:
+      "Use our instant house cleaning calculator to estimate regular, deep, and move-out cleaning prices across Chicago suburbs.",
+    ogTitle: "Instant House Cleaning Cost Calculator | Shynli Cleaning",
+    ogDescription:
+      "Estimate your cleaning cost online for regular, deep, and move-out services in Chicago suburbs.",
+    canonical: `${SITE_ORIGIN}/home-calculator`,
+    robots: "noindex,follow",
+  },
+  "/services/post-construction-cleaning": {
+    title: "Post-Construction Cleaning Services | Shynli Cleaning | Chicago Suburbs",
+    description:
+      "Professional post-construction cleaning for renovated homes and newly finished spaces across Chicago suburbs. Remove dust, debris, and residue with a final detailed clean.",
+    ogTitle: "Post-Construction Cleaning Services | Shynli Cleaning",
+    ogDescription:
+      "Detailed post-construction cleaning for remodels, renovations, and newly completed spaces across Chicago suburbs.",
+  },
+  "/oauth/callback": {
+    robots: "noindex,nofollow",
+  },
+  "/quote": {
+    robots: "noindex,nofollow",
+  },
+};
 
 const CONTENT_TYPES = {
   ".avif": "image/avif",
@@ -374,11 +423,168 @@ function buildHtmlCacheEntry(sanitizedHtml, fileMeta) {
   };
 }
 
+function getHtmlCacheKey(absolutePath, routePath = "") {
+  return `${absolutePath}::${routePath || "__file__"}`;
+}
+
 function normalizeRoute(rawPath) {
   let p = rawPath || "/";
   if (!p.startsWith("/")) p = `/${p}`;
   if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
   return p;
+}
+
+function toAbsoluteUrl(routePath) {
+  const normalizedRoute = normalizeRoute(routePath);
+  return `${SITE_ORIGIN}${normalizedRoute === "/" ? "/" : normalizedRoute}`;
+}
+
+function slugToTitle(value) {
+  return String(value || "")
+    .split("-")
+    .filter(Boolean)
+    .map((part) => {
+      const lower = part.toLowerCase();
+      if (lower === "faq") return "FAQ";
+      if (lower === "oauth") return "OAuth";
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
+
+function getRouteLabel(routePath) {
+  if (BREADCRUMB_LABELS.has(routePath)) return BREADCRUMB_LABELS.get(routePath);
+  const parts = normalizeRoute(routePath).split("/").filter(Boolean);
+  if (parts.length === 0) return "Home";
+  return slugToTitle(parts[parts.length - 1]);
+}
+
+function escapeHtmlAttribute(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function replaceOrInsertMetaTag(html, matcher, tagFactory) {
+  if (matcher.test(html)) {
+    return html.replace(matcher, tagFactory());
+  }
+  return html.replace(/<!--\/metatextblock-->/i, `${tagFactory()} <!--/metatextblock-->`);
+}
+
+function setTitleTag(html, title) {
+  if (!title) return html;
+  const safeTitle = title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  if (/<title>[\s\S]*?<\/title>/i.test(html)) {
+    return html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
+  }
+  return html.replace(/<!--\/metatextblock-->/i, `<title>${safeTitle}</title> <!--/metatextblock-->`);
+}
+
+function setMetaContent(html, key, value, attr = "name") {
+  if (!value) return html;
+  const safeValue = escapeHtmlAttribute(value);
+  const matcher = new RegExp(`<meta[^>]+${attr}="${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[^>]*>`, "i");
+  return replaceOrInsertMetaTag(
+    html,
+    matcher,
+    () => `<meta ${attr}="${key}" content="${safeValue}" />`
+  );
+}
+
+function setCanonicalLink(html, url) {
+  if (!url) return html;
+  const safeUrl = escapeHtmlAttribute(url);
+  if (/<link[^>]+rel="canonical"[^>]*>/i.test(html)) {
+    return html.replace(
+      /<link[^>]+rel="canonical"[^>]*>/i,
+      `<link rel="canonical" href="${safeUrl}">`
+    );
+  }
+  return html.replace(/<!--\/metatextblock-->/i, `<link rel="canonical" href="${safeUrl}"> <!--/metatextblock-->`);
+}
+
+function upsertJsonLd(html, id, payload) {
+  const script = `<script type="application/ld+json" id="${id}">${JSON.stringify(payload)}</script>`;
+  const matcher = new RegExp(`<script[^>]+id="${id}"[^>]*>[\\s\\S]*?<\\/script>`, "i");
+  if (matcher.test(html)) {
+    return html.replace(matcher, script);
+  }
+  return html.replace(/<\/head>/i, `${script}</head>`);
+}
+
+function buildBreadcrumbSchema(routePath) {
+  const normalized = normalizeRoute(routePath);
+  if (normalized === "/" || normalized === "/quote" || normalized === "/oauth/callback") return null;
+
+  const parts = normalized.split("/").filter(Boolean);
+  const itemListElement = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: `${SITE_ORIGIN}/`,
+    },
+  ];
+
+  let currentPath = "";
+  for (const [index, part] of parts.entries()) {
+    currentPath += `/${part}`;
+    itemListElement.push({
+      "@type": "ListItem",
+      position: index + 2,
+      name: getRouteLabel(currentPath),
+      item: toAbsoluteUrl(currentPath),
+    });
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement,
+  };
+}
+
+function buildHomeSchemas() {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "LocalBusiness",
+        "@id": `${SITE_ORIGIN}/#localbusiness`,
+        name: "Shynli Cleaning",
+        url: `${SITE_ORIGIN}/`,
+        telephone: "+1(630)812-7077",
+        image: `${SITE_ORIGIN}/images/tild3663-3735-4236-a133-346266656365__photo.png`,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_ORIGIN}/#website`,
+        url: `${SITE_ORIGIN}/`,
+        name: "Shynli Cleaning",
+        publisher: { "@id": `${SITE_ORIGIN}/#localbusiness` },
+      },
+    ],
+  };
+}
+
+function deriveRouteSeo(html, routePath) {
+  const normalizedRoute = normalizeRoute(routePath);
+  const overrides = ROUTE_META_OVERRIDES[normalizedRoute] || {};
+  const titleMatch = html.match(/<title>([\s\S]*?)<\/title>/i);
+  const descMatch = html.match(/<meta[^>]+name="description"[^>]+content="([^"]*)"/i);
+  const existingTitle = titleMatch ? titleMatch[1].trim() : "";
+  const existingDesc = descMatch ? descMatch[1].trim() : "";
+  const title = overrides.title || existingTitle;
+  const description = overrides.description || existingDesc;
+  const canonical = overrides.canonical || toAbsoluteUrl(normalizedRoute);
+  const ogUrl = overrides.ogUrl || canonical;
+  const ogTitle = overrides.ogTitle || title;
+  const ogDescription = overrides.ogDescription || description;
+  const robots = overrides.robots || (NOINDEX_ROUTES.has(normalizedRoute) ? "noindex,follow" : "");
+  return { title, description, canonical, ogUrl, ogTitle, ogDescription, robots };
 }
 
 function isFingerprintLikeAsset(absolutePath) {
@@ -758,7 +964,7 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 })();
 </script>`;
 
-function sanitizeHtml(html) {
+function sanitizeHtml(html, routePath = "/") {
   let cleaned = html
     .replace(
       /<script src="https:\/\/neo\.tildacdn\.com\/js\/tilda-fallback-1\.0\.min\.js"[^>]*><\/script>/g,
@@ -780,6 +986,23 @@ function sanitizeHtml(html) {
     /document\.getElementById\('zipCode'\)\.addEventListener\('keypress',function\(e\) \{if\(e\.key==='Enter'\) checkZipArea\(\);\}\);document\.getElementById\('zipCode'\)\.addEventListener\('input',function\(\) \{this\.value=this\.value\.replace\(\/\\D\/g,''\);\}\);/g,
     `(()=>{const zipInput=document.getElementById('zipCode');if(!zipInput||zipInput.dataset.autoZipBound==='true') return;zipInput.dataset.autoZipBound='true';zipInput.addEventListener('keypress',function(e){if(e.key==='Enter') checkZipArea();});zipInput.addEventListener('input',function(){this.value=this.value.replace(/\\D/g,'').slice(0,5);if(this.value.length===5){checkZipArea();}});})();`
   );
+
+  const routeSeo = deriveRouteSeo(cleaned, routePath);
+  cleaned = setTitleTag(cleaned, routeSeo.title);
+  cleaned = setMetaContent(cleaned, "description", routeSeo.description);
+  cleaned = setMetaContent(cleaned, "robots", routeSeo.robots);
+  cleaned = setMetaContent(cleaned, "og:url", routeSeo.ogUrl, "property");
+  cleaned = setMetaContent(cleaned, "og:title", routeSeo.ogTitle, "property");
+  cleaned = setMetaContent(cleaned, "og:description", routeSeo.ogDescription, "property");
+  cleaned = setCanonicalLink(cleaned, routeSeo.canonical);
+
+  if (normalizeRoute(routePath) === "/") {
+    cleaned = upsertJsonLd(cleaned, "schema-home", buildHomeSchemas());
+  }
+  const breadcrumbSchema = buildBreadcrumbSchema(routePath);
+  if (breadcrumbSchema) {
+    cleaned = upsertJsonLd(cleaned, "schema-breadcrumbs", breadcrumbSchema);
+  }
 
   const hasForms = /data-elem-type='form'|class="t-form"|tn-atom__form/.test(cleaned);
   if (!hasForms) {
@@ -833,10 +1056,14 @@ async function buildRuntimeIndex(routes) {
   await walk(SITE_DIR);
 
   const routeFileByPath = new Map();
+  const primaryRouteByFilePath = new Map();
   for (const [routePath, routeFile] of Object.entries(routes)) {
     const absolutePath = resolveSitePath(routeFile);
     if (existingFiles.has(absolutePath)) {
       routeFileByPath.set(routePath, absolutePath);
+      if (!primaryRouteByFilePath.has(absolutePath)) {
+        primaryRouteByFilePath.set(absolutePath, routePath);
+      }
     }
   }
 
@@ -848,6 +1075,7 @@ async function buildRuntimeIndex(routes) {
     notFoundAbsolutePath,
     notFoundExists: existingFiles.has(notFoundAbsolutePath),
     routeFileByPath,
+    primaryRouteByFilePath,
   };
 }
 
@@ -865,9 +1093,10 @@ async function warmHtmlCache(runtimeIndex) {
 
     try {
       const rawHtml = await fsp.readFile(absolutePath, "utf8");
-      const sanitizedHtml = sanitizeHtml(rawHtml);
+      const routePath = runtimeIndex.primaryRouteByFilePath.get(absolutePath) || "/";
+      const sanitizedHtml = sanitizeHtml(rawHtml, routePath);
       htmlCache.set(
-        absolutePath,
+        getHtmlCacheKey(absolutePath, routePath),
         buildHtmlCacheEntry(sanitizedHtml, runtimeIndex.fileMetaByPath.get(absolutePath))
       );
       warmedCount += 1;
@@ -879,17 +1108,18 @@ async function warmHtmlCache(runtimeIndex) {
   return { htmlCache, warmedCount };
 }
 
-async function getHtmlFromCache(absolutePath, htmlCache, fileMeta) {
-  if (htmlCache.has(absolutePath)) {
+async function getHtmlFromCache(absolutePath, routePath, htmlCache, fileMeta) {
+  const cacheKey = getHtmlCacheKey(absolutePath, routePath);
+  if (htmlCache.has(cacheKey)) {
     return {
-      entry: htmlCache.get(absolutePath),
+      entry: htmlCache.get(cacheKey),
       cacheHit: true,
     };
   }
 
   const rawHtml = await fsp.readFile(absolutePath, "utf8");
-  const htmlEntry = buildHtmlCacheEntry(sanitizeHtml(rawHtml), fileMeta);
-  htmlCache.set(absolutePath, htmlEntry);
+  const htmlEntry = buildHtmlCacheEntry(sanitizeHtml(rawHtml, routePath), fileMeta);
+  htmlCache.set(cacheKey, htmlEntry);
   return {
     entry: htmlEntry,
     cacheHit: false,
@@ -957,7 +1187,12 @@ async function sendFile(
     }
 
     if (ext === ".html") {
-      const htmlResult = await getHtmlFromCache(absolutePath, htmlCache, fileMeta);
+      const htmlResult = await getHtmlFromCache(
+        absolutePath,
+        requestContext.route,
+        htmlCache,
+        fileMeta
+      );
       const htmlEntry = htmlResult.entry;
       requestContext.cacheHit = htmlResult.cacheHit;
       const headers = {
@@ -966,6 +1201,9 @@ async function sendFile(
         ETag: htmlEntry.etag,
         "Last-Modified": htmlEntry.lastModified,
       };
+      if (NOINDEX_ROUTES.has(requestContext.route) || statusCode === 404) {
+        headers["X-Robots-Tag"] = "noindex, nofollow";
+      }
 
       if (statusCode === 200 && isNotModified(req.headers, htmlEntry.etag, htmlEntry.mtimeMs)) {
         requestContext.cacheHit = true;
@@ -1212,6 +1450,23 @@ async function main() {
       const pathname = decodeURIComponent(reqUrl.pathname);
       const normalizedPath = normalizeRoute(pathname);
       requestContext.route = normalizedPath;
+
+      const redirectTarget = REDIRECT_ROUTES.get(normalizedPath);
+      if (redirectTarget) {
+        requestContext.cacheHit = false;
+        writeHeadWithTiming(
+          res,
+          301,
+          {
+            Location: redirectTarget,
+            "Cache-Control": "public, max-age=3600",
+          },
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        res.end();
+        return;
+      }
 
       if (normalizedPath === "/__perf") {
         requestContext.cacheHit = false;
