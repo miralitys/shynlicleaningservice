@@ -964,6 +964,43 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 })();
 </script>`;
 
+const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
+(() => {
+  if (window.__safariHomeLayoutFixBound) return;
+  window.__safariHomeLayoutFixBound = true;
+
+  const ua = navigator.userAgent || "";
+  const isSafari =
+    /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Android/i.test(ua);
+  if (!isSafari) return;
+
+  document.documentElement.classList.add("is-safari");
+
+  const style = document.createElement("style");
+  style.textContent = [
+    "@media (min-width: 960px) {",
+    'html.is-safari #rec1763891643 .tn-elem[data-elem-id="1767788361452"],',
+    'html.is-safari #rec1763891643 .tn-elem[data-elem-id="1767788361489"] {',
+    "height: auto !important;",
+    "}",
+    'html.is-safari #rec1763891643 .tn-elem[data-elem-id="1767788361452"] .tn-atom,',
+    'html.is-safari #rec1763891643 .tn-elem[data-elem-id="1767788361489"] .tn-atom {',
+    "white-space: normal !important;",
+    "line-height: 1.18 !important;",
+    "}",
+    'html.is-safari #rec1763891643 .tn-elem[data-elem-id="1767788361458"] {',
+    "top: 398px !important;",
+    "}",
+    'html.is-safari #rec1763891643 .tn-elem[data-elem-id="1767788361493"] {',
+    "top: 607px !important;",
+    "}",
+    "}",
+  ].join("");
+
+  document.head.appendChild(style);
+})();
+</script>`;
+
 function sanitizeHtml(html, routePath = "/") {
   let cleaned = html
     .replace(
@@ -1020,7 +1057,7 @@ function sanitizeHtml(html, routePath = "/") {
   if (!/id="full-card-click-handler"/.test(cleaned) && /<body[\s>]/i.test(cleaned)) {
     cleaned = cleaned.replace(
       /<\/body>/i,
-      `${FULL_CARD_CLICK_SCRIPT}${MOBILE_STICKY_CTA_SCRIPT}</body>`
+      `${FULL_CARD_CLICK_SCRIPT}${MOBILE_STICKY_CTA_SCRIPT}${SAFARI_HOME_LAYOUT_FIX}</body>`
     );
   }
 
