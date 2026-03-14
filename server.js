@@ -87,6 +87,7 @@ const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg"]);
 const NEGOTIATED_IMAGE_VARY = "Accept, Sec-CH-Width, Viewport-Width, DPR";
 const REQUEST_LOG_BUFFER_LIMIT = Number(process.env.REQUEST_LOG_BUFFER_LIMIT || 4000);
 const REQUEST_LOG_FLUSH_INTERVAL_MS = Number(process.env.REQUEST_LOG_FLUSH_INTERVAL_MS || 250);
+const HTML_CACHE_WARM_MODE = String(process.env.HTML_CACHE_WARM_MODE || "minimal").toLowerCase();
 const PERF_WINDOW_MS = Number(process.env.PERF_WINDOW_MS || 5 * 60 * 1000);
 const PERF_SUMMARY_INTERVAL_MS = Number(process.env.PERF_SUMMARY_INTERVAL_MS || 60 * 1000);
 const PERF_MAX_SAMPLES = Number(process.env.PERF_MAX_SAMPLES || 40000);
@@ -175,6 +176,18 @@ function createBufferedLogger() {
       clearInterval(flushTimer);
       flush();
     },
+  };
+}
+
+function getMemoryUsageSnapshot() {
+  const toMb = (bytes) => roundNumber(bytes / (1024 * 1024));
+  const usage = process.memoryUsage();
+  return {
+    rss_mb: toMb(usage.rss),
+    heap_total_mb: toMb(usage.heapTotal),
+    heap_used_mb: toMb(usage.heapUsed),
+    external_mb: toMb(usage.external),
+    array_buffers_mb: toMb(usage.arrayBuffers),
   };
 }
 
@@ -1130,10 +1143,22 @@ async function buildRuntimeIndex(routes) {
 
 async function warmHtmlCache(runtimeIndex) {
   const htmlCache = new Map();
-  const filesToWarm = new Set([
-    ...runtimeIndex.routeFileByPath.values(),
-    runtimeIndex.notFoundAbsolutePath,
-  ]);
+  const filesToWarm = new Set();
+
+  if (HTML_CACHE_WARM_MODE === "all") {
+    for (const absolutePath of runtimeIndex.routeFileByPath.values()) {
+      filesToWarm.add(absolutePath);
+    }
+  } else if (HTML_CACHE_WARM_MODE === "minimal") {
+    const homeAbsolutePath = runtimeIndex.routeFileByPath.get("/");
+    if (homeAbsolutePath) {
+      filesToWarm.add(homeAbsolutePath);
+    }
+  }
+
+  if (HTML_CACHE_WARM_MODE !== "off") {
+    filesToWarm.add(runtimeIndex.notFoundAbsolutePath);
+  }
 
   let warmedCount = 0;
   for (const absolutePath of filesToWarm) {
@@ -1437,10 +1462,27 @@ async function loadRoutes() {
 }
 
 async function main() {
+  const requestLogger = createBufferedLogger();
   const routes = await loadRoutes();
   const runtimeIndex = await buildRuntimeIndex(routes);
+  requestLogger.log({
+    ts: new Date().toISOString(),
+    type: "startup_index_built",
+    routes_count: Object.keys(routes).length,
+    indexed_files: runtimeIndex.existingFiles.size,
+    indexed_image_variant_sets: runtimeIndex.imageVariantsByOriginal.size,
+    memory: getMemoryUsageSnapshot(),
+  });
+
   const { htmlCache, warmedCount } = await warmHtmlCache(runtimeIndex);
-  const requestLogger = createBufferedLogger();
+  requestLogger.log({
+    ts: new Date().toISOString(),
+    type: "startup_cache_warmed",
+    warm_mode: HTML_CACHE_WARM_MODE,
+    warmed_html_cache_entries: warmedCount,
+    memory: getMemoryUsageSnapshot(),
+  });
+
   const requestPerfWindow = createRequestPerfWindow();
   const eventLoopStats = createEventLoopStats();
 
@@ -1653,13 +1695,38 @@ async function main() {
 
   process.on("SIGINT", () => shutdown("SIGINT"));
   process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("unhandledRejection", (reason) => {
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "unhandled_rejection",
+      reason: reason instanceof Error ? reason.stack || reason.message : String(reason),
+      memory: getMemoryUsageSnapshot(),
+    });
+  });
+  process.on("uncaughtException", (error) => {
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "uncaught_exception",
+      error: error && error.stack ? error.stack : String(error),
+      memory: getMemoryUsageSnapshot(),
+    });
+    requestLogger.close();
+    setTimeout(() => process.exit(1), 100).unref();
+  });
 
   server.listen(PORT, HOST, () => {
-    console.log(`Server started on http://${HOST}:${PORT}`);
-    console.log(`Loaded routes: ${Object.keys(routes).length}`);
-    console.log(`Indexed files: ${runtimeIndex.existingFiles.size}`);
-    console.log(`Indexed image variant sets: ${runtimeIndex.imageVariantsByOriginal.size}`);
-    console.log(`Warmed HTML cache entries: ${warmedCount}`);
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "startup_ready",
+      host: HOST,
+      port: PORT,
+      routes_count: Object.keys(routes).length,
+      indexed_files: runtimeIndex.existingFiles.size,
+      indexed_image_variant_sets: runtimeIndex.imageVariantsByOriginal.size,
+      warm_mode: HTML_CACHE_WARM_MODE,
+      warmed_html_cache_entries: warmedCount,
+      memory: getMemoryUsageSnapshot(),
+    });
   });
 }
 
