@@ -1069,6 +1069,14 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
     "white-space: nowrap !important;",
     "line-height: 1.08 !important;",
     "}",
+    'html.is-safari .tn-elem[data-elem-id="1767901684054"] {',
+    "height: auto !important;",
+    "width: 920px !important;",
+    "}",
+    'html.is-safari .tn-elem[data-elem-id="1767901684054"] .tn-atom {',
+    "white-space: nowrap !important;",
+    "line-height: 1.08 !important;",
+    "}",
     "}",
   ].join("");
 
