@@ -1154,34 +1154,43 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
 
   html.is-safari #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"] {
     height: auto !important;
-    left: calc(50% - 600px + 110px) !important;
-    width: 420px !important;
+    width: auto !important;
+    max-width: none !important;
   }
 
   html.is-safari #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"] .tn-atom {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: none !important;
     white-space: nowrap !important;
     line-height: 1.08 !important;
   }
 
   html.is-safari #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
     height: auto !important;
-    left: calc(50% - 600px + 215px) !important;
-    width: 860px !important;
+    width: auto !important;
+    max-width: none !important;
     top: 529px !important;
   }
 
   html.is-safari #rec1778752123 .tn-elem[data-elem-id="1768240056136"] .tn-atom {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: none !important;
     white-space: nowrap !important;
     line-height: 1.12 !important;
   }
 
   html.is-safari #rec1787446063 .tn-elem[data-elem-id="1768240056136"] {
     height: auto !important;
-    left: calc(50% - 600px + 210px) !important;
-    width: 860px !important;
+    width: auto !important;
+    max-width: none !important;
   }
 
   html.is-safari #rec1787446063 .tn-elem[data-elem-id="1768240056136"] .tn-atom {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: none !important;
     white-space: nowrap !important;
     line-height: 1.12 !important;
   }
@@ -1219,6 +1228,68 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"] .tn-atom,
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] .tn-atom {
     line-height: 1.18 !important;
+  }
+
+  /* Shared Safari desktop fixes for repeated Tilda text blocks */
+  html.is-safari .tn-elem[data-elem-id="1767801668999"] {
+    height: auto !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  html.is-safari .tn-elem[data-elem-id="1767801668999"] .tn-atom {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+    font-size: 30px !important;
+    line-height: 1.06 !important;
+  }
+
+  html.is-safari .tn-elem[data-elem-id="1768305816214000039"],
+  html.is-safari .tn-elem[data-elem-id="1768240056136"],
+  html.is-safari .tn-elem[data-elem-id="1768231764341"] {
+    height: auto !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  html.is-safari .tn-elem[data-elem-id="1768305816214000039"] .tn-atom,
+  html.is-safari .tn-elem[data-elem-id="1768240056136"] .tn-atom {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+    font-size: 20px !important;
+    line-height: 1.08 !important;
+  }
+
+  html.is-safari .tn-elem[data-elem-id="1768231764341"] {
+    top: 166px !important;
+  }
+
+  html.is-safari .tn-elem[data-elem-id="1768231764341"] .tn-atom {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+    font-size: 20px !important;
+    line-height: 1.08 !important;
+  }
+
+  html.is-safari .tn-elem[data-elem-id="1768311103133000001"] {
+    height: auto !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  html.is-safari .tn-elem[data-elem-id="1768311103133000001"] .tn-atom {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+    font-size: 32px !important;
+    line-height: 1.04 !important;
   }
 }
 \`;
