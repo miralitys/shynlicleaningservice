@@ -977,6 +977,70 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 })();
 </script>`;
 
+const MOBILE_CONTACT_DETAILS_FIX = `<script id="mobile-contact-details-fix">
+(() => {
+  if (window.__mobileContactDetailsFixBound) return;
+  window.__mobileContactDetailsFixBound = true;
+
+  const CONTACT_ELEMENT_IDS = [
+    "1767883949420",
+    "1767883278623",
+    "1767883278634",
+    "1767883278627"
+  ];
+
+  function ensureStyle() {
+    if (document.getElementById("mobile-contact-details-fix-style")) return;
+
+    const style = document.createElement("style");
+    style.id = "mobile-contact-details-fix-style";
+    style.textContent = "@media (max-width: 640px) {" +
+      ".tn-elem[data-elem-id=\"1767883949420\"]," +
+      ".tn-elem[data-elem-id=\"1767883278623\"]," +
+      ".tn-elem[data-elem-id=\"1767883278634\"]," +
+      ".tn-elem[data-elem-id=\"1767883278627\"] {" +
+      "z-index: 12 !important;" +
+      "opacity: 1 !important;" +
+      "visibility: visible !important;" +
+      "}" +
+      ".tn-elem[data-elem-id=\"1767883949420\"] .tn-atom," +
+      ".tn-elem[data-elem-id=\"1767883278623\"] .tn-atom," +
+      ".tn-elem[data-elem-id=\"1767883278634\"] .tn-atom," +
+      ".tn-elem[data-elem-id=\"1767883278627\"] .tn-atom {" +
+      "opacity: 1 !important;" +
+      "visibility: visible !important;" +
+      "}" +
+      "}";
+    document.head.appendChild(style);
+  }
+
+  function raiseContacts() {
+    if (!window.matchMedia("(max-width: 640px)").matches) return;
+
+    CONTACT_ELEMENT_IDS.forEach((id) => {
+      document.querySelectorAll('.tn-elem[data-elem-id="' + id + '"]').forEach((element) => {
+        element.style.setProperty("z-index", "12", "important");
+        element.style.setProperty("opacity", "1", "important");
+        element.style.setProperty("visibility", "visible", "important");
+      });
+    });
+  }
+
+  function applyFix() {
+    ensureStyle();
+    raiseContacts();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyFix, { once: true });
+  } else {
+    applyFix();
+  }
+
+  window.addEventListener("load", applyFix);
+})();
+</script>`;
+
 const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
 (() => {
   if (window.__safariHomeLayoutFixBound) return;
@@ -1353,7 +1417,7 @@ function sanitizeHtml(html, routePath = "/") {
   if (!/id="full-card-click-handler"/.test(cleaned) && /<body[\s>]/i.test(cleaned)) {
     cleaned = cleaned.replace(
       /<\/body>/i,
-      `${FULL_CARD_CLICK_SCRIPT}${MOBILE_STICKY_CTA_SCRIPT}${SAFARI_HOME_LAYOUT_FIX}</body>`
+      `${FULL_CARD_CLICK_SCRIPT}${MOBILE_STICKY_CTA_SCRIPT}${MOBILE_CONTACT_DETAILS_FIX}${SAFARI_HOME_LAYOUT_FIX}</body>`
     );
   }
 
