@@ -987,6 +987,27 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
     /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Android/i.test(ua);
   if (!isSafari) return;
 
+  document.documentElement.classList.add("is-safari");
+
+  const style = document.createElement("style");
+  style.textContent = [
+    "@media (min-width: 960px) {",
+    'html.is-safari #rec1767616313 .tn-elem[data-elem-id="1767801668999"],',
+    'html.is-safari #rec1822459163 .tn-elem[data-elem-id="1767801668999"] {',
+    "height: auto !important;",
+    "left: calc(50% - 600px + 320px) !important;",
+    "width: 560px !important;",
+    "}",
+    'html.is-safari #rec1767616313 .tn-elem[data-elem-id="1767801668999"] .tn-atom,',
+    'html.is-safari #rec1822459163 .tn-elem[data-elem-id="1767801668999"] .tn-atom {',
+    "white-space: nowrap !important;",
+    "line-height: 1.08 !important;",
+    "font-size: 28px !important;",
+    "}",
+    "}",
+  ].join(\"\\n\");
+  document.head.appendChild(style);
+
   const reinitTildaLayouts = () => {
     const run = () => {
       const recs = Array.from(
