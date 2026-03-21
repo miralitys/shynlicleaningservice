@@ -989,60 +989,60 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     #rec1778752123 .t396__artboard,
     #rec1778752123 .t396__carrier,
     #rec1778752123 .t396__filter {
-      height: 980px !important;
+      height: 1040px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 423px !important;
+      top: 446px !important;
       left: calc(50% - 240px + 45px) !important;
       width: 212px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 418px !important;
+      top: 441px !important;
       left: calc(50% - 240px + 10px) !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      top: 456px !important;
+      top: 492px !important;
       width: 260px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
-      top: 502px !important;
+      top: 542px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
-      top: 497px !important;
+      top: 537px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
-      top: 546px !important;
+      top: 586px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
-      top: 541px !important;
+      top: 581px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
-      top: 590px !important;
+      top: 630px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
-      top: 585px !important;
+      top: 625px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
-      top: 678px !important;
+      top: 738px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
-      top: 700px !important;
+      top: 760px !important;
       height: 110px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      top: 722px !important;
+      top: 782px !important;
       left: calc(50% - 240px + 38px) !important;
       width: 404px !important;
     }
@@ -1050,60 +1050,60 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     #rec1778752123 .t396__artboard,
     #rec1778752123 .t396__carrier,
     #rec1778752123 .t396__filter {
-      height: 955px !important;
+      height: 1005px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 376px !important;
+      top: 399px !important;
       left: calc(50% - 160px + 45px) !important;
       width: 212px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 371px !important;
+      top: 394px !important;
       left: calc(50% - 160px + 10px) !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      top: 410px !important;
+      top: 446px !important;
       width: 240px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
-      top: 455px !important;
+      top: 491px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
-      top: 450px !important;
+      top: 486px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
-      top: 499px !important;
+      top: 535px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
-      top: 494px !important;
+      top: 530px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
-      top: 543px !important;
+      top: 579px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
-      top: 538px !important;
+      top: 574px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
-      top: 628px !important;
+      top: 688px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
-      top: 650px !important;
+      top: 710px !important;
       height: 122px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      top: 672px !important;
+      top: 732px !important;
       left: calc(50% - 160px + 38px) !important;
       width: 254px !important;
     }
