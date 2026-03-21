@@ -997,13 +997,13 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 352px !important;
+      top: 346px !important;
       left: calc(50% - 160px + 45px) !important;
       width: 220px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 347px !important;
+      top: 341px !important;
       left: calc(50% - 160px + 10px) !important;
     }
 
