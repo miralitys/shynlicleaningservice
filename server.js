@@ -447,6 +447,135 @@ function normalizeRoute(rawPath) {
   return p;
 }
 
+const DEEP_CLEANING_ADDONS_SECTION = `
+<style id="deep-cleaning-addons-static-style">
+#deep-cleaning-addons-static{background:#faf9f6;padding:0 0 56px;}
+#deep-cleaning-addons-static .dc-addons{max-width:1200px;margin:0 auto;padding:0 20px;box-sizing:border-box;color:#313131;}
+#deep-cleaning-addons-static .dc-addons__title{margin:0;text-align:center;font-family:'Playfair Display',serif;font-size:48px;line-height:1.14;font-weight:400;}
+#deep-cleaning-addons-static .dc-addons__title-accent{color:#9e435a;}
+#deep-cleaning-addons-static .dc-addons__subtitle{margin:14px 0 38px;text-align:center;font-family:'Montserrat',sans-serif;font-size:18px;line-height:1.35;font-weight:400;}
+#deep-cleaning-addons-static .dc-addons__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px 80px;align-items:start;}
+#deep-cleaning-addons-static .dc-addons__group-title{margin:0 0 26px;font-family:'Playfair Display',serif;font-size:32px;line-height:1.12;font-weight:400;color:#ddd8d2;}
+#deep-cleaning-addons-static .dc-addons__list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:24px;}
+#deep-cleaning-addons-static .dc-addons__item{display:grid;grid-template-columns:40px minmax(0,1fr);gap:16px;align-items:start;}
+#deep-cleaning-addons-static .dc-addons__item-label{font-family:'Montserrat',sans-serif;font-size:18px;line-height:1.35;font-weight:400;color:#313131;}
+#deep-cleaning-addons-static .dc-addons__item-label strong{font-weight:700;}
+#deep-cleaning-addons-static .dc-addons__icon{width:32px;height:32px;display:block;flex:none;margin-top:2px;}
+#deep-cleaning-addons-static .dc-addons__note{margin:52px 0 30px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:16px;align-items:start;}
+#deep-cleaning-addons-static .dc-addons__note-box{background:#d8cfc4;border-radius:24px;padding:24px 28px;min-height:72px;display:flex;align-items:center;box-sizing:border-box;}
+#deep-cleaning-addons-static .dc-addons__note-text{font-family:'Playfair Display',serif;font-size:32px;line-height:1.15;font-weight:400;color:#313131;}
+#deep-cleaning-addons-static .dc-addons__cta{display:flex;flex-direction:column;align-items:center;gap:10px;}
+#deep-cleaning-addons-static .dc-addons__button{display:inline-flex;align-items:center;justify-content:center;min-width:300px;min-height:70px;padding:0 32px;border-radius:999px;background:#9e435a;color:#faf9f6;text-decoration:none;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:500;line-height:1;box-sizing:border-box;transition:background-color .2s ease;}
+#deep-cleaning-addons-static .dc-addons__button:hover{background:#6e2e3e;color:#faf9f6;}
+#deep-cleaning-addons-static .dc-addons__helper{font-family:'Montserrat',sans-serif;font-size:12px;line-height:1.35;font-weight:400;color:#6a665f;text-align:center;}
+@media (max-width:959px){
+  #deep-cleaning-addons-static .dc-addons__title{font-size:42px;}
+  #deep-cleaning-addons-static .dc-addons__grid{gap:40px 48px;}
+  #deep-cleaning-addons-static .dc-addons__note-text{font-size:28px;}
+}
+@media (max-width:639px){
+  #deep-cleaning-addons-static{padding:0 0 44px;}
+  #deep-cleaning-addons-static .dc-addons{padding:0 16px;}
+  #deep-cleaning-addons-static .dc-addons__title{font-size:34px;}
+  #deep-cleaning-addons-static .dc-addons__subtitle{font-size:16px;margin:12px 0 30px;}
+  #deep-cleaning-addons-static .dc-addons__grid{grid-template-columns:1fr;gap:28px;}
+  #deep-cleaning-addons-static .dc-addons__group-title{font-size:26px;margin-bottom:20px;}
+  #deep-cleaning-addons-static .dc-addons__list{gap:20px;}
+  #deep-cleaning-addons-static .dc-addons__item{grid-template-columns:34px minmax(0,1fr);gap:14px;}
+  #deep-cleaning-addons-static .dc-addons__item-label{font-size:16px;line-height:1.32;}
+  #deep-cleaning-addons-static .dc-addons__icon{width:28px;height:28px;}
+  #deep-cleaning-addons-static .dc-addons__note{margin:36px 0 24px;grid-template-columns:48px minmax(0,1fr);gap:12px;}
+  #deep-cleaning-addons-static .dc-addons__note-box{padding:20px 22px;border-radius:22px;}
+  #deep-cleaning-addons-static .dc-addons__note-text{font-size:24px;line-height:1.14;}
+  #deep-cleaning-addons-static .dc-addons__button{min-width:100%;min-height:58px;font-size:15px;}
+  #deep-cleaning-addons-static .dc-addons__helper{font-size:11px;}
+}
+@media (max-width:479px){
+  #deep-cleaning-addons-static .dc-addons__title{font-size:24px;line-height:1.18;}
+  #deep-cleaning-addons-static .dc-addons__title-accent{display:block;}
+  #deep-cleaning-addons-static .dc-addons__subtitle{font-size:13px;line-height:1.4;margin:10px 0 22px;}
+  #deep-cleaning-addons-static .dc-addons__group-title{font-size:22px;line-height:1.1;color:#d7d0c7;}
+  #deep-cleaning-addons-static .dc-addons__item{grid-template-columns:28px minmax(0,1fr);gap:12px;}
+  #deep-cleaning-addons-static .dc-addons__item-label{font-size:14px;line-height:1.3;}
+  #deep-cleaning-addons-static .dc-addons__icon{width:24px;height:24px;margin-top:1px;}
+  #deep-cleaning-addons-static .dc-addons__note{margin:30px 0 22px;grid-template-columns:42px minmax(0,1fr);gap:10px;}
+  #deep-cleaning-addons-static .dc-addons__note-box{padding:18px 18px 20px;border-radius:20px;}
+  #deep-cleaning-addons-static .dc-addons__note-text{font-size:17px;line-height:1.18;}
+  #deep-cleaning-addons-static .dc-addons__button{min-height:52px;font-size:14px;padding:0 20px;}
+}
+</style>
+<section id="deep-cleaning-addons-static">
+  <div class="dc-addons">
+    <h2 class="dc-addons__title">Take Your Deep Cleaning <span class="dc-addons__title-accent">Even Further</span></h2>
+    <p class="dc-addons__subtitle">Add these services to any deep cleaning</p>
+    <div class="dc-addons__grid">
+      <div class="dc-addons__group">
+        <h3 class="dc-addons__group-title">Interior Add-Ons:</h3>
+        <ul class="dc-addons__list">
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Inside Fridge — <strong>$45</strong></span>
+          </li>
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Inside Oven — <strong>$45</strong></span>
+          </li>
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Interior Windows — <strong>$6 per window</strong></span>
+          </li>
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Wet Baseboards — <strong>$22</strong></span>
+          </li>
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Doors — <strong>$22</strong></span>
+          </li>
+        </ul>
+      </div>
+      <div class="dc-addons__group">
+        <h3 class="dc-addons__group-title">Extra Focus:</h3>
+        <ul class="dc-addons__list">
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Inside Cabinets (empty) — <strong>$45</strong></span>
+          </li>
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Polishing wooden furniture — <strong>$20</strong></span>
+          </li>
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Bed linen replacement — <strong>$8</strong></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="dc-addons__note">
+      <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+      <div class="dc-addons__note-box">
+        <div class="dc-addons__note-text">Most add-ons are recommended after your first recurring visit.</div>
+      </div>
+    </div>
+    <div class="dc-addons__cta">
+      <a class="dc-addons__button" href="/quote">Start with Deep Cleaning</a>
+      <div class="dc-addons__helper">Recommended before recurring service</div>
+    </div>
+  </div>
+</section>
+`;
+
+function rebuildDeepCleaningAddonsSection(html, routePath) {
+  if (normalizeRoute(routePath) !== "/services/deep-cleaning") return html;
+  if (html.includes('id="deep-cleaning-addons-static"')) return html;
+
+  const oldSectionPattern = /<div id="rec1778752123"[\s\S]*?(?=<div id="rec1778752133")/i;
+  if (!oldSectionPattern.test(html)) return html;
+
+  return html.replace(oldSectionPattern, DEEP_CLEANING_ADDONS_SECTION);
+}
+
 function toAbsoluteUrl(routePath) {
   const normalizedRoute = normalizeRoute(routePath);
   return `${SITE_ORIGIN}${normalizedRoute === "/" ? "/" : normalizedRoute}`;
@@ -1475,6 +1604,8 @@ function sanitizeHtml(html, routePath = "/") {
     /document\.getElementById\('zipCode'\)\.addEventListener\('keypress',function\(e\) \{if\(e\.key==='Enter'\) checkZipArea\(\);\}\);document\.getElementById\('zipCode'\)\.addEventListener\('input',function\(\) \{this\.value=this\.value\.replace\(\/\\D\/g,''\);\}\);/g,
     `(()=>{const zipInput=document.getElementById('zipCode');if(!zipInput||zipInput.dataset.autoZipBound==='true') return;zipInput.dataset.autoZipBound='true';const zipWrapper=zipInput.closest('.zip-input-wrapper');const zipContainer=zipInput.closest('.zip-checker-container');const focusZipInput=(event)=>{if(event?.target?.closest('.zip-check-btn')) return;if(event?.target?.closest('.zip-result a')) return;zipInput.focus();const length=zipInput.value.length;if(typeof zipInput.setSelectionRange==='function'){zipInput.setSelectionRange(length,length);}};[zipWrapper,zipContainer].forEach((node)=>{if(!node) return;node.style.cursor='text';node.addEventListener('click',focusZipInput);});zipInput.addEventListener('keypress',function(e){if(e.key==='Enter') checkZipArea();});zipInput.addEventListener('input',function(){this.value=this.value.replace(/\\D/g,'').slice(0,5);if(this.value.length===5){checkZipArea();}});})();`
   );
+
+  cleaned = rebuildDeepCleaningAddonsSection(cleaned, routePath);
 
   const routeSeo = deriveRouteSeo(cleaned, routePath);
   cleaned = setTitleTag(cleaned, routeSeo.title);
