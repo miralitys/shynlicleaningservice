@@ -989,7 +989,7 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     #rec1778752123 .t396__artboard,
     #rec1778752123 .t396__carrier,
     #rec1778752123 .t396__filter {
-      height: 1000px !important;
+      height: 1068px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"],
@@ -1005,56 +1005,56 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 431px !important;
+      top: 456px !important;
       left: calc(50% - 240px + 35px) !important;
       width: 222px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 426px !important;
+      top: 451px !important;
       left: calc(50% - 240px + 0px) !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      top: 490px !important;
+      top: 530px !important;
       width: 260px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
-      top: 536px !important;
+      top: 576px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
-      top: 531px !important;
+      top: 571px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
-      top: 580px !important;
+      top: 620px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
-      top: 575px !important;
+      top: 615px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
-      top: 624px !important;
+      top: 664px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
-      top: 619px !important;
+      top: 659px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
-      top: 712px !important;
+      top: 760px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
-      top: 734px !important;
+      top: 782px !important;
       height: 110px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      top: 756px !important;
+      top: 804px !important;
       left: calc(50% - 240px + 38px) !important;
       width: 404px !important;
     }
@@ -1062,7 +1062,7 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     #rec1778752123 .t396__artboard,
     #rec1778752123 .t396__carrier,
     #rec1778752123 .t396__filter {
-      height: 965px !important;
+      height: 1035px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"],
@@ -1078,56 +1078,56 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 371px !important;
+      top: 398px !important;
       left: calc(50% - 160px + 35px) !important;
       width: 222px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 366px !important;
+      top: 393px !important;
       left: calc(50% - 160px + 0px) !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      top: 426px !important;
+      top: 468px !important;
       width: 240px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
-      top: 471px !important;
+      top: 513px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
-      top: 466px !important;
+      top: 508px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
-      top: 515px !important;
+      top: 557px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
-      top: 510px !important;
+      top: 552px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
-      top: 559px !important;
+      top: 601px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
-      top: 554px !important;
+      top: 596px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
-      top: 656px !important;
+      top: 712px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
-      top: 678px !important;
+      top: 734px !important;
       height: 122px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      top: 700px !important;
+      top: 756px !important;
       left: calc(50% - 160px + 38px) !important;
       width: 254px !important;
     }
