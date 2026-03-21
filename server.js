@@ -977,162 +977,95 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 })();
 </script>`;
 
-const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
+const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-addons-rebuild">
 (() => {
   const path = ((window.location && window.location.pathname) || "").replace(/\/+$/, "") || "/";
   if (path !== "/services/deep-cleaning") return;
-  if (!window.matchMedia("(max-width: 480px)").matches) return;
-  const isWidePhone = window.innerWidth > 360;
+
+  const source = document.getElementById("rec1778752123");
+  const anchor = document.getElementById("rec1778752133");
+  if (!source || !anchor || document.getElementById("deep-cleaning-addons-rebuild-root")) return;
 
   const style = document.createElement("style");
-  style.textContent = isWidePhone ? \`
-    #rec1778752123 .t396__artboard,
-    #rec1778752123 .t396__carrier,
-    #rec1778752123 .t396__filter {
-      height: 1068px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"],
-    #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      height: auto !important;
-      width: 280px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"] .tn-atom,
-    #rec1778752123 .tn-elem[data-elem-id="1768240056120"] .tn-atom {
-      white-space: nowrap !important;
-      line-height: 1.08 !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 456px !important;
-      left: calc(50% - 240px + 35px) !important;
-      width: 222px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 451px !important;
-      left: calc(50% - 240px + 0px) !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      top: 530px !important;
-      width: 260px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
-      top: 576px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
-      top: 571px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
-      top: 620px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
-      top: 615px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
-      top: 664px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
-      top: 659px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
-      top: 760px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
-      top: 782px !important;
-      height: 110px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      top: 804px !important;
-      left: calc(50% - 240px + 38px) !important;
-      width: 404px !important;
-    }
-  \` : \`
-    #rec1778752123 .t396__artboard,
-    #rec1778752123 .t396__carrier,
-    #rec1778752123 .t396__filter {
-      height: 1035px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"],
-    #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      height: auto !important;
-      width: 240px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"] .tn-atom,
-    #rec1778752123 .tn-elem[data-elem-id="1768240056120"] .tn-atom {
-      white-space: nowrap !important;
-      line-height: 1.08 !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 398px !important;
-      left: calc(50% - 160px + 35px) !important;
-      width: 222px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 393px !important;
-      left: calc(50% - 160px + 0px) !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      top: 468px !important;
-      width: 240px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
-      top: 513px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
-      top: 508px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
-      top: 557px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
-      top: 552px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
-      top: 601px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
-      top: 596px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
-      top: 712px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
-      top: 734px !important;
-      height: 122px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      top: 756px !important;
-      left: calc(50% - 160px + 38px) !important;
-      width: 254px !important;
-    }
-  \`;
+  style.id = "deep-cleaning-addons-rebuild-style";
+  style.textContent = [
+    "#rec1778752123{display:none !important;}",
+    "#deep-cleaning-addons-rebuild-root{background:#faf9f6;padding:0 0 56px;}",
+    ".dc-addons{max-width:1200px;margin:0 auto;padding:0 20px;box-sizing:border-box;color:#313131;}",
+    ".dc-addons__title{margin:0;text-align:center;font-family:'Playfair Display',serif;font-size:48px;line-height:1.14;font-weight:400;}",
+    ".dc-addons__title-accent{color:#9e435a;}",
+    ".dc-addons__subtitle{margin:14px 0 38px;text-align:center;font-family:'Montserrat',sans-serif;font-size:18px;line-height:1.35;font-weight:400;}",
+    ".dc-addons__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px 80px;align-items:start;}",
+    ".dc-addons__group-title{margin:0 0 26px;font-family:'Playfair Display',serif;font-size:32px;line-height:1.12;font-weight:400;color:#ddd8d2;}",
+    ".dc-addons__list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:24px;}",
+    ".dc-addons__item{display:grid;grid-template-columns:40px minmax(0,1fr);gap:16px;align-items:start;}",
+    ".dc-addons__item-label{font-family:'Montserrat',sans-serif;font-size:18px;line-height:1.35;font-weight:400;color:#313131;}",
+    ".dc-addons__item-label strong{font-weight:700;}",
+    ".dc-addons__icon{width:32px;height:32px;display:block;flex:none;margin-top:2px;}",
+    ".dc-addons__note{margin:52px 0 30px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:16px;align-items:start;}",
+    ".dc-addons__note-box{background:#d8cfc4;border-radius:24px;padding:24px 28px;min-height:72px;display:flex;align-items:center;box-sizing:border-box;}",
+    ".dc-addons__note-text{font-family:'Playfair Display',serif;font-size:32px;line-height:1.15;font-weight:400;color:#313131;}",
+    ".dc-addons__cta{display:flex;flex-direction:column;align-items:center;gap:10px;}",
+    ".dc-addons__button{display:inline-flex;align-items:center;justify-content:center;min-width:300px;min-height:70px;padding:0 32px;border-radius:999px;background:#9e435a;color:#faf9f6;text-decoration:none;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:500;line-height:1;box-sizing:border-box;transition:background-color .2s ease;}",
+    ".dc-addons__button:hover{background:#6e2e3e;color:#faf9f6;}",
+    ".dc-addons__helper{font-family:'Montserrat',sans-serif;font-size:12px;line-height:1.35;font-weight:400;color:#6a665f;text-align:center;}",
+    "@media (max-width:959px){.dc-addons__title{font-size:42px;}.dc-addons__grid{gap:40px 48px;}.dc-addons__note-text{font-size:28px;}}",
+    "@media (max-width:639px){#deep-cleaning-addons-rebuild-root{padding:0 0 44px;}.dc-addons{padding:0 16px;}.dc-addons__title{font-size:34px;}.dc-addons__subtitle{font-size:16px;margin:12px 0 30px;}.dc-addons__grid{grid-template-columns:1fr;gap:28px;}.dc-addons__group-title{font-size:26px;margin-bottom:20px;}.dc-addons__list{gap:20px;}.dc-addons__item{grid-template-columns:34px minmax(0,1fr);gap:14px;}.dc-addons__item-label{font-size:16px;line-height:1.32;}.dc-addons__icon{width:28px;height:28px;}.dc-addons__note{margin:36px 0 24px;grid-template-columns:48px minmax(0,1fr);gap:12px;}.dc-addons__note-box{padding:20px 22px;border-radius:22px;}.dc-addons__note-text{font-size:24px;line-height:1.14;}.dc-addons__button{min-width:100%;min-height:58px;font-size:15px;}.dc-addons__helper{font-size:11px;}}",
+    "@media (max-width:479px){.dc-addons__title{font-size:24px;line-height:1.18;}.dc-addons__title-accent{display:block;}.dc-addons__subtitle{font-size:13px;line-height:1.4;margin:10px 0 22px;}.dc-addons__group-title{font-size:22px;line-height:1.1;}.dc-addons__item{grid-template-columns:28px minmax(0,1fr);gap:12px;}.dc-addons__item-label{font-size:14px;line-height:1.3;}.dc-addons__icon{width:24px;height:24px;margin-top:1px;}.dc-addons__note{margin:30px 0 22px;grid-template-columns:42px minmax(0,1fr);gap:10px;}.dc-addons__note-box{padding:18px 18px 20px;border-radius:20px;}.dc-addons__note-text{font-size:17px;line-height:1.18;}.dc-addons__button{min-height:52px;font-size:14px;padding:0 20px;}}"
+  ].join("\\n");
   document.head.appendChild(style);
+
+  const star = '<svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>';
+
+  const leftItems = [
+    'Inside Fridge — <strong>$45</strong>',
+    'Inside Oven — <strong>$45</strong>',
+    'Interior Windows — <strong>$6 per window</strong>',
+    'Wet Baseboards — <strong>$22</strong>',
+    'Doors — <strong>$22</strong>'
+  ];
+
+  const rightItems = [
+    'Inside Cabinets (empty) — <strong>$45</strong>',
+    'Polishing wooden furniture — <strong>$20</strong>',
+    'Bed linen replacement — <strong>$8</strong>'
+  ];
+
+  const renderItems = (items) => items.map((item) =>
+    '<li class="dc-addons__item">' +
+      star +
+      '<span class="dc-addons__item-label">' + item + '</span>' +
+    '</li>'
+  ).join('');
+
+  const root = document.createElement("section");
+  root.id = "deep-cleaning-addons-rebuild-root";
+  root.innerHTML =
+    '<div class="dc-addons">' +
+      '<h2 class="dc-addons__title">Take Your Deep Cleaning <span class="dc-addons__title-accent">Even Further</span></h2>' +
+      '<p class="dc-addons__subtitle">Add these services to any deep cleaning</p>' +
+      '<div class="dc-addons__grid">' +
+        '<div class="dc-addons__group">' +
+          '<h3 class="dc-addons__group-title">Interior Add-Ons:</h3>' +
+          '<ul class="dc-addons__list">' + renderItems(leftItems) + '</ul>' +
+        '</div>' +
+        '<div class="dc-addons__group">' +
+          '<h3 class="dc-addons__group-title">Extra Focus:</h3>' +
+          '<ul class="dc-addons__list">' + renderItems(rightItems) + '</ul>' +
+        '</div>' +
+      '</div>' +
+      '<div class="dc-addons__note">' +
+        star +
+        '<div class="dc-addons__note-box"><div class="dc-addons__note-text">Most add-ons are recommended after your first recurring visit.</div></div>' +
+      '</div>' +
+      '<div class="dc-addons__cta">' +
+        '<a class="dc-addons__button" href="/quote">Start with Deep Cleaning</a>' +
+        '<div class="dc-addons__helper">Recommended before recurring service</div>' +
+      '</div>' +
+    '</div>';
+
+  source.style.display = "none";
+  anchor.parentNode.insertBefore(root, anchor);
 })();
 </script>`;
 
@@ -1573,11 +1506,21 @@ function sanitizeHtml(html, routePath = "/") {
     cleaned = cleaned.replace(/<head>/i, '<head><base href="/" />');
   }
 
-  if (!/id="full-card-click-handler"/.test(cleaned) && /<body[\s>]/i.test(cleaned)) {
-    cleaned = cleaned.replace(
-      /<\/body>/i,
-      `${FULL_CARD_CLICK_SCRIPT}${MOBILE_STICKY_CTA_SCRIPT}${DEEP_CLEANING_MOBILE_FIX}${MOBILE_CONTACT_DETAILS_FIX}${SAFARI_HOME_LAYOUT_FIX}</body>`
-    );
+  if (/<body[\s>]/i.test(cleaned)) {
+    const runtimeScripts = [
+      [FULL_CARD_CLICK_SCRIPT, "full-card-click-handler"],
+      [MOBILE_STICKY_CTA_SCRIPT, "mobile-sticky-cta"],
+      [DEEP_CLEANING_MOBILE_FIX, "deep-cleaning-addons-rebuild"],
+      [MOBILE_CONTACT_DETAILS_FIX, "mobile-contact-details-fix"],
+      [SAFARI_HOME_LAYOUT_FIX, "safari-home-layout-fix"],
+    ]
+      .filter(([, scriptId]) => !cleaned.includes(`id="${scriptId}"`))
+      .map(([script]) => script)
+      .join("");
+
+    if (runtimeScripts) {
+      cleaned = cleaned.replace(/<\/body>/i, `${runtimeScripts}</body>`);
+    }
   }
 
   return cleaned;
