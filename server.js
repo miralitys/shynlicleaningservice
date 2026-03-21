@@ -977,6 +977,50 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 })();
 </script>`;
 
+const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
+(() => {
+  const path = ((window.location && window.location.pathname) || "").replace(/\/+$/, "") || "/";
+  if (path !== "/services/deep-cleaning") return;
+  if (!window.matchMedia("(max-width: 480px)").matches) return;
+
+  const style = document.createElement("style");
+  style.textContent = \`
+    #rec1778752123 .tn-elem[data-elem-id="1768240056057"] {
+      top: 314px !important;
+      left: calc(50% - 160px + 45px) !important;
+      width: 230px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056064"] {
+      top: 309px !important;
+      left: calc(50% - 160px + 10px) !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
+      top: 352px !important;
+      left: calc(50% - 160px + 45px) !important;
+      width: 220px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
+      top: 347px !important;
+      left: calc(50% - 160px + 10px) !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"],
+    #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
+      width: 240px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
+      width: 255px !important;
+      left: calc(50% - 160px + 34px) !important;
+    }
+  \`;
+  document.head.appendChild(style);
+})();
+</script>`;
+
 const MOBILE_CONTACT_DETAILS_FIX = `<script id="mobile-contact-details-fix">
 (() => {
   if (window.__mobileContactDetailsFixBound) return;
@@ -1417,7 +1461,7 @@ function sanitizeHtml(html, routePath = "/") {
   if (!/id="full-card-click-handler"/.test(cleaned) && /<body[\s>]/i.test(cleaned)) {
     cleaned = cleaned.replace(
       /<\/body>/i,
-      `${FULL_CARD_CLICK_SCRIPT}${MOBILE_STICKY_CTA_SCRIPT}${MOBILE_CONTACT_DETAILS_FIX}${SAFARI_HOME_LAYOUT_FIX}</body>`
+      `${FULL_CARD_CLICK_SCRIPT}${MOBILE_STICKY_CTA_SCRIPT}${DEEP_CLEANING_MOBILE_FIX}${MOBILE_CONTACT_DETAILS_FIX}${SAFARI_HOME_LAYOUT_FIX}</body>`
     );
   }
 
