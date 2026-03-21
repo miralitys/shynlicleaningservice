@@ -989,7 +989,7 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     #rec1778752123 .t396__artboard,
     #rec1778752123 .t396__carrier,
     #rec1778752123 .t396__filter {
-      height: 1040px !important;
+      height: 1000px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"],
@@ -1005,56 +1005,56 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 446px !important;
-      left: calc(50% - 240px + 45px) !important;
-      width: 212px !important;
+      top: 431px !important;
+      left: calc(50% - 240px + 35px) !important;
+      width: 222px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 441px !important;
-      left: calc(50% - 240px + 10px) !important;
+      top: 426px !important;
+      left: calc(50% - 240px + 0px) !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      top: 492px !important;
+      top: 490px !important;
       width: 260px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
-      top: 542px !important;
+      top: 536px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
-      top: 537px !important;
+      top: 531px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
-      top: 586px !important;
+      top: 580px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
-      top: 581px !important;
+      top: 575px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
-      top: 630px !important;
+      top: 624px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
-      top: 625px !important;
+      top: 619px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
-      top: 738px !important;
+      top: 712px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
-      top: 760px !important;
+      top: 734px !important;
       height: 110px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      top: 782px !important;
+      top: 756px !important;
       left: calc(50% - 240px + 38px) !important;
       width: 404px !important;
     }
@@ -1062,7 +1062,7 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     #rec1778752123 .t396__artboard,
     #rec1778752123 .t396__carrier,
     #rec1778752123 .t396__filter {
-      height: 1005px !important;
+      height: 965px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"],
@@ -1078,56 +1078,56 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 399px !important;
-      left: calc(50% - 160px + 45px) !important;
-      width: 212px !important;
+      top: 371px !important;
+      left: calc(50% - 160px + 35px) !important;
+      width: 222px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 394px !important;
-      left: calc(50% - 160px + 10px) !important;
+      top: 366px !important;
+      left: calc(50% - 160px + 0px) !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      top: 446px !important;
+      top: 426px !important;
       width: 240px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
-      top: 491px !important;
+      top: 471px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
-      top: 486px !important;
+      top: 466px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
-      top: 535px !important;
+      top: 515px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
-      top: 530px !important;
+      top: 510px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
-      top: 579px !important;
+      top: 559px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
-      top: 574px !important;
+      top: 554px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
-      top: 688px !important;
+      top: 656px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
-      top: 710px !important;
+      top: 678px !important;
       height: 122px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      top: 732px !important;
+      top: 700px !important;
       left: calc(50% - 160px + 38px) !important;
       width: 254px !important;
     }
