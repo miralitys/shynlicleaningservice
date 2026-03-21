@@ -982,39 +982,130 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-mobile-fix">
   const path = ((window.location && window.location.pathname) || "").replace(/\/+$/, "") || "/";
   if (path !== "/services/deep-cleaning") return;
   if (!window.matchMedia("(max-width: 480px)").matches) return;
+  const isWidePhone = window.innerWidth > 360;
 
   const style = document.createElement("style");
-  style.textContent = \`
-    #rec1778752123 .tn-elem[data-elem-id="1768240056057"] {
-      top: 314px !important;
-      left: calc(50% - 160px + 45px) !important;
-      width: 230px !important;
-    }
-
-    #rec1778752123 .tn-elem[data-elem-id="1768240056064"] {
-      top: 309px !important;
-      left: calc(50% - 160px + 10px) !important;
+  style.textContent = isWidePhone ? \`
+    #rec1778752123 .t396__artboard,
+    #rec1778752123 .t396__carrier,
+    #rec1778752123 .t396__filter {
+      height: 980px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
-      top: 346px !important;
-      left: calc(50% - 160px + 45px) !important;
-      width: 220px !important;
+      top: 423px !important;
+      left: calc(50% - 240px + 45px) !important;
+      width: 212px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
-      top: 341px !important;
-      left: calc(50% - 160px + 10px) !important;
+      top: 418px !important;
+      left: calc(50% - 240px + 10px) !important;
     }
 
-    #rec1778752123 .tn-elem[data-elem-id="1768311103133000001"],
     #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
-      width: 240px !important;
+      top: 456px !important;
+      width: 260px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
+      top: 502px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
+      top: 497px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
+      top: 546px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
+      top: 541px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
+      top: 590px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
+      top: 585px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
+      top: 678px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
+      top: 700px !important;
+      height: 110px !important;
     }
 
     #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
-      width: 255px !important;
-      left: calc(50% - 160px + 34px) !important;
+      top: 722px !important;
+      left: calc(50% - 240px + 38px) !important;
+      width: 404px !important;
+    }
+  \` : \`
+    #rec1778752123 .t396__artboard,
+    #rec1778752123 .t396__carrier,
+    #rec1778752123 .t396__filter {
+      height: 955px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768876310511000001"] {
+      top: 376px !important;
+      left: calc(50% - 160px + 45px) !important;
+      width: 212px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768876315853000002"] {
+      top: 371px !important;
+      left: calc(50% - 160px + 10px) !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056120"] {
+      top: 410px !important;
+      width: 240px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056075"] {
+      top: 455px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056080"] {
+      top: 450px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056083"] {
+      top: 499px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056087"] {
+      top: 494px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056089"] {
+      top: 543px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056093"] {
+      top: 538px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056143"] {
+      top: 628px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056133"] {
+      top: 650px !important;
+      height: 122px !important;
+    }
+
+    #rec1778752123 .tn-elem[data-elem-id="1768240056136"] {
+      top: 672px !important;
+      left: calc(50% - 160px + 38px) !important;
+      width: 254px !important;
     }
   \`;
   document.head.appendChild(style);
