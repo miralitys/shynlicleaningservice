@@ -1547,8 +1547,8 @@
                 </a> <a href="#" id="addToAppleCalendarBtn" class="btn btn-calendar btn-apple" download="cleaning-appointment.ics"> <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;"> <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/> </svg>
                     Apple Calendar
                 </a> </div> </div> </div> </div> </div> <!-- nominify end --> </div> </div> </div> </div> <div id="rec1812677593" class="r t-rec" style=" " data-animationappear="off" data-record-type="131"> <!-- T123 --> <div class="t123"> <div class="t-container_100 "> <div class="t-width t-width_100 "> <!-- nominify begin --> <script>
-    // Google Places API ключ
-    const GOOGLE_PLACES_API_KEY = 'AIzaSyDyWkkTl2dov2AbEBcEg1RCZi1lh9o8rDI';
+    // Google Places browser key is injected at runtime from server config.
+    const GOOGLE_PLACES_API_KEY = (window.__shynliRuntimeConfig && window.__shynliRuntimeConfig.googlePlacesApiKey) || 'YOUR_GOOGLE_API_KEY_HERE';
     
     window.__quoteAutocompleteInitPending = false;
     window.__quoteGooglePlacesReady = function() {
@@ -1595,15 +1595,7 @@
         });
     }
 </script> <script>
-    const GHL_CONFIG = {
-        apiKey: 'pit-98e2f804-1252-4a5e-b54c-a5a899ace19e',
-        locationId: 'H3JoUqRWLxub6eauiC3S',
-        pipelineId: 'S5mJVrsIBSMKe3PbgK7O',
-        pipelineStageId: 'YOUR_PIPELINE_STAGE_ID_HERE',
-        pipelineName: 'Pipelines Main',
-        pipelineStageName: 'New Lead',
-        apiUrl: 'https://services.leadconnectorhq.com'
-    };
+    const QUOTE_SUBMISSION_ENDPOINT = '/api/quote/submit';
 
     const PRICING = {
         regular: {
@@ -1624,7 +1616,7 @@
             includedServices: ['baseboardCleaning', 'doorsCleaning']
         },
         moving: {
-            basePrice: 215,
+            basePrice: 150,
             roomPrice: 12,
             bathroomPrice: 23,
             includedServices: ['ovenCleaning', 'refrigeratorCleaning', 'baseboardCleaning', 'doorsCleaning']
@@ -1676,38 +1668,25 @@
 
     function setPayNowLoading(isLoading) {
         if (!payNowBtn) return;
-        payNowBtn.disabled = isLoading || !latestCheckoutData || !(latestCheckoutData.calculatorData && latestCheckoutData.calculatorData.totalPrice > 0);
+        payNowBtn.disabled = isLoading || !latestCheckoutData || !latestCheckoutData.quoteToken || !(latestCheckoutData.calculatorData && latestCheckoutData.calculatorData.totalPrice > 0);
         payNowBtn.textContent = isLoading ? 'Redirecting...' : 'Pay Now';
     }
 
     function buildStripeCheckoutPayload() {
-        if (!latestCheckoutData || !latestCheckoutData.calculatorData) return null;
-        const calculatorData = latestCheckoutData.calculatorData;
-        const serviceTypeNames = {
-            'regular': 'Regular Cleaning',
-            'deep': 'Deep Cleaning',
-            'moving': 'Move In/Move Out Clean'
-        };
+        if (!latestCheckoutData || !latestCheckoutData.calculatorData || !latestCheckoutData.quoteToken) return null;
         return {
-            amount: calculatorData.totalPrice || 0,
-            serviceType: calculatorData.serviceType || 'regular',
-            serviceName: serviceTypeNames[calculatorData.serviceType] || 'Cleaning Service',
-            selectedDate: calculatorData.selectedDate || '',
-            selectedTime: calculatorData.selectedTime || '',
-            fullAddress: calculatorData.fullAddress || calculatorData.address || '',
-            customerName: (latestCheckoutData.contactData && latestCheckoutData.contactData.fullName) || '',
-            customerPhone: (latestCheckoutData.contactData && latestCheckoutData.contactData.phone) || ''
+            quoteToken: latestCheckoutData.quoteToken
         };
     }
 
     async function startStripeCheckout() {
-        if (!latestCheckoutData || !latestCheckoutData.calculatorData) {
+        if (!latestCheckoutData || !latestCheckoutData.calculatorData || !latestCheckoutData.quoteToken) {
             alert('Please submit the request form first.');
             return;
         }
         const payload = buildStripeCheckoutPayload();
-        if (!payload || !payload.amount || payload.amount <= 0) {
-            alert('Unable to start payment: invalid amount.');
+        if (!payload || !payload.quoteToken) {
+            alert('Unable to start payment right now. Please resubmit the quote.');
             return;
         }
 
@@ -1772,7 +1751,7 @@
             summaryTotal.textContent = '$' + (calculatorData.totalPrice || 0).toLocaleString('en-US');
         }
         if (payNowBtn) {
-            payNowBtn.disabled = !(calculatorData.totalPrice > 0);
+            payNowBtn.disabled = !(calculatorData.totalPrice > 0) || !latestCheckoutData || !latestCheckoutData.quoteToken;
             payNowBtn.textContent = `Pay Now ($${(calculatorData.totalPrice || 0).toLocaleString('en-US')})`;
         }
         if (addToCalendarBtn && calculatorData.selectedDate && calculatorData.selectedTime) {
@@ -1905,12 +1884,6 @@ END:VCALENDAR`;
                 calculatorSection.style.display = 'block';
                 if (totalSection) totalSection.style.display = 'block';
                 setTimeout(() => initServiceCarousel(), 100);
-                const nameParts = fullName.split(' ');
-                submitContactToGHL({
-                    firstName: nameParts[0] || fullName,
-                    lastName: nameParts.slice(1).join(' ') || '',
-                    phone: phoneValue
-                }).catch(err => console.error('Error submitting contact:', err));
             } else {
                 if (totalSection) totalSection.style.display = 'block';
             }
@@ -1975,12 +1948,25 @@ END:VCALENDAR`;
                         if (frequencySelect) frequencySelect.value = 'biweekly';
                     }
                 }
+                applyIncludedServiceDefaults(serviceType);
                 calculateTotal();
             });
         });
         if (frequencySelect) {
             frequencySelect.addEventListener('change', calculateTotal);
         }
+    }
+
+    function applyIncludedServiceDefaults(serviceType) {
+        const includedServices = (PRICING[serviceType] && PRICING[serviceType].includedServices) || [];
+        document.querySelectorAll('input[name="services"]').forEach(checkbox => {
+            checkbox.checked = false;
+            checkbox.disabled = false;
+        });
+        includedServices.forEach(serviceValue => {
+            const checkbox = document.querySelector(`input[name="services"][value="${serviceValue}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
     }
 
     function parseBathroomCount(value, fallback = 0) {
@@ -2079,16 +2065,13 @@ END:VCALENDAR`;
             const priceElement = item.querySelector('.service-price');
             if (checkbox && priceElement) {
                 const serviceValue = checkbox.value;
+                checkbox.disabled = false;
                 if (includedServices.includes(serviceValue)) {
                     priceElement.textContent = 'Included';
                     priceElement.classList.add('included');
-                    checkbox.checked = true;
-                    checkbox.disabled = true;
                 } else if (PRICING.services[serviceValue]) {
                     priceElement.textContent = '+$' + PRICING.services[serviceValue];
                     priceElement.classList.remove('included');
-                    if (checkbox.disabled) checkbox.checked = false;
-                    checkbox.disabled = false;
                 }
             }
         });
@@ -2170,503 +2153,25 @@ END:VCALENDAR`;
         }
     }
 
-    function isAPIConfigured() {
-        return GHL_CONFIG.apiKey && GHL_CONFIG.apiKey !== 'YOUR_API_KEY_HERE' && GHL_CONFIG.locationId && GHL_CONFIG.locationId !== 'YOUR_LOCATION_ID_HERE';
-    }
-
-    async function submitContactToGHL(data) {
-        if (!isAPIConfigured()) return { success: true, message: 'API not configured' };
-        try {
-            const phoneDigits = data.phone.replace(/\D/g, '');
-            const contactPayload = {
-                firstName: data.firstName,
-                lastName: data.lastName || '',
-                phone: phoneDigits,
-                ...(data.email && data.email.trim() ? { email: data.email } : {}),
-                source: 'Website Calculator',
-                tags: ['Calculator', 'Website Request']
-            };
-            const response = await fetch(`${GHL_CONFIG.apiUrl}/contacts/`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' },
-                body: JSON.stringify({ ...contactPayload, locationId: GHL_CONFIG.locationId })
-            });
-            if (!response.ok) {
-                let errorData; try { errorData = await response.json(); } catch (e) { errorData = await response.text(); }
-                if (response.status === 400 && errorData.message && (errorData.message.includes('duplicated') || errorData.message.includes('duplicate'))) {
-                    const searchResponse = await fetch(`${GHL_CONFIG.apiUrl}/contacts/?phone=${encodeURIComponent(phoneDigits)}&locationId=${encodeURIComponent(GHL_CONFIG.locationId)}`, {
-                        method: 'GET',
-                        headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' }
-                    });
-                    if (searchResponse.ok) {
-                        const searchData = await searchResponse.json();
-                        if (searchData.contacts && searchData.contacts.length > 0) {
-                            const updateResponse = await fetch(`${GHL_CONFIG.apiUrl}/contacts/${searchData.contacts[0].id}`, {
-                                method: 'PUT',
-                                headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' },
-                                body: JSON.stringify(contactPayload)
-                            });
-                            if (updateResponse.ok) return await updateResponse.json();
-                        }
-                    }
-                }
-                return { success: false, message: 'API error' };
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('Ошибка при отправке контакта:', error);
-            return { success: false, message: error.message };
-        }
-    }
-
-    async function getLocationId() {
-        if (GHL_CONFIG.locationId && GHL_CONFIG.locationId !== 'YOUR_LOCATION_ID_HERE') return GHL_CONFIG.locationId;
-        if (!isAPIConfigured()) return null;
-        try {
-            const response = await fetch(`${GHL_CONFIG.apiUrl}/locations/`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                if (data.locations && data.locations.length > 0) return data.locations[0].id;
-            }
-            return null;
-        } catch (error) { console.error('Ошибка при получении Location ID:', error); return null; }
-    }
-
-    async function findContactByPhone(phone) {
-        if (!isAPIConfigured()) return null;
-        try {
-            const phoneDigits = phone.replace(/\D/g, '');
-            const locationId = await getLocationId() || GHL_CONFIG.locationId;
-            if (!locationId) return null;
-            const listResponse = await fetch(`${GHL_CONFIG.apiUrl}/contacts/?locationId=${encodeURIComponent(locationId)}&limit=100`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' }
-            });
-            if (listResponse.ok) {
-                const listData = await listResponse.json();
-                const allContacts = listData.contacts || listData.data || (Array.isArray(listData) ? listData : []);
-                const foundContact = allContacts.find(contact => {
-                    const contactPhone = (contact.phone || '').replace(/\D/g, '');
-                    return contactPhone === phoneDigits || contactPhone.endsWith(phoneDigits) || phoneDigits.endsWith(contactPhone);
-                });
-                if (foundContact) return foundContact.id || foundContact.contactId || foundContact._id;
-            }
-            return null;
-        } catch (error) { console.error('Ошибка при поиске контакта:', error); return null; }
-    }
-
-    async function getCustomFieldIds(locationId) {
-        const endpoints = [
-            `${GHL_CONFIG.apiUrl}/locations/${locationId}/customFields`,
-            `${GHL_CONFIG.apiUrl}/locations/${locationId}/customFields/`,
-            `${GHL_CONFIG.apiUrl}/customFields/?locationId=${locationId}`,
-            `${GHL_CONFIG.apiUrl}/locations/${locationId}/objects/contact/custom-fields`
-        ];
-        for (const endpoint of endpoints) {
+    async function submitQuoteToBackend(submissionPayload) {
+        const response = await fetch(QUOTE_SUBMISSION_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submissionPayload)
+        });
+        const responseText = await response.text();
+        let responseData = {};
+        if (responseText) {
             try {
-                const response = await fetch(endpoint, {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    const fields = data.customFields || data.fields || data.data || data || [];
-                    const fieldMap = {};
-                    (Array.isArray(fields) ? fields : []).forEach(field => {
-                        if (!field.objectType || field.objectType === 'contact' || field.objectType === 'Contact') {
-                            const key = field.name || field.key || field.fieldKey || field.uniqueKey || field.fieldName;
-                            const fieldId = field.id || field.fieldId || field.customFieldId;
-                            if (key && fieldId) {
-                                const normalizedKey = key.replace(/^contact\./i, '').toLowerCase();
-                                fieldMap[normalizedKey] = fieldId;
-                                fieldMap[`contact.${normalizedKey}`] = fieldId;
-                                fieldMap[key] = fieldId;
-                                fieldMap[key.toLowerCase()] = fieldId;
-                            }
-                        }
-                    });
-                    return Object.keys(fieldMap).length > 0 ? fieldMap : null;
-                }
-            } catch (err) {}
-        }
-        return null;
-    }
-
-    function normalizeText(value) {
-        return String(value || '').trim().toLowerCase();
-    }
-
-    function getConfiguredValue(value, placeholderPrefix) {
-        if (!value || typeof value !== 'string') return '';
-        const trimmed = value.trim();
-        if (!trimmed) return '';
-        if (placeholderPrefix && trimmed.startsWith(placeholderPrefix)) return '';
-        return trimmed;
-    }
-
-    function extractPipelinesFromResponse(data) {
-        const pipelines = [];
-        const queue = [data];
-        const seen = new Set();
-
-        while (queue.length > 0) {
-            const current = queue.shift();
-            if (!current || typeof current !== 'object' || seen.has(current)) continue;
-            seen.add(current);
-
-            if (Array.isArray(current)) {
-                current.forEach(item => queue.push(item));
-                continue;
-            }
-
-            const pipelineId = current.id || current._id || current.pipelineId;
-            const pipelineName = current.name || current.pipelineName || current.title || current.label;
-            const hasStages = Array.isArray(current.stages) || Array.isArray(current.pipelineStages) || Array.isArray(current.stageList);
-            if (pipelineId && pipelineName && hasStages) pipelines.push(current);
-
-            Object.values(current).forEach(value => {
-                if (value && typeof value === 'object') queue.push(value);
-            });
-        }
-
-        return pipelines;
-    }
-
-    function extractStagesFromPipeline(pipeline) {
-        const candidates = [pipeline && pipeline.stages, pipeline && pipeline.pipelineStages, pipeline && pipeline.stageList];
-        for (const list of candidates) {
-            if (!Array.isArray(list) || list.length === 0) continue;
-            const stages = list
-                .map(stage => ({
-                    id: stage.id || stage._id || stage.stageId || stage.pipelineStageId,
-                    name: stage.name || stage.stageName || stage.title || stage.label
-                }))
-                .filter(stage => stage.id || stage.name);
-            if (stages.length > 0) return stages;
-        }
-        return [];
-    }
-
-    function findStageIdByName(stages, stageName) {
-        if (!Array.isArray(stages) || stages.length === 0) return '';
-        const normalizedStageName = normalizeText(stageName);
-        if (!normalizedStageName) return stages[0].id || '';
-        const exact = stages.find(stage => normalizeText(stage.name) === normalizedStageName);
-        if (exact && exact.id) return exact.id;
-        const partial = stages.find(stage => normalizeText(stage.name).includes(normalizedStageName));
-        if (partial && partial.id) return partial.id;
-        return stages[0].id || '';
-    }
-
-    async function getPipelineAndStageIds(locationId) {
-        const configuredPipelineId = getConfiguredValue(GHL_CONFIG.pipelineId, 'YOUR_');
-        const configuredStageId = getConfiguredValue(GHL_CONFIG.pipelineStageId, 'YOUR_');
-        if (configuredPipelineId && configuredStageId) {
-            return { pipelineId: configuredPipelineId, pipelineStageId: configuredStageId };
-        }
-
-        const headers = {
-            'Authorization': `Bearer ${GHL_CONFIG.apiKey}`,
-            'Content-Type': 'application/json',
-            'Version': '2021-07-28'
-        };
-        const targetPipelineName = GHL_CONFIG.pipelineName || 'Pipelines Main';
-        const targetStageName = GHL_CONFIG.pipelineStageName || 'New Lead';
-        const query = `locationId=${encodeURIComponent(locationId)}`;
-        const endpoints = [
-            `${GHL_CONFIG.apiUrl}/opportunities/pipelines?${query}`,
-            `${GHL_CONFIG.apiUrl}/opportunities/pipelines/?${query}`,
-            `${GHL_CONFIG.apiUrl}/pipelines?${query}`,
-            `${GHL_CONFIG.apiUrl}/pipelines/?${query}`
-        ];
-
-        let pipelines = [];
-        for (const endpoint of endpoints) {
-            try {
-                const response = await fetch(endpoint, { method: 'GET', headers });
-                if (!response.ok) continue;
-                const data = await response.json();
-                const extracted = extractPipelinesFromResponse(data);
-                if (extracted.length > 0) {
-                    pipelines = extracted;
-                    break;
-                }
-            } catch (error) {}
-        }
-
-        let selectedPipeline = null;
-        if (configuredPipelineId) {
-            selectedPipeline = pipelines.find(p => (p.id || p._id || p.pipelineId) === configuredPipelineId) || null;
-        }
-        if (!selectedPipeline && pipelines.length > 0) {
-            const normalizedTargetName = normalizeText(targetPipelineName);
-            selectedPipeline =
-                pipelines.find(p => normalizeText(p.name || p.pipelineName || p.title || p.label) === normalizedTargetName) ||
-                pipelines.find(p => normalizeText(p.name || p.pipelineName || p.title || p.label).includes(normalizedTargetName)) ||
-                pipelines[0];
-        }
-
-        const pipelineId = configuredPipelineId || (selectedPipeline && (selectedPipeline.id || selectedPipeline._id || selectedPipeline.pipelineId)) || '';
-        if (!pipelineId) return null;
-
-        let stages = selectedPipeline ? extractStagesFromPipeline(selectedPipeline) : [];
-        if (!stages.length) {
-            const detailsEndpoints = [
-                `${GHL_CONFIG.apiUrl}/opportunities/pipelines/${encodeURIComponent(pipelineId)}?${query}`,
-                `${GHL_CONFIG.apiUrl}/opportunities/pipelines/${encodeURIComponent(pipelineId)}`,
-                `${GHL_CONFIG.apiUrl}/pipelines/${encodeURIComponent(pipelineId)}?${query}`,
-                `${GHL_CONFIG.apiUrl}/pipelines/${encodeURIComponent(pipelineId)}`
-            ];
-            for (const endpoint of detailsEndpoints) {
-                try {
-                    const response = await fetch(endpoint, { method: 'GET', headers });
-                    if (!response.ok) continue;
-                    const data = await response.json();
-                    const extractedPipelines = extractPipelinesFromResponse(data);
-                    if (extractedPipelines.length > 0) {
-                        stages = extractStagesFromPipeline(extractedPipelines[0]);
-                    } else {
-                        stages = extractStagesFromPipeline(data);
-                    }
-                    if (stages.length > 0) break;
-                } catch (error) {}
+                responseData = JSON.parse(responseText);
+            } catch (error) {
+                responseData = { message: responseText };
             }
         }
-
-        const pipelineStageId = configuredStageId || findStageIdByName(stages, targetStageName);
-        if (!pipelineStageId) return { pipelineId, pipelineStageId: '' };
-        return { pipelineId, pipelineStageId };
-    }
-
-    async function createOpportunityForContact(contactId, contactData, calculatorData, locationId) {
-        if (!contactId || !isAPIConfigured()) return { success: false, skipped: true, message: 'Missing contact id' };
-        try {
-            const pipelineConfig = await getPipelineAndStageIds(locationId);
-            if (!pipelineConfig || !pipelineConfig.pipelineId || !pipelineConfig.pipelineStageId) {
-                console.warn('Pipeline/stage не найдены, opportunity не создана');
-                return { success: false, skipped: true, message: 'Pipeline or stage not found' };
-            }
-
-            const total = Number(calculatorData.totalPrice);
-            const monetaryValue = Number.isFinite(total) ? Math.max(0, Math.round(total)) : 0;
-            const opportunityName = [
-                'Website Quote',
-                contactData.fullName || '',
-                calculatorData.serviceType ? `(${calculatorData.serviceType})` : ''
-            ].filter(Boolean).join(' ').trim();
-
-            const payloadBase = {
-                locationId,
-                contactId,
-                pipelineId: pipelineConfig.pipelineId,
-                name: opportunityName || `Website Quote - ${contactId}`,
-                monetaryValue,
-                source: 'Website Calculator'
-            };
-            const payloadVariants = [
-                { ...payloadBase, pipelineStageId: pipelineConfig.pipelineStageId, status: 'open' },
-                { ...payloadBase, stageId: pipelineConfig.pipelineStageId, status: 'open' },
-                { ...payloadBase, pipelineStageId: pipelineConfig.pipelineStageId, status: 'Open' }
-            ];
-            const endpoints = [
-                `${GHL_CONFIG.apiUrl}/opportunities/`,
-                `${GHL_CONFIG.apiUrl}/opportunities`,
-                `${GHL_CONFIG.apiUrl}/pipelines/${encodeURIComponent(pipelineConfig.pipelineId)}/opportunities/`,
-                `${GHL_CONFIG.apiUrl}/pipelines/${encodeURIComponent(pipelineConfig.pipelineId)}/opportunities`
-            ];
-            const headers = {
-                'Authorization': `Bearer ${GHL_CONFIG.apiKey}`,
-                'Content-Type': 'application/json',
-                'Version': '2021-07-28'
-            };
-
-            for (const endpoint of endpoints) {
-                for (const payload of payloadVariants) {
-                    try {
-                        const response = await fetch(endpoint, {
-                            method: 'POST',
-                            headers,
-                            body: JSON.stringify(payload)
-                        });
-                        if (response.ok) return await response.json();
-                    } catch (error) {}
-                }
-            }
-
-            return { success: false, message: 'Failed to create opportunity' };
-        } catch (error) {
-            console.error('Ошибка createOpportunityForContact:', error);
-            return { success: false, message: error.message };
+        if (!response.ok || responseData.success === false) {
+            throw new Error(responseData.error || responseData.message || 'Unable to submit your request right now.');
         }
-    }
-
-    async function createNoteForContact(contactId, contactData, calculatorData) {
-        if (!contactId || !isAPIConfigured()) return;
-        try {
-            const noteLines = [];
-            noteLines.push('NEW WEBSITE REQUEST');
-            noteLines.push('═══════════════════════════════════════');
-            noteLines.push('CONTACT: ' + (contactData.fullName || '') + ', ' + (contactData.phone || ''));
-            noteLines.push('Bedrooms: ' + (calculatorData.rooms || ''));
-            noteLines.push('Bathrooms: ' + (calculatorData.bathrooms || ''));
-            noteLines.push('Home Size: ' + (calculatorData.squareMeters ? calculatorData.squareMeters + ' sq ft' : ''));
-            noteLines.push('Service Type: ' + (calculatorData.serviceType || ''));
-            if (calculatorData.serviceType === 'regular' && calculatorData.frequency) {
-                noteLines.push('Frequency: ' + (calculatorData.frequency || ''));
-            }
-            if (calculatorData.services && calculatorData.services.length > 0) noteLines.push('Additional: ' + calculatorData.services.join(', '));
-            if (calculatorData.quantityServices) {
-                const q = calculatorData.quantityServices;
-                if ((q.interiorWindowsCleaning || 0) + (q.blindsCleaning || 0) + (q.bedLinenChange || 0) > 0) {
-                    noteLines.push('Quantity: Windows ' + (q.interiorWindowsCleaning || 0) + ' x $6, Blinds ' + (q.blindsCleaning || 0) + ' x $8, Bed Linen ' + (q.bedLinenChange || 0) + ' x $8');
-                }
-            }
-            if (calculatorData.address) noteLines.push('Address: ' + calculatorData.address);
-            if (calculatorData.selectedDate || calculatorData.selectedTime) noteLines.push('Booking: ' + (calculatorData.selectedDate || '') + ' ' + (calculatorData.selectedTime || ''));
-            noteLines.push('Total: $' + (calculatorData.totalPrice || 0));
-            const noteText = noteLines.join('\n');
-            const noteEndpoints = [
-                { url: `${GHL_CONFIG.apiUrl}/contacts/${contactId}/notes`, payload: { body: noteText } },
-                { url: `${GHL_CONFIG.apiUrl}/contacts/${contactId}/notes/`, payload: { body: noteText } },
-                { url: `${GHL_CONFIG.apiUrl}/notes/`, payload: { contactId, body: noteText } }
-            ];
-            for (const ep of noteEndpoints) {
-                try {
-                    const r = await fetch(ep.url, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' },
-                        body: JSON.stringify(ep.payload)
-                    });
-                    if (r.ok) break;
-                } catch (e) {}
-            }
-        } catch (e) { console.error('Ошибка createNote:', e); }
-    }
-
-    async function submitCalculatorToGHL(contactData, calculatorData) {
-        if (!isAPIConfigured()) {
-            console.log('API не настроен');
-            return { success: true, message: 'API not configured' };
-        }
-        try {
-            const nameParts = contactData.fullName.split(' ');
-            const firstName = nameParts[0] || contactData.fullName;
-            const lastName = nameParts.slice(1).join(' ') || '';
-            const phoneDigits = contactData.phone.replace(/\D/g, '');
-            const serviceNames = {
-                'ovenCleaning': 'Oven Cleaning', 'refrigeratorCleaning': 'Inside Refrigerator Cleaning',
-                'baseboardCleaning': 'Baseboard Cleaning', 'doorsCleaning': 'Doors Cleaning',
-                'insideCabinets': 'Inside Cabinets', 'rangeHood': 'Range hood', 'furniturePolishing': 'Wood Furniture Polishing'
-            };
-            const selectedServicesText = calculatorData.services && calculatorData.services.length > 0
-                ? calculatorData.services.map(s => serviceNames[s] || s).join(', ') : 'None';
-            const locationId = await getLocationId() || GHL_CONFIG.locationId;
-            const fieldMap = await getCustomFieldIds(locationId);
-            const customFields = [];
-            const addField = (key, value, allowEmpty = false) => {
-                if (!allowEmpty && (value === null || value === undefined || value === '')) return;
-                const stringValue = value.toString();
-                const fieldId = fieldMap ? (fieldMap[key] || fieldMap[key.toLowerCase()] || fieldMap[key.replace(/^contact\./i, '')]) : null;
-                if (fieldId) customFields.push({ id: fieldId, field_value: stringValue });
-                else customFields.push({ key: key.replace(/^contact\./i, ''), field_value: stringValue });
-            };
-            addField('contact.fullname', contactData.fullName);
-            addField('contact.rooms', calculatorData.rooms || '1');
-            addField('contact.bathrooms', calculatorData.bathrooms);
-            addField('contact.squaremeters', calculatorData.squareMeters);
-            addField('contact.has_pets', { 'no': 'No', 'cat': 'Cat', 'dog': 'Dog' }[calculatorData.hasPets] || 'No');
-            addField('contact.basement_cleaning', calculatorData.basementCleaning === 'yes' ? 'Yes, Please!' : 'No');
-            addField('contact.service_type', calculatorData.serviceType || 'regular');
-            if (calculatorData.serviceType === 'regular') addField('contact.frequency', { 'weekly': 'Every Week', 'biweekly': 'Every Two Weeks', 'monthly': 'Monthly' }[calculatorData.frequency] || calculatorData.frequency);
-            addField('contact.additional_services', selectedServicesText);
-            if (calculatorData.quantityServices) {
-                addField('contact.interior_windows_cleaning', (calculatorData.quantityServices.interiorWindowsCleaning || 0).toString(), true);
-                addField('contact.blinds_cleaning', (calculatorData.quantityServices.blindsCleaning || 0).toString(), true);
-                addField('contact.bed_linen_change', (calculatorData.quantityServices.bedLinenChange || 0).toString(), true);
-            }
-            addField('contact.additional_details', calculatorData.additionalDetails || '', true);
-            addField('contact.marketing_consent', calculatorData.consent || 'No');
-            addField('contact.total_price', calculatorData.totalPrice);
-            if (calculatorData.address) addField('contact.address1', calculatorData.fullAddress || calculatorData.address);
-            if (calculatorData.city) addField('contact.city', calculatorData.city);
-            if (calculatorData.state) addField('contact.state', calculatorData.state);
-            if (calculatorData.zipCode) addField('contact.postal_code', calculatorData.zipCode);
-            if (calculatorData.selectedDate) addField('contact.booking_date', calculatorData.selectedDate);
-            if (calculatorData.selectedTime) addField('contact.booking_time', calculatorData.selectedTime);
-
-            const calculatorPayload = {
-                firstName, lastName, phone: phoneDigits, locationId, customFields,
-                source: 'Website Calculator', tags: ['Calculator', 'Price Calculation', 'Booking', 'Website']
-            };
-            if (calculatorData.address) calculatorPayload.address1 = calculatorData.fullAddress || calculatorData.address;
-            if (calculatorData.city) calculatorPayload.city = calculatorData.city;
-            if (calculatorData.state) calculatorPayload.state = calculatorData.state;
-            if (calculatorData.zipCode) calculatorPayload.postalCode = calculatorData.zipCode;
-
-            let existingContactId = await findContactByPhone(phoneDigits);
-            let result;
-
-            if (existingContactId) {
-                const updatePayload = { ...calculatorPayload }; delete updatePayload.locationId;
-                const updateResponse = await fetch(`${GHL_CONFIG.apiUrl}/contacts/${existingContactId}`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' },
-                    body: JSON.stringify(updatePayload)
-                });
-                if (updateResponse.ok) result = await updateResponse.json();
-                else existingContactId = null;
-            }
-
-            if (!existingContactId) {
-                const createResponse = await fetch(`${GHL_CONFIG.apiUrl}/contacts/`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' },
-                    body: JSON.stringify(calculatorPayload)
-                });
-                if (createResponse.ok) result = await createResponse.json();
-                else {
-                    let err; try { err = await createResponse.json(); } catch (e) { err = await createResponse.text(); }
-                    if (createResponse.status === 400 && err.message && (err.message.includes('duplicate'))) {
-                        const retry = await findContactByPhone(phoneDigits);
-                        if (retry) {
-                            const up = { ...calculatorPayload }; delete up.locationId;
-                            const ur = await fetch(`${GHL_CONFIG.apiUrl}/contacts/${retry}`, {
-                                method: 'PUT',
-                                headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' },
-                                body: JSON.stringify(up)
-                            });
-                            if (ur.ok) result = await ur.json();
-                        }
-                    }
-                    if (!result) return { success: false, message: 'API error', error: err };
-                }
-            }
-
-            const contactId = (result && result.contact && result.contact.id) || existingContactId;
-            if (contactId) {
-                const customFieldsForPut = customFields.map(f => {
-                    if (f.id) return { id: f.id, value: f.field_value };
-                    const fid = fieldMap ? (fieldMap[f.key] || fieldMap[f.key.toLowerCase()]) : null;
-                    return fid ? { id: fid, value: f.field_value } : { key: f.key, value: f.field_value };
-                });
-                try {
-                    await fetch(`${GHL_CONFIG.apiUrl}/contacts/${contactId}`, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `Bearer ${GHL_CONFIG.apiKey}`, 'Content-Type': 'application/json', 'Version': '2021-07-28' },
-                        body: JSON.stringify({ customFields: customFieldsForPut })
-                    });
-                } catch (e) {}
-                await createNoteForContact(contactId, contactData, calculatorData);
-                await createOpportunityForContact(contactId, contactData, calculatorData, locationId);
-            }
-            return result;
-        } catch (error) {
-            console.error('Ошибка submitCalculator:', error);
-            return { success: false, message: error.message };
-        }
+        return responseData;
     }
 
     document.getElementById('fullName').addEventListener('input', () => checkPhoneAndShowCalculator(document.getElementById('phone').value));
@@ -2832,13 +2337,44 @@ END:VCALENDAR`;
             address: completeAddress, fullAddress, addressLine2, city, state, zipCode
         };
         contactData = { fullName: document.getElementById('fullName').value, phone: document.getElementById('phone').value };
-        latestCheckoutData = { contactData, calculatorData };
+        latestCheckoutData = null;
         try {
-            await submitCalculatorToGHL(contactData, calculatorData);
-        } catch (err) { console.error(err); }
+            const submissionResult = await submitQuoteToBackend({
+                source: 'quote',
+                consent: true,
+                contact: contactData,
+                quote: calculatorData,
+                fullName: contactData.fullName || '',
+                phone: contactData.phone || '',
+                serviceType: calculatorData.serviceType || 'regular',
+                totalPrice: calculatorData.totalPrice || 0,
+                selectedDate: calculatorData.selectedDate || '',
+                selectedTime: calculatorData.selectedTime || '',
+                fullAddress: calculatorData.fullAddress || calculatorData.address || '',
+                submittedAt: new Date().toISOString()
+            });
+            const canonicalTotal = submissionResult && submissionResult.pricing && typeof submissionResult.pricing.totalPrice === 'number'
+                ? submissionResult.pricing.totalPrice
+                : calculatorData.totalPrice;
+            latestCheckoutData = {
+                contactData,
+                calculatorData: {
+                    ...calculatorData,
+                    totalPrice: canonicalTotal
+                },
+                quoteToken: (submissionResult && submissionResult.quoteToken) || ''
+            };
+        } catch (err) {
+            console.error(err);
+            alert('We could not send your request right now. Please try again.');
+            submitBtn.disabled = false;
+            btnText.style.display = 'inline-block';
+            btnLoader.style.display = 'none';
+            return;
+        }
         dateTimeSection.style.display = 'none';
         successMessage.style.display = 'block';
-        updateOrderSummary(calculatorData);
+        updateOrderSummary(latestCheckoutData ? latestCheckoutData.calculatorData : calculatorData);
         successMessage.scrollIntoView({ behavior: 'smooth', block: 'start' });
         submitBtn.disabled = false;
         btnText.style.display = 'inline-block';
@@ -2875,6 +2411,7 @@ END:VCALENDAR`;
         initTimeSlots();
         initStickyTotal();
         updateServicePrices();
+        applyIncludedServiceDefaults(document.getElementById('serviceType')?.value || 'regular');
         calculateTotal();
         if (payNowBtn) {
             payNowBtn.addEventListener('click', startStripeCheckout);
@@ -2891,6 +2428,7 @@ END:VCALENDAR`;
                     if (si) si.value = data.serviceType;
                     const fg = document.getElementById('frequencyGroup');
                     if (fg) fg.style.display = data.serviceType === 'regular' ? 'block' : 'none';
+                    applyIncludedServiceDefaults(data.serviceType);
                 }
                 if (data.rooms !== undefined) {
                     document.querySelectorAll('.option-btn input[name="rooms"]').forEach(r => {
