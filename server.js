@@ -1262,6 +1262,62 @@ const MOBILE_CONTACT_DETAILS_FIX = `<script id="mobile-contact-details-fix">
 })();
 </script>`;
 
+const PRICING_CALCULATOR_SCROLL_SCRIPT = `<script id="pricing-calculator-scroll">
+(() => {
+  const path = ((window.location && window.location.pathname) || "").replace(/\\/+$/, "") || "/";
+  if (path !== "/pricing") return;
+  if (window.__pricingCalculatorScrollBound) return;
+  window.__pricingCalculatorScrollBound = true;
+
+  function getHeaderOffset() {
+    const candidates = [
+      document.querySelector(".t1272"),
+      document.querySelector(".t228"),
+      document.querySelector(".t-menu__wrapper"),
+      document.querySelector(".tmenu-mobile")
+    ].filter((node) => node instanceof HTMLElement);
+
+    const header = candidates.find((node) => {
+      const style = window.getComputedStyle(node);
+      return style.position === "fixed" || style.position === "sticky";
+    });
+
+    if (!(header instanceof HTMLElement)) return 24;
+    return Math.max(24, Math.ceil(header.getBoundingClientRect().height) + 16);
+  }
+
+  function scrollToCalculator(event) {
+    const target =
+      document.getElementById("calc") ||
+      document.getElementById("rec1787758753") ||
+      document.querySelector('a[name="calc"]');
+    if (!target) return;
+
+    event.preventDefault();
+    const top = target.getBoundingClientRect().top + window.pageYOffset - getHeaderOffset();
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+
+    if (typeof history !== "undefined" && typeof history.replaceState === "function") {
+      history.replaceState(null, "", "#calc");
+    }
+  }
+
+  function bind() {
+    document.querySelectorAll('a[href="#calc"]').forEach((link) => {
+      if (!(link instanceof HTMLElement)) return;
+      if (link.dataset.calcScrollBound === "1") return;
+      link.dataset.calcScrollBound = "1";
+      link.addEventListener("click", scrollToCalculator);
+    });
+  }
+
+  bind();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bind, { once: true });
+  }
+})();
+</script>`;
+
 const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
 (() => {
   if (window.__safariHomeLayoutFixBound) return;
@@ -1605,6 +1661,10 @@ function sanitizeHtml(html, routePath = "/") {
     `(()=>{const zipInput=document.getElementById('zipCode');if(!zipInput||zipInput.dataset.autoZipBound==='true') return;zipInput.dataset.autoZipBound='true';const zipWrapper=zipInput.closest('.zip-input-wrapper');const zipContainer=zipInput.closest('.zip-checker-container');const focusZipInput=(event)=>{if(event?.target?.closest('.zip-check-btn')) return;if(event?.target?.closest('.zip-result a')) return;zipInput.focus();const length=zipInput.value.length;if(typeof zipInput.setSelectionRange==='function'){zipInput.setSelectionRange(length,length);}};[zipWrapper,zipContainer].forEach((node)=>{if(!node) return;node.style.cursor='text';node.addEventListener('click',focusZipInput);});zipInput.addEventListener('keypress',function(e){if(e.key==='Enter') checkZipArea();});zipInput.addEventListener('input',function(){this.value=this.value.replace(/\\D/g,'').slice(0,5);if(this.value.length===5){checkZipArea();}});})();`
   );
 
+  if (normalizeRoute(routePath) === "/pricing") {
+    cleaned = cleaned.replace(/<a name="calc"([^>]*)><\/a>/i, '<a id="calc" name="calc"$1></a>');
+  }
+
   cleaned = rebuildDeepCleaningAddonsSection(cleaned, routePath);
 
   const routeSeo = deriveRouteSeo(cleaned, routePath);
@@ -1643,6 +1703,7 @@ function sanitizeHtml(html, routePath = "/") {
       [MOBILE_STICKY_CTA_SCRIPT, "mobile-sticky-cta"],
       [DEEP_CLEANING_MOBILE_FIX, "deep-cleaning-addons-rebuild"],
       [MOBILE_CONTACT_DETAILS_FIX, "mobile-contact-details-fix"],
+      [PRICING_CALCULATOR_SCROLL_SCRIPT, "pricing-calculator-scroll"],
       [SAFARI_HOME_LAYOUT_FIX, "safari-home-layout-fix"],
     ]
       .filter(([, scriptId]) => !cleaned.includes(`id="${scriptId}"`))
