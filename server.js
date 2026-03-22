@@ -528,10 +528,6 @@ const DEEP_CLEANING_ADDONS_SECTION = `
             <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
             <span class="dc-addons__item-label">Wet Baseboards — <strong>$22</strong></span>
           </li>
-          <li class="dc-addons__item">
-            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
-            <span class="dc-addons__item-label">Doors — <strong>$22</strong></span>
-          </li>
         </ul>
       </div>
       <div class="dc-addons__group">
@@ -548,6 +544,10 @@ const DEEP_CLEANING_ADDONS_SECTION = `
           <li class="dc-addons__item">
             <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
             <span class="dc-addons__item-label">Bed linen replacement — <strong>$8</strong></span>
+          </li>
+          <li class="dc-addons__item">
+            <svg class="dc-addons__icon" viewBox="0 0 24.13916015625 24" aria-hidden="true" focusable="false"><path fill="#9E445A" fill-rule="evenodd" clip-rule="evenodd" d="M15.702399252980026 8.2878197965327L12.053404352247101 0L8.350332755617751 8.2878197965327L-0.00009127041340810245 11.942911701634987L8.326467338514819 15.598028492469394L11.975437353515623 23.890178406390948L15.678533835877094 15.598028492469394L24.028966134423325 11.942911701634987L15.702399252980026 8.2878197965327Z"></path></svg>
+            <span class="dc-addons__item-label">Doors — <strong>$22</strong></span>
           </li>
         </ul>
       </div>
@@ -1150,14 +1150,14 @@ const DEEP_CLEANING_MOBILE_FIX = `<script id="deep-cleaning-addons-rebuild">
     'Inside Fridge — <strong>$45</strong>',
     'Inside Oven — <strong>$45</strong>',
     'Interior Windows — <strong>$6 per window</strong>',
-    'Wet Baseboards — <strong>$22</strong>',
-    'Doors — <strong>$22</strong>'
+    'Wet Baseboards — <strong>$22</strong>'
   ];
 
   const rightItems = [
     'Inside Cabinets (empty) — <strong>$45</strong>',
     'Polishing wooden furniture — <strong>$20</strong>',
-    'Bed linen replacement — <strong>$8</strong>'
+    'Bed linen replacement — <strong>$8</strong>',
+    'Doors — <strong>$22</strong>'
   ];
 
   const renderItems = (items) => items.map((item) =>
