@@ -181,6 +181,11 @@ alt='' imgfield='tn_img_1768411433253000017'
 }
 
 .addon-item.included {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(158, 68, 90, 0.2);
+}
+
+.addon-item.included.active-included {
   background: rgba(45, 122, 79, 0.15);
   border: 1px solid rgba(45, 122, 79, 0.3);
 }
@@ -213,12 +218,12 @@ alt='' imgfield='tn_img_1768411433253000017'
   font-weight: bold;
 }
 
-.addon-item.included .addon-checkbox {
+.addon-item.included.active-included .addon-checkbox {
   border-color: #2d7a4f;
   background: #2d7a4f;
 }
 
-.addon-item.included .addon-checkbox::after {
+.addon-item.included.active-included .addon-checkbox::after {
   content: '✓';
   display: block;
   position: absolute;
@@ -248,7 +253,7 @@ alt='' imgfield='tn_img_1768411433253000017'
   pointer-events: none;
 }
 
-.addon-item.included .addon-price {
+.addon-item.included.active-included .addon-price {
   color: #2d7a4f;
 }
 
@@ -555,7 +560,18 @@ function toggleAddon(id) {
   const checkbox = document.getElementById(id);
   if (!checkbox) return;
   checkbox.checked = !checkbox.checked;
+  syncIncludedAddonStates();
   calculatePrice();
+}
+
+function syncIncludedAddonStates() {
+  document.querySelectorAll('.addon-item.included').forEach(item => {
+    const checkbox = item.querySelector('.addon-checkbox');
+    const price = item.querySelector('.addon-price');
+    const isChecked = !!(checkbox && checkbox.checked);
+    item.classList.toggle('active-included', isChecked);
+    if (price) price.textContent = isChecked ? 'Included' : 'Excluded';
+  });
 }
 
 function getDefaultIncludedAddonIds(serviceType) {
@@ -573,6 +589,8 @@ function applyDefaultIncludedAddons(serviceType) {
     const checkbox = document.getElementById(id);
     if (checkbox) checkbox.checked = true;
   });
+
+  syncIncludedAddonStates();
 }
 
 function changeQuantity(type, delta) {
