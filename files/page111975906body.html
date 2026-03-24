@@ -1599,32 +1599,42 @@
 
     const PRICING = {
         regular: {
-            basePrice: 100,
+            basePrices: {
+                weekly: 101,
+                biweekly: 111,
+                monthly: 121
+            },
             roomPrice: 12,
-            bathroomPrice: 23,
-            squareFeetStepPrice: 10,
+            firstBathroomPrice: 22,
+            bathroomStepPrice: 12,
+            bathroomStepSize: 0.5,
+            squareFeetStepPrice: 20,
+            basementCleaningFee: 45,
             includedServices: []
         },
         deep: {
-            basePrice: 130,
-            firstRoomPrice: 22.5,
-            roomStepPrice: 22.5,
-            roomStepSize: 0.5,
+            basePrice: 84.5,
+            roomPrice: 22.5,
             firstBathroomPrice: 45,
             bathroomStepPrice: 22.5,
             bathroomStepSize: 0.5,
+            squareFeetStepPrice: 20,
+            basementCleaningFee: 65,
             includedServices: ['baseboardCleaning', 'doorsCleaning']
         },
         moving: {
-            basePrice: 150,
-            roomPrice: 12,
-            bathroomPrice: 23,
+            basePrice: 129.5,
+            roomPrice: 22.5,
+            firstBathroomPrice: 45,
+            bathroomStepPrice: 22.5,
+            bathroomStepSize: 0.5,
+            squareFeetStepPrice: 20,
+            basementCleaningFee: 65,
             includedServices: ['ovenCleaning', 'refrigeratorCleaning', 'baseboardCleaning', 'doorsCleaning']
         },
         squareFeetIncluded: 1200,
         squareFeetStep: 500,
         squareFeetStepPrice: 20,
-        basementCleaningFee: 45,
         services: {
             ovenCleaning: 45,
             refrigeratorCleaning: 45,
@@ -1980,6 +1990,40 @@ END:VCALENDAR`;
         return Number.isFinite(parsed) ? parsed : fallback;
     }
 
+    function getRegularBasePrice(frequency) {
+        const normalizedFrequency = String(frequency || 'biweekly').trim().toLowerCase();
+        return PRICING.regular.basePrices[normalizedFrequency] ?? PRICING.regular.basePrices.biweekly;
+    }
+
+    function calculateBedroomPrice(serviceType, rooms) {
+        const typePricing = PRICING[serviceType] || PRICING.regular;
+        return rooms * (typePricing.roomPrice || 0);
+    }
+
+    function calculateBathroomPrice(typePricing, bathrooms) {
+        if (!bathrooms || bathrooms <= 0) return 0;
+        const firstBathroomPrice = typePricing.firstBathroomPrice ?? 0;
+        const bathroomStepPrice = typePricing.bathroomStepPrice ?? typePricing.bathroomPrice ?? 0;
+        const bathroomStepSize = typePricing.bathroomStepSize ?? 0.5;
+
+        if (bathrooms <= 1) return firstBathroomPrice;
+
+        return firstBathroomPrice + Math.max(0, (bathrooms - 1) / bathroomStepSize) * bathroomStepPrice;
+    }
+
+    function calculateSquareFeetPrice(typePricing, squareFeet) {
+        if (squareFeet <= PRICING.squareFeetIncluded) return 0;
+        const extraSquareFeet = squareFeet - PRICING.squareFeetIncluded;
+        const extraSteps = Math.ceil(extraSquareFeet / PRICING.squareFeetStep);
+        const stepPrice = typePricing.squareFeetStepPrice !== undefined ? typePricing.squareFeetStepPrice : PRICING.squareFeetStepPrice;
+        return extraSteps * stepPrice;
+    }
+
+    function getBasementCleaningFee(serviceType) {
+        const typePricing = PRICING[serviceType] || PRICING.regular;
+        return typePricing.basementCleaningFee || 0;
+    }
+
     function calculateCleaningTime(rooms, bathrooms, serviceType) {
         let baseMin = 2.0, baseMax = 2.5;
         if (serviceType === 'regular') {
@@ -2031,34 +2075,14 @@ END:VCALENDAR`;
         const typePricing = PRICING[serviceType] || PRICING.regular;
         const includedServices = typePricing.includedServices || [];
         
-        let total = typePricing.basePrice;
+        const frequency = document.getElementById('frequency')?.value || 'biweekly';
+        let total = serviceType === 'regular' ? getRegularBasePrice(frequency) : typePricing.basePrice;
         
-        if (serviceType === 'deep' && typePricing.firstRoomPrice !== undefined) {
-            total += typePricing.firstRoomPrice + typePricing.roomStepPrice * Math.max(0, (rooms - 1) / typePricing.roomStepSize);
-        } else {
-            total += rooms * (typePricing.roomPrice || 12);
-        }
+        total += calculateBedroomPrice(serviceType, rooms);
+        total += calculateBathroomPrice(typePricing, bathrooms);
+        total += calculateSquareFeetPrice(typePricing, squareMeters);
         
-        if (serviceType === 'deep' && typePricing.firstBathroomPrice !== undefined) {
-            total += typePricing.firstBathroomPrice + typePricing.bathroomStepPrice * Math.max(0, (bathrooms - 1) / typePricing.bathroomStepSize);
-        } else {
-            total += bathrooms * (typePricing.bathroomPrice || 23);
-        }
-        
-        if (squareMeters > PRICING.squareFeetIncluded) {
-            const extraSquareFeet = squareMeters - PRICING.squareFeetIncluded;
-            const extraSteps = Math.ceil(extraSquareFeet / PRICING.squareFeetStep);
-            const stepPrice = typePricing.squareFeetStepPrice !== undefined ? typePricing.squareFeetStepPrice : PRICING.squareFeetStepPrice;
-            total += extraSteps * stepPrice;
-        }
-        
-        if (basementCleaning) total += PRICING.basementCleaningFee;
-        
-        if (serviceType === 'regular') {
-            const frequency = document.getElementById('frequency')?.value || 'biweekly';
-            if (frequency === 'monthly') total += 20;
-            else if (frequency === 'biweekly') total += 10;
-        }
+        if (basementCleaning) total += getBasementCleaningFee(serviceType);
         
         document.querySelectorAll('.service-item').forEach(item => {
             const checkbox = item.querySelector('input[name="services"]');
