@@ -199,12 +199,12 @@ alt='' imgfield='tn_img_1768411433253000017'
   height: 20px;
   border: 2px solid #9E445A;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: inherit;
   flex-shrink: 0;
   appearance: none;
   background: white;
   position: relative;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .addon-checkbox:checked {
@@ -244,7 +244,7 @@ alt='' imgfield='tn_img_1768411433253000017'
   font-size: 14px;
   color: #313131;
   flex: 1;
-  cursor: pointer;
+  cursor: inherit;
   pointer-events: none;
 }
 
@@ -620,21 +620,7 @@ function initializeAddonInteractions() {
     if (!checkbox || item.dataset.addonBound === 'true') return;
 
     item.dataset.addonBound = 'true';
-    item.removeAttribute('onclick');
-    item.onclick = null;
-
-    item.addEventListener('click', event => {
-      event.preventDefault();
-      if (checkbox.disabled) return;
-      toggleAddon(checkbox.id);
-    });
-
-    checkbox.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (checkbox.disabled) return;
-      toggleAddon(checkbox.id);
-    });
+    item.style.cursor = checkbox.disabled ? 'default' : 'pointer';
   });
 }
 
@@ -645,6 +631,7 @@ function syncIncludedAddonStates() {
     item.classList.add('included', 'active-included');
     if (checkbox) checkbox.checked = true;
     if (price) price.textContent = 'Included';
+    item.style.cursor = 'default';
   });
 
   document.querySelectorAll('.addon-item.removable-default-addon').forEach(item => {
@@ -655,6 +642,7 @@ function syncIncludedAddonStates() {
     item.classList.toggle('included', isChecked);
     item.classList.toggle('active-included', isChecked);
     if (price) price.textContent = isChecked ? 'Included' : `$${formatPrice(addonPrice)}`;
+    item.style.cursor = checkbox && checkbox.disabled ? 'default' : 'pointer';
   });
 }
 
