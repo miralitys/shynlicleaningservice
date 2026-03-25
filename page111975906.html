@@ -1612,7 +1612,8 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
             bathroomStepSize: 0.5,
             squareFeetStepPrice: 20,
             basementCleaningFee: 45,
-            includedServices: []
+            includedServices: [],
+            defaultSelectedServices: []
         },
         deep: {
             basePrice: 84.5,
@@ -1622,7 +1623,8 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
             bathroomStepSize: 0.5,
             squareFeetStepPrice: 20,
             basementCleaningFee: 65,
-            includedServices: ['baseboardCleaning', 'doorsCleaning']
+            includedServices: ['baseboardCleaning', 'doorsCleaning'],
+            defaultSelectedServices: ['ovenCleaning', 'refrigeratorCleaning', 'baseboardCleaning', 'doorsCleaning']
         },
         moving: {
             basePrice: 129.5,
@@ -1632,7 +1634,8 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
             bathroomStepSize: 0.5,
             squareFeetStepPrice: 20,
             basementCleaningFee: 65,
-            includedServices: ['ovenCleaning', 'refrigeratorCleaning', 'baseboardCleaning', 'doorsCleaning']
+            includedServices: ['baseboardCleaning', 'doorsCleaning'],
+            defaultSelectedServices: ['ovenCleaning', 'refrigeratorCleaning', 'baseboardCleaning', 'doorsCleaning']
         },
         squareFeetIncluded: 1200,
         squareFeetStep: 500,
@@ -1970,14 +1973,20 @@ END:VCALENDAR`;
     }
 
     function applyIncludedServiceDefaults(serviceType) {
-        const includedServices = (PRICING[serviceType] && PRICING[serviceType].includedServices) || [];
+        const typePricing = PRICING[serviceType] || PRICING.regular;
+        const includedServices = typePricing.includedServices || [];
+        const defaultSelectedServices = typePricing.defaultSelectedServices || [];
         document.querySelectorAll('input[name="services"]').forEach(checkbox => {
             checkbox.checked = false;
             checkbox.disabled = false;
         });
-        includedServices.forEach(serviceValue => {
+        defaultSelectedServices.forEach(serviceValue => {
             const checkbox = document.querySelector(`input[name="services"][value="${serviceValue}"]`);
             if (checkbox) checkbox.checked = true;
+        });
+        includedServices.forEach(serviceValue => {
+            const checkbox = document.querySelector(`input[name="services"][value="${serviceValue}"]`);
+            if (checkbox) checkbox.disabled = true;
         });
     }
 
@@ -1990,6 +1999,14 @@ END:VCALENDAR`;
         }
         const parsed = parseFloat(rawValue);
         return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function formatServicePrice(value) {
+        return Number.isInteger(value) ? String(value) : String(value.toFixed(1));
+    }
+
+    function formatIncludedServiceLabel(value) {
+        return `Included (+$${formatServicePrice(value)})`;
     }
 
     function getRegularBasePrice(frequency) {
@@ -2076,6 +2093,7 @@ END:VCALENDAR`;
         const serviceType = document.getElementById('serviceType').value || 'regular';
         const typePricing = PRICING[serviceType] || PRICING.regular;
         const includedServices = typePricing.includedServices || [];
+        const defaultSelectedServices = typePricing.defaultSelectedServices || [];
         
         const frequency = document.getElementById('frequency')?.value || 'biweekly';
         let total = serviceType === 'regular' ? getRegularBasePrice(frequency) : typePricing.basePrice;
@@ -2091,12 +2109,15 @@ END:VCALENDAR`;
             const priceElement = item.querySelector('.service-price');
             if (checkbox && priceElement) {
                 const serviceValue = checkbox.value;
-                checkbox.disabled = false;
-                if (includedServices.includes(serviceValue)) {
-                    priceElement.textContent = 'Included';
-                    priceElement.classList.add('included');
-                } else if (PRICING.services[serviceValue]) {
-                    priceElement.textContent = '+$' + PRICING.services[serviceValue];
+                const isDefaultSelected = defaultSelectedServices.includes(serviceValue);
+                const isLockedIncluded = includedServices.includes(serviceValue);
+                const servicePrice = PRICING.services[serviceValue] || 0;
+                checkbox.disabled = isLockedIncluded;
+                if (isDefaultSelected) {
+                    priceElement.textContent = checkbox.checked ? formatIncludedServiceLabel(servicePrice) : '+$' + formatServicePrice(servicePrice);
+                    priceElement.classList.toggle('included', checkbox.checked);
+                } else if (servicePrice) {
+                    priceElement.textContent = '+$' + formatServicePrice(servicePrice);
                     priceElement.classList.remove('included');
                 }
             }
@@ -2104,7 +2125,7 @@ END:VCALENDAR`;
         
         document.querySelectorAll('input[name="services"]:checked').forEach(service => {
             const serviceValue = service.value;
-            if (PRICING.services[serviceValue] && !includedServices.includes(serviceValue)) {
+            if (PRICING.services[serviceValue]) {
                 total += PRICING.services[serviceValue];
             }
         });
@@ -2128,7 +2149,7 @@ END:VCALENDAR`;
         document.querySelectorAll('.service-price').forEach(priceElement => {
             const serviceValue = priceElement.getAttribute('data-service');
             if (PRICING.services[serviceValue]) {
-                priceElement.textContent = `+$${PRICING.services[serviceValue]}`;
+                priceElement.textContent = `+$${formatServicePrice(PRICING.services[serviceValue])}`;
             }
         });
     }
