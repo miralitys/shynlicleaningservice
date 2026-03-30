@@ -1696,40 +1696,6 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
     line-height: 1.12 !important;
   }
 
-  html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730660"],
-  html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730660"] {
-    height: 238px !important;
-  }
-
-  html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"],
-  html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"],
-  html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"],
-  html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] {
-    height: auto !important;
-  }
-
-  html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"],
-  html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"] {
-    width: 300px !important;
-  }
-
-  html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"] .tn-atom,
-  html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"] .tn-atom {
-    font-size: 18px !important;
-    line-height: 1.14 !important;
-  }
-
-  html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"],
-  html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] {
-    top: 540px !important;
-    width: 270px !important;
-  }
-
-  html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"] .tn-atom,
-  html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] .tn-atom {
-    line-height: 1.24 !important;
-  }
-
   /* Shared Safari desktop fixes for repeated Tilda text blocks */
   html.is-safari .tn-elem[data-elem-id="1767801668999"] {
     height: auto !important;
