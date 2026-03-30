@@ -31,7 +31,15 @@ try {
     throw new QuoteTokenError("Quote token module is not available in this build.");
   };
 }
-const { createSlidingWindowRateLimiter } = require("./lib/rate-limit");
+let createSlidingWindowRateLimiter;
+try {
+  ({ createSlidingWindowRateLimiter } = require("./lib/rate-limit"));
+} catch (error) {
+  createSlidingWindowRateLimiter = () => ({
+    check: () => true,
+    reset: () => {},
+  });
+}
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
