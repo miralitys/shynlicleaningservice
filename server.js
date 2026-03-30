@@ -1705,7 +1705,15 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
   html.is-safari #rec1764265683 .t396__artboard,
   html.is-safari #rec1764265683 .t396__carrier,
   html.is-safari #rec1764265683 .t396__filter {
-    height: 820px !important;
+    height: 880px !important;
+  }
+
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730628"] {
+    top: 660px !important;
+  }
+
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730631"] {
+    top: 675px !important;
   }
   html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"],
