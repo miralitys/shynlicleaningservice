@@ -17,7 +17,20 @@ try {
   };
 }
 const { calculateQuotePricing } = require("./lib/quote-pricing");
-const { QuoteTokenError, createQuoteToken, verifyQuoteToken } = require("./lib/quote-token");
+let QuoteTokenError;
+let createQuoteToken;
+let verifyQuoteToken;
+try {
+  ({ QuoteTokenError, createQuoteToken, verifyQuoteToken } = require("./lib/quote-token"));
+} catch (error) {
+  QuoteTokenError = class QuoteTokenError extends Error {};
+  createQuoteToken = () => {
+    throw new QuoteTokenError("Quote token module is not available in this build.");
+  };
+  verifyQuoteToken = () => {
+    throw new QuoteTokenError("Quote token module is not available in this build.");
+  };
+}
 const { createSlidingWindowRateLimiter } = require("./lib/rate-limit");
 
 const HOST = process.env.HOST || "0.0.0.0";
