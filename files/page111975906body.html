@@ -1362,6 +1362,41 @@
         font-style: italic;
     }
 
+    .service-price.excluded {
+        color: #7d7d7d;
+        font-style: normal;
+        font-weight: 600;
+    }
+
+    .service-item.locked-included,
+    .service-item.removable-default-addon.active-included {
+        background: rgba(45, 122, 79, 0.08);
+        border-color: #8bc79a;
+    }
+
+    .service-item.locked-included::before,
+    .service-item.removable-default-addon.active-included::before {
+        background: #2d7a4f;
+        transform: scaleY(1);
+    }
+
+    .service-item.locked-included .checkmark,
+    .service-item.removable-default-addon.active-included .checkmark {
+        background-color: #2d7a4f;
+        border-color: #2d7a4f;
+    }
+
+    .service-item.locked-included .checkmark::after,
+    .service-item.removable-default-addon.active-included .checkmark::after {
+        display: block;
+    }
+
+    .service-item.locked-included .service-text,
+    .service-item.removable-default-addon.active-included .service-text {
+        color: #2d7a4f;
+        font-weight: 600;
+    }
+
     .service-item input[type="checkbox"]:disabled + .checkmark {
         background-color: #2d7a4f;
         border-color: #2d7a4f;
@@ -1986,6 +2021,7 @@ END:VCALENDAR`;
             const checkbox = document.querySelector(`input[name="services"][value="${serviceValue}"]`);
             if (checkbox) checkbox.disabled = true;
         });
+        syncIncludedServiceStates(serviceType);
     }
 
     function parseBathroomCount(value, fallback = 0) {
@@ -2004,7 +2040,53 @@ END:VCALENDAR`;
     }
 
     function formatIncludedServiceLabel(value) {
-        return `Included (+$${formatServicePrice(value)})`;
+        return 'Included';
+    }
+
+    function syncIncludedServiceStates(serviceType) {
+        const typePricing = PRICING[serviceType] || PRICING.regular;
+        const includedServices = typePricing.includedServices || [];
+        const defaultSelectedServices = typePricing.defaultSelectedServices || [];
+
+        document.querySelectorAll('.service-item').forEach(item => {
+            const checkbox = item.querySelector('input[name="services"]');
+            const priceElement = item.querySelector('.service-price');
+            if (!checkbox || !priceElement) return;
+
+            const serviceValue = checkbox.value;
+            const servicePrice = PRICING.services[serviceValue] || 0;
+            const isLockedIncluded = includedServices.includes(serviceValue);
+            const isDefaultSelected = defaultSelectedServices.includes(serviceValue);
+            const isChecked = checkbox.checked;
+
+            checkbox.disabled = isLockedIncluded;
+
+            item.classList.remove('locked-included', 'removable-default-addon', 'active-included');
+            priceElement.classList.remove('included', 'excluded');
+
+            if (isLockedIncluded) {
+                item.classList.add('locked-included', 'active-included');
+                checkbox.checked = true;
+                priceElement.textContent = formatIncludedServiceLabel(servicePrice);
+                priceElement.classList.add('included');
+                return;
+            }
+
+            if (isDefaultSelected) {
+                item.classList.add('removable-default-addon');
+                item.classList.toggle('active-included', isChecked);
+                if (isChecked) {
+                    priceElement.textContent = formatIncludedServiceLabel(servicePrice);
+                    priceElement.classList.add('included');
+                } else {
+                    priceElement.textContent = 'Excluded';
+                    priceElement.classList.add('excluded');
+                }
+                return;
+            }
+
+            priceElement.textContent = '+$' + formatServicePrice(servicePrice);
+        });
     }
 
     function getRegularBasePrice(frequency) {
@@ -2090,8 +2172,6 @@ END:VCALENDAR`;
         const basementCleaning = document.getElementById('basementCleaning').value === 'yes';
         const serviceType = document.getElementById('serviceType').value || 'regular';
         const typePricing = PRICING[serviceType] || PRICING.regular;
-        const includedServices = typePricing.includedServices || [];
-        const defaultSelectedServices = typePricing.defaultSelectedServices || [];
         
         const frequency = document.getElementById('frequency')?.value || 'biweekly';
         let total = serviceType === 'regular' ? getRegularBasePrice(frequency) : typePricing.basePrice;
@@ -2101,25 +2181,8 @@ END:VCALENDAR`;
         total += calculateSquareFeetPrice(typePricing, squareMeters);
         
         if (basementCleaning) total += getBasementCleaningFee(serviceType);
-        
-        document.querySelectorAll('.service-item').forEach(item => {
-            const checkbox = item.querySelector('input[name="services"]');
-            const priceElement = item.querySelector('.service-price');
-            if (checkbox && priceElement) {
-                const serviceValue = checkbox.value;
-                const isDefaultSelected = defaultSelectedServices.includes(serviceValue);
-                const isLockedIncluded = includedServices.includes(serviceValue);
-                const servicePrice = PRICING.services[serviceValue] || 0;
-                checkbox.disabled = isLockedIncluded;
-                if (isDefaultSelected) {
-                    priceElement.textContent = checkbox.checked ? formatIncludedServiceLabel(servicePrice) : '+$' + formatServicePrice(servicePrice);
-                    priceElement.classList.toggle('included', checkbox.checked);
-                } else if (servicePrice) {
-                    priceElement.textContent = '+$' + formatServicePrice(servicePrice);
-                    priceElement.classList.remove('included');
-                }
-            }
-        });
+
+        syncIncludedServiceStates(serviceType);
         
         document.querySelectorAll('input[name="services"]:checked').forEach(service => {
             const serviceValue = service.value;
