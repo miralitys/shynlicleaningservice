@@ -1696,27 +1696,11 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
     line-height: 1.12 !important;
   }
 
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730660"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730660"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730660"] {
     height: 238px !important;
   }
 
-  html.is-safari #rec1764265683 .t396__artboard,
-  html.is-safari #rec1764265683 .t396__carrier,
-  html.is-safari #rec1764265683 .t396__filter {
-    height: 880px !important;
-  }
-
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730628"] {
-    top: 660px !important;
-  }
-
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730631"] {
-    top: 675px !important;
-  }
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"],
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"],
@@ -1724,32 +1708,23 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
     height: auto !important;
   }
 
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"] {
     width: 300px !important;
-    top: 470px !important;
   }
 
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"] .tn-atom,
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"] .tn-atom,
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"] .tn-atom {
     font-size: 18px !important;
     line-height: 1.14 !important;
   }
 
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] {
     top: 540px !important;
     width: 270px !important;
   }
 
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730677"] {
-    height: 160px !important;
-  }
-
-  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"] .tn-atom,
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"] .tn-atom,
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] .tn-atom {
     line-height: 1.24 !important;
@@ -1822,20 +1797,6 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
 })();
 </script>`;
 
-const HOME_CARD_HEIGHT_FIX = `<style id="home-card-height-fix">
-#rec1764265683 .tn-elem[data-elem-id="1767791730664"] {
-  top: 470px !important;
-}
-
-#rec1764265683 .tn-elem[data-elem-id="1767791730667"] {
-  top: 540px !important;
-}
-
-#rec1764265683 .tn-elem[data-elem-id="1767791730677"] {
-  height: 160px !important;
-}
-</style>`;
-
 function sanitizeHtml(html, routePath = "/") {
   let cleaned = html
     .replace(
@@ -1906,7 +1867,6 @@ function sanitizeHtml(html, routePath = "/") {
       [MOBILE_CONTACT_DETAILS_FIX, "mobile-contact-details-fix"],
       [PRICING_CALCULATOR_SCROLL_SCRIPT, "pricing-calculator-scroll"],
       [SAFARI_HOME_LAYOUT_FIX, "safari-home-layout-fix"],
-      [HOME_CARD_HEIGHT_FIX, "home-card-height-fix"],
     ]
       .filter(([, scriptId]) => !cleaned.includes(`id="${scriptId}"`))
       .map(([script]) => script)
