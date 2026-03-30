@@ -8,14 +8,21 @@ const fsp = require("fs/promises");
 const path = require("path");
 const { monitorEventLoopDelay } = require("perf_hooks");
 const { URL } = require("url");
+const { createLeadConnectorClient } = require("./lib/leadconnector");
+const { calculateQuotePricing } = require("./lib/quote-pricing");
+const { QuoteTokenError, createQuoteToken, verifyQuoteToken } = require("./lib/quote-token");
+const { createSlidingWindowRateLimiter } = require("./lib/rate-limit");
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
 const SITE_DIR = __dirname;
 const ROUTES_PATH = path.join(SITE_DIR, "routes.json");
 const NOT_FOUND_PAGE = "page113047926.html";
-const SITE_ORIGIN = "https://shynlicleaningservice.com";
+const QUOTE_PUBLIC_PATH = "/quote";
 const REDIRECT_ROUTES = new Map([["/home-simple", "/"]]);
+const SITE_ORIGIN = normalizeConfiguredOrigin(
+  process.env.PUBLIC_SITE_ORIGIN || process.env.SITE_BASE_URL || "https://shynlicleaningservice.com"
+);
 const NOINDEX_ROUTES = new Set(["/home-calculator", "/oauth/callback", "/quote"]);
 const BREADCRUMB_LABELS = new Map([
   ["/about-us", "About Us"],
@@ -96,11 +103,46 @@ const ALERT_P99_MS = Number(process.env.ALERT_P99_MS || 1000);
 const ALERT_5XX_RATE = Number(process.env.ALERT_5XX_RATE || 0.01);
 const ALERT_EVENT_LOOP_P95_MS = Number(process.env.ALERT_EVENT_LOOP_P95_MS || 100);
 const STRIPE_CHECKOUT_ENDPOINT = "/api/stripe/checkout-session";
+const QUOTE_REQUEST_ENDPOINT = "/api/quote/request";
+const QUOTE_SUBMIT_ENDPOINT = "/api/quote/submit";
 const MAX_JSON_BODY_BYTES = Number(process.env.MAX_JSON_BODY_BYTES || 64 * 1024);
 const STRIPE_MIN_AMOUNT_CENTS = Number(process.env.STRIPE_MIN_AMOUNT_CENTS || 50);
 const STRIPE_MAX_AMOUNT_CENTS = Number(process.env.STRIPE_MAX_AMOUNT_CENTS || 200000);
+const POST_RATE_LIMIT_WINDOW_MS = Number(process.env.POST_RATE_LIMIT_WINDOW_MS || 60_000);
+const POST_RATE_LIMIT_MAX_REQUESTS = Number(process.env.POST_RATE_LIMIT_MAX_REQUESTS || 10);
+const TRUST_PROXY_HEADERS = /^(1|true|yes)$/i.test(String(process.env.TRUST_PROXY_HEADERS || ""));
+const TRUSTED_PROXY_IPS = new Set(
+  String(process.env.TRUSTED_PROXY_IPS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+    .map((value) => {
+      if (value === "::1") return "127.0.0.1";
+      return value.startsWith("::ffff:") ? value.slice(7) : value;
+    })
+);
+const PERF_ENDPOINT_ENABLED = /^(1|true|yes)$/i.test(String(process.env.ENABLE_PERF_ENDPOINT || ""));
+const PERF_ENDPOINT_TOKEN = String(process.env.PERF_ENDPOINT_TOKEN || "").trim();
+const GOOGLE_PLACES_API_KEY = String(process.env.GOOGLE_PLACES_API_KEY || "").trim();
+const PUBLIC_ASSET_DIRECTORIES = new Set(["css", "images", "js"]);
+const PUBLIC_ASSET_FILES = new Set(["robots.txt", "sitemap.xml"]);
+const BASE_SECURITY_HEADERS = Object.freeze({
+  "Content-Security-Policy":
+    "base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self' https://checkout.stripe.com https://api.stripe.com;",
+  "Cross-Origin-Resource-Policy": "same-origin",
+  "Permissions-Policy": "camera=(), geolocation=(), microphone=()",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+});
 
 let stripeClient = null;
+let leadConnectorClient = null;
+const postRateLimiter = createSlidingWindowRateLimiter({
+  windowMs: POST_RATE_LIMIT_WINDOW_MS,
+  maxRequests: POST_RATE_LIMIT_MAX_REQUESTS,
+});
 
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -110,6 +152,15 @@ function getStripeClient() {
   const Stripe = require("stripe");
   stripeClient = new Stripe(secretKey);
   return stripeClient;
+}
+
+function getLeadConnectorClient() {
+  if (leadConnectorClient) return leadConnectorClient;
+  leadConnectorClient = createLeadConnectorClient({
+    env: process.env,
+    fetch: global.fetch,
+  });
+  return leadConnectorClient;
 }
 
 function getRequestDurationMs(startTimeNs) {
@@ -298,8 +349,13 @@ function toServerTimingHeader(startTimeNs, cacheHit) {
   return `app;dur=${durationToken}, cache;desc="${cacheToken}"`;
 }
 
+function normalizeConfiguredOrigin(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
 function writeHeadWithTiming(res, statusCode, headers, startTimeNs, cacheHit) {
   const enrichedHeaders = {
+    ...BASE_SECURITY_HEADERS,
     ...headers,
     "Server-Timing": toServerTimingHeader(startTimeNs, cacheHit),
   };
@@ -320,14 +376,70 @@ function writeJsonWithTiming(res, statusCode, payload, startTimeNs, cacheHit) {
   res.end(JSON.stringify(payload));
 }
 
-function getRequestOrigin(req) {
-  const host = req.headers["x-forwarded-host"] || req.headers.host || `localhost:${PORT}`;
-  const forwardedProtoRaw = req.headers["x-forwarded-proto"];
-  const forwardedProto = Array.isArray(forwardedProtoRaw)
-    ? forwardedProtoRaw[0]
-    : String(forwardedProtoRaw || "").split(",")[0].trim();
-  const protocol = forwardedProto || (req.socket.encrypted ? "https" : "http");
-  return `${protocol}://${host}`;
+function isPublicDirectAssetPath(pathname) {
+  const normalizedPath = String(pathname || "").replace(/^\/+/, "");
+  if (!normalizedPath || !path.extname(normalizedPath)) return false;
+  if (normalizedPath.includes("\0")) return false;
+  if (!normalizedPath.includes("/") && /^favicon\./i.test(normalizedPath)) return true;
+
+  const [topLevel] = normalizedPath.split("/");
+  if (PUBLIC_ASSET_DIRECTORIES.has(topLevel)) return true;
+  return PUBLIC_ASSET_FILES.has(normalizedPath);
+}
+
+function getStripeReturnOrigin() {
+  return SITE_ORIGIN;
+}
+
+function canAccessPerfEndpoint(req) {
+  if (!PERF_ENDPOINT_ENABLED || !PERF_ENDPOINT_TOKEN) return false;
+  return String(req.headers["x-perf-token"] || "").trim() === PERF_ENDPOINT_TOKEN;
+}
+
+function normalizeClientIp(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "::1") return "127.0.0.1";
+  if (normalized.startsWith("::ffff:")) return normalized.slice(7);
+  return normalized;
+}
+
+function shouldTrustProxyHeaders(req) {
+  if (!TRUST_PROXY_HEADERS || TRUSTED_PROXY_IPS.size === 0) return false;
+  const remoteAddress = normalizeClientIp(req.socket && req.socket.remoteAddress);
+  return Boolean(remoteAddress) && TRUSTED_PROXY_IPS.has(remoteAddress);
+}
+
+function getClientAddress(req) {
+  if (shouldTrustProxyHeaders(req)) {
+    const forwardedForChain = String(req.headers["x-forwarded-for"] || "")
+      .split(",")
+      .map((value) => normalizeClientIp(value))
+      .filter(Boolean);
+    const forwardedFor = forwardedForChain.length > 0 ? forwardedForChain[forwardedForChain.length - 1] : "";
+    if (forwardedFor) return forwardedFor;
+  }
+  return normalizeString(normalizeClientIp(req.socket && req.socket.remoteAddress), 120) || "unknown";
+}
+
+function enforcePostRateLimit(req, res, requestStartNs, requestContext, routeKey) {
+  const decision = postRateLimiter.take(`${routeKey}:${getClientAddress(req)}`);
+  if (decision.allowed) return false;
+
+  requestContext.cacheHit = false;
+  writeHeadWithTiming(
+    res,
+    429,
+    {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Retry-After": String(Math.max(1, Math.ceil(decision.retryAfterMs / 1000))),
+    },
+    requestStartNs,
+    requestContext.cacheHit
+  );
+  res.end(JSON.stringify({ error: "Too many requests. Please try again later." }));
+  return true;
 }
 
 function normalizeString(value, maxLength = 500) {
@@ -441,10 +553,10 @@ function getHtmlCacheKey(absolutePath, routePath = "") {
 }
 
 function normalizeRoute(rawPath) {
-  let p = rawPath || "/";
-  if (!p.startsWith("/")) p = `/${p}`;
-  if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
-  return p;
+  let value = rawPath || "/";
+  if (!value.startsWith("/")) value = `/${value}`;
+  if (value.length > 1 && value.endsWith("/")) value = value.slice(0, -1);
+  return value;
 }
 
 const DEEP_CLEANING_ADDONS_SECTION = `
@@ -930,6 +1042,12 @@ const FULL_CARD_CLICK_SCRIPT = `<script id="full-card-click-handler">
 })();
 </script>`;
 
+const RUNTIME_CONFIG_SCRIPT = `<script id="runtime-config">
+window.__shynliRuntimeConfig = Object.assign({}, window.__shynliRuntimeConfig || {}, {
+  googlePlacesApiKey: ${JSON.stringify(GOOGLE_PLACES_API_KEY)}
+});
+</script>`;
+
 const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 (() => {
   if (window.__mobileStickyCtaBound) return;
@@ -937,70 +1055,85 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 
   const PHONE = "+16308127077";
   const EXCLUDED_PATHS = new Set(["/quote"]);
+  const MOBILE_QUERY = "(max-width: 960px)";
+  const CTA_TEXT_PATTERNS = ["book now", "book your cleaning", "order services", "call us"];
+  const LEGACY_CTA_SELECTOR = [
+    "a[href='/quote']",
+    "a[href='tel:+16308127077']",
+    ".t943__buttonwrapper",
+    ".t943",
+    ".t-btn",
+    ".t-btnflex",
+    ".t228",
+    ".tmenu-mobile",
+    ".t396__elem",
+    "[style*='position:fixed']",
+    "[style*='position: fixed']",
+    "[style*='position:sticky']",
+    "[style*='position: sticky']"
+  ].join(",");
 
-  function hideLegacyStickyCtas() {
-    const isMobile = window.matchMedia("(max-width: 960px)").matches;
-    if (!isMobile) return;
+  let hideLegacyScheduled = false;
+
+  function isMobileViewport() {
+    return window.matchMedia(MOBILE_QUERY).matches;
+  }
+
+  function normalizeNodeText(node) {
+    return (node && node.textContent ? node.textContent : "").replace(/\\s+/g, " ").trim().toLowerCase();
+  }
+
+  function looksLikeLegacyCta(node) {
+    if (!(node instanceof HTMLElement)) return false;
+    const text = normalizeNodeText(node);
+    const href = node.getAttribute("href") || "";
+    return CTA_TEXT_PATTERNS.some((pattern) => text.includes(pattern)) || href === "/quote" || href === "tel:+16308127077";
+  }
+
+  function maybeHideLegacyCta(candidate) {
+    if (!isMobileViewport()) return;
+    if (!(candidate instanceof HTMLElement)) return;
 
     const ourBar = document.getElementById("mobileStickyCta");
-    const nodes = document.querySelectorAll("a,button,div,span");
-    nodes.forEach((node) => {
-      if (!node || node === ourBar || (ourBar && ourBar.contains(node))) return;
-      if (!(node instanceof HTMLElement)) return;
+    if (candidate === ourBar || (ourBar && ourBar.contains(candidate))) return;
 
-      const text = (node.textContent || "").trim().toLowerCase();
-      const href = node.getAttribute("href") || "";
-      const looksLikeCta =
-        text.includes("book now") ||
-        text.includes("book your cleaning") ||
-        text.includes("order services") ||
-        text.includes("call us") ||
-        href === "/quote" ||
-        href === "tel:+16308127077";
-      if (!looksLikeCta) return;
+    const target = candidate.closest(".t943__buttonwrapper,.t943,.t396__elem,.t-btn,.t-btnflex,.t-rec,.t228,.tmenu-mobile") || candidate;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.id === "mobileStickyCta" || (ourBar && ourBar.contains(target))) return;
+    if (target.hasAttribute("data-legacy-mobile-cta-hidden")) return;
+    if (!looksLikeLegacyCta(target) && !looksLikeLegacyCta(candidate)) return;
 
-      const target = node.closest(".t396__elem,.t-btn,.t-btnflex,.t-rec,.t228,.tmenu-mobile") || node;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.id === "mobileStickyCta" || (ourBar && ourBar.contains(target))) return;
+    const style = window.getComputedStyle(target);
+    if (style.position !== "fixed" && style.position !== "sticky") return;
 
-      const style = window.getComputedStyle(target);
-      const rect = target.getBoundingClientRect();
-      const isFloating = style.position === "fixed" || style.position === "sticky";
-      const isBottomArea = rect.top > window.innerHeight * 0.55;
-      if (!isFloating || !isBottomArea) return;
+    const rect = target.getBoundingClientRect();
+    if (rect.top <= window.innerHeight * 0.55) return;
 
-      target.style.setProperty("display", "none", "important");
-      target.setAttribute("data-legacy-mobile-cta-hidden", "true");
-    });
+    target.style.setProperty("display", "none", "important");
+    target.setAttribute("data-legacy-mobile-cta-hidden", "true");
+  }
 
-    const fixedNodes = document.querySelectorAll("body *");
-    fixedNodes.forEach((el) => {
-      if (!(el instanceof HTMLElement)) return;
-      if (el.id === "mobileStickyCta" || (ourBar && ourBar.contains(el))) return;
-      if (el.hasAttribute("data-legacy-mobile-cta-hidden")) return;
+  function hideLegacyStickyCtas() {
+    if (!isMobileViewport()) return;
+    document.querySelectorAll(LEGACY_CTA_SELECTOR).forEach(maybeHideLegacyCta);
+  }
 
-      const text = (el.textContent || "").trim().toLowerCase();
-      if (
-        !text.includes("book now") &&
-        !text.includes("call us") &&
-        !text.includes("book your cleaning") &&
-        !text.includes("order services")
-      ) {
-        return;
-      }
-
-      const style = window.getComputedStyle(el);
-      if (style.position !== "fixed" && style.position !== "sticky") return;
-      const rect = el.getBoundingClientRect();
-      if (rect.top <= window.innerHeight * 0.55) return;
-
-      el.style.setProperty("display", "none", "important");
-      el.setAttribute("data-legacy-mobile-cta-hidden", "true");
-    });
+  function scheduleHideLegacyStickyCtas() {
+    if (!isMobileViewport() || hideLegacyScheduled) return;
+    hideLegacyScheduled = true;
+    const run = () => {
+      hideLegacyScheduled = false;
+      hideLegacyStickyCtas();
+    };
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(run);
+    } else {
+      window.setTimeout(run, 16);
+    }
   }
 
   function initStickyCta() {
-    const currentPath = (window.location && window.location.pathname) || "";
+    const currentPath = (((window.location && window.location.pathname) || "").replace(/\/+$/, "") || "/");
     if (EXCLUDED_PATHS.has(currentPath)) return;
     if (document.getElementById("mobileStickyCta")) return;
 
@@ -1067,7 +1200,7 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
     document.body.appendChild(wrap);
 
     function updateCtaVisibility() {
-      const isMobile = window.matchMedia("(max-width: 960px)").matches;
+      const isMobile = isMobileViewport();
       if (!isMobile) {
         wrap.classList.remove("is-visible");
         document.body.classList.remove("has-mobile-sticky-cta");
@@ -1082,19 +1215,18 @@ const MOBILE_STICKY_CTA_SCRIPT = `<script id="mobile-sticky-cta">
 
     hideLegacyStickyCtas();
     updateCtaVisibility();
-    const observer = new MutationObserver(() => hideLegacyStickyCtas());
+    const observer = new MutationObserver(() => scheduleHideLegacyStickyCtas());
     observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("resize", () => {
-      hideLegacyStickyCtas();
       updateCtaVisibility();
+      scheduleHideLegacyStickyCtas();
     }, { passive: true });
     window.addEventListener("scroll", () => {
-      hideLegacyStickyCtas();
       updateCtaVisibility();
     }, { passive: true });
-    setTimeout(hideLegacyStickyCtas, 300);
-    setTimeout(hideLegacyStickyCtas, 1000);
-    setTimeout(hideLegacyStickyCtas, 2000);
+    setTimeout(scheduleHideLegacyStickyCtas, 300);
+    setTimeout(scheduleHideLegacyStickyCtas, 1000);
+    setTimeout(scheduleHideLegacyStickyCtas, 2000);
     setTimeout(updateCtaVisibility, 300);
   }
 
@@ -1542,6 +1674,11 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
     height: 238px !important;
   }
 
+  html.is-safari #rec1764265683 .t396__artboard,
+  html.is-safari #rec1764265683 .t396__carrier,
+  html.is-safari #rec1764265683 .t396__filter {
+    height: 820px !important;
+  }
   html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"],
@@ -1702,6 +1839,9 @@ function sanitizeHtml(html, routePath = "/") {
   // Fix relative asset paths on nested routes like /services/*.
   if (!/<base\s+href=/i.test(cleaned)) {
     cleaned = cleaned.replace(/<head>/i, '<head><base href="/" />');
+  }
+  if (normalizeRoute(routePath) === "/quote" && GOOGLE_PLACES_API_KEY && !cleaned.includes('id="runtime-config"')) {
+    cleaned = cleaned.replace(/<head>/i, `<head>${RUNTIME_CONFIG_SCRIPT}`);
   }
 
   if (/<body[\s>]/i.test(cleaned)) {
@@ -1975,6 +2115,10 @@ async function handleStripeCheckoutRequest(req, res, requestStartNs, requestCont
     return;
   }
 
+  if (enforcePostRateLimit(req, res, requestStartNs, requestContext, STRIPE_CHECKOUT_ENDPOINT)) {
+    return;
+  }
+
   const stripe = getStripeClient();
   if (!stripe) {
     writeJsonWithTiming(
@@ -2002,7 +2146,40 @@ async function handleStripeCheckoutRequest(req, res, requestStartNs, requestCont
     return;
   }
 
-  const amountCents = toAmountCents(body.amount ?? body.totalPrice);
+  const quoteToken = normalizeString(body.quoteToken, 5000);
+  if (!quoteToken) {
+    writeJsonWithTiming(
+      res,
+      400,
+      { error: "A valid quote token is required." },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  let checkoutQuote;
+  try {
+    checkoutQuote = verifyQuoteToken(quoteToken, { env: process.env });
+  } catch (error) {
+    const status = Number(error && error.status) || 400;
+    const safeMessage =
+      status >= 500
+        ? "Payments are temporarily unavailable."
+        : error instanceof QuoteTokenError && error.message
+          ? error.message
+          : "Invalid quote token.";
+    writeJsonWithTiming(
+      res,
+      status,
+      { error: safeMessage, code: error && error.code ? error.code : "INVALID_QUOTE_TOKEN" },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  const amountCents = Number(checkoutQuote.totalPriceCents);
   if (
     !Number.isFinite(amountCents) ||
     amountCents < STRIPE_MIN_AMOUNT_CENTS ||
@@ -2022,20 +2199,20 @@ async function handleStripeCheckoutRequest(req, res, requestStartNs, requestCont
     return;
   }
 
-  const origin = getRequestOrigin(req);
+  const origin = getStripeReturnOrigin();
   const successUrl = process.env.STRIPE_SUCCESS_URL || `${origin}/quote?payment=success`;
   const cancelUrl = process.env.STRIPE_CANCEL_URL || `${origin}/quote?payment=cancelled`;
-  const serviceName = normalizeString(body.serviceName || "Cleaning Service", 120);
+  const serviceName = normalizeString(checkoutQuote.serviceName || "Cleaning Service", 120);
   const customerEmail = normalizeString(body.customerEmail, 320);
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail);
 
   const metadata = {
-    service_type: normalizeString(body.serviceType || "", 100),
-    selected_date: normalizeString(body.selectedDate || "", 100),
-    selected_time: normalizeString(body.selectedTime || "", 100),
-    customer_name: normalizeString(body.customerName || "", 250),
-    customer_phone: normalizeString(body.customerPhone || "", 80),
-    full_address: normalizeString(body.fullAddress || body.address || "", 500),
+    service_type: normalizeString(checkoutQuote.serviceType || "", 100),
+    selected_date: normalizeString(checkoutQuote.selectedDate || "", 100),
+    selected_time: normalizeString(checkoutQuote.selectedTime || "", 100),
+    customer_name: normalizeString(checkoutQuote.customerName || "", 250),
+    customer_phone: normalizeString(checkoutQuote.customerPhone || "", 80),
+    full_address: normalizeString(checkoutQuote.fullAddress || checkoutQuote.address || "", 500),
   };
 
   try {
@@ -2085,6 +2262,197 @@ async function handleStripeCheckoutRequest(req, res, requestStartNs, requestCont
       requestContext.cacheHit
     );
   }
+}
+
+async function handleQuoteSubmissionRequest(
+  req,
+  res,
+  requestStartNs,
+  requestContext,
+  requestLogger
+) {
+  requestContext.cacheHit = false;
+
+  if (req.method !== "POST") {
+    writeHeadWithTiming(
+      res,
+      405,
+      {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+        Allow: "POST",
+      },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    res.end(JSON.stringify({ error: "Method not allowed" }));
+    return;
+  }
+
+  if (enforcePostRateLimit(req, res, requestStartNs, requestContext, QUOTE_SUBMIT_ENDPOINT)) {
+    return;
+  }
+
+  let body;
+  try {
+    body = await readJsonBody(req, MAX_JSON_BODY_BYTES);
+  } catch (error) {
+    const isLarge = String(error && error.message).toLowerCase().includes("payload");
+    writeJsonWithTiming(
+      res,
+      isLarge ? 413 : 400,
+      { error: isLarge ? "Request payload is too large" : "Invalid request body" },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  let leadConnector;
+  try {
+    leadConnector = getLeadConnectorClient();
+  } catch (error) {
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "quote_client_init_error",
+      message: error && error.message ? error.message : "Unknown LeadConnector init error",
+    });
+    writeJsonWithTiming(
+      res,
+      503,
+      { error: "Quote requests are temporarily unavailable." },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  const contactData = body?.contactData || body?.contact || {
+    fullName: body?.fullName,
+    phone: body?.phone,
+    email: body?.email,
+  };
+  const calculatorData = body?.calculatorData || body?.quote || {
+    serviceType: body?.serviceType,
+    totalPrice: body?.totalPrice,
+    selectedDate: body?.selectedDate,
+    selectedTime: body?.selectedTime,
+    fullAddress: body?.fullAddress,
+    address: body?.address,
+    addressLine2: body?.addressLine2,
+    city: body?.city,
+    state: body?.state,
+    zipCode: body?.zipCode,
+    rooms: body?.rooms,
+    bathrooms: body?.bathrooms,
+    squareMeters: body?.squareMeters,
+    hasPets: body?.hasPets,
+    basementCleaning: body?.basementCleaning,
+    frequency: body?.frequency,
+    services: body?.services,
+    quantityServices: body?.quantityServices,
+    additionalDetails: body?.additionalDetails,
+    consent: body?.consent,
+    formattedDateTime: body?.formattedDateTime,
+  };
+
+  const pricing = calculateQuotePricing(calculatorData);
+  const submittedTotalPrice = Number(calculatorData && calculatorData.totalPrice);
+  if (
+    Number.isFinite(submittedTotalPrice) &&
+    Math.abs(submittedTotalPrice - pricing.totalPrice) > 0.009
+  ) {
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "quote_total_repriced",
+      submitted_total: submittedTotalPrice,
+      canonical_total: pricing.totalPrice,
+    });
+  }
+
+  const canonicalCalculatorData = {
+    ...calculatorData,
+    serviceType: pricing.serviceType,
+    frequency: pricing.frequency,
+    rooms: pricing.rooms,
+    bathrooms: pricing.bathrooms,
+    squareMeters: pricing.squareMeters,
+    basementCleaning: pricing.basementCleaning,
+    services: pricing.services,
+    quantityServices: pricing.quantityServices,
+    totalPrice: pricing.totalPrice,
+  };
+
+  const result = await leadConnector.submitQuoteSubmission({
+    contactData,
+    calculatorData: canonicalCalculatorData,
+    source: body?.source || "Website Quote",
+    pageUrl: `${SITE_ORIGIN}${QUOTE_PUBLIC_PATH}`,
+    requestId: normalizeString(req.headers["x-request-id"] || crypto.randomUUID(), 120),
+    userAgent: normalizeString(req.headers["user-agent"], 180),
+    submittedAt: normalizeString(body?.submittedAt || new Date().toISOString(), 64),
+  });
+
+  if (!result.ok) {
+    const resultStatus = Number(result.status) || 502;
+    const safeErrorMessage =
+      resultStatus >= 400 && resultStatus < 500
+        ? result.message || "Failed to submit quote request"
+        : "Quote requests are temporarily unavailable.";
+
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "quote_submission_error",
+      status: resultStatus,
+      code: result.code,
+      retryable: Boolean(result.retryable),
+    });
+    writeJsonWithTiming(
+      res,
+      resultStatus,
+      { error: safeErrorMessage, code: result.code },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  requestLogger.log({
+    ts: new Date().toISOString(),
+    type: "quote_submission_success",
+    status: result.status,
+    contact_id: result.contactId,
+    warnings: result.warnings || [],
+  });
+  writeJsonWithTiming(
+    res,
+    Number(result.status) || 200,
+    {
+      ok: true,
+      success: true,
+      contactId: result.contactId,
+      usedExistingContact: Boolean(result.usedExistingContact),
+      noteCreated: Boolean(result.noteCreated),
+      opportunityCreated: Boolean(result.opportunityCreated),
+      warnings: Array.isArray(result.warnings) ? result.warnings : [],
+      pricing: {
+        totalPrice: pricing.totalPrice,
+        totalPriceCents: pricing.totalPriceCents,
+        currency: pricing.currency,
+        serviceName: pricing.serviceName,
+      },
+      quoteToken: createQuoteToken(
+        {
+          ...pricing,
+          customerName: normalizeString(contactData && contactData.fullName, 250),
+          customerPhone: normalizeString(contactData && contactData.phone, 80),
+        },
+        { env: process.env }
+      ),
+    },
+    requestStartNs,
+    requestContext.cacheHit
+  );
 }
 
 async function loadRoutes() {
@@ -2196,6 +2564,22 @@ async function main() {
       }
 
       if (normalizedPath === "/__perf") {
+        if (!canAccessPerfEndpoint(req)) {
+          requestContext.cacheHit = false;
+          writeHeadWithTiming(
+            res,
+            404,
+            {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-store",
+            },
+            requestStartNs,
+            requestContext.cacheHit
+          );
+          res.end("Not found");
+          return;
+        }
+
         requestContext.cacheHit = false;
         const perfBody = JSON.stringify(
           {
@@ -2232,10 +2616,15 @@ async function main() {
         return;
       }
 
+      if (normalizedPath === QUOTE_REQUEST_ENDPOINT || normalizedPath === QUOTE_SUBMIT_ENDPOINT) {
+        await handleQuoteSubmissionRequest(req, res, requestStartNs, requestContext, requestLogger);
+        return;
+      }
+
       const directAssetPath = resolveSitePath(pathname);
       if (
         pathname !== "/" &&
-        path.extname(pathname) &&
+        isPublicDirectAssetPath(pathname) &&
         isSafePath(SITE_DIR, directAssetPath) &&
         runtimeIndex.existingFiles.has(directAssetPath)
       ) {
