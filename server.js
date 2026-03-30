@@ -1822,6 +1822,20 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
 })();
 </script>`;
 
+const HOME_CARD_HEIGHT_FIX = `<style id="home-card-height-fix">
+#rec1764265683 .tn-elem[data-elem-id="1767791730664"] {
+  top: 470px !important;
+}
+
+#rec1764265683 .tn-elem[data-elem-id="1767791730667"] {
+  top: 540px !important;
+}
+
+#rec1764265683 .tn-elem[data-elem-id="1767791730677"] {
+  height: 160px !important;
+}
+</style>`;
+
 function sanitizeHtml(html, routePath = "/") {
   let cleaned = html
     .replace(
@@ -1892,6 +1906,7 @@ function sanitizeHtml(html, routePath = "/") {
       [MOBILE_CONTACT_DETAILS_FIX, "mobile-contact-details-fix"],
       [PRICING_CALCULATOR_SCROLL_SCRIPT, "pricing-calculator-scroll"],
       [SAFARI_HOME_LAYOUT_FIX, "safari-home-layout-fix"],
+      [HOME_CARD_HEIGHT_FIX, "home-card-height-fix"],
     ]
       .filter(([, scriptId]) => !cleaned.includes(`id="${scriptId}"`))
       .map(([script]) => script)
