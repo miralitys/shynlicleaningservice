@@ -1536,11 +1536,14 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
     line-height: 1.12 !important;
   }
 
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730660"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730660"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730660"] {
     height: 214px !important;
   }
 
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"],
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"],
@@ -1548,24 +1551,28 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
     height: auto !important;
   }
 
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"] {
     width: 290px !important;
     top: 490px !important;
   }
 
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"] .tn-atom,
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"] .tn-atom,
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"] .tn-atom {
     font-size: 18px !important;
     line-height: 1.08 !important;
   }
 
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] {
     top: 555px !important;
     width: 300px !important;
   }
 
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"] .tn-atom,
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"] .tn-atom,
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] .tn-atom {
     line-height: 1.18 !important;
