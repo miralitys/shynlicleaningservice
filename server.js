@@ -1728,7 +1728,7 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730664"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730664"] {
     width: 300px !important;
-    top: 484px !important;
+    top: 470px !important;
   }
 
   html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730664"] .tn-atom,
@@ -1741,8 +1741,12 @@ const SAFARI_HOME_LAYOUT_FIX = `<script id="safari-home-layout-fix">
   html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1777679683 .tn-elem[data-elem-id="1767791730667"],
   html.is-safari #rec1793182423 .tn-elem[data-elem-id="1767791730667"] {
-    top: 582px !important;
+    top: 540px !important;
     width: 270px !important;
+  }
+
+  html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730677"] {
+    height: 160px !important;
   }
 
   html.is-safari #rec1764265683 .tn-elem[data-elem-id="1767791730667"] .tn-atom,
