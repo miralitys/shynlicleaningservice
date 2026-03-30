@@ -8,7 +8,14 @@ const fsp = require("fs/promises");
 const path = require("path");
 const { monitorEventLoopDelay } = require("perf_hooks");
 const { URL } = require("url");
-const { createLeadConnectorClient } = require("./lib/leadconnector");
+let createLeadConnectorClient;
+try {
+  ({ createLeadConnectorClient } = require("./lib/leadconnector"));
+} catch (error) {
+  createLeadConnectorClient = () => {
+    throw new Error("Lead connector module is not available in this build.");
+  };
+}
 const { calculateQuotePricing } = require("./lib/quote-pricing");
 const { QuoteTokenError, createQuoteToken, verifyQuoteToken } = require("./lib/quote-token");
 const { createSlidingWindowRateLimiter } = require("./lib/rate-limit");
