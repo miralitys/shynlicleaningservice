@@ -684,7 +684,12 @@ function buildAdminUserAuthConfig(systemConfig, user) {
 function getAdminRequestFingerprint(req) {
   return crypto
     .createHash("sha256")
-    .update(`${getClientAddress(req)}|${normalizeString(req.headers["user-agent"], 240)}`)
+    .update(
+      `${normalizeString(req.headers["user-agent"], 240)}|${normalizeString(
+        req.headers["accept-language"],
+        120
+      )}|${normalizeString(req.headers["sec-ch-ua-platform"], 80)}`
+    )
     .digest("hex")
     .slice(0, 32);
 }
