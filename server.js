@@ -46,6 +46,18 @@ try {
 } catch (error) {
   adminAuth = null;
 }
+let adminUsers;
+try {
+  adminUsers = require("./lib/admin-users");
+} catch (error) {
+  adminUsers = null;
+}
+let QRCode;
+try {
+  QRCode = require("qrcode");
+} catch (error) {
+  QRCode = null;
+}
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
@@ -54,7 +66,9 @@ const ROUTES_PATH = path.join(SITE_DIR, "routes.json");
 const NOT_FOUND_PAGE = "page113047926.html";
 const ADMIN_ROOT_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
+const ADMIN_SETUP_PATH = "/admin/setup";
 const ADMIN_2FA_PATH = "/admin/2fa";
+const ADMIN_USERS_PATH = "/admin/users";
 const ADMIN_LOGOUT_PATH = "/admin/logout";
 const ADMIN_SESSION_COOKIE = "shynli_admin_session";
 const ADMIN_CHALLENGE_COOKIE = "shynli_admin_challenge";
@@ -650,10 +664,21 @@ function parseFormBody(rawBody) {
   return output;
 }
 
-function getAdminConfig() {
-  if (!adminAuth) return null;
+function getAdminSystemConfig() {
+  if (!adminAuth || !adminUsers) return null;
   const config = adminAuth.loadAdminConfig(process.env);
   return config.configured ? config : null;
+}
+
+function buildAdminUserAuthConfig(systemConfig, user) {
+  return {
+    configured: Boolean(systemConfig && systemConfig.masterSecret && user && user.email && user.passwordHash),
+    email: user.email,
+    passwordHash: user.passwordHash,
+    issuer: systemConfig.issuer,
+    masterSecret: systemConfig.masterSecret,
+    configuredTotpSecret: user.totpSecret || "",
+  };
 }
 
 function getAdminRequestFingerprint(req) {
@@ -674,34 +699,111 @@ function getAdminCookieOptions(req) {
 }
 
 function getAdminAuthState(req) {
-  const config = getAdminConfig();
+  const systemConfig = getAdminSystemConfig();
   const cookies = parseCookies(req.headers.cookie);
   const fingerprint = getAdminRequestFingerprint(req);
   const state = {
-    config,
+    systemConfig,
+    store: null,
     fingerprint,
     session: null,
     challenge: null,
+    currentUser: null,
+    challengeUser: null,
     cookies,
+    error: null,
   };
 
-  if (!config) return state;
+  if (!systemConfig) return state;
 
   try {
-    const sessionPayload = adminAuth.verifyAdminSessionToken(cookies[ADMIN_SESSION_COOKIE], config);
-    if (sessionPayload && sessionPayload.email === config.email && sessionPayload.fingerprint === fingerprint) {
+    state.store = adminUsers.loadAdminUserStore({
+      env: process.env,
+      baseDir: SITE_DIR,
+      systemConfig,
+    });
+  } catch (error) {
+    state.error = error;
+    return state;
+  }
+
+  try {
+    const sessionPayload = adminAuth.verifyAdminSessionToken(cookies[ADMIN_SESSION_COOKIE], systemConfig);
+    const sessionUser = adminUsers.findAdminUserById(state.store, sessionPayload.userId);
+    if (
+      sessionPayload &&
+      sessionUser &&
+      sessionPayload.email === sessionUser.email &&
+      sessionPayload.fingerprint === fingerprint
+    ) {
       state.session = sessionPayload;
+      state.currentUser = sessionUser;
     }
   } catch {}
 
   try {
-    const challengePayload = adminAuth.verifyAdminChallengeToken(cookies[ADMIN_CHALLENGE_COOKIE], config);
-    if (challengePayload && challengePayload.email === config.email && challengePayload.fingerprint === fingerprint) {
+    const challengePayload = adminAuth.verifyAdminChallengeToken(cookies[ADMIN_CHALLENGE_COOKIE], systemConfig);
+    const challengeUser = adminUsers.findAdminUserById(state.store, challengePayload.userId);
+    if (
+      challengePayload &&
+      challengeUser &&
+      challengePayload.email === challengeUser.email &&
+      challengePayload.fingerprint === fingerprint
+    ) {
       state.challenge = challengePayload;
+      state.challengeUser = challengeUser;
     }
   } catch {}
 
   return state;
+}
+
+function buildAdminRouteWithQuery(routePath, params = {}) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    const normalizedValue = normalizeString(value, 240);
+    if (!normalizedValue) continue;
+    search.set(key, normalizedValue);
+  }
+  const query = search.toString();
+  return query ? `${routePath}?${query}` : routePath;
+}
+
+async function buildAdminQrMarkup(text) {
+  if (!QRCode || !text) return "";
+  try {
+    const dataUrl = await QRCode.toDataURL(text, {
+      margin: 1,
+      width: 220,
+      color: {
+        dark: "#2f2a27",
+        light: "#fffdfa",
+      },
+    });
+    return `<img class="admin-qr-image" src="${escapeHtmlText(dataUrl)}" alt="Authenticator QR code">`;
+  } catch {
+    return "";
+  }
+}
+
+function ensureAdminUserTotpSecret(store, user, systemConfig) {
+  if (!user || user.totpSecret) {
+    return { store, user };
+  }
+
+  const updated = adminUsers.updateAdminUser(store, user.id, (currentUser) => ({
+    ...currentUser,
+    totpSecret: adminAuth.createTotpSecret(),
+  }));
+
+  return {
+    store: adminUsers.saveAdminUserStore(updated.store, {
+      env: process.env,
+      baseDir: SITE_DIR,
+      systemConfig,
+    }),
+    user: updated.user,
+  };
 }
 
 function renderAdminLayout(title, content, options = {}) {
@@ -726,6 +828,7 @@ function renderAdminLayout(title, content, options = {}) {
       --danger: #b23a48;
       --success: #2f7d5a;
       --shadow: 0 20px 50px rgba(70, 42, 27, 0.12);
+      --soft: #f5ece4;
     }
     * { box-sizing: border-box; }
     body {
@@ -739,7 +842,7 @@ function renderAdminLayout(title, content, options = {}) {
       padding: 32px 18px;
     }
     .admin-shell {
-      max-width: 1120px;
+      max-width: 1180px;
       margin: 0 auto;
       display: grid;
       gap: 20px;
@@ -770,7 +873,7 @@ function renderAdminLayout(title, content, options = {}) {
     }
     .admin-subtitle {
       margin: 12px 0 0;
-      max-width: 720px;
+      max-width: 760px;
       color: var(--muted);
       font-size: 15px;
       line-height: 1.65;
@@ -781,7 +884,12 @@ function renderAdminLayout(title, content, options = {}) {
     .admin-form {
       display: grid;
       gap: 16px;
-      max-width: 480px;
+      max-width: 560px;
+    }
+    .admin-form-split {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .admin-label {
       display: grid;
@@ -857,6 +965,12 @@ function renderAdminLayout(title, content, options = {}) {
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 16px;
     }
+    .admin-grid-wide {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      align-items: start;
+    }
     .admin-card {
       border: 1px solid var(--panel-border);
       border-radius: 18px;
@@ -873,12 +987,43 @@ function renderAdminLayout(title, content, options = {}) {
       font-size: 14px;
       line-height: 1.65;
     }
+    .admin-card code {
+      font-size: 13px;
+    }
     .admin-list {
       margin: 0;
       padding: 0;
       list-style: none;
       display: grid;
       gap: 8px;
+    }
+    .admin-users-list {
+      display: grid;
+      gap: 12px;
+    }
+    .admin-user-row {
+      border: 1px solid #e6d9ce;
+      border-radius: 16px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.72);
+      display: grid;
+      gap: 8px;
+    }
+    .admin-user-header {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .admin-user-header strong {
+      font-size: 15px;
+    }
+    .admin-user-meta {
+      display: grid;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--muted);
     }
     .admin-badge {
       display: inline-flex;
@@ -896,6 +1041,10 @@ function renderAdminLayout(title, content, options = {}) {
       background: rgba(115, 104, 96, 0.12);
       color: var(--muted);
     }
+    .admin-badge-owner {
+      background: rgba(158, 67, 90, 0.12);
+      color: var(--accent);
+    }
     .admin-code {
       margin: 0;
       padding: 14px 16px;
@@ -906,16 +1055,6 @@ function renderAdminLayout(title, content, options = {}) {
       overflow-x: auto;
       white-space: pre-wrap;
       word-break: break-word;
-    }
-    details.admin-details {
-      border: 1px dashed #d9c7ba;
-      border-radius: 14px;
-      padding: 14px 16px;
-      background: #fffcf8;
-    }
-    details.admin-details summary {
-      cursor: pointer;
-      font-weight: 700;
     }
     .admin-topbar {
       display: flex;
@@ -933,11 +1072,52 @@ function renderAdminLayout(title, content, options = {}) {
     .admin-logout-form {
       margin: 0;
     }
+    .admin-qr-shell {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+      align-items: start;
+      margin-top: 16px;
+    }
+    .admin-qr-card {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      text-align: center;
+      background: var(--soft);
+    }
+    .admin-qr-image {
+      width: 220px;
+      height: 220px;
+      max-width: 100%;
+      display: block;
+      border-radius: 18px;
+      background: #fffdfa;
+      padding: 10px;
+      border: 1px solid #eadfd3;
+    }
+    .admin-helper {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
     a { color: var(--accent); }
+    @media (max-width: 860px) {
+      .admin-grid-wide {
+        grid-template-columns: 1fr;
+      }
+      .admin-qr-shell {
+        grid-template-columns: 1fr;
+      }
+    }
     @media (max-width: 720px) {
       body { padding: 18px 12px; }
       .admin-hero { padding: 22px 18px 8px; }
       .admin-content { padding: 0 18px 22px; }
+      .admin-form-split {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -958,17 +1138,21 @@ function renderAdminLayout(title, content, options = {}) {
 </html>`;
 }
 
-function renderAdminUnavailablePage() {
+function renderAdminUnavailablePage(message = "") {
+  const detail = normalizeString(message, 400);
+  const detailBlock = detail
+    ? `<div class="admin-alert admin-alert-error">${escapeHtml(detail)}</div>`
+    : "";
   return renderAdminLayout(
     "Admin Unavailable",
-    `<div class="admin-alert admin-alert-error">Admin access needs a server-side secret before it can be enabled. Configure <code>ADMIN_MASTER_SECRET</code>, or make sure one of <code>QUOTE_SIGNING_SECRET</code>, <code>GHL_API_KEY</code>, or <code>STRIPE_SECRET_KEY</code> is available on the server.</div>`,
+    `${detailBlock}<div class="admin-alert admin-alert-error">Admin access needs a server-side secret and the local user store before it can be enabled. Configure <code>ADMIN_MASTER_SECRET</code>, or make sure one of <code>QUOTE_SIGNING_SECRET</code>, <code>GHL_API_KEY</code>, or <code>STRIPE_SECRET_KEY</code> is available on the server.</div>`,
     {
-      subtitle: "The route is wired, but secure authentication cannot start until the server has a private signing secret.",
+      subtitle: "The route is wired, but secure authentication cannot start until the server has a private signing secret and the admin user store is available.",
     }
   );
 }
 
-function renderLoginPage(config, options = {}) {
+function renderLoginPage(systemConfig, options = {}) {
   const errorBlock = options.error
     ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
     : "";
@@ -981,35 +1165,101 @@ function renderLoginPage(config, options = {}) {
       <form class="admin-form" method="post" action="${ADMIN_LOGIN_PATH}" autocomplete="on">
         <label class="admin-label">
           Email
-          <input class="admin-input" type="email" name="email" value="${escapeHtmlText(options.email || config.email)}" autocomplete="username" required>
+          <input class="admin-input" type="email" name="email" value="${escapeHtmlText(options.email || "")}" autocomplete="username" required>
         </label>
         <label class="admin-label">
           Password
           <input class="admin-input" type="password" name="password" autocomplete="current-password" required>
         </label>
         <div class="admin-inline-actions">
-          <button class="admin-button" type="submit">Continue to 2FA</button>
+          <button class="admin-button" type="submit">Continue</button>
         </div>
       </form>`,
     {
-      subtitle: "Use your admin email and password first. The second step will ask for a 6-digit code from your Authenticator app.",
+      subtitle: `Use your admin email and password first. If this is your first login, we will ask you to change the standard password and finish your Authenticator setup for ${systemConfig.issuer}.`,
     }
   );
 }
 
-function renderTwoFactorPage(config, options = {}) {
+function renderSetupPage(systemConfig, user, options = {}) {
   const errorBlock = options.error
     ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
     : "";
-  const secret = adminAuth.getTotpSecretMaterial(config);
-  const otpauthUri = adminAuth.buildOtpauthUri(config);
-  const secretMode = secret.derived
-    ? "This key is derived from your server secret and current admin credentials."
-    : "This key comes from ADMIN_TOTP_SECRET.";
+  const infoBlock = options.info
+    ? `<div class="admin-alert admin-alert-info">${escapeHtml(options.info)}</div>`
+    : "";
+  const displayName = adminUsers.getAdminUserDisplayName(user);
+  const qrMarkup = options.qrMarkup || "";
+  return renderAdminLayout(
+    "Finish Your Setup",
+    `${errorBlock}${infoBlock}
+      <div class="admin-grid-wide">
+        <div class="admin-card">
+          <h3>Complete your first login</h3>
+          <p class="admin-helper">You are signing in as <strong>${escapeHtml(displayName)}</strong> (${escapeHtml(
+            user.email
+          )}). Change the shared standard password now, scan the QR code in your Authenticator app, and enter the 6-digit code to activate your account.</p>
+          <form class="admin-form" method="post" action="${ADMIN_SETUP_PATH}" autocomplete="off" style="margin-top:16px;">
+            <div class="admin-form-split">
+              <label class="admin-label">
+                New password
+                <input class="admin-input" type="password" name="newPassword" minlength="10" autocomplete="new-password" required>
+              </label>
+              <label class="admin-label">
+                Confirm password
+                <input class="admin-input" type="password" name="confirmPassword" minlength="10" autocomplete="new-password" required>
+              </label>
+            </div>
+            <label class="admin-label">
+              Authenticator code
+              <input class="admin-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" name="code" placeholder="123456" required>
+            </label>
+            <div class="admin-inline-actions">
+              <button class="admin-button" type="submit">Save password and finish setup</button>
+              <a class="admin-link-button admin-button-secondary" href="${ADMIN_LOGIN_PATH}">Back</a>
+            </div>
+          </form>
+        </div>
+        <div class="admin-card admin-qr-card">
+          <h3>Scan this QR code</h3>
+          ${qrMarkup || '<p class="admin-helper">QR generation is unavailable on this server. Use the manual setup values instead.</p>'}
+          <p class="admin-helper">Works with Google Authenticator, Microsoft Authenticator, 1Password, and similar apps.</p>
+        </div>
+      </div>
+      <div class="admin-qr-shell">
+        <div class="admin-card">
+          <h3>Manual setup</h3>
+          <ul class="admin-list">
+            <li><strong>Issuer:</strong> ${escapeHtml(systemConfig.issuer)}</li>
+            <li><strong>Account:</strong> ${escapeHtml(user.email)}</li>
+            <li><strong>Key:</strong> <code>${escapeHtml(options.secret || "")}</code></li>
+          </ul>
+        </div>
+        <div class="admin-card">
+          <h3>otpauth URI</h3>
+          <pre class="admin-code">${escapeHtml(options.otpauthUri || "")}</pre>
+        </div>
+      </div>`,
+    {
+      subtitle: "This step only happens once for each new user. After this, future logins will use your personal password and a TOTP code from the Authenticator app.",
+    }
+  );
+}
+
+function renderTwoFactorPage(user, options = {}) {
+  const errorBlock = options.error
+    ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
+    : "";
+  const infoBlock = options.info
+    ? `<div class="admin-alert admin-alert-info">${escapeHtml(options.info)}</div>`
+    : "";
   return renderAdminLayout(
     "Two-Factor Authentication",
-    `${errorBlock}
+    `${errorBlock}${infoBlock}
       <form class="admin-form" method="post" action="${ADMIN_2FA_PATH}" autocomplete="off">
+        <p class="admin-helper">Account: <strong>${escapeHtml(adminUsers.getAdminUserDisplayName(user))}</strong> (${escapeHtml(
+          user.email
+        )})</p>
         <label class="admin-label">
           6-digit code
           <input class="admin-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" name="code" placeholder="123456" required>
@@ -1018,54 +1268,132 @@ function renderTwoFactorPage(config, options = {}) {
           <button class="admin-button" type="submit">Verify and sign in</button>
           <a class="admin-link-button admin-button-secondary" href="${ADMIN_LOGIN_PATH}">Back</a>
         </div>
-      </form>
-      <details class="admin-details" style="margin-top:18px;">
-        <summary>Need to set up your Authenticator app?</summary>
-        <div style="display:grid; gap:12px; margin-top:12px;">
-          <p class="admin-subtitle" style="margin:0;">Add a new TOTP account in Google Authenticator, Microsoft Authenticator, 1Password, or a similar app using the values below. ${escapeHtml(secretMode)}</p>
-          <div class="admin-card">
-            <h3>Manual setup</h3>
-            <ul class="admin-list">
-              <li><strong>Issuer:</strong> ${escapeHtml(config.issuer)}</li>
-              <li><strong>Account:</strong> ${escapeHtml(config.email)}</li>
-              <li><strong>Key:</strong> <code>${escapeHtml(secret.base32)}</code></li>
-            </ul>
-          </div>
-          <div class="admin-card">
-            <h3>otpauth URI</h3>
-            <pre class="admin-code">${escapeHtml(otpauthUri)}</pre>
-          </div>
-        </div>
-      </details>`,
+      </form>`,
     {
-      subtitle: "Enter the current TOTP code from your Authenticator app. If this is your first time, expand the setup section below and add the account manually.",
+      subtitle: "Enter the current code from your Authenticator app to complete sign-in.",
     }
   );
 }
 
-function renderDashboardPage(req, config) {
+function renderAdminUsersList(store) {
+  const users = adminUsers.listAdminUsers(store);
+  if (!users.length) {
+    return '<p class="admin-helper">No users have been created yet.</p>';
+  }
+
+  return users
+    .map((user) => {
+      const roleBadge =
+        user.role === "owner"
+          ? '<span class="admin-badge admin-badge-owner">Owner</span>'
+          : '<span class="admin-badge admin-badge-muted">Staff</span>';
+      const statusBadge = user.mustChangePassword
+        ? '<span class="admin-badge admin-badge-muted">Pending setup</span>'
+        : '<span class="admin-badge">Active</span>';
+      const lastLoginText = user.lastLoginAt
+        ? new Date(user.lastLoginAt).toLocaleString("en-US", {
+            timeZone: "America/Chicago",
+            dateStyle: "medium",
+            timeStyle: "short",
+          })
+        : "Never";
+      return `<article class="admin-user-row">
+        <div class="admin-user-header">
+          <strong>${escapeHtml(adminUsers.getAdminUserDisplayName(user))}</strong>
+          <div class="admin-inline-actions">${roleBadge} ${statusBadge}</div>
+        </div>
+        <div class="admin-user-meta">
+          <span>${escapeHtml(user.email)}</span>
+          <span>Last login: ${escapeHtml(lastLoginText)}</span>
+          <span>Created: ${escapeHtml(
+            new Date(user.createdAt).toLocaleString("en-US", {
+              timeZone: "America/Chicago",
+              dateStyle: "medium",
+              timeStyle: "short",
+            })
+          )}</span>
+        </div>
+      </article>`;
+    })
+    .join("");
+}
+
+function renderDashboardPage(req, systemConfig, currentUser, store, options = {}) {
   const runtimeBadges = [
     getLeadConnectorClient().isConfigured() ? '<span class="admin-badge">GHL Ready</span>' : '<span class="admin-badge admin-badge-muted">GHL Missing</span>',
     getStripeClient() ? '<span class="admin-badge">Stripe Ready</span>' : '<span class="admin-badge admin-badge-muted">Stripe Missing</span>',
     GOOGLE_PLACES_API_KEY ? '<span class="admin-badge">Places Key Ready</span>' : '<span class="admin-badge admin-badge-muted">Places Key Missing</span>',
   ].join(" ");
   const memory = getMemoryUsageSnapshot();
-  const totp = adminAuth.getTotpSecretMaterial(config);
+  const currentUserConfig = buildAdminUserAuthConfig(systemConfig, currentUser);
+  const totp = adminAuth.getTotpSecretMaterial(currentUserConfig);
+  const noticeBlock = options.notice
+    ? `<div class="admin-alert ${options.noticeType === "error" ? "admin-alert-error" : "admin-alert-info"}">${escapeHtml(
+        options.notice
+      )}</div>`
+    : "";
+  const creationFormBlock =
+    currentUser.role === "owner"
+      ? `<article class="admin-card">
+          <h3>Create a new user</h3>
+          <p class="admin-helper">A new user gets the standard first-login password <code>${escapeHtml(
+            adminUsers.getDefaultUserPasswordHint(process.env)
+          )}</code>. On their first login we force a password change and Authenticator onboarding.</p>
+          <form class="admin-form" method="post" action="${ADMIN_USERS_PATH}" style="margin-top:16px;">
+            <div class="admin-form-split">
+              <label class="admin-label">
+                First name
+                <input class="admin-input" type="text" name="firstName" value="${escapeHtmlText(
+                  options.userForm && options.userForm.firstName
+                )}" required>
+              </label>
+              <label class="admin-label">
+                Last name
+                <input class="admin-input" type="text" name="lastName" value="${escapeHtmlText(
+                  options.userForm && options.userForm.lastName
+                )}" required>
+              </label>
+            </div>
+            <label class="admin-label">
+              Email
+              <input class="admin-input" type="email" name="email" value="${escapeHtmlText(
+                options.userForm && options.userForm.email
+              )}" required>
+            </label>
+            <div class="admin-inline-actions">
+              <button class="admin-button" type="submit">Create user</button>
+            </div>
+          </form>
+        </article>`
+      : `<article class="admin-card">
+          <h3>User management</h3>
+          <p class="admin-helper">Only the owner account can create new users. Your account can still sign in and use the secured admin area.</p>
+        </article>`;
   return renderAdminLayout(
     "Admin Dashboard",
-    `<div class="admin-topbar">
-        <p>Signed in as <strong>${escapeHtml(config.email)}</strong></p>
+    `${noticeBlock}
+      <div class="admin-topbar">
+        <p>Signed in as <strong>${escapeHtml(adminUsers.getAdminUserDisplayName(currentUser))}</strong> (${escapeHtml(
+          currentUser.email
+        )})</p>
         <form class="admin-logout-form" method="post" action="${ADMIN_LOGOUT_PATH}">
           <button class="admin-button admin-button-secondary" type="submit">Log out</button>
         </form>
+      </div>
+      <div class="admin-grid-wide" style="margin-bottom:16px;">
+        <article class="admin-card">
+          <h3>Users</h3>
+          <div class="admin-users-list">${renderAdminUsersList(store)}</div>
+        </article>
+        ${creationFormBlock}
       </div>
       <div class="admin-grid">
         <article class="admin-card">
           <h3>Security</h3>
           <ul class="admin-list">
-            <li>Password check: enabled</li>
-            <li>TOTP issuer: ${escapeHtml(config.issuer)}</li>
-            <li>TOTP mode: ${totp.derived ? "derived from server secret" : "explicit ADMIN_TOTP_SECRET"}</li>
+            <li>Role: ${escapeHtml(currentUser.role)}</li>
+            <li>TOTP issuer: ${escapeHtml(systemConfig.issuer)}</li>
+            <li>Your TOTP mode: ${totp.derived ? "derived from server secret" : "personal explicit secret"}</li>
             <li>Cookies: HttpOnly + SameSite=Strict${shouldUseSecureCookies(req) ? " + Secure" : ""}</li>
           </ul>
         </article>
@@ -1099,12 +1427,12 @@ function renderDashboardPage(req, config) {
         </article>
       </div>`,
     {
-      subtitle: "This is the secured admin area. Right now it focuses on safe access control, runtime visibility, and guarded entry into future internal tools.",
+      subtitle: "This secured area now supports multiple users. New users are created by the owner, start with a shared standard password, and must finish password + Authenticator setup on first login.",
     }
   );
 }
 
-function buildAdminAuthHeaders(req, cookies = []) {
+function buildAdminAuthHeaders(cookies = []) {
   const headers = {};
   if (cookies.length > 0) {
     headers["Set-Cookie"] = cookies;
@@ -1136,23 +1464,56 @@ function enforceSlidingRateLimit(rateLimiter, req, res, requestStartNs, requestC
 async function handleAdminRequest(req, res, requestStartNs, requestContext, requestLogger) {
   requestContext.cacheHit = false;
   const adminState = getAdminAuthState(req);
-  if (!adminState.config) {
+  const requestUrl = new URL(req.url || ADMIN_ROOT_PATH, `http://${req.headers.host || "localhost"}`);
+
+  if (!adminState.systemConfig) {
     writeHtmlWithTiming(res, 503, renderAdminUnavailablePage(), requestStartNs, requestContext.cacheHit);
     return;
   }
 
-  const { config, session, challenge, fingerprint } = adminState;
+  if (adminState.error) {
+    writeHtmlWithTiming(
+      res,
+      500,
+      renderAdminUnavailablePage(`Could not load the admin user store: ${adminState.error.message}`),
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
+  const { systemConfig, fingerprint } = adminState;
+  let { store, session, challenge, currentUser, challengeUser } = adminState;
 
   if (requestContext.route === ADMIN_ROOT_PATH) {
     if (req.method !== "GET") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(
+        res,
+        405,
+        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET.</div>`),
+        requestStartNs,
+        requestContext.cacheHit
+      );
       return;
     }
-    if (session) {
-      writeHtmlWithTiming(res, 200, renderDashboardPage(req, config), requestStartNs, requestContext.cacheHit);
+    if (session && currentUser) {
+      writeHtmlWithTiming(
+        res,
+        200,
+        renderDashboardPage(req, systemConfig, currentUser, store, {
+          notice: normalizeString(requestUrl.searchParams.get("notice"), 240),
+          noticeType: normalizeString(requestUrl.searchParams.get("noticeType"), 16),
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
       return;
     }
-    if (challenge) {
+    if (challenge && challenge.mode === "setup") {
+      redirectWithTiming(res, 303, ADMIN_SETUP_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+    if (challenge && challenge.mode === "2fa") {
       redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
       return;
     }
@@ -1162,16 +1523,30 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
 
   if (requestContext.route === ADMIN_LOGIN_PATH) {
     if (req.method === "GET") {
-      if (session) {
+      if (session && currentUser) {
         redirectWithTiming(res, 303, ADMIN_ROOT_PATH, requestStartNs, requestContext.cacheHit);
         return;
       }
-      writeHtmlWithTiming(res, 200, renderLoginPage(config), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(
+        res,
+        200,
+        renderLoginPage(systemConfig, {
+          info: normalizeString(requestUrl.searchParams.get("notice"), 240),
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
       return;
     }
 
     if (req.method !== "POST") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(
+        res,
+        405,
+        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`),
+        requestStartNs,
+        requestContext.cacheHit
+      );
       return;
     }
 
@@ -1192,13 +1567,13 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
     const email = normalizeString(formBody.email, 320).toLowerCase();
     const password = normalizeString(formBody.password, 200);
-    const validEmail = email && email === config.email;
-    const validPassword = password && adminAuth.verifyPassword(password, config.passwordHash);
-    if (!validEmail || !validPassword) {
+    const user = adminUsers.findAdminUserByEmail(store, email);
+    const validPassword = user && adminAuth.verifyPassword(password, user.passwordHash);
+    if (!user || !validPassword) {
       writeHtmlWithTiming(
         res,
         401,
-        renderLoginPage(config, {
+        renderLoginPage(systemConfig, {
           error: "Wrong email or password. Please try again.",
           email,
         }),
@@ -1208,17 +1583,20 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
       return;
     }
 
-    const challengeToken = adminAuth.createAdminChallengeToken(config, {
-      email: config.email,
+    const challengeMode = user.mustChangePassword ? "setup" : "2fa";
+    const challengeToken = adminAuth.createAdminChallengeToken(systemConfig, {
+      userId: user.id,
+      email: user.email,
       fingerprint,
+      mode: challengeMode,
     });
     redirectWithTiming(
       res,
       303,
-      ADMIN_2FA_PATH,
+      challengeMode === "setup" ? ADMIN_SETUP_PATH : ADMIN_2FA_PATH,
       requestStartNs,
       requestContext.cacheHit,
-      buildAdminAuthHeaders(req, [
+      buildAdminAuthHeaders([
         serializeCookie(ADMIN_CHALLENGE_COOKIE, challengeToken, {
           ...getAdminCookieOptions(req),
           maxAge: adminAuth.CHALLENGE_TTL_SECONDS,
@@ -1229,26 +1607,55 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
     return;
   }
 
-  if (requestContext.route === ADMIN_2FA_PATH) {
-    if (!challenge) {
+  if (requestContext.route === ADMIN_SETUP_PATH) {
+    if (!challenge || !challengeUser) {
       redirectWithTiming(
         res,
         303,
         ADMIN_LOGIN_PATH,
         requestStartNs,
         requestContext.cacheHit,
-        buildAdminAuthHeaders(req, [clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req))])
+        buildAdminAuthHeaders([clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req))])
       );
       return;
     }
 
+    if (challenge.mode !== "setup") {
+      redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    const ensured = ensureAdminUserTotpSecret(store, challengeUser, systemConfig);
+    store = ensured.store;
+    challengeUser = ensured.user;
+    const userConfig = buildAdminUserAuthConfig(systemConfig, challengeUser);
+    const secret = adminAuth.getTotpSecretMaterial(userConfig).base32;
+    const otpauthUri = adminAuth.buildOtpauthUri(userConfig);
+    const qrMarkup = await buildAdminQrMarkup(otpauthUri);
+
     if (req.method === "GET") {
-      writeHtmlWithTiming(res, 200, renderTwoFactorPage(config), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(
+        res,
+        200,
+        renderSetupPage(systemConfig, challengeUser, {
+          secret,
+          otpauthUri,
+          qrMarkup,
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
       return;
     }
 
     if (req.method !== "POST") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(
+        res,
+        405,
+        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`),
+        requestStartNs,
+        requestContext.cacheHit
+      );
       return;
     }
 
@@ -1259,21 +1666,33 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
         res,
         requestStartNs,
         requestContext,
-        `${getClientAddress(req)}:2fa`,
-        "Too many verification attempts. Please wait a few minutes before trying again."
+        `${getClientAddress(req)}:setup:${challengeUser.id}`,
+        "Too many setup attempts. Please wait a few minutes before trying again."
       )
     ) {
       return;
     }
 
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
+    const newPassword = String(formBody.newPassword || "");
+    const confirmPassword = String(formBody.confirmPassword || "");
     const code = normalizeString(formBody.code, 16);
-    if (!adminAuth.verifyTotpCode(code, config)) {
+    const passwordError =
+      newPassword.length < 10
+        ? "Choose a stronger password with at least 10 characters."
+        : newPassword !== confirmPassword
+          ? "The password confirmation does not match."
+          : "";
+
+    if (passwordError) {
       writeHtmlWithTiming(
         res,
-        401,
-        renderTwoFactorPage(config, {
-          error: "That code was not valid. Check the app and try again.",
+        400,
+        renderSetupPage(systemConfig, challengeUser, {
+          error: passwordError,
+          secret,
+          otpauthUri,
+          qrMarkup,
         }),
         requestStartNs,
         requestContext.cacheHit
@@ -1281,17 +1700,50 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
       return;
     }
 
-    const sessionToken = adminAuth.createAdminSessionToken(config, {
-      email: config.email,
+    if (!adminAuth.verifyTotpCode(code, userConfig)) {
+      writeHtmlWithTiming(
+        res,
+        401,
+        renderSetupPage(systemConfig, challengeUser, {
+          error: "That Authenticator code was not valid. Scan the QR code again and try once more.",
+          secret,
+          otpauthUri,
+          qrMarkup,
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    const updated = adminUsers.updateAdminUser(store, challengeUser.id, (currentUserRecord) => ({
+      ...currentUserRecord,
+      passwordHash: adminAuth.hashPassword(newPassword),
+      mustChangePassword: false,
+      setupCompletedAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+    }));
+    store = adminUsers.saveAdminUserStore(updated.store, {
+      env: process.env,
+      baseDir: SITE_DIR,
+      systemConfig,
+    });
+
+    const sessionToken = adminAuth.createAdminSessionToken(systemConfig, {
+      userId: updated.user.id,
+      email: updated.user.email,
       fingerprint,
     });
     redirectWithTiming(
       res,
       303,
-      ADMIN_ROOT_PATH,
+      buildAdminRouteWithQuery(ADMIN_ROOT_PATH, {
+        notice: "Your password and Authenticator setup are now active.",
+        noticeType: "info",
+      }),
       requestStartNs,
       requestContext.cacheHit,
-      buildAdminAuthHeaders(req, [
+      buildAdminAuthHeaders([
         serializeCookie(ADMIN_SESSION_COOKIE, sessionToken, {
           ...getAdminCookieOptions(req),
           maxAge: adminAuth.SESSION_TTL_SECONDS,
@@ -1302,18 +1754,191 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
     return;
   }
 
+  if (requestContext.route === ADMIN_2FA_PATH) {
+    if (!challenge || !challengeUser) {
+      redirectWithTiming(
+        res,
+        303,
+        ADMIN_LOGIN_PATH,
+        requestStartNs,
+        requestContext.cacheHit,
+        buildAdminAuthHeaders([clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req))])
+      );
+      return;
+    }
+
+    if (challenge.mode === "setup") {
+      redirectWithTiming(res, 303, ADMIN_SETUP_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    const userConfig = buildAdminUserAuthConfig(systemConfig, challengeUser);
+
+    if (req.method === "GET") {
+      writeHtmlWithTiming(
+        res,
+        200,
+        renderTwoFactorPage(challengeUser),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    if (req.method !== "POST") {
+      writeHtmlWithTiming(
+        res,
+        405,
+        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    if (
+      enforceSlidingRateLimit(
+        adminTwoFactorRateLimiter,
+        req,
+        res,
+        requestStartNs,
+        requestContext,
+        `${getClientAddress(req)}:2fa:${challengeUser.id}`,
+        "Too many verification attempts. Please wait a few minutes before trying again."
+      )
+    ) {
+      return;
+    }
+
+    const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
+    const code = normalizeString(formBody.code, 16);
+    if (!adminAuth.verifyTotpCode(code, userConfig)) {
+      writeHtmlWithTiming(
+        res,
+        401,
+        renderTwoFactorPage(challengeUser, {
+          error: "That code was not valid. Check the app and try again.",
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    const updated = adminUsers.updateAdminUser(store, challengeUser.id, (currentUserRecord) => ({
+      ...currentUserRecord,
+      lastLoginAt: new Date().toISOString(),
+    }));
+    adminUsers.saveAdminUserStore(updated.store, {
+      env: process.env,
+      baseDir: SITE_DIR,
+      systemConfig,
+    });
+
+    const sessionToken = adminAuth.createAdminSessionToken(systemConfig, {
+      userId: challengeUser.id,
+      email: challengeUser.email,
+      fingerprint,
+    });
+    redirectWithTiming(
+      res,
+      303,
+      ADMIN_ROOT_PATH,
+      requestStartNs,
+      requestContext.cacheHit,
+      buildAdminAuthHeaders([
+        serializeCookie(ADMIN_SESSION_COOKIE, sessionToken, {
+          ...getAdminCookieOptions(req),
+          maxAge: adminAuth.SESSION_TTL_SECONDS,
+        }),
+        clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req)),
+      ])
+    );
+    return;
+  }
+
+  if (requestContext.route === ADMIN_USERS_PATH) {
+    if (!session || !currentUser) {
+      redirectWithTiming(res, 303, ADMIN_LOGIN_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    if (currentUser.role !== "owner") {
+      writeHtmlWithTiming(
+        res,
+        403,
+        renderAdminLayout("Forbidden", `<div class="admin-alert admin-alert-error">Only the owner account can create new users.</div>`),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    if (req.method !== "POST") {
+      redirectWithTiming(res, 303, ADMIN_ROOT_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
+    try {
+      const created = adminUsers.createAdminUser(store, formBody, {
+        env: process.env,
+        systemConfig,
+        createdBy: currentUser.id,
+      });
+      adminUsers.saveAdminUserStore(created.store, {
+        env: process.env,
+        baseDir: SITE_DIR,
+        systemConfig,
+      });
+
+      redirectWithTiming(
+        res,
+        303,
+        buildAdminRouteWithQuery(ADMIN_ROOT_PATH, {
+          notice: `User ${created.user.email} was created successfully.`,
+          noticeType: "info",
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    } catch (error) {
+      writeHtmlWithTiming(
+        res,
+        400,
+        renderDashboardPage(req, systemConfig, currentUser, store, {
+          notice: error && error.message ? error.message : "Could not create the user.",
+          noticeType: "error",
+          userForm: formBody,
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+  }
+
   if (requestContext.route === ADMIN_LOGOUT_PATH) {
     if (req.method !== "POST") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">Log out must be submitted with POST.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(
+        res,
+        405,
+        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">Log out must be submitted with POST.</div>`),
+        requestStartNs,
+        requestContext.cacheHit
+      );
       return;
     }
     redirectWithTiming(
       res,
       303,
-      ADMIN_LOGIN_PATH,
+      buildAdminRouteWithQuery(ADMIN_LOGIN_PATH, {
+        notice: "You have been signed out.",
+      }),
       requestStartNs,
       requestContext.cacheHit,
-      buildAdminAuthHeaders(req, [
+      buildAdminAuthHeaders([
         clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions(req)),
         clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req)),
       ])
@@ -3404,7 +4029,9 @@ async function main() {
       if (
         normalizedPath === ADMIN_ROOT_PATH ||
         normalizedPath === ADMIN_LOGIN_PATH ||
+        normalizedPath === ADMIN_SETUP_PATH ||
         normalizedPath === ADMIN_2FA_PATH ||
+        normalizedPath === ADMIN_USERS_PATH ||
         normalizedPath === ADMIN_LOGOUT_PATH
       ) {
         await handleAdminRequest(req, res, requestStartNs, requestContext, requestLogger);
