@@ -3830,6 +3830,8 @@ async function handleQuoteSubmissionRequest(
     type: "quote_submission_success",
     status: result.status,
     contact_id: result.contactId,
+    custom_fields_updated: Boolean(result.customFieldsUpdated),
+    custom_field_sync_reason: result.customFieldSyncReason || "",
     warnings: result.warnings || [],
   });
 
@@ -3859,8 +3861,11 @@ async function handleQuoteSubmissionRequest(
       success: true,
       contactId: result.contactId,
       usedExistingContact: Boolean(result.usedExistingContact),
+      customFieldsUpdated: Boolean(result.customFieldsUpdated),
+      customFieldSyncReason: result.customFieldSyncReason || "",
       noteCreated: Boolean(result.noteCreated),
       opportunityCreated: Boolean(result.opportunityCreated),
+      skipped: result.skipped || {},
       warnings: Array.isArray(result.warnings) ? result.warnings : [],
       pricing: {
         totalPrice: pricing.totalPrice,
