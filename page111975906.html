@@ -727,12 +727,14 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
     }
 
     .quantity-service-item {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-areas: "label selector price";
         align-items: center;
-        justify-content: space-between;
+        gap: 16px 14px;
         padding: 18px 20px;
         background: white;
-        border-radius: 10px;
+        border-radius: 14px;
         border: 1.5px solid #e8e6e0;
         transition: all 0.3s ease;
     }
@@ -743,30 +745,45 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
     }
 
     .quantity-service-label {
+        grid-area: label;
         font-size: 15px;
         color: #2c2c2c;
         font-weight: 500;
-        flex: 1;
-        margin-right: 20px;
+        min-width: 0;
+        margin: 0;
+        line-height: 1.45;
+    }
+
+    .quantity-service-controls {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 14px;
+        flex-shrink: 0;
     }
 
     .quantity-selector {
-        display: flex;
+        grid-area: selector;
+        display: inline-flex;
         align-items: center;
         gap: 0;
-        background: #fafafa;
-        border-radius: 8px;
-        border: 1.5px solid #e8e6e0;
+        background: linear-gradient(180deg, #fcfcfb 0%, #f4f1ed 100%);
+        border-radius: 12px;
+        border: 1.5px solid #e4ddd4;
         overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        flex-shrink: 0;
+        justify-self: end;
     }
 
     .quantity-btn {
-        width: 40px;
-        height: 40px;
+        width: 42px;
+        min-width: 42px;
+        height: 42px;
         border: none;
-        background: #f0f0f0;
+        background: transparent;
         color: #2c2c2c;
-        font-size: 20px;
+        font-size: 24px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -774,6 +791,9 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
         align-items: center;
         justify-content: center;
         user-select: none;
+        flex: 0 0 42px;
+        line-height: 1;
+        padding: 0;
     }
 
     .quantity-btn:hover {
@@ -794,8 +814,9 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
     }
 
     .quantity-input {
-        width: 60px;
-        height: 40px;
+        width: 56px;
+        min-width: 56px;
+        height: 42px;
         border: none;
         background: white;
         text-align: center;
@@ -806,19 +827,31 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
         margin: 0;
         border-left: 1.5px solid #e8e6e0;
         border-right: 1.5px solid #e8e6e0;
+        flex: 0 0 56px;
+        appearance: textfield;
+        -webkit-appearance: none;
+        -moz-appearance: textfield;
     }
 
     .quantity-input:focus {
         outline: none;
     }
 
+    .quantity-input::-webkit-outer-spin-button,
+    .quantity-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
     .quantity-service-price {
+        grid-area: price;
         font-size: 15px;
         font-weight: 700;
         color: #8B2635;
-        min-width: 60px;
+        min-width: 52px;
         text-align: right;
-        margin-left: 20px;
+        margin: 0;
+        justify-self: end;
     }
 
     #totalSection {
@@ -1469,6 +1502,58 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
             line-height: 1.1;
         }
 
+        .quantity-service-item {
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas:
+                "label label"
+                "selector price";
+            gap: 14px 12px;
+            padding: 16px;
+            border-radius: 16px;
+        }
+
+        .quantity-service-controls {
+            width: 100%;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .quantity-service-label {
+            font-size: 15px;
+            grid-column: auto;
+        }
+
+        .quantity-selector {
+            border-radius: 14px;
+            justify-self: start;
+        }
+
+        .quantity-btn {
+            width: 44px;
+            min-width: 44px;
+            height: 44px;
+            flex-basis: 44px;
+            font-size: 24px;
+        }
+
+        .quantity-input {
+            width: 58px;
+            min-width: 58px;
+            height: 44px;
+            flex-basis: 58px;
+            font-size: 17px;
+        }
+
+        .quantity-service-price {
+            min-width: auto;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(139, 38, 53, 0.08);
+            text-align: center;
+            justify-self: end;
+            white-space: nowrap;
+        }
+
         .form-section,
         .calculator-section {
             padding: 30px 20px;
@@ -1508,6 +1593,64 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
 
         .input-row {
             grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .quantity-service-controls {
+            gap: 10px;
+        }
+
+        .quantity-service-price {
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 430px) {
+        .quantity-services-list > .quantity-service-item {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            grid-template-areas:
+                "label label"
+                "selector price" !important;
+            align-items: center !important;
+            gap: 14px 12px !important;
+        }
+
+        .quantity-services-list > .quantity-service-item > .quantity-service-label {
+            grid-area: label !important;
+            margin-right: 0 !important;
+        }
+
+        .quantity-services-list > .quantity-service-item > .quantity-selector {
+            grid-area: selector !important;
+            display: inline-flex !important;
+            min-width: 146px;
+            justify-self: start !important;
+        }
+
+        .quantity-services-list .quantity-btn {
+            width: 44px !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            flex: 0 0 44px !important;
+        }
+
+        .quantity-services-list .quantity-input {
+            width: 58px !important;
+            min-width: 58px !important;
+            height: 44px !important;
+            flex: 0 0 58px !important;
+        }
+
+        .quantity-services-list > .quantity-service-item > .quantity-service-price {
+            grid-area: price !important;
+            min-width: auto !important;
+            justify-self: end !important;
+            padding: 10px 12px;
+            border-radius: 999px;
+            background: rgba(139, 38, 53, 0.08);
         }
     }
 
@@ -1570,7 +1713,7 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();</script></head
                                 5
                             </label> <label class="option-btn" data-value="5.5"> <input type="radio" name="bathrooms" value="5.5">
                                 5+
-                            </label> </div> </div> <div class="input-group"> <label for="squareMeters">Size of Home</label> <select id="squareMeters" name="squareMeters" class="select-input"> <option value="">Select size...</option> <option value="0">700 - 1,200 sq ft</option> <option value="1">1,201 - 2,000 sq ft</option> <option value="2">2,001 - 2,500 sq ft</option> <option value="3">2,501 - 3,000 sq ft</option> <option value="4">3,001 - 3,500 sq ft</option> <option value="5">3,501 - 4,000 sq ft</option> <option value="6">4,001 - 5,000 sq ft</option> <option value="7">5,001 - 6,000 sq ft</option> <option value="8">6,001 - 7,000 sq ft</option> </select> </div> <div class="input-group"> <label for="hasPets">Do you have pets?</label> <select id="hasPets" name="hasPets" class="select-input"> <option value="no" selected>No</option> <option value="cat">Cat</option> <option value="dog">Dog</option> </select> </div> <div class="input-group"> <label for="basementCleaning">Basement Cleaning</label> <select id="basementCleaning" name="basementCleaning" class="select-input"> <option value="">Options</option> <option value="yes">Yes, Please!</option> <option value="no">No</option> </select> </div> </div> <div class="calculator-group"> <h3>Additional Services</h3> <div class="services-list"> <label class="service-item"> <input type="checkbox" name="services" value="ovenCleaning"> <span class="checkmark"></span> <span class="service-text">Oven Cleaning</span> <span class="service-price" data-service="ovenCleaning">+$45</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="refrigeratorCleaning"> <span class="checkmark"></span> <span class="service-text">Inside Refrigerator Cleaning</span> <span class="service-price" data-service="refrigeratorCleaning">+$45</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="baseboardCleaning"> <span class="checkmark"></span> <span class="service-text">Baseboard Cleaning (whole house)</span> <span class="service-price" data-service="baseboardCleaning">+$22</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="doorsCleaning"> <span class="checkmark"></span> <span class="service-text">Doors Cleaning</span> <span class="service-price" data-service="doorsCleaning">+$22</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="insideCabinets"> <span class="checkmark"></span> <span class="service-text">Inside Cabinets Cleaning</span> <span class="service-price" data-service="insideCabinets">+$45</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="rangeHood"> <span class="checkmark"></span> <span class="service-text">Range hood</span> <span class="service-price" data-service="rangeHood">+$22</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="furniturePolishing"> <span class="checkmark"></span> <span class="service-text">Wood Furniture Polishing</span> <span class="service-price" data-service="furniturePolishing">+$20</span> </label> </div> <div class="quantity-services-list"> <div class="quantity-service-item"> <label class="quantity-service-label">Interior Windows Cleaning ($6/window)</label> <div class="quantity-selector"> <button type="button" class="quantity-btn quantity-decrease" data-service="interiorWindowsCleaning">-</button> <input type="number" class="quantity-input" id="interiorWindowsCleaning" name="interiorWindowsCleaning" value="0" min="0" readonly> <button type="button" class="quantity-btn quantity-increase" data-service="interiorWindowsCleaning">+</button> </div> <span class="quantity-service-price" data-service="interiorWindowsCleaning">$0</span> </div> <div class="quantity-service-item"> <label class="quantity-service-label">Blinds Cleaning ($8/window)</label> <div class="quantity-selector"> <button type="button" class="quantity-btn quantity-decrease" data-service="blindsCleaning">-</button> <input type="number" class="quantity-input" id="blindsCleaning" name="blindsCleaning" value="0" min="0" readonly> <button type="button" class="quantity-btn quantity-increase" data-service="blindsCleaning">+</button> </div> <span class="quantity-service-price" data-service="blindsCleaning">$0</span> </div> <div class="quantity-service-item"> <label class="quantity-service-label">Bed Linen / Sofa Cover Change ($8/each)</label> <div class="quantity-selector"> <button type="button" class="quantity-btn quantity-decrease" data-service="bedLinenChange">-</button> <input type="number" class="quantity-input" id="bedLinenChange" name="bedLinenChange" value="0" min="0" readonly> <button type="button" class="quantity-btn quantity-increase" data-service="bedLinenChange">+</button> </div> <span class="quantity-service-price" data-service="bedLinenChange">$0</span> </div> </div> </div> <div class="calculator-group"> <h3>Additional details (optional)</h3> <div class="input-group"> <textarea 
+                            </label> </div> </div> <div class="input-group"> <label for="squareMeters">Size of Home</label> <select id="squareMeters" name="squareMeters" class="select-input"> <option value="">Select size...</option> <option value="0">700 - 1,200 sq ft</option> <option value="1">1,201 - 2,000 sq ft</option> <option value="2">2,001 - 2,500 sq ft</option> <option value="3">2,501 - 3,000 sq ft</option> <option value="4">3,001 - 3,500 sq ft</option> <option value="5">3,501 - 4,000 sq ft</option> <option value="6">4,001 - 5,000 sq ft</option> <option value="7">5,001 - 6,000 sq ft</option> <option value="8">6,001 - 7,000 sq ft</option> </select> </div> <div class="input-group"> <label for="hasPets">Do you have pets?</label> <select id="hasPets" name="hasPets" class="select-input"> <option value="no" selected>No</option> <option value="cat">Cat</option> <option value="dog">Dog</option> </select> </div> <div class="input-group"> <label for="basementCleaning">Basement Cleaning</label> <select id="basementCleaning" name="basementCleaning" class="select-input"> <option value="">Options</option> <option value="yes">Yes, Please!</option> <option value="no">No</option> </select> </div> </div> <div class="calculator-group"> <h3>Additional Services</h3> <div class="services-list"> <label class="service-item"> <input type="checkbox" name="services" value="ovenCleaning"> <span class="checkmark"></span> <span class="service-text">Oven Cleaning</span> <span class="service-price" data-service="ovenCleaning">+$45</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="refrigeratorCleaning"> <span class="checkmark"></span> <span class="service-text">Inside Refrigerator Cleaning</span> <span class="service-price" data-service="refrigeratorCleaning">+$45</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="baseboardCleaning"> <span class="checkmark"></span> <span class="service-text">Baseboard Cleaning (whole house)</span> <span class="service-price" data-service="baseboardCleaning">+$22</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="doorsCleaning"> <span class="checkmark"></span> <span class="service-text">Doors Cleaning</span> <span class="service-price" data-service="doorsCleaning">+$22</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="insideCabinets"> <span class="checkmark"></span> <span class="service-text">Inside Cabinets Cleaning</span> <span class="service-price" data-service="insideCabinets">+$45</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="rangeHood"> <span class="checkmark"></span> <span class="service-text">Range hood</span> <span class="service-price" data-service="rangeHood">+$22</span> </label> <label class="service-item"> <input type="checkbox" name="services" value="furniturePolishing"> <span class="checkmark"></span> <span class="service-text">Wood Furniture Polishing</span> <span class="service-price" data-service="furniturePolishing">+$20</span> </label> </div> <div class="quantity-services-list"> <div class="quantity-service-item"> <label class="quantity-service-label">Interior Windows Cleaning ($6/window)</label> <div class="quantity-selector"> <button type="button" class="quantity-btn quantity-decrease" data-service="interiorWindowsCleaning">-</button> <input type="text" inputmode="numeric" class="quantity-input" id="interiorWindowsCleaning" name="interiorWindowsCleaning" value="0" readonly> <button type="button" class="quantity-btn quantity-increase" data-service="interiorWindowsCleaning">+</button> </div> <span class="quantity-service-price" data-service="interiorWindowsCleaning">$0</span> </div> <div class="quantity-service-item"> <label class="quantity-service-label">Blinds Cleaning ($8/window)</label> <div class="quantity-selector"> <button type="button" class="quantity-btn quantity-decrease" data-service="blindsCleaning">-</button> <input type="text" inputmode="numeric" class="quantity-input" id="blindsCleaning" name="blindsCleaning" value="0" readonly> <button type="button" class="quantity-btn quantity-increase" data-service="blindsCleaning">+</button> </div> <span class="quantity-service-price" data-service="blindsCleaning">$0</span> </div> <div class="quantity-service-item"> <label class="quantity-service-label">Bed Linen / Sofa Cover Change ($8/each)</label> <div class="quantity-selector"> <button type="button" class="quantity-btn quantity-decrease" data-service="bedLinenChange">-</button> <input type="text" inputmode="numeric" class="quantity-input" id="bedLinenChange" name="bedLinenChange" value="0" readonly> <button type="button" class="quantity-btn quantity-increase" data-service="bedLinenChange">+</button> </div> <span class="quantity-service-price" data-service="bedLinenChange">$0</span> </div> </div> </div> <div class="calculator-group"> <h3>Additional details (optional)</h3> <div class="input-group"> <textarea 
                             id="additionalDetails" 
                             name="additionalDetails" 
                             class="additional-details-textarea"
