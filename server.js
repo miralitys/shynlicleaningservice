@@ -2405,6 +2405,25 @@ async function handleQuoteSubmissionRequest(
     contact_id: result.contactId,
     warnings: result.warnings || [],
   });
+
+  let quoteToken = "";
+  try {
+    quoteToken = createQuoteToken(
+      {
+        ...pricing,
+        customerName: normalizeString(contactData && contactData.fullName, 250),
+        customerPhone: normalizeString(contactData && contactData.phone, 80),
+      },
+      { env: process.env }
+    );
+  } catch (error) {
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "quote_token_error",
+      message: error && error.message ? error.message : "Unknown quote token error",
+    });
+  }
+
   writeJsonWithTiming(
     res,
     Number(result.status) || 200,
@@ -2422,14 +2441,7 @@ async function handleQuoteSubmissionRequest(
         currency: pricing.currency,
         serviceName: pricing.serviceName,
       },
-      quoteToken: createQuoteToken(
-        {
-          ...pricing,
-          customerName: normalizeString(contactData && contactData.fullName, 250),
-          customerPhone: normalizeString(contactData && contactData.phone, 80),
-        },
-        { env: process.env }
-      ),
+      quoteToken,
     },
     requestStartNs,
     requestContext.cacheHit
@@ -2658,16 +2670,34 @@ async function main() {
         requestContext.cacheHit
       );
       res.end("Page not found");
-    } catch {
+    } catch (error) {
+      requestLogger.log({
+        ts: new Date().toISOString(),
+        type: "request_unhandled_error",
+        path: normalizedPath,
+        method: req.method,
+        message: error && error.message ? error.message : "Unknown unhandled request error",
+        stack: error && error.stack ? String(error.stack).slice(0, 4000) : "",
+      });
       requestContext.cacheHit = false;
-      writeHeadWithTiming(
-        res,
-        500,
-        { "Content-Type": "text/plain; charset=utf-8" },
-        requestStartNs,
-        requestContext.cacheHit
-      );
-      res.end("Internal server error");
+      if (normalizedPath.startsWith("/api/")) {
+        writeJsonWithTiming(
+          res,
+          500,
+          { error: "Request failed unexpectedly. Please try again." },
+          requestStartNs,
+          requestContext.cacheHit
+        );
+      } else {
+        writeHeadWithTiming(
+          res,
+          500,
+          { "Content-Type": "text/plain; charset=utf-8" },
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        res.end("Internal server error");
+      }
     }
   });
 

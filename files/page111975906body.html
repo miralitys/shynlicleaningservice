@@ -2271,7 +2271,10 @@ END:VCALENDAR`;
             }
         }
         if (!response.ok || responseData.success === false) {
-            throw new Error(responseData.error || responseData.message || 'Unable to submit your request right now.');
+            const error = new Error(responseData.error || responseData.message || 'Unable to submit your request right now.');
+            error.status = response.status;
+            error.code = responseData.code || '';
+            throw error;
         }
         return responseData;
     }
@@ -2467,8 +2470,11 @@ END:VCALENDAR`;
                 quoteToken: (submissionResult && submissionResult.quoteToken) || ''
             };
         } catch (err) {
-            console.error(err);
-            alert('We could not send your request right now. Please try again.');
+            console.error('Quote submission failed:', err);
+            const errorMessage = err && err.message
+                ? err.message
+                : 'We could not send your request right now. Please try again.';
+            alert(errorMessage);
             submitBtn.disabled = false;
             btnText.style.display = 'inline-block';
             btnLoader.style.display = 'none';
