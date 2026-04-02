@@ -40,12 +40,24 @@ try {
     reset: () => {},
   });
 }
+let adminAuth;
+try {
+  adminAuth = require("./lib/admin-auth");
+} catch (error) {
+  adminAuth = null;
+}
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
 const SITE_DIR = __dirname;
 const ROUTES_PATH = path.join(SITE_DIR, "routes.json");
 const NOT_FOUND_PAGE = "page113047926.html";
+const ADMIN_ROOT_PATH = "/admin";
+const ADMIN_LOGIN_PATH = "/admin/login";
+const ADMIN_2FA_PATH = "/admin/2fa";
+const ADMIN_LOGOUT_PATH = "/admin/logout";
+const ADMIN_SESSION_COOKIE = "shynli_admin_session";
+const ADMIN_CHALLENGE_COOKIE = "shynli_admin_challenge";
 const QUOTE_PUBLIC_PATH = "/quote";
 const REDIRECT_ROUTES = new Map([["/home-simple", "/"]]);
 const SITE_ORIGIN = normalizeConfiguredOrigin(
@@ -138,6 +150,10 @@ const STRIPE_MIN_AMOUNT_CENTS = Number(process.env.STRIPE_MIN_AMOUNT_CENTS || 50
 const STRIPE_MAX_AMOUNT_CENTS = Number(process.env.STRIPE_MAX_AMOUNT_CENTS || 200000);
 const POST_RATE_LIMIT_WINDOW_MS = Number(process.env.POST_RATE_LIMIT_WINDOW_MS || 60_000);
 const POST_RATE_LIMIT_MAX_REQUESTS = Number(process.env.POST_RATE_LIMIT_MAX_REQUESTS || 10);
+const ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS = Number(process.env.ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS || 10 * 60_000);
+const ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS = Number(process.env.ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS || 5);
+const ADMIN_2FA_RATE_LIMIT_WINDOW_MS = Number(process.env.ADMIN_2FA_RATE_LIMIT_WINDOW_MS || 10 * 60_000);
+const ADMIN_2FA_RATE_LIMIT_MAX_REQUESTS = Number(process.env.ADMIN_2FA_RATE_LIMIT_MAX_REQUESTS || 10);
 const TRUST_PROXY_HEADERS = /^(1|true|yes)$/i.test(String(process.env.TRUST_PROXY_HEADERS || ""));
 const TRUSTED_PROXY_IPS = new Set(
   String(process.env.TRUSTED_PROXY_IPS || "")
@@ -170,6 +186,14 @@ let leadConnectorClient = null;
 const postRateLimiter = createSlidingWindowRateLimiter({
   windowMs: POST_RATE_LIMIT_WINDOW_MS,
   maxRequests: POST_RATE_LIMIT_MAX_REQUESTS,
+});
+const adminLoginRateLimiter = createSlidingWindowRateLimiter({
+  windowMs: ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS,
+  maxRequests: ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS,
+});
+const adminTwoFactorRateLimiter = createSlidingWindowRateLimiter({
+  windowMs: ADMIN_2FA_RATE_LIMIT_WINDOW_MS,
+  maxRequests: ADMIN_2FA_RATE_LIMIT_MAX_REQUESTS,
 });
 
 function getStripeClient() {
@@ -404,6 +428,73 @@ function writeJsonWithTiming(res, statusCode, payload, startTimeNs, cacheHit) {
   res.end(JSON.stringify(payload));
 }
 
+function writeHtmlWithTiming(res, statusCode, html, startTimeNs, cacheHit, headers = {}) {
+  writeHeadWithTiming(
+    res,
+    statusCode,
+    {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex, nofollow",
+      ...headers,
+    },
+    startTimeNs,
+    cacheHit
+  );
+  res.end(html);
+}
+
+function redirectWithTiming(res, statusCode, location, startTimeNs, cacheHit, headers = {}) {
+  writeHeadWithTiming(
+    res,
+    statusCode,
+    {
+      Location: location,
+      "Cache-Control": "no-store",
+      ...headers,
+    },
+    startTimeNs,
+    cacheHit
+  );
+  res.end();
+}
+
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  for (const pair of String(cookieHeader || "").split(";")) {
+    const separatorIndex = pair.indexOf("=");
+    if (separatorIndex === -1) continue;
+    const key = pair.slice(0, separatorIndex).trim();
+    const value = pair.slice(separatorIndex + 1).trim();
+    if (!key) continue;
+    try {
+      cookies[key] = decodeURIComponent(value);
+    } catch {
+      cookies[key] = value;
+    }
+  }
+  return cookies;
+}
+
+function serializeCookie(name, value, options = {}) {
+  const segments = [`${name}=${encodeURIComponent(String(value || ""))}`];
+  segments.push(`Path=${options.path || "/"}`);
+  if (Number.isFinite(options.maxAge)) {
+    segments.push(`Max-Age=${Math.max(0, Math.floor(options.maxAge))}`);
+  }
+  if (options.httpOnly !== false) segments.push("HttpOnly");
+  if (options.sameSite) segments.push(`SameSite=${options.sameSite}`);
+  if (options.secure) segments.push("Secure");
+  return segments.join("; ");
+}
+
+function clearCookie(name, options = {}) {
+  return serializeCookie(name, "", {
+    ...options,
+    maxAge: 0,
+  });
+}
+
 function isPublicDirectAssetPath(pathname) {
   const normalizedPath = String(pathname || "").replace(/^\/+/, "");
   if (!normalizedPath || !path.extname(normalizedPath)) return false;
@@ -450,6 +541,17 @@ function getClientAddress(req) {
   return normalizeString(normalizeClientIp(req.socket && req.socket.remoteAddress), 120) || "unknown";
 }
 
+function getRequestProtocol(req) {
+  const forwardedProto = normalizeString(String(req.headers["x-forwarded-proto"] || "").split(",")[0], 16).toLowerCase();
+  if (forwardedProto === "https" || forwardedProto === "http") return forwardedProto;
+  if (req.socket && req.socket.encrypted) return "https";
+  return "http";
+}
+
+function shouldUseSecureCookies(req) {
+  return getRequestProtocol(req) === "https";
+}
+
 function enforcePostRateLimit(req, res, requestStartNs, requestContext, routeKey) {
   const decision = postRateLimiter.take(`${routeKey}:${getClientAddress(req)}`);
   if (decision.allowed) return false;
@@ -481,6 +583,15 @@ function toAmountCents(amountValue) {
 }
 
 async function readJsonBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
+  const rawBody = await readTextBody(req, maxBytes);
+  try {
+    return rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    throw new Error("Invalid JSON");
+  }
+}
+
+async function readTextBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     let size = 0;
     let settled = false;
@@ -512,16 +623,702 @@ async function readJsonBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
 
     req.on("end", () => {
       if (payloadTooLarge) return;
-      try {
-        const rawBody = Buffer.concat(chunks).toString("utf8");
-        safeResolve(rawBody ? JSON.parse(rawBody) : {});
-      } catch {
-        safeReject(new Error("Invalid JSON"));
-      }
+      safeResolve(Buffer.concat(chunks).toString("utf8"));
     });
 
     req.on("error", (err) => safeReject(err));
   });
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeHtmlText(value) {
+  return escapeHtml(value).replace(/"/g, "&quot;");
+}
+
+function parseFormBody(rawBody) {
+  const params = new URLSearchParams(String(rawBody || ""));
+  const output = {};
+  for (const [key, value] of params.entries()) {
+    output[key] = value;
+  }
+  return output;
+}
+
+function getAdminConfig() {
+  if (!adminAuth) return null;
+  const config = adminAuth.loadAdminConfig(process.env);
+  return config.configured ? config : null;
+}
+
+function getAdminRequestFingerprint(req) {
+  return crypto
+    .createHash("sha256")
+    .update(`${getClientAddress(req)}|${normalizeString(req.headers["user-agent"], 240)}`)
+    .digest("hex")
+    .slice(0, 32);
+}
+
+function getAdminCookieOptions(req) {
+  return {
+    path: "/admin",
+    httpOnly: true,
+    sameSite: "Strict",
+    secure: shouldUseSecureCookies(req),
+  };
+}
+
+function getAdminAuthState(req) {
+  const config = getAdminConfig();
+  const cookies = parseCookies(req.headers.cookie);
+  const fingerprint = getAdminRequestFingerprint(req);
+  const state = {
+    config,
+    fingerprint,
+    session: null,
+    challenge: null,
+    cookies,
+  };
+
+  if (!config) return state;
+
+  try {
+    const sessionPayload = adminAuth.verifyAdminSessionToken(cookies[ADMIN_SESSION_COOKIE], config);
+    if (sessionPayload && sessionPayload.email === config.email && sessionPayload.fingerprint === fingerprint) {
+      state.session = sessionPayload;
+    }
+  } catch {}
+
+  try {
+    const challengePayload = adminAuth.verifyAdminChallengeToken(cookies[ADMIN_CHALLENGE_COOKIE], config);
+    if (challengePayload && challengePayload.email === config.email && challengePayload.fingerprint === fingerprint) {
+      state.challenge = challengePayload;
+    }
+  } catch {}
+
+  return state;
+}
+
+function renderAdminLayout(title, content, options = {}) {
+  const pageTitle = `${title} | SHYNLI Admin`;
+  const subtitle = options.subtitle ? `<p class="admin-subtitle">${escapeHtml(options.subtitle)}</p>` : "";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>${escapeHtml(pageTitle)}</title>
+  <style>
+    :root {
+      --bg: #f7f2ed;
+      --panel: #fffdfa;
+      --panel-border: #eadfd3;
+      --text: #2f2a27;
+      --muted: #736860;
+      --accent: #9e435a;
+      --accent-deep: #7e3347;
+      --danger: #b23a48;
+      --success: #2f7d5a;
+      --shadow: 0 20px 50px rgba(70, 42, 27, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Montserrat", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(158, 67, 90, 0.12), transparent 28%),
+        linear-gradient(180deg, #fbf7f2 0%, var(--bg) 100%);
+      padding: 32px 18px;
+    }
+    .admin-shell {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+    .admin-panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+    .admin-hero {
+      padding: 28px 28px 12px;
+    }
+    .admin-kicker {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .admin-title {
+      margin: 0;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+    .admin-subtitle {
+      margin: 12px 0 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    .admin-content {
+      padding: 0 28px 28px;
+    }
+    .admin-form {
+      display: grid;
+      gap: 16px;
+      max-width: 480px;
+    }
+    .admin-label {
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .admin-input {
+      width: 100%;
+      border: 1px solid #dbcdbf;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: inherit;
+      background: #fff;
+      color: var(--text);
+    }
+    .admin-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(158, 67, 90, 0.14);
+    }
+    .admin-button, .admin-link-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .admin-button:hover, .admin-link-button:hover {
+      background: var(--accent-deep);
+    }
+    .admin-button-secondary {
+      background: #efe4da;
+      color: var(--text);
+    }
+    .admin-button-secondary:hover {
+      background: #e4d5c6;
+    }
+    .admin-inline-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .admin-alert {
+      margin: 0 0 18px;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .admin-alert-error {
+      background: rgba(178, 58, 72, 0.09);
+      color: var(--danger);
+      border: 1px solid rgba(178, 58, 72, 0.18);
+    }
+    .admin-alert-info {
+      background: rgba(47, 125, 90, 0.08);
+      color: var(--success);
+      border: 1px solid rgba(47, 125, 90, 0.16);
+    }
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+    .admin-card {
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(249,245,239,0.92));
+    }
+    .admin-card h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+    .admin-card p, .admin-card li {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .admin-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: rgba(47, 125, 90, 0.1);
+      color: var(--success);
+    }
+    .admin-badge-muted {
+      background: rgba(115, 104, 96, 0.12);
+      color: var(--muted);
+    }
+    .admin-code {
+      margin: 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #271f22;
+      color: #fff4f4;
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    details.admin-details {
+      border: 1px dashed #d9c7ba;
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: #fffcf8;
+    }
+    details.admin-details summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .admin-topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .admin-topbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .admin-logout-form {
+      margin: 0;
+    }
+    a { color: var(--accent); }
+    @media (max-width: 720px) {
+      body { padding: 18px 12px; }
+      .admin-hero { padding: 22px 18px 8px; }
+      .admin-content { padding: 0 18px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="admin-panel">
+      <div class="admin-hero">
+        <p class="admin-kicker">Secure Access</p>
+        <h1 class="admin-title">${escapeHtml(title)}</h1>
+        ${subtitle}
+      </div>
+      <div class="admin-content">
+        ${content}
+      </div>
+    </section>
+  </main>
+</body>
+</html>`;
+}
+
+function renderAdminUnavailablePage() {
+  return renderAdminLayout(
+    "Admin Unavailable",
+    `<div class="admin-alert admin-alert-error">Admin access needs a server-side secret before it can be enabled. Configure <code>ADMIN_MASTER_SECRET</code>, or make sure one of <code>QUOTE_SIGNING_SECRET</code>, <code>GHL_API_KEY</code>, or <code>STRIPE_SECRET_KEY</code> is available on the server.</div>`,
+    {
+      subtitle: "The route is wired, but secure authentication cannot start until the server has a private signing secret.",
+    }
+  );
+}
+
+function renderLoginPage(config, options = {}) {
+  const errorBlock = options.error
+    ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
+    : "";
+  const infoBlock = options.info
+    ? `<div class="admin-alert admin-alert-info">${escapeHtml(options.info)}</div>`
+    : "";
+  return renderAdminLayout(
+    "Admin Login",
+    `${errorBlock}${infoBlock}
+      <form class="admin-form" method="post" action="${ADMIN_LOGIN_PATH}" autocomplete="on">
+        <label class="admin-label">
+          Email
+          <input class="admin-input" type="email" name="email" value="${escapeHtmlText(options.email || config.email)}" autocomplete="username" required>
+        </label>
+        <label class="admin-label">
+          Password
+          <input class="admin-input" type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <div class="admin-inline-actions">
+          <button class="admin-button" type="submit">Continue to 2FA</button>
+        </div>
+      </form>`,
+    {
+      subtitle: "Use your admin email and password first. The second step will ask for a 6-digit code from your Authenticator app.",
+    }
+  );
+}
+
+function renderTwoFactorPage(config, options = {}) {
+  const errorBlock = options.error
+    ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
+    : "";
+  const secret = adminAuth.getTotpSecretMaterial(config);
+  const otpauthUri = adminAuth.buildOtpauthUri(config);
+  const secretMode = secret.derived
+    ? "This key is derived from your server secret and current admin credentials."
+    : "This key comes from ADMIN_TOTP_SECRET.";
+  return renderAdminLayout(
+    "Two-Factor Authentication",
+    `${errorBlock}
+      <form class="admin-form" method="post" action="${ADMIN_2FA_PATH}" autocomplete="off">
+        <label class="admin-label">
+          6-digit code
+          <input class="admin-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" name="code" placeholder="123456" required>
+        </label>
+        <div class="admin-inline-actions">
+          <button class="admin-button" type="submit">Verify and sign in</button>
+          <a class="admin-link-button admin-button-secondary" href="${ADMIN_LOGIN_PATH}">Back</a>
+        </div>
+      </form>
+      <details class="admin-details" style="margin-top:18px;">
+        <summary>Need to set up your Authenticator app?</summary>
+        <div style="display:grid; gap:12px; margin-top:12px;">
+          <p class="admin-subtitle" style="margin:0;">Add a new TOTP account in Google Authenticator, Microsoft Authenticator, 1Password, or a similar app using the values below. ${escapeHtml(secretMode)}</p>
+          <div class="admin-card">
+            <h3>Manual setup</h3>
+            <ul class="admin-list">
+              <li><strong>Issuer:</strong> ${escapeHtml(config.issuer)}</li>
+              <li><strong>Account:</strong> ${escapeHtml(config.email)}</li>
+              <li><strong>Key:</strong> <code>${escapeHtml(secret.base32)}</code></li>
+            </ul>
+          </div>
+          <div class="admin-card">
+            <h3>otpauth URI</h3>
+            <pre class="admin-code">${escapeHtml(otpauthUri)}</pre>
+          </div>
+        </div>
+      </details>`,
+    {
+      subtitle: "Enter the current TOTP code from your Authenticator app. If this is your first time, expand the setup section below and add the account manually.",
+    }
+  );
+}
+
+function renderDashboardPage(req, config) {
+  const runtimeBadges = [
+    getLeadConnectorClient().isConfigured() ? '<span class="admin-badge">GHL Ready</span>' : '<span class="admin-badge admin-badge-muted">GHL Missing</span>',
+    getStripeClient() ? '<span class="admin-badge">Stripe Ready</span>' : '<span class="admin-badge admin-badge-muted">Stripe Missing</span>',
+    GOOGLE_PLACES_API_KEY ? '<span class="admin-badge">Places Key Ready</span>' : '<span class="admin-badge admin-badge-muted">Places Key Missing</span>',
+  ].join(" ");
+  const memory = getMemoryUsageSnapshot();
+  const totp = adminAuth.getTotpSecretMaterial(config);
+  return renderAdminLayout(
+    "Admin Dashboard",
+    `<div class="admin-topbar">
+        <p>Signed in as <strong>${escapeHtml(config.email)}</strong></p>
+        <form class="admin-logout-form" method="post" action="${ADMIN_LOGOUT_PATH}">
+          <button class="admin-button admin-button-secondary" type="submit">Log out</button>
+        </form>
+      </div>
+      <div class="admin-grid">
+        <article class="admin-card">
+          <h3>Security</h3>
+          <ul class="admin-list">
+            <li>Password check: enabled</li>
+            <li>TOTP issuer: ${escapeHtml(config.issuer)}</li>
+            <li>TOTP mode: ${totp.derived ? "derived from server secret" : "explicit ADMIN_TOTP_SECRET"}</li>
+            <li>Cookies: HttpOnly + SameSite=Strict${shouldUseSecureCookies(req) ? " + Secure" : ""}</li>
+          </ul>
+        </article>
+        <article class="admin-card">
+          <h3>Integrations</h3>
+          <p>${runtimeBadges}</p>
+        </article>
+        <article class="admin-card">
+          <h3>Server</h3>
+          <ul class="admin-list">
+            <li>Site origin: ${escapeHtml(SITE_ORIGIN)}</li>
+            <li>Server time: ${escapeHtml(new Date().toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "full", timeStyle: "long" }))}</li>
+            <li>Protocol: ${escapeHtml(getRequestProtocol(req))}</li>
+          </ul>
+        </article>
+        <article class="admin-card">
+          <h3>Memory</h3>
+          <ul class="admin-list">
+            <li>RSS: ${escapeHtml(`${memory.rss_mb} MB`)}</li>
+            <li>Heap used: ${escapeHtml(`${memory.heap_used_mb} MB`)}</li>
+            <li>External: ${escapeHtml(`${memory.external_mb} MB`)}</li>
+          </ul>
+        </article>
+        <article class="admin-card">
+          <h3>Quick Links</h3>
+          <ul class="admin-list">
+            <li><a href="/" target="_blank" rel="noreferrer">Open website homepage</a></li>
+            <li><a href="/quote" target="_blank" rel="noreferrer">Open quote form</a></li>
+            <li><a href="/faq" target="_blank" rel="noreferrer">Open FAQ page</a></li>
+          </ul>
+        </article>
+      </div>`,
+    {
+      subtitle: "This is the secured admin area. Right now it focuses on safe access control, runtime visibility, and guarded entry into future internal tools.",
+    }
+  );
+}
+
+function buildAdminAuthHeaders(req, cookies = []) {
+  const headers = {};
+  if (cookies.length > 0) {
+    headers["Set-Cookie"] = cookies;
+  }
+  return headers;
+}
+
+function enforceSlidingRateLimit(rateLimiter, req, res, requestStartNs, requestContext, key, errorMessage) {
+  const decision = rateLimiter.take(key);
+  if (decision.allowed) return false;
+  requestContext.cacheHit = false;
+  writeHtmlWithTiming(
+    res,
+    429,
+    renderAdminLayout(
+      "Too Many Attempts",
+      `<div class="admin-alert admin-alert-error">${escapeHtml(errorMessage || "Too many attempts. Please wait a minute and try again.")}</div>`,
+      { subtitle: "Rate limiting is active to protect admin access." }
+    ),
+    requestStartNs,
+    requestContext.cacheHit,
+    {
+      "Retry-After": String(Math.max(1, Math.ceil(decision.retryAfterMs / 1000))),
+    }
+  );
+  return true;
+}
+
+async function handleAdminRequest(req, res, requestStartNs, requestContext, requestLogger) {
+  requestContext.cacheHit = false;
+  const adminState = getAdminAuthState(req);
+  if (!adminState.config) {
+    writeHtmlWithTiming(res, 503, renderAdminUnavailablePage(), requestStartNs, requestContext.cacheHit);
+    return;
+  }
+
+  const { config, session, challenge, fingerprint } = adminState;
+
+  if (requestContext.route === ADMIN_ROOT_PATH) {
+    if (req.method !== "GET") {
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET.</div>`), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+    if (session) {
+      writeHtmlWithTiming(res, 200, renderDashboardPage(req, config), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+    if (challenge) {
+      redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+    redirectWithTiming(res, 303, ADMIN_LOGIN_PATH, requestStartNs, requestContext.cacheHit);
+    return;
+  }
+
+  if (requestContext.route === ADMIN_LOGIN_PATH) {
+    if (req.method === "GET") {
+      if (session) {
+        redirectWithTiming(res, 303, ADMIN_ROOT_PATH, requestStartNs, requestContext.cacheHit);
+        return;
+      }
+      writeHtmlWithTiming(res, 200, renderLoginPage(config), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    if (req.method !== "POST") {
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    if (
+      enforceSlidingRateLimit(
+        adminLoginRateLimiter,
+        req,
+        res,
+        requestStartNs,
+        requestContext,
+        `${getClientAddress(req)}:login`,
+        "Too many login attempts. Please wait a few minutes before trying again."
+      )
+    ) {
+      return;
+    }
+
+    const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
+    const email = normalizeString(formBody.email, 320).toLowerCase();
+    const password = normalizeString(formBody.password, 200);
+    const validEmail = email && email === config.email;
+    const validPassword = password && adminAuth.verifyPassword(password, config.passwordHash);
+    if (!validEmail || !validPassword) {
+      writeHtmlWithTiming(
+        res,
+        401,
+        renderLoginPage(config, {
+          error: "Wrong email or password. Please try again.",
+          email,
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    const challengeToken = adminAuth.createAdminChallengeToken(config, {
+      email: config.email,
+      fingerprint,
+    });
+    redirectWithTiming(
+      res,
+      303,
+      ADMIN_2FA_PATH,
+      requestStartNs,
+      requestContext.cacheHit,
+      buildAdminAuthHeaders(req, [
+        serializeCookie(ADMIN_CHALLENGE_COOKIE, challengeToken, {
+          ...getAdminCookieOptions(req),
+          maxAge: adminAuth.CHALLENGE_TTL_SECONDS,
+        }),
+        clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions(req)),
+      ])
+    );
+    return;
+  }
+
+  if (requestContext.route === ADMIN_2FA_PATH) {
+    if (!challenge) {
+      redirectWithTiming(
+        res,
+        303,
+        ADMIN_LOGIN_PATH,
+        requestStartNs,
+        requestContext.cacheHit,
+        buildAdminAuthHeaders(req, [clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req))])
+      );
+      return;
+    }
+
+    if (req.method === "GET") {
+      writeHtmlWithTiming(res, 200, renderTwoFactorPage(config), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    if (req.method !== "POST") {
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    if (
+      enforceSlidingRateLimit(
+        adminTwoFactorRateLimiter,
+        req,
+        res,
+        requestStartNs,
+        requestContext,
+        `${getClientAddress(req)}:2fa`,
+        "Too many verification attempts. Please wait a few minutes before trying again."
+      )
+    ) {
+      return;
+    }
+
+    const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
+    const code = normalizeString(formBody.code, 16);
+    if (!adminAuth.verifyTotpCode(code, config)) {
+      writeHtmlWithTiming(
+        res,
+        401,
+        renderTwoFactorPage(config, {
+          error: "That code was not valid. Check the app and try again.",
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    const sessionToken = adminAuth.createAdminSessionToken(config, {
+      email: config.email,
+      fingerprint,
+    });
+    redirectWithTiming(
+      res,
+      303,
+      ADMIN_ROOT_PATH,
+      requestStartNs,
+      requestContext.cacheHit,
+      buildAdminAuthHeaders(req, [
+        serializeCookie(ADMIN_SESSION_COOKIE, sessionToken, {
+          ...getAdminCookieOptions(req),
+          maxAge: adminAuth.SESSION_TTL_SECONDS,
+        }),
+        clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req)),
+      ])
+    );
+    return;
+  }
+
+  if (requestContext.route === ADMIN_LOGOUT_PATH) {
+    if (req.method !== "POST") {
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">Log out must be submitted with POST.</div>`), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+    redirectWithTiming(
+      res,
+      303,
+      ADMIN_LOGIN_PATH,
+      requestStartNs,
+      requestContext.cacheHit,
+      buildAdminAuthHeaders(req, [
+        clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions(req)),
+        clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req)),
+      ])
+    );
+  }
 }
 
 function resolveSitePath(relativeOrAbsolutePath) {
@@ -2601,6 +3398,16 @@ async function main() {
           requestContext.cacheHit
         );
         res.end(perfBody);
+        return;
+      }
+
+      if (
+        normalizedPath === ADMIN_ROOT_PATH ||
+        normalizedPath === ADMIN_LOGIN_PATH ||
+        normalizedPath === ADMIN_2FA_PATH ||
+        normalizedPath === ADMIN_LOGOUT_PATH
+      ) {
+        await handleAdminRequest(req, res, requestStartNs, requestContext, requestLogger);
         return;
       }
 
