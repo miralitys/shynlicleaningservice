@@ -3832,6 +3832,7 @@ async function handleQuoteSubmissionRequest(
     contact_id: result.contactId,
     custom_fields_updated: Boolean(result.customFieldsUpdated),
     custom_field_sync_reason: result.customFieldSyncReason || "",
+    opportunity_sync_reason: result.opportunitySyncReason || "",
     warnings: result.warnings || [],
   });
 
@@ -3865,6 +3866,7 @@ async function handleQuoteSubmissionRequest(
       customFieldSyncReason: result.customFieldSyncReason || "",
       noteCreated: Boolean(result.noteCreated),
       opportunityCreated: Boolean(result.opportunityCreated),
+      opportunitySyncReason: result.opportunitySyncReason || "",
       skipped: result.skipped || {},
       warnings: Array.isArray(result.warnings) ? result.warnings : [],
       pricing: {
