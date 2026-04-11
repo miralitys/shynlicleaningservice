@@ -610,6 +610,7 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.match(ordersBody, /Weekly/);
     assert.match(ordersBody, /Scheduled/);
     assert.match(ordersBody, /Поля из формы клиента/);
+    assert.match(ordersBody, /admin-delete-button/);
     assert.match(ordersBody, /Inside Cabinets Cleaning/);
     assert.match(ordersBody, /Interior Windows Cleaning/);
     assert.match(ordersBody, /Apt 4B/);
@@ -617,6 +618,7 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.match(ordersBody, /March 22, 2026 at 09:00/);
     assert.match(ordersBody, /Please call on arrival/);
     assert.match(ordersBody, /Gate code 2040/);
+    assert.doesNotMatch(ordersBody, /Удаление убирает запись из рабочих разделов админки/);
 
     const entryIdMatch = ordersBody.match(/name="entryId" value="([^"]+)"/);
     assert.ok(entryIdMatch);
