@@ -406,6 +406,9 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /Точно удалить\?/);
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
+    assert.match(staffBody, /admin-table-link admin-table-link-button/);
+    assert.doesNotMatch(staffBody, /<th>Действие<\/th>/);
+    assert.doesNotMatch(staffBody, /<p class="admin-kicker">Сотрудники<\/p>/);
     assert.match(staffBody, /name="address"/);
     assert.match(staffBody, /data-admin-address-autocomplete="true"/);
     assert.match(staffBody, /data-admin-address-suggestions/);
@@ -973,7 +976,9 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(clientsBody, /John Smith/);
     assert.match(clientsBody, /client-request-2/);
     assert.match(clientsBody, /client-request-3/);
-    assert.match(clientsBody, /Фильтры/i);
+    assert.match(clientsBody, /\+1\(312\)555-0100/);
+    assert.match(clientsBody, /\+1\(312\)555-0109/);
+    assert.doesNotMatch(clientsBody, /Фильтры/i);
     assert.doesNotMatch(clientsBody, /Диагностика/i);
     assert.match(clientsBody, /Поиск по имени, email или телефону/i);
     assert.match(clientsBody, /Клик по имени открывает профиль/i);
@@ -1002,6 +1007,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /Сумма заказов/i);
     assert.match(selectedClientDialog, /client-request-2/);
     assert.match(selectedClientDialog, /Команда: Olga Stone/);
+    assert.match(selectedClientDialog, /\+1\(312\)555-0100/);
     assert.doesNotMatch(selectedClientDialog, /client-request-3/);
     assert.match(selectedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.doesNotMatch(selectedClientDialog, /789 Cedar Ln, Plainfield, IL 60544/);
