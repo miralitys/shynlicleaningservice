@@ -1777,7 +1777,8 @@ test("creates employee users in settings and serves a personal cabinet with assi
       body: new URLSearchParams({
         action: "create_user",
         name: "Alina Carter",
-        role: "Cleaner",
+        staffRole: "Cleaner",
+        role: "cleaner",
         status: "active",
         staffStatus: "active",
         email: "alina.staff@example.com",
@@ -1814,6 +1815,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(usersStorePayload.users.length, 1);
     assert.equal(usersStorePayload.users[0].staffId, staffId);
     assert.equal(usersStorePayload.users[0].email, "alina.staff@example.com");
+    assert.equal(usersStorePayload.users[0].role, "cleaner");
     assert.match(usersStorePayload.users[0].passwordHash, /^scrypt\$/);
 
     const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
@@ -1874,6 +1876,15 @@ test("creates employee users in settings and serves a personal cabinet with assi
 
     const userSessionCookieValue = getCookieValue(getSetCookies(accountLoginResponse), "shynli_user_session");
     assert.ok(userSessionCookieValue);
+
+    const cleanerAdminResponse = await fetch(`${started.baseUrl}/admin`, {
+      redirect: "manual",
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    assert.equal(cleanerAdminResponse.status, 303);
+    assert.equal(cleanerAdminResponse.headers.get("location"), "/account");
 
     const accountDashboardResponse = await fetch(`${started.baseUrl}/account`, {
       headers: {
@@ -1982,5 +1993,140 @@ test("creates employee users in settings and serves a personal cabinet with assi
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
     fetchStub.cleanup();
+  }
+});
+
+test("allows managers into admin workspace but blocks delete actions", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-manager-role-route-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Marta Greene",
+        staffRole: "Operations Manager",
+        role: "manager",
+        status: "active",
+        staffStatus: "active",
+        email: "marta.manager@example.com",
+        phone: "3125550198",
+        address: "500 Executive Dr, Naperville, IL 60563",
+        notes: "Can coordinate the full team",
+        password: "ManagerPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+    assert.match(createUserResponse.headers.get("location") || "", /notice=user-created/);
+
+    const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(usersStorePayload.users.length, 1);
+    const managerUser = usersStorePayload.users[0];
+    assert.equal(managerUser.role, "manager");
+
+    const staffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(staffStorePayload.staff.length, 1);
+    const managerStaff = staffStorePayload.staff[0];
+
+    const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "marta.manager@example.com",
+        password: "ManagerPass123!",
+      }),
+    });
+    assert.equal(accountLoginResponse.status, 303);
+    assert.equal(accountLoginResponse.headers.get("location"), "/admin");
+
+    const userSessionCookieValue = getCookieValue(getSetCookies(accountLoginResponse), "shynli_user_session");
+    assert.ok(userSessionCookieValue);
+
+    const dashboardResponse = await fetch(`${started.baseUrl}/admin`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const dashboardBody = await dashboardResponse.text();
+    assert.equal(dashboardResponse.status, 200);
+    assert.match(dashboardBody, /Обзор/i);
+    assert.match(dashboardBody, /Менеджер/i);
+
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=users`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const settingsBody = await settingsResponse.text();
+    assert.equal(settingsResponse.status, 200);
+    assert.match(settingsBody, /Пользователи/i);
+    assert.doesNotMatch(settingsBody, /aria-label="Удалить пользователя"/i);
+
+    const updateUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update_user",
+        userId: managerUser.id,
+        staffId: managerStaff.id,
+        name: "Marta Greene",
+        staffRole: "Operations Lead",
+        role: "manager",
+        status: "active",
+        staffStatus: "active",
+        email: "marta.manager@example.com",
+        phone: "3315550198",
+        address: "500 Executive Dr, Naperville, IL 60563",
+        notes: "Updated by manager session",
+        password: "",
+      }),
+    });
+    assert.equal(updateUserResponse.status, 303);
+    assert.match(updateUserResponse.headers.get("location") || "", /notice=user-updated/);
+
+    const updatedUsersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(updatedUsersStorePayload.users[0].phone, "+1(331)555-0198");
+
+    const deleteUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "delete_user",
+        userId: managerUser.id,
+      }),
+    });
+    const deleteUserBody = await deleteUserResponse.text();
+    assert.equal(deleteUserResponse.status, 403);
+    assert.match(deleteUserBody, /Недостаточно прав/i);
+    assert.match(deleteUserBody, /Удаление доступно только администратору/i);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });

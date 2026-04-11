@@ -106,7 +106,7 @@ const {
   createAdminStaffStore,
 } = require("./lib/admin-staff-store");
 const { createAdminSettingsStore } = require("./lib/admin-settings-store");
-const { USER_STATUS_VALUES, createAdminUsersStore } = require("./lib/admin-users-store");
+const { USER_ROLE_VALUES, USER_STATUS_VALUES, createAdminUsersStore } = require("./lib/admin-users-store");
 let QRCode;
 try {
   QRCode = require("qrcode");
@@ -529,6 +529,7 @@ const adminPageRenderers = createAdminPageRenderers({
   QUOTE_OPS_LEDGER_LIMIT,
   QUOTE_PUBLIC_PATH,
   STAFF_STATUS_VALUES,
+  USER_ROLE_VALUES,
   USER_STATUS_VALUES,
   buildAdminRedirectPath,
   buildOrdersReturnPath,
@@ -573,6 +574,7 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_LOGIN_PATH,
   ADMIN_LOGOUT_PATH,
+  ACCOUNT_LOGOUT_PATH,
   ADMIN_ORDERS_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
   ADMIN_ROOT_PATH,
@@ -580,8 +582,12 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_SETTINGS_PATH,
   ADMIN_STAFF_PATH,
   ADMIN_STAFF_GOOGLE_CONNECT_PATH,
+  ACCOUNT_LOGIN_PATH,
+  ACCOUNT_ROOT_PATH,
   QUOTE_OPS_LEDGER_LIMIT,
+  USER_SESSION_COOKIE,
   adminAuth,
+  accountAuth,
   adminLoginRateLimiter,
   adminPageRenderers,
   adminSharedRenderers,
@@ -602,10 +608,12 @@ const handleAdminRequest = createAdminRequestHandler({
   getLeadConnectorClient,
   getQuoteOpsFilters,
   normalizeString,
+  parseCookies,
   parseFormBody,
   readTextBody,
   redirectWithTiming,
   serializeCookie,
+  shouldUseSecureCookies,
   writeHeadWithTiming,
   writeHtmlWithTiming,
 });
