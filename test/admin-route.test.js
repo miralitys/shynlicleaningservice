@@ -1081,6 +1081,8 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /Редактировать/i);
     assert.match(selectedClientDialog, /<a class="admin-button" href="\/admin\/orders\?q=client-request-2&amp;order=/i);
     assert.match(selectedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
+    assert.doesNotMatch(selectedClientDialog, /delete-client/i);
+    assert.doesNotMatch(selectedClientDialog, /admin-client-delete-form/i);
     assert.doesNotMatch(selectedClientDialog, /<h3 class="admin-subsection-title">Контакты<\/h3>/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100[\s\S]*jane@example\.com[\s\S]*123 Main St, Romeoville, IL 60446/i);
@@ -1133,21 +1135,6 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(phoneFilterBody, /John Smith/);
     assert.doesNotMatch(phoneFilterBody, /Jane Doe/);
 
-    const deleteSourceResponse = await fetch(
-      `${started.baseUrl}/admin/clients?client=${encodeURIComponent(janeRomeovilleClientKey)}`,
-      {
-        headers: {
-          cookie: `shynli_admin_session=${sessionCookieValue}`,
-        },
-      }
-    );
-    const deleteSourceBody = await deleteSourceResponse.text();
-    assert.equal(deleteSourceResponse.status, 200);
-    const clientKeyMatch = deleteSourceBody.match(/name="clientKey" value="([^"]+)"/);
-    assert.ok(clientKeyMatch);
-    const clientKey = clientKeyMatch[1];
-    assert.equal(clientKey, janeRomeovilleClientKey);
-
     const deleteClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
       method: "POST",
       redirect: "manual",
@@ -1157,7 +1144,7 @@ test("renders the clients table with filters and request history", async () => {
       },
       body: new URLSearchParams({
         action: "delete-client",
-        clientKey,
+        clientKey: janeRomeovilleClientKey,
         returnTo: `/admin/clients?client=${encodeURIComponent(janeRomeovilleClientKey)}`,
       }),
     });
