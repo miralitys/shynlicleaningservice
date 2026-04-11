@@ -1078,9 +1078,12 @@ function getAdminConfig() {
 }
 
 function getAdminRequestFingerprint(req) {
+  const userAgent = normalizeString(req.headers["user-agent"], 240);
+  const acceptLanguage = normalizeString(req.headers["accept-language"], 240);
+  const clientAddress = shouldTrustProxyHeaders(req) ? getClientAddress(req) : "";
   return crypto
     .createHash("sha256")
-    .update(`${getClientAddress(req)}|${normalizeString(req.headers["user-agent"], 240)}`)
+    .update(`${clientAddress}|${userAgent}|${acceptLanguage}`)
     .digest("hex")
     .slice(0, 32);
 }
