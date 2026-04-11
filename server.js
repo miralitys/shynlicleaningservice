@@ -8,25 +8,45 @@ const fsp = require("fs/promises");
 const path = require("path");
 const { monitorEventLoopDelay } = require("perf_hooks");
 const { URL } = require("url");
-let createLeadConnectorClient;
+let createSupabaseQuoteOpsClient;
+let loadSupabaseQuoteOpsConfig;
 try {
-  ({ createLeadConnectorClient } = require("./lib/leadconnector"));
+  ({ createSupabaseQuoteOpsClient, loadSupabaseQuoteOpsConfig } = require("./lib/supabase-quote-ops"));
+} catch (error) {
+  createSupabaseQuoteOpsClient = null;
+  loadSupabaseQuoteOpsConfig = null;
+}
+let createLeadConnectorClient;
+let loadLeadConnectorConfig;
+try {
+  ({ createLeadConnectorClient, loadLeadConnectorConfig } = require("./lib/leadconnector"));
 } catch (error) {
   createLeadConnectorClient = () => {
     throw new Error("Lead connector module is not available in this build.");
   };
+  loadLeadConnectorConfig = null;
 }
-const { calculateQuotePricing } = require("./lib/quote-pricing");
+const {
+  ALLOWED_BATHROOM_COUNTS,
+  ALLOWED_ROOM_COUNTS,
+  ALLOWED_SQUARE_FEET_BUCKETS,
+  PRICING,
+  calculateQuotePricing,
+} = require("./lib/quote-pricing");
 let QuoteTokenError;
 let createQuoteToken;
+let getQuoteTokenSecret;
+let getQuoteTokenTtlSeconds;
 let verifyQuoteToken;
 try {
-  ({ QuoteTokenError, createQuoteToken, verifyQuoteToken } = require("./lib/quote-token"));
+  ({ QuoteTokenError, createQuoteToken, getQuoteTokenSecret, getQuoteTokenTtlSeconds, verifyQuoteToken } = require("./lib/quote-token"));
 } catch (error) {
   QuoteTokenError = class QuoteTokenError extends Error {};
   createQuoteToken = () => {
     throw new QuoteTokenError("Quote token module is not available in this build.");
   };
+  getQuoteTokenSecret = () => "";
+  getQuoteTokenTtlSeconds = () => 0;
   verifyQuoteToken = () => {
     throw new QuoteTokenError("Quote token module is not available in this build.");
   };
@@ -46,18 +66,6 @@ try {
 } catch (error) {
   adminAuth = null;
 }
-let adminUsers;
-try {
-  adminUsers = require("./lib/admin-users");
-} catch (error) {
-  adminUsers = null;
-}
-let QRCode;
-try {
-  QRCode = require("qrcode");
-} catch (error) {
-  QRCode = null;
-}
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
@@ -66,14 +74,54 @@ const ROUTES_PATH = path.join(SITE_DIR, "routes.json");
 const NOT_FOUND_PAGE = "page113047926.html";
 const ADMIN_ROOT_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
-const ADMIN_SETUP_PATH = "/admin/setup";
 const ADMIN_2FA_PATH = "/admin/2fa";
-const ADMIN_USERS_PATH = "/admin/users";
 const ADMIN_LOGOUT_PATH = "/admin/logout";
+const ADMIN_QUOTE_OPS_PATH = "/admin/quote-ops";
+const ADMIN_QUOTE_OPS_EXPORT_PATH = "/admin/quote-ops/export.csv";
+const ADMIN_QUOTE_OPS_RETRY_PATH = "/admin/quote-ops/retry";
+const ADMIN_INTEGRATIONS_PATH = "/admin/integrations";
+const ADMIN_RUNTIME_PATH = "/admin/runtime";
 const ADMIN_SESSION_COOKIE = "shynli_admin_session";
 const ADMIN_CHALLENGE_COOKIE = "shynli_admin_challenge";
+const ADMIN_APP_ROUTES = new Set([
+  ADMIN_ROOT_PATH,
+  ADMIN_QUOTE_OPS_PATH,
+  ADMIN_INTEGRATIONS_PATH,
+  ADMIN_RUNTIME_PATH,
+]);
+const ADMIN_ALL_ROUTES = new Set([
+  ...ADMIN_APP_ROUTES,
+  ADMIN_QUOTE_OPS_EXPORT_PATH,
+  ADMIN_QUOTE_OPS_RETRY_PATH,
+  ADMIN_LOGIN_PATH,
+  ADMIN_2FA_PATH,
+  ADMIN_LOGOUT_PATH,
+]);
+const ADMIN_APP_NAV_ITEMS = Object.freeze([
+  {
+    path: ADMIN_ROOT_PATH,
+    label: "Overview",
+  },
+  {
+    path: ADMIN_QUOTE_OPS_PATH,
+    label: "Quote Ops",
+  },
+  {
+    path: ADMIN_INTEGRATIONS_PATH,
+    label: "Integrations",
+  },
+  {
+    path: ADMIN_RUNTIME_PATH,
+    label: "Runtime",
+  },
+]);
 const QUOTE_PUBLIC_PATH = "/quote";
-const REDIRECT_ROUTES = new Map([["/home-simple", "/"]]);
+const REDIRECT_ROUTES = new Map([
+  ["/home-simple", "/"],
+  ["/действуй", "/quote"],
+  ["/admin/setup", ADMIN_ROOT_PATH],
+  ["/admin/users", ADMIN_ROOT_PATH],
+]);
 const SITE_ORIGIN = normalizeConfiguredOrigin(
   process.env.PUBLIC_SITE_ORIGIN || process.env.SITE_BASE_URL || "https://shynlicleaningservice.com"
 );
@@ -164,6 +212,7 @@ const STRIPE_MIN_AMOUNT_CENTS = Number(process.env.STRIPE_MIN_AMOUNT_CENTS || 50
 const STRIPE_MAX_AMOUNT_CENTS = Number(process.env.STRIPE_MAX_AMOUNT_CENTS || 200000);
 const POST_RATE_LIMIT_WINDOW_MS = Number(process.env.POST_RATE_LIMIT_WINDOW_MS || 60_000);
 const POST_RATE_LIMIT_MAX_REQUESTS = Number(process.env.POST_RATE_LIMIT_MAX_REQUESTS || 10);
+const QUOTE_OPS_LEDGER_LIMIT = Number(process.env.QUOTE_OPS_LEDGER_LIMIT || 250);
 const ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS = Number(process.env.ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS || 10 * 60_000);
 const ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS = Number(process.env.ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS || 5);
 const ADMIN_2FA_RATE_LIMIT_WINDOW_MS = Number(process.env.ADMIN_2FA_RATE_LIMIT_WINDOW_MS || 10 * 60_000);
@@ -358,6 +407,358 @@ function createRequestPerfWindow() {
         status_5xx: status5xx,
         status_5xx_rate: roundNumber(status5xx / total, 4),
       };
+    },
+  };
+}
+
+function getQuoteOpsSearchHaystack(entry) {
+  return [
+    entry.requestId,
+    entry.customerName,
+    entry.customerPhone,
+    entry.customerEmail,
+    entry.contactId,
+    entry.serviceName,
+    entry.serviceType,
+    entry.source,
+    entry.code,
+    entry.errorMessage,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function filterQuoteOpsEntries(entries = [], filters = {}) {
+  const status = normalizeString(filters.status, 32).toLowerCase();
+  const serviceType = normalizeString(filters.serviceType, 32).toLowerCase();
+  const query = normalizeString(filters.q, 200).toLowerCase();
+  const limitValue = Number.isFinite(filters.limit) ? filters.limit : entries.length;
+
+  return entries
+    .filter((entry) => {
+      if (status && status !== "all" && entry.status !== status) return false;
+      if (serviceType && serviceType !== "all" && entry.serviceType !== serviceType) return false;
+      if (query && !getQuoteOpsSearchHaystack(entry).includes(query)) return false;
+      return true;
+    })
+    .slice(0, Math.max(0, limitValue));
+}
+
+async function performQuoteOpsRetry(entry, options = {}) {
+  if (!entry) {
+    return {
+      ok: false,
+      status: 404,
+      code: "ENTRY_NOT_FOUND",
+      message: "Quote entry was not found.",
+    };
+  }
+
+  if (!entry.payloadForRetry) {
+    return {
+      ok: false,
+      status: 400,
+      code: "RETRY_UNAVAILABLE",
+      message: "Retry is not available for this quote entry.",
+    };
+  }
+
+  function normalizeQuoteOpsStatus(ok, warnings) {
+    if (!ok) return "error";
+    return Array.isArray(warnings) && warnings.length > 0 ? "warning" : "success";
+  }
+
+  let leadConnector;
+  try {
+    leadConnector = options.getLeadConnectorClient();
+  } catch (error) {
+    const failureMessage = normalizeString(error && error.message ? error.message : "Quote retry is unavailable.", 200);
+    const retryTimestamp = new Date().toISOString();
+    entry.retryCount += 1;
+    entry.lastRetryAt = retryTimestamp;
+    entry.lastRetryStatus = "error";
+    entry.lastRetryMessage = failureMessage;
+    entry.updatedAt = retryTimestamp;
+    entry.retryHistory.unshift({
+      at: retryTimestamp,
+      status: "error",
+      code: "CLIENT_INIT_ERROR",
+      message: failureMessage,
+    });
+    entry.retryHistory = entry.retryHistory.slice(0, 10);
+    return {
+      ok: false,
+      status: 503,
+      code: "CLIENT_INIT_ERROR",
+      message: failureMessage,
+    };
+  }
+
+  const submittedAt = new Date().toISOString();
+  const retryRequestId = normalizeString(
+    `${entry.requestId || "quote"}-retry-${Date.now()}`,
+    120
+  );
+  const result = await leadConnector.submitQuoteSubmission({
+    ...entry.payloadForRetry,
+    requestId: retryRequestId,
+    submittedAt,
+    userAgent: normalizeString(options.userAgent || "Admin retry", 180),
+  });
+
+  const retryTimestamp = new Date().toISOString();
+  const retryStatus = normalizeQuoteOpsStatus(Boolean(result.ok), result.warnings);
+  entry.retryCount += 1;
+  entry.lastRetryAt = retryTimestamp;
+  entry.lastRetryStatus = retryStatus;
+  entry.lastRetryMessage = normalizeString(
+    result.ok ? "CRM retry completed." : result.message || "CRM retry failed.",
+    300
+  );
+  entry.updatedAt = retryTimestamp;
+  entry.retryHistory.unshift({
+    at: retryTimestamp,
+    status: retryStatus,
+    code: normalizeString(result.code || "", 80),
+    message: entry.lastRetryMessage,
+  });
+  entry.retryHistory = entry.retryHistory.slice(0, 10);
+
+  if (result.ok) {
+    entry.status = retryStatus;
+    entry.httpStatus = Number(result.status) || entry.httpStatus;
+    entry.code = normalizeString(result.code || "OK", 80);
+    entry.retryable = Boolean(result.retryable);
+    entry.warnings = Array.isArray(result.warnings) ? result.warnings.map((item) => normalizeString(item, 120)).filter(Boolean) : [];
+    entry.errorMessage = "";
+    entry.contactId = normalizeString(result.contactId || entry.contactId, 120);
+    entry.noteCreated = Boolean(result.noteCreated);
+    entry.opportunityCreated = Boolean(result.opportunityCreated);
+    entry.customFieldsUpdated = Boolean(result.customFieldsUpdated);
+    entry.usedExistingContact = Boolean(result.usedExistingContact);
+  } else {
+    entry.httpStatus = Number(result.status) || entry.httpStatus;
+    entry.code = normalizeString(result.code || entry.code || "RETRY_FAILED", 80);
+    entry.retryable = Boolean(result.retryable);
+    entry.errorMessage = normalizeString(result.message || "CRM retry failed.", 300);
+  }
+
+  return result;
+}
+
+function createQuoteOpsLedger(limit = QUOTE_OPS_LEDGER_LIMIT) {
+  const entries = [];
+  const entryById = new Map();
+
+  function trim() {
+    while (entries.length > limit) {
+      const removed = entries.pop();
+      if (removed) {
+        entryById.delete(removed.id);
+      }
+    }
+  }
+
+  function normalizeQuoteOpsStatus(ok, warnings) {
+    if (!ok) return "error";
+    return Array.isArray(warnings) && warnings.length > 0 ? "warning" : "success";
+  }
+
+  function createBaseEntry(input = {}) {
+    const timestamp = new Date().toISOString();
+    return {
+      id: crypto.randomUUID(),
+      kind: "quote_submission",
+      status: normalizeQuoteOpsStatus(Boolean(input.ok), input.warnings),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      requestId: normalizeString(input.requestId, 120),
+      sourceRoute: normalizeString(input.sourceRoute, 120),
+      source: normalizeString(input.source, 120),
+      customerName: normalizeString(input.customerName, 250),
+      customerPhone: normalizeString(input.customerPhone, 80),
+      customerEmail: normalizeString(input.customerEmail, 250),
+      serviceType: normalizeString(input.serviceType, 40),
+      serviceName: normalizeString(input.serviceName, 120),
+      totalPrice: Number.isFinite(input.totalPrice) ? Number(input.totalPrice) : 0,
+      totalPriceCents: Number.isFinite(input.totalPriceCents) ? Number(input.totalPriceCents) : 0,
+      selectedDate: normalizeString(input.selectedDate, 32),
+      selectedTime: normalizeString(input.selectedTime, 32),
+      fullAddress: normalizeString(input.fullAddress, 500),
+      httpStatus: Number.isFinite(input.httpStatus) ? input.httpStatus : 0,
+      code: normalizeString(input.code, 80),
+      retryable: Boolean(input.retryable),
+      warnings: Array.isArray(input.warnings) ? input.warnings.map((item) => normalizeString(item, 120)).filter(Boolean) : [],
+      errorMessage: normalizeString(input.errorMessage, 300),
+      contactId: normalizeString(input.contactId, 120),
+      noteCreated: Boolean(input.noteCreated),
+      opportunityCreated: Boolean(input.opportunityCreated),
+      customFieldsUpdated: Boolean(input.customFieldsUpdated),
+      usedExistingContact: Boolean(input.usedExistingContact),
+      retryCount: 0,
+      lastRetryAt: "",
+      lastRetryStatus: "",
+      lastRetryMessage: "",
+      retryHistory: [],
+      payloadForRetry: input.payloadForRetry || null,
+    };
+  }
+
+  return {
+    recordSubmission(input = {}) {
+      const entry = createBaseEntry(input);
+      entries.unshift(entry);
+      entryById.set(entry.id, entry);
+      trim();
+      return entry;
+    },
+    getEntry(entryId) {
+      return entryById.get(normalizeString(entryId, 120)) || null;
+    },
+    listEntries(filters = {}) {
+      return filterQuoteOpsEntries(entries, filters);
+    },
+    buildCsv(entriesToExport = []) {
+      const headers = [
+        "id",
+        "status",
+        "created_at",
+        "updated_at",
+        "request_id",
+        "source_route",
+        "source",
+        "customer_name",
+        "customer_phone",
+        "customer_email",
+        "service_type",
+        "service_name",
+        "total_price",
+        "selected_date",
+        "selected_time",
+        "full_address",
+        "http_status",
+        "code",
+        "retryable",
+        "warnings",
+        "error_message",
+        "contact_id",
+        "note_created",
+        "opportunity_created",
+        "custom_fields_updated",
+        "used_existing_contact",
+        "retry_count",
+        "last_retry_at",
+        "last_retry_status",
+        "last_retry_message",
+      ];
+      const csvEscape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+      const lines = [headers.map(csvEscape).join(",")];
+
+      for (const entry of entriesToExport) {
+        lines.push(
+          [
+            entry.id,
+            entry.status,
+            entry.createdAt,
+            entry.updatedAt,
+            entry.requestId,
+            entry.sourceRoute,
+            entry.source,
+            entry.customerName,
+            entry.customerPhone,
+            entry.customerEmail,
+            entry.serviceType,
+            entry.serviceName,
+            entry.totalPrice,
+            entry.selectedDate,
+            entry.selectedTime,
+            entry.fullAddress,
+            entry.httpStatus,
+            entry.code,
+            entry.retryable,
+            entry.warnings.join("|"),
+            entry.errorMessage,
+            entry.contactId,
+            entry.noteCreated,
+            entry.opportunityCreated,
+            entry.customFieldsUpdated,
+            entry.usedExistingContact,
+            entry.retryCount,
+            entry.lastRetryAt,
+            entry.lastRetryStatus,
+            entry.lastRetryMessage,
+          ]
+            .map(csvEscape)
+            .join(",")
+        );
+      }
+
+      return lines.join("\n");
+    },
+    async retrySubmission(entryId, options = {}) {
+      const entry = entryById.get(normalizeString(entryId, 120));
+      return performQuoteOpsRetry(entry, options);
+    },
+  };
+}
+
+function createQuoteOpsStore(options = {}) {
+  const localLedger = createQuoteOpsLedger(options.limit);
+  const supabaseClient =
+    typeof createSupabaseQuoteOpsClient === "function"
+      ? createSupabaseQuoteOpsClient({
+          env: options.env || process.env,
+          fetch: options.fetch || global.fetch,
+        })
+      : null;
+  const remoteEnabled = Boolean(supabaseClient && typeof supabaseClient.isConfigured === "function" && supabaseClient.isConfigured());
+
+  return {
+    mode: remoteEnabled ? "supabase" : "memory",
+    buildCsv(entriesToExport = []) {
+      return localLedger.buildCsv(entriesToExport);
+    },
+    async recordSubmission(input = {}) {
+      const entry = localLedger.recordSubmission(input);
+      if (!remoteEnabled) return entry;
+      try {
+        await supabaseClient.upsertEntry(entry);
+      } catch {}
+      return entry;
+    },
+    async listEntries(filters = {}) {
+      if (!remoteEnabled) {
+        return localLedger.listEntries(filters);
+      }
+      try {
+        const remoteEntries = await supabaseClient.fetchEntries(
+          Number.isFinite(filters.limit) ? filters.limit : QUOTE_OPS_LEDGER_LIMIT
+        );
+        return filterQuoteOpsEntries(remoteEntries, filters);
+      } catch {
+        return localLedger.listEntries(filters);
+      }
+    },
+    async retrySubmission(entryId, optionsForRetry = {}) {
+      if (!remoteEnabled) {
+        return localLedger.retrySubmission(entryId, optionsForRetry);
+      }
+
+      let entry = null;
+      try {
+        entry = await supabaseClient.fetchEntryById(entryId);
+      } catch {}
+      if (!entry) {
+        entry = localLedger.getEntry(entryId);
+      }
+
+      const result = await performQuoteOpsRetry(entry, optionsForRetry);
+      if (entry) {
+        try {
+          await supabaseClient.upsertEntry(entry);
+        } catch {}
+      }
+      return result;
     },
   };
 }
@@ -596,15 +997,6 @@ function toAmountCents(amountValue) {
   return Math.round(parsed * 100);
 }
 
-async function readJsonBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
-  const rawBody = await readTextBody(req, maxBytes);
-  try {
-    return rawBody ? JSON.parse(rawBody) : {};
-  } catch {
-    throw new Error("Invalid JSON");
-  }
-}
-
 async function readTextBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     let size = 0;
@@ -644,6 +1036,15 @@ async function readTextBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
   });
 }
 
+async function readJsonBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
+  const rawBody = await readTextBody(req, maxBytes);
+  try {
+    return rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    throw new Error("Invalid JSON");
+  }
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -664,32 +1065,16 @@ function parseFormBody(rawBody) {
   return output;
 }
 
-function getAdminSystemConfig() {
-  if (!adminAuth || !adminUsers) return null;
+function getAdminConfig() {
+  if (!adminAuth) return null;
   const config = adminAuth.loadAdminConfig(process.env);
   return config.configured ? config : null;
-}
-
-function buildAdminUserAuthConfig(systemConfig, user) {
-  return {
-    configured: Boolean(systemConfig && systemConfig.masterSecret && user && user.email && user.passwordHash),
-    email: user.email,
-    passwordHash: user.passwordHash,
-    issuer: systemConfig.issuer,
-    masterSecret: systemConfig.masterSecret,
-    configuredTotpSecret: user.totpSecret || "",
-  };
 }
 
 function getAdminRequestFingerprint(req) {
   return crypto
     .createHash("sha256")
-    .update(
-      `${normalizeString(req.headers["user-agent"], 240)}|${normalizeString(
-        req.headers["accept-language"],
-        120
-      )}|${normalizeString(req.headers["sec-ch-ua-platform"], 80)}`
-    )
+    .update(`${getClientAddress(req)}|${normalizeString(req.headers["user-agent"], 240)}`)
     .digest("hex")
     .slice(0, 32);
 }
@@ -704,116 +1089,304 @@ function getAdminCookieOptions(req) {
 }
 
 function getAdminAuthState(req) {
-  const systemConfig = getAdminSystemConfig();
+  const config = getAdminConfig();
   const cookies = parseCookies(req.headers.cookie);
   const fingerprint = getAdminRequestFingerprint(req);
   const state = {
-    systemConfig,
-    store: null,
+    config,
     fingerprint,
     session: null,
     challenge: null,
-    currentUser: null,
-    challengeUser: null,
     cookies,
-    error: null,
   };
 
-  if (!systemConfig) return state;
+  if (!config) return state;
 
   try {
-    state.store = adminUsers.loadAdminUserStore({
-      env: process.env,
-      baseDir: SITE_DIR,
-      systemConfig,
-    });
-  } catch (error) {
-    state.error = error;
-    return state;
-  }
-
-  try {
-    const sessionPayload = adminAuth.verifyAdminSessionToken(cookies[ADMIN_SESSION_COOKIE], systemConfig);
-    const sessionUser = adminUsers.findAdminUserById(state.store, sessionPayload.userId);
-    if (
-      sessionPayload &&
-      sessionUser &&
-      sessionPayload.email === sessionUser.email &&
-      sessionPayload.fingerprint === fingerprint
-    ) {
+    const sessionPayload = adminAuth.verifyAdminSessionToken(cookies[ADMIN_SESSION_COOKIE], config);
+    if (sessionPayload && sessionPayload.email === config.email && sessionPayload.fingerprint === fingerprint) {
       state.session = sessionPayload;
-      state.currentUser = sessionUser;
     }
   } catch {}
 
   try {
-    const challengePayload = adminAuth.verifyAdminChallengeToken(cookies[ADMIN_CHALLENGE_COOKIE], systemConfig);
-    const challengeUser = adminUsers.findAdminUserById(state.store, challengePayload.userId);
-    if (
-      challengePayload &&
-      challengeUser &&
-      challengePayload.email === challengeUser.email &&
-      challengePayload.fingerprint === fingerprint
-    ) {
+    const challengePayload = adminAuth.verifyAdminChallengeToken(cookies[ADMIN_CHALLENGE_COOKIE], config);
+    if (challengePayload && challengePayload.email === config.email && challengePayload.fingerprint === fingerprint) {
       state.challenge = challengePayload;
-      state.challengeUser = challengeUser;
     }
   } catch {}
 
   return state;
 }
 
-function buildAdminRouteWithQuery(routePath, params = {}) {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    const normalizedValue = normalizeString(value, 240);
-    if (!normalizedValue) continue;
-    search.set(key, normalizedValue);
+function getLeadConnectorAdminState() {
+  if (typeof loadLeadConnectorConfig !== "function") {
+    return {
+      available: false,
+      configured: false,
+      config: null,
+      error: "LeadConnector module is not available in this build.",
+    };
   }
-  const query = search.toString();
-  return query ? `${routePath}?${query}` : routePath;
-}
 
-async function buildAdminQrMarkup(text) {
-  if (!QRCode || !text) return "";
   try {
-    const dataUrl = await QRCode.toDataURL(text, {
-      margin: 1,
-      width: 220,
-      color: {
-        dark: "#2f2a27",
-        light: "#fffdfa",
-      },
-    });
-    return `<img class="admin-qr-image" src="${escapeHtmlText(dataUrl)}" alt="Authenticator QR code">`;
-  } catch {
-    return "";
+    const config = loadLeadConnectorConfig(process.env);
+    return {
+      available: true,
+      configured: Boolean(config && config.configured),
+      config,
+      error: "",
+    };
+  } catch (error) {
+    return {
+      available: true,
+      configured: false,
+      config: null,
+      error: normalizeString(error && error.message ? error.message : "Invalid LeadConnector configuration", 200),
+    };
   }
 }
 
-function ensureAdminUserTotpSecret(store, user, systemConfig) {
-  if (!user || user.totpSecret) {
-    return { store, user };
-  }
-
-  const updated = adminUsers.updateAdminUser(store, user.id, (currentUser) => ({
-    ...currentUser,
-    totpSecret: adminAuth.createTotpSecret(),
-  }));
-
+function getAdminIntegrationState() {
+  const leadConnector = getLeadConnectorAdminState();
+  const stripeConfigured = Boolean(normalizeString(process.env.STRIPE_SECRET_KEY, 256));
+  const quoteTokenSecret = getQuoteTokenSecret(process.env);
+  const supabaseConfig =
+    typeof loadSupabaseQuoteOpsConfig === "function"
+      ? loadSupabaseQuoteOpsConfig(process.env)
+      : { configured: false, url: "", serviceRoleKey: "", tableName: "" };
   return {
-    store: adminUsers.saveAdminUserStore(updated.store, {
-      env: process.env,
-      baseDir: SITE_DIR,
-      systemConfig,
-    }),
-    user: updated.user,
+    leadConnector,
+    stripeConfigured,
+    placesConfigured: Boolean(GOOGLE_PLACES_API_KEY),
+    supabaseConfigured: Boolean(supabaseConfig.configured),
+    supabaseUrl: supabaseConfig.url,
+    supabaseTableName: supabaseConfig.tableName || "",
+    quoteTokenConfigured: Boolean(quoteTokenSecret),
+    quoteTokenTtlSeconds: Number(getQuoteTokenTtlSeconds(process.env) || 0),
+    perfEndpointEnabled: PERF_ENDPOINT_ENABLED,
+    perfTokenPresent: Boolean(PERF_ENDPOINT_TOKEN),
+    perfProtected: PERF_ENDPOINT_ENABLED && Boolean(PERF_ENDPOINT_TOKEN),
   };
+}
+
+function formatBooleanLabel(value, yesLabel = "Enabled", noLabel = "Disabled") {
+  return value ? yesLabel : noLabel;
+}
+
+function formatCountList(values) {
+  return values.map((value) => String(value)).join(", ");
+}
+
+function formatCurrencyAmount(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(Number(value || 0));
+}
+
+function formatDurationLabel(totalSeconds) {
+  const seconds = Math.max(0, Number(totalSeconds || 0));
+  if (!seconds) return "Not available";
+  if (seconds % 3600 === 0) return `${seconds / 3600}h`;
+  if (seconds % 60 === 0) return `${seconds / 60}m`;
+  return `${seconds}s`;
+}
+
+function maskSecretPreview(value, visibleEnd = 4) {
+  const raw = normalizeString(value, 512);
+  if (!raw) return "Missing";
+  if (raw.length <= visibleEnd) return `${"*".repeat(raw.length)}`;
+  return `${"*".repeat(Math.max(6, raw.length - visibleEnd))}${raw.slice(-visibleEnd)}`;
+}
+
+function getRequestUrl(req) {
+  const host = normalizeString(req.headers.host || "localhost", 255) || "localhost";
+  return new URL(req.url || "/", `http://${host}`);
+}
+
+function getQuoteOpsFilters(req) {
+  const reqUrl = getRequestUrl(req);
+  const status = normalizeString(reqUrl.searchParams.get("status"), 32).toLowerCase();
+  const serviceType = normalizeString(reqUrl.searchParams.get("serviceType"), 32).toLowerCase();
+  const q = normalizeString(reqUrl.searchParams.get("q"), 200);
+  return {
+    reqUrl,
+    filters: {
+      status: status || "all",
+      serviceType: serviceType || "all",
+      q,
+    },
+  };
+}
+
+function buildQuoteOpsReturnPath(value) {
+  const candidate = normalizeString(value, 1000);
+  if (!candidate) return ADMIN_QUOTE_OPS_PATH;
+
+  try {
+    const parsed = new URL(candidate, SITE_ORIGIN);
+    if (parsed.pathname !== ADMIN_QUOTE_OPS_PATH) return ADMIN_QUOTE_OPS_PATH;
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return ADMIN_QUOTE_OPS_PATH;
+  }
+}
+
+function buildAdminRedirectPath(basePath, params = {}) {
+  const url = new URL(basePath, SITE_ORIGIN);
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") {
+      url.searchParams.delete(key);
+    } else {
+      url.searchParams.set(key, String(value));
+    }
+  }
+  return `${url.pathname}${url.search}`;
+}
+
+function renderAdminBadge(label, tone = "default") {
+  const toneClass =
+    tone === "success"
+      ? " admin-badge-success"
+      : tone === "muted"
+        ? " admin-badge-muted"
+        : tone === "danger"
+          ? " admin-badge-danger"
+        : tone === "outline"
+          ? " admin-badge-outline"
+          : "";
+  return `<span class="admin-badge${toneClass}">${escapeHtml(label)}</span>`;
+}
+
+function renderAdminCard(title, description, body, options = {}) {
+  const eyebrow = options.eyebrow ? `<p class="admin-card-eyebrow">${escapeHtml(options.eyebrow)}</p>` : "";
+  const cardClass = options.muted ? "admin-card admin-card-muted" : "admin-card";
+  return `<section class="${cardClass}">
+    ${(eyebrow || title || description) ? `<div class="admin-card-header">
+      ${eyebrow}
+      ${title ? `<h2 class="admin-card-title">${escapeHtml(title)}</h2>` : ""}
+      ${description ? `<p class="admin-card-description">${escapeHtml(description)}</p>` : ""}
+    </div>` : ""}
+    <div class="admin-card-content">
+      ${body}
+    </div>
+  </section>`;
+}
+
+function renderAdminAuthSidebar(activeStep) {
+  const steps = [
+    {
+      key: "login",
+      index: "01",
+      title: "Credentials",
+      description: "Confirm the admin email and password before any TOTP prompt appears.",
+    },
+    {
+      key: "2fa",
+      index: "02",
+      title: "Authenticator",
+      description: "Use the current 6-digit code from Google Authenticator, 1Password, or a similar app.",
+    },
+    {
+      key: "dashboard",
+      index: "03",
+      title: "Dashboard",
+      description: "Open the secured overview for runtime visibility and future internal tools.",
+    },
+  ];
+
+  return `
+    <div class="admin-sidebar-card">
+      <div class="admin-brand">
+        <div class="admin-brand-mark">S</div>
+        <div>
+          <p class="admin-sidebar-label">SHYNLI</p>
+          <h2 class="admin-sidebar-title">Admin Workspace</h2>
+        </div>
+      </div>
+      <p class="admin-sidebar-copy">A framework-free admin shell restyled with shadcn/ui card, input, button, and badge patterns.</p>
+      <div class="admin-step-list">
+        ${steps
+          .map(
+            (step) => `<div class="admin-step${activeStep === step.key ? " admin-step-active" : ""}">
+              <span class="admin-step-index">${step.index}</span>
+              <div class="admin-step-copy">
+                <strong>${escapeHtml(step.title)}</strong>
+                <span>${escapeHtml(step.description)}</span>
+              </div>
+            </div>`
+          )
+          .join("")}
+      </div>
+    </div>
+    <div class="admin-sidebar-card admin-sidebar-card-muted">
+      <p class="admin-sidebar-label">Security Defaults</p>
+      <ul class="admin-feature-list">
+        <li>Password verification happens before the second factor challenge.</li>
+        <li>TOTP codes rotate every 30 seconds and accept only a narrow validation window.</li>
+        <li>Admin cookies stay HttpOnly and SameSite=Strict for every route under <code>/admin</code>.</li>
+      </ul>
+    </div>`;
+}
+
+function renderAdminAppSidebar(config, req, activePath, statusBadges) {
+  const cookieMode = `HttpOnly + SameSite=Strict${shouldUseSecureCookies(req) ? " + Secure" : ""}`;
+  return `
+    <div class="admin-sidebar-card">
+      <div class="admin-brand">
+        <div class="admin-brand-mark">S</div>
+        <div>
+          <p class="admin-sidebar-label">SHYNLI</p>
+          <h2 class="admin-sidebar-title">Admin Dashboard</h2>
+        </div>
+      </div>
+      <p class="admin-sidebar-copy">A shadcn-style operator shell for secure access, quote operations, integration visibility, and runtime diagnostics.</p>
+      <nav class="admin-nav">
+        ${ADMIN_APP_NAV_ITEMS.map((item) => `<a class="admin-nav-link${item.path === activePath ? " admin-nav-link-active" : ""}" href="${item.path}">${escapeHtml(item.label)}</a>`).join("")}
+      </nav>
+    </div>
+    <div class="admin-sidebar-card admin-sidebar-card-muted">
+      <p class="admin-sidebar-label">Access Posture</p>
+      <div class="admin-badge-row">${statusBadges}</div>
+      <div class="admin-divider"></div>
+      <div class="admin-property-list">
+        <div class="admin-property-row">
+          <span class="admin-property-label">Account</span>
+          <span class="admin-property-value">${escapeHtml(config.email)}</span>
+        </div>
+        <div class="admin-property-row">
+          <span class="admin-property-label">Protocol</span>
+          <span class="admin-property-value">${escapeHtml(getRequestProtocol(req))}</span>
+        </div>
+        <div class="admin-property-row">
+          <span class="admin-property-label">Cookies</span>
+          <span class="admin-property-value">${escapeHtml(cookieMode)}</span>
+        </div>
+      </div>
+      <div class="admin-divider"></div>
+      <div class="admin-link-grid">
+        <a class="admin-link-tile" href="/" target="_blank" rel="noreferrer">
+          <strong>Website Homepage</strong>
+          <span>Open the public marketing site in a new tab.</span>
+        </a>
+        <a class="admin-link-tile" href="${QUOTE_PUBLIC_PATH}" target="_blank" rel="noreferrer">
+          <strong>Quote Form</strong>
+          <span>Preview the public quote flow and checkout handoff.</span>
+        </a>
+      </div>
+    </div>`;
 }
 
 function renderAdminLayout(title, content, options = {}) {
   const pageTitle = `${title} | SHYNLI Admin`;
   const subtitle = options.subtitle ? `<p class="admin-subtitle">${escapeHtml(options.subtitle)}</p>` : "";
+  const heroMeta = options.heroMeta ? `<div class="admin-hero-meta">${options.heroMeta}</div>` : "";
+  const kicker = escapeHtml(options.kicker || "Secure Access");
+  const sidebar = options.sidebar ? `<aside class="admin-sidebar">${options.sidebar}</aside>` : "";
+  const shellClass = options.sidebar ? "admin-shell admin-shell-with-sidebar" : "admin-shell";
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -823,43 +1396,222 @@ function renderAdminLayout(title, content, options = {}) {
   <title>${escapeHtml(pageTitle)}</title>
   <style>
     :root {
-      --bg: #f7f2ed;
-      --panel: #fffdfa;
-      --panel-border: #eadfd3;
-      --text: #2f2a27;
-      --muted: #736860;
+      --background: #f6f7fb;
+      --foreground: #18181b;
+      --card: rgba(255, 255, 255, 0.94);
+      --card-muted: rgba(250, 250, 251, 0.96);
+      --border: #e4e4e7;
+      --input: #d4d4d8;
+      --muted: #71717a;
+      --muted-foreground: #52525b;
       --accent: #9e435a;
-      --accent-deep: #7e3347;
-      --danger: #b23a48;
-      --success: #2f7d5a;
-      --shadow: 0 20px 50px rgba(70, 42, 27, 0.12);
-      --soft: #f5ece4;
+      --accent-foreground: #ffffff;
+      --accent-soft: rgba(158, 67, 90, 0.12);
+      --success: #0f766e;
+      --success-soft: rgba(15, 118, 110, 0.12);
+      --danger: #b91c1c;
+      --danger-soft: rgba(185, 28, 28, 0.10);
+      --shadow-lg: 0 28px 70px rgba(24, 24, 27, 0.10);
+      --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.05);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
     }
     * { box-sizing: border-box; }
+    html { color-scheme: light; }
     body {
       margin: 0;
       min-height: 100vh;
       font-family: "Montserrat", "Segoe UI", sans-serif;
-      color: var(--text);
+      color: var(--foreground);
       background:
-        radial-gradient(circle at top right, rgba(158, 67, 90, 0.12), transparent 28%),
-        linear-gradient(180deg, #fbf7f2 0%, var(--bg) 100%);
-      padding: 32px 18px;
+        radial-gradient(circle at top left, rgba(158, 67, 90, 0.10), transparent 32%),
+        radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 24%),
+        linear-gradient(180deg, #fcfcfd 0%, var(--background) 100%);
+      padding: 28px 18px 40px;
+    }
+    a {
+      color: inherit;
+      text-decoration-color: rgba(158, 67, 90, 0.28);
+      text-underline-offset: 3px;
+    }
+    code {
+      font-family: "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.92em;
+      background: rgba(24, 24, 27, 0.04);
+      border: 1px solid rgba(24, 24, 27, 0.05);
+      padding: 0.16em 0.42em;
+      border-radius: 999px;
     }
     .admin-shell {
-      max-width: 1180px;
+      max-width: 1220px;
       margin: 0 auto;
       display: grid;
-      gap: 20px;
+      gap: 24px;
+    }
+    .admin-shell-with-sidebar {
+      grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+      align-items: start;
+    }
+    .admin-sidebar {
+      display: grid;
+      gap: 16px;
+      position: sticky;
+      top: 24px;
+    }
+    .admin-sidebar-card,
+    .admin-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      background: var(--card);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(18px);
+    }
+    .admin-sidebar-card {
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+    }
+    .admin-sidebar-card-muted,
+    .admin-card-muted {
+      background: var(--card-muted);
+    }
+    .admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .admin-brand-mark {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), #c55d78);
+      color: var(--accent-foreground);
+      font-size: 20px;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28);
+    }
+    .admin-sidebar-label {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .admin-sidebar-title {
+      margin: 4px 0 0;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+    .admin-sidebar-copy {
+      margin: 0 0 18px;
+      color: var(--muted-foreground);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .admin-step-list,
+    .admin-nav,
+    .admin-badge-row,
+    .admin-property-list,
+    .admin-content,
+    .admin-feature-list,
+    .admin-link-grid,
+    .admin-stats-grid,
+    .admin-section-grid,
+    .admin-form,
+    .admin-form-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .admin-step {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      background: rgba(24, 24, 27, 0.02);
+    }
+    .admin-step-active {
+      border-color: rgba(158, 67, 90, 0.22);
+      background: linear-gradient(180deg, rgba(158, 67, 90, 0.10), rgba(255,255,255,0.88));
+    }
+    .admin-step-index {
+      display: grid;
+      place-items: center;
+      height: 36px;
+      border-radius: 12px;
+      background: rgba(24, 24, 27, 0.06);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted-foreground);
+    }
+    .admin-step-active .admin-step-index {
+      background: rgba(158, 67, 90, 0.16);
+      color: var(--accent);
+    }
+    .admin-step-copy {
+      display: grid;
+      gap: 4px;
+    }
+    .admin-step-copy strong {
+      font-size: 14px;
+    }
+    .admin-step-copy span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .admin-nav-link,
+    .admin-link-tile {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 13px 14px;
+      background: rgba(255,255,255,0.72);
+      color: var(--foreground);
+      text-decoration: none;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    }
+    .admin-nav-link:hover,
+    .admin-link-tile:hover {
+      border-color: rgba(158, 67, 90, 0.24);
+      background: rgba(255,255,255,0.96);
+      transform: translateY(-1px);
+    }
+    .admin-nav-link-active {
+      border-color: rgba(158, 67, 90, 0.24);
+      background: rgba(158, 67, 90, 0.10);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .admin-link-tile strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .admin-link-tile span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .admin-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
     }
     .admin-panel {
-      background: var(--panel);
-      border: 1px solid var(--panel-border);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
+      overflow: hidden;
     }
     .admin-hero {
-      padding: 28px 28px 12px;
+      padding: 28px 30px 18px;
+      border-bottom: 1px solid rgba(228, 228, 231, 0.88);
+      background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(250,250,251,0.68));
     }
     .admin-kicker {
       margin: 0 0 10px;
@@ -871,76 +1623,114 @@ function renderAdminLayout(title, content, options = {}) {
     }
     .admin-title {
       margin: 0;
-      font-family: "Playfair Display", Georgia, serif;
-      font-size: clamp(32px, 5vw, 52px);
+      font-size: clamp(30px, 4vw, 40px);
       line-height: 1.05;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.04em;
     }
     .admin-subtitle {
       margin: 12px 0 0;
       max-width: 760px;
       color: var(--muted);
       font-size: 15px;
-      line-height: 1.65;
+      line-height: 1.7;
+    }
+    .admin-hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
     }
     .admin-content {
-      padding: 0 28px 28px;
+      padding: 24px 30px 30px;
     }
-    .admin-form {
+    .admin-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.82));
+      box-shadow: var(--shadow-sm);
+    }
+    .admin-card-header {
+      padding: 20px 20px 0;
+      display: grid;
+      gap: 6px;
+    }
+    .admin-card-eyebrow {
+      margin: 0;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .admin-card-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+    .admin-card-description {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .admin-card-content {
+      padding: 20px;
       display: grid;
       gap: 16px;
-      max-width: 560px;
     }
-    .admin-form-split {
-      display: grid;
-      gap: 14px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .admin-stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .admin-section-grid {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    .admin-form {
+      max-width: 520px;
+    }
+    .admin-form-grid-two {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
     .admin-label {
       display: grid;
       gap: 8px;
       font-size: 14px;
       font-weight: 600;
+      color: var(--foreground);
+    }
+    .admin-field-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
     }
     .admin-input {
       width: 100%;
-      border: 1px solid #dbcdbf;
-      border-radius: 14px;
-      padding: 14px 16px;
+      height: 46px;
+      border: 1px solid var(--input);
+      border-radius: var(--radius-sm);
+      padding: 0 14px;
       font: inherit;
-      background: #fff;
-      color: var(--text);
+      background: rgba(255,255,255,0.9);
+      color: var(--foreground);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .admin-input::placeholder {
+      color: #a1a1aa;
+    }
+    select.admin-input {
+      padding-right: 40px;
     }
     .admin-input:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 4px rgba(158, 67, 90, 0.14);
+      border-color: rgba(158, 67, 90, 0.48);
+      box-shadow: 0 0 0 4px rgba(158, 67, 90, 0.12);
+      background: #fff;
     }
-    .admin-button, .admin-link-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 48px;
-      padding: 0 18px;
-      border: 0;
-      border-radius: 999px;
-      background: var(--accent);
-      color: #fff;
-      font: inherit;
+    .admin-input-code {
+      text-align: center;
+      letter-spacing: 0.24em;
+      font-size: 24px;
       font-weight: 700;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .admin-button:hover, .admin-link-button:hover {
-      background: var(--accent-deep);
-    }
-    .admin-button-secondary {
-      background: #efe4da;
-      color: var(--text);
-    }
-    .admin-button-secondary:hover {
-      background: #e4d5c6;
     }
     .admin-inline-actions {
       display: flex;
@@ -948,191 +1738,337 @@ function renderAdminLayout(title, content, options = {}) {
       gap: 12px;
       align-items: center;
     }
-    .admin-alert {
-      margin: 0 0 18px;
-      border-radius: 16px;
-      padding: 14px 16px;
-      font-size: 14px;
-      line-height: 1.55;
-    }
-    .admin-alert-error {
-      background: rgba(178, 58, 72, 0.09);
-      color: var(--danger);
-      border: 1px solid rgba(178, 58, 72, 0.18);
-    }
-    .admin-alert-info {
-      background: rgba(47, 125, 90, 0.08);
-      color: var(--success);
-      border: 1px solid rgba(47, 125, 90, 0.16);
-    }
-    .admin-grid {
+    .admin-entry-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 16px;
+      gap: 14px;
     }
-    .admin-grid-wide {
+    .admin-entry-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.84);
+      padding: 16px;
       display: grid;
-      gap: 16px;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-      align-items: start;
+      gap: 14px;
     }
-    .admin-card {
-      border: 1px solid var(--panel-border);
-      border-radius: 18px;
-      padding: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(249,245,239,0.92));
-    }
-    .admin-card h3 {
-      margin: 0 0 10px;
-      font-size: 16px;
-    }
-    .admin-card p, .admin-card li {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.65;
-    }
-    .admin-card code {
-      font-size: 13px;
-    }
-    .admin-list {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 8px;
-    }
-    .admin-users-list {
-      display: grid;
-      gap: 12px;
-    }
-    .admin-user-row {
-      border: 1px solid #e6d9ce;
-      border-radius: 16px;
-      padding: 14px 16px;
-      background: rgba(255,255,255,0.72);
-      display: grid;
-      gap: 8px;
-    }
-    .admin-user-header {
+    .admin-entry-head {
       display: flex;
-      gap: 12px;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+      gap: 12px;
       flex-wrap: wrap;
     }
-    .admin-user-header strong {
-      font-size: 15px;
+    .admin-entry-title {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.3;
     }
-    .admin-user-meta {
-      display: grid;
-      gap: 4px;
-      font-size: 13px;
+    .admin-entry-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .admin-entry-copy {
+      margin: 0;
       color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .admin-entry-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    }
+    .admin-mini-stat {
+      border: 1px solid rgba(228, 228, 231, 0.92);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      background: rgba(250,250,251,0.88);
+    }
+    .admin-mini-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .admin-mini-value {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .admin-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .admin-empty-state {
+      padding: 20px;
+      border: 1px dashed rgba(158, 67, 90, 0.24);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.72);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .admin-action-hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .admin-button,
+    .admin-link-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(180deg, var(--accent), #88384d);
+      color: var(--accent-foreground);
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+      box-shadow: 0 12px 24px rgba(158, 67, 90, 0.18);
+    }
+    .admin-button:hover,
+    .admin-link-button:hover {
+      transform: translateY(-1px);
+      background: linear-gradient(180deg, #a94962, #7a3043);
+    }
+    .admin-button-secondary {
+      background: rgba(255,255,255,0.84);
+      border-color: var(--border);
+      color: var(--foreground);
+      box-shadow: none;
+    }
+    .admin-button-secondary:hover {
+      background: rgba(255,255,255,0.96);
     }
     .admin-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
+      justify-content: center;
+      min-height: 28px;
+      padding: 0 10px;
       border-radius: 999px;
+      border: 1px solid transparent;
+      background: var(--accent-soft);
+      color: var(--accent);
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.02em;
-      background: rgba(47, 125, 90, 0.1);
+      white-space: nowrap;
+    }
+    .admin-badge-success {
+      background: var(--success-soft);
       color: var(--success);
     }
     .admin-badge-muted {
-      background: rgba(115, 104, 96, 0.12);
-      color: var(--muted);
+      background: rgba(113, 113, 122, 0.10);
+      color: var(--muted-foreground);
     }
-    .admin-badge-owner {
-      background: rgba(158, 67, 90, 0.12);
-      color: var(--accent);
+    .admin-badge-danger {
+      background: var(--danger-soft);
+      color: var(--danger);
     }
-    .admin-code {
+    .admin-badge-outline {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--muted-foreground);
+    }
+    .admin-alert {
       margin: 0;
+      border-radius: var(--radius-md);
       padding: 14px 16px;
-      border-radius: 14px;
-      background: #271f22;
-      color: #fff4f4;
+      font-size: 14px;
+      line-height: 1.6;
+      border: 1px solid transparent;
+    }
+    .admin-alert-error {
+      background: var(--danger-soft);
+      border-color: rgba(185, 28, 28, 0.16);
+      color: var(--danger);
+    }
+    .admin-alert-info {
+      background: var(--success-soft);
+      border-color: rgba(15, 118, 110, 0.16);
+      color: var(--success);
+    }
+    .admin-feature-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .admin-feature-list li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--muted-foreground);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .admin-feature-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.72em;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    .admin-property-list {
+      gap: 12px;
+    }
+    .admin-property-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(228, 228, 231, 0.92);
+    }
+    .admin-property-row:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+    .admin-property-label {
+      color: var(--muted);
       font-size: 13px;
-      overflow-x: auto;
-      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .admin-property-value {
+      color: var(--foreground);
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 600;
+      text-align: right;
       word-break: break-word;
     }
     .admin-topbar {
       display: flex;
       justify-content: space-between;
-      gap: 16px;
       align-items: center;
       flex-wrap: wrap;
-      margin-bottom: 18px;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: rgba(250,250,251,0.88);
     }
-    .admin-topbar p {
+    .admin-topbar p,
+    .admin-user-email,
+    .admin-metric-value,
+    .admin-card-copy {
       margin: 0;
+    }
+    .admin-topbar p,
+    .admin-card-copy {
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.6;
+    }
+    .admin-user-email {
+      margin-top: 3px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .admin-metric-value {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+    .admin-code {
+      margin: 0;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(24, 24, 27, 0.06);
+      background: #18181b;
+      color: #fafafa;
+      font-size: 13px;
+      line-height: 1.65;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    details.admin-details {
+      border: 1px dashed rgba(158, 67, 90, 0.24);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.82);
+    }
+    details.admin-details summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--foreground);
     }
     .admin-logout-form {
       margin: 0;
     }
-    .admin-qr-shell {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
-      align-items: start;
-      margin-top: 16px;
-    }
-    .admin-qr-card {
-      display: grid;
-      gap: 12px;
-      justify-items: center;
-      text-align: center;
-      background: var(--soft);
-    }
-    .admin-qr-image {
-      width: 220px;
-      height: 220px;
-      max-width: 100%;
-      display: block;
-      border-radius: 18px;
-      background: #fffdfa;
-      padding: 10px;
-      border: 1px solid #eadfd3;
-    }
-    .admin-helper {
-      margin: 0;
-      font-size: 13px;
-      line-height: 1.6;
-      color: var(--muted);
-    }
-    a { color: var(--accent); }
-    @media (max-width: 860px) {
-      .admin-grid-wide {
+    @media (max-width: 980px) {
+      .admin-shell-with-sidebar {
         grid-template-columns: 1fr;
       }
-      .admin-qr-shell {
-        grid-template-columns: 1fr;
+      .admin-sidebar {
+        position: static;
       }
     }
     @media (max-width: 720px) {
-      body { padding: 18px 12px; }
-      .admin-hero { padding: 22px 18px 8px; }
-      .admin-content { padding: 0 18px 22px; }
-      .admin-form-split {
-        grid-template-columns: 1fr;
+      body {
+        padding: 14px 10px 28px;
+      }
+      .admin-hero {
+        padding: 22px 18px 16px;
+      }
+      .admin-content {
+        padding: 18px;
+      }
+      .admin-sidebar-card {
+        padding: 18px;
+      }
+      .admin-card-header,
+      .admin-card-content {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .admin-inline-actions > * {
+        width: 100%;
+      }
+      .admin-inline-actions .admin-action-hint {
+        width: 100%;
+      }
+      .admin-input-code {
+        font-size: 20px;
+      }
+      .admin-property-row {
+        flex-direction: column;
+      }
+      .admin-property-value {
+        text-align: left;
       }
     }
   </style>
 </head>
 <body>
-  <main class="admin-shell">
+  <main class="${shellClass}">
+    ${sidebar}
     <section class="admin-panel">
       <div class="admin-hero">
-        <p class="admin-kicker">Secure Access</p>
+        <p class="admin-kicker">${kicker}</p>
         <h1 class="admin-title">${escapeHtml(title)}</h1>
         ${subtitle}
+        ${heroMeta}
       </div>
       <div class="admin-content">
         ${content}
@@ -1143,301 +2079,750 @@ function renderAdminLayout(title, content, options = {}) {
 </html>`;
 }
 
-function renderAdminUnavailablePage(message = "") {
-  const detail = normalizeString(message, 400);
-  const detailBlock = detail
-    ? `<div class="admin-alert admin-alert-error">${escapeHtml(detail)}</div>`
-    : "";
+function renderAdminUnavailablePage() {
   return renderAdminLayout(
     "Admin Unavailable",
-    `${detailBlock}<div class="admin-alert admin-alert-error">Admin access needs a server-side secret and the local user store before it can be enabled. Configure <code>ADMIN_MASTER_SECRET</code>, or make sure one of <code>QUOTE_SIGNING_SECRET</code>, <code>GHL_API_KEY</code>, or <code>STRIPE_SECRET_KEY</code> is available on the server.</div>`,
+    `${renderAdminCard(
+      "Configuration Required",
+      "The route is already wired, but secure authentication cannot start until the server has a private signing secret.",
+      `<div class="admin-alert admin-alert-error">Admin access needs a server-side secret before it can be enabled. Configure <code>ADMIN_MASTER_SECRET</code>, or make sure one of <code>QUOTE_SIGNING_SECRET</code>, <code>GHL_API_KEY</code>, or <code>STRIPE_SECRET_KEY</code> is available on the server.</div>
+      <ul class="admin-feature-list">
+        <li><code>ADMIN_MASTER_SECRET</code> is the preferred source for signing challenge and session cookies.</li>
+        <li>If you do not set it explicitly, the server can fall back to <code>QUOTE_SIGNING_SECRET</code>, <code>GHL_API_KEY</code>, or <code>STRIPE_SECRET_KEY</code>.</li>
+        <li>Once a signing secret exists, the login and TOTP steps become available immediately.</li>
+      </ul>`,
+      { eyebrow: "Status", muted: true }
+    )}`,
     {
-      subtitle: "The route is wired, but secure authentication cannot start until the server has a private signing secret and the admin user store is available.",
+      kicker: "Configuration",
+      subtitle: "The admin shell is ready. It just needs one private signing secret before secure access can begin.",
+      sidebar: renderAdminAuthSidebar("login"),
     }
   );
 }
 
-function renderLoginPage(systemConfig, options = {}) {
+function renderLoginPage(config, options = {}) {
   const errorBlock = options.error
     ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
     : "";
   const infoBlock = options.info
     ? `<div class="admin-alert admin-alert-info">${escapeHtml(options.info)}</div>`
     : "";
+
   return renderAdminLayout(
     "Admin Login",
-    `${errorBlock}${infoBlock}
-      <form class="admin-form" method="post" action="${ADMIN_LOGIN_PATH}" autocomplete="on">
-        <label class="admin-label">
-          Email
-          <input class="admin-input" type="email" name="email" value="${escapeHtmlText(options.email || "")}" autocomplete="username" required>
-        </label>
-        <label class="admin-label">
-          Password
-          <input class="admin-input" type="password" name="password" autocomplete="current-password" required>
-        </label>
-        <div class="admin-inline-actions">
-          <button class="admin-button" type="submit">Continue</button>
-        </div>
-      </form>`,
-    {
-      subtitle: `Use your admin email and password first. If this is your first login, we will ask you to change the standard password and finish your Authenticator setup for ${systemConfig.issuer}.`,
-    }
-  );
-}
-
-function renderSetupPage(systemConfig, user, options = {}) {
-  const errorBlock = options.error
-    ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
-    : "";
-  const infoBlock = options.info
-    ? `<div class="admin-alert admin-alert-info">${escapeHtml(options.info)}</div>`
-    : "";
-  const displayName = adminUsers.getAdminUserDisplayName(user);
-  const qrMarkup = options.qrMarkup || "";
-  return renderAdminLayout(
-    "Finish Your Setup",
-    `${errorBlock}${infoBlock}
-      <div class="admin-grid-wide">
-        <div class="admin-card">
-          <h3>Complete your first login</h3>
-          <p class="admin-helper">You are signing in as <strong>${escapeHtml(displayName)}</strong> (${escapeHtml(
-            user.email
-          )}). Change the shared standard password now, scan the QR code in your Authenticator app, and enter the 6-digit code to activate your account.</p>
-          <form class="admin-form" method="post" action="${ADMIN_SETUP_PATH}" autocomplete="off" style="margin-top:16px;">
-            <div class="admin-form-split">
-              <label class="admin-label">
-                New password
-                <input class="admin-input" type="password" name="newPassword" minlength="10" autocomplete="new-password" required>
-              </label>
-              <label class="admin-label">
-                Confirm password
-                <input class="admin-input" type="password" name="confirmPassword" minlength="10" autocomplete="new-password" required>
-              </label>
-            </div>
-            <label class="admin-label">
-              Authenticator code
-              <input class="admin-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" name="code" placeholder="123456" required>
-            </label>
-            <div class="admin-inline-actions">
-              <button class="admin-button" type="submit">Save password and finish setup</button>
-              <a class="admin-link-button admin-button-secondary" href="${ADMIN_LOGIN_PATH}">Back</a>
-            </div>
-          </form>
-        </div>
-        <div class="admin-card admin-qr-card">
-          <h3>Scan this QR code</h3>
-          ${qrMarkup || '<p class="admin-helper">QR generation is unavailable on this server. Use the manual setup values instead.</p>'}
-          <p class="admin-helper">Works with Google Authenticator, Microsoft Authenticator, 1Password, and similar apps.</p>
-        </div>
-      </div>
-      <div class="admin-qr-shell">
-        <div class="admin-card">
-          <h3>Manual setup</h3>
-          <ul class="admin-list">
-            <li><strong>Issuer:</strong> ${escapeHtml(systemConfig.issuer)}</li>
-            <li><strong>Account:</strong> ${escapeHtml(user.email)}</li>
-            <li><strong>Key:</strong> <code>${escapeHtml(options.secret || "")}</code></li>
-          </ul>
-        </div>
-        <div class="admin-card">
-          <h3>otpauth URI</h3>
-          <pre class="admin-code">${escapeHtml(options.otpauthUri || "")}</pre>
-        </div>
-      </div>`,
-    {
-      subtitle: "This step only happens once for each new user. After this, future logins will use your personal password and a TOTP code from the Authenticator app.",
-    }
-  );
-}
-
-function renderTwoFactorPage(user, options = {}) {
-  const errorBlock = options.error
-    ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
-    : "";
-  const infoBlock = options.info
-    ? `<div class="admin-alert admin-alert-info">${escapeHtml(options.info)}</div>`
-    : "";
-  return renderAdminLayout(
-    "Two-Factor Authentication",
-    `${errorBlock}${infoBlock}
-      <form class="admin-form" method="post" action="${ADMIN_2FA_PATH}" autocomplete="off">
-        <p class="admin-helper">Account: <strong>${escapeHtml(adminUsers.getAdminUserDisplayName(user))}</strong> (${escapeHtml(
-          user.email
-        )})</p>
-        <label class="admin-label">
-          6-digit code
-          <input class="admin-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" name="code" placeholder="123456" required>
-        </label>
-        <div class="admin-inline-actions">
-          <button class="admin-button" type="submit">Verify and sign in</button>
-          <a class="admin-link-button admin-button-secondary" href="${ADMIN_LOGIN_PATH}">Back</a>
-        </div>
-      </form>`,
-    {
-      subtitle: "Enter the current code from your Authenticator app to complete sign-in.",
-    }
-  );
-}
-
-function renderAdminUsersList(store) {
-  const users = adminUsers.listAdminUsers(store);
-  if (!users.length) {
-    return '<p class="admin-helper">No users have been created yet.</p>';
-  }
-
-  return users
-    .map((user) => {
-      const roleBadge =
-        user.role === "owner"
-          ? '<span class="admin-badge admin-badge-owner">Owner</span>'
-          : '<span class="admin-badge admin-badge-muted">Staff</span>';
-      const statusBadge = user.mustChangePassword
-        ? '<span class="admin-badge admin-badge-muted">Pending setup</span>'
-        : '<span class="admin-badge">Active</span>';
-      const lastLoginText = user.lastLoginAt
-        ? new Date(user.lastLoginAt).toLocaleString("en-US", {
-            timeZone: "America/Chicago",
-            dateStyle: "medium",
-            timeStyle: "short",
-          })
-        : "Never";
-      return `<article class="admin-user-row">
-        <div class="admin-user-header">
-          <strong>${escapeHtml(adminUsers.getAdminUserDisplayName(user))}</strong>
-          <div class="admin-inline-actions">${roleBadge} ${statusBadge}</div>
-        </div>
-        <div class="admin-user-meta">
-          <span>${escapeHtml(user.email)}</span>
-          <span>Last login: ${escapeHtml(lastLoginText)}</span>
-          <span>Created: ${escapeHtml(
-            new Date(user.createdAt).toLocaleString("en-US", {
-              timeZone: "America/Chicago",
-              dateStyle: "medium",
-              timeStyle: "short",
-            })
-          )}</span>
-        </div>
-      </article>`;
-    })
-    .join("");
-}
-
-function renderDashboardPage(req, systemConfig, currentUser, store, options = {}) {
-  const runtimeBadges = [
-    getLeadConnectorClient().isConfigured() ? '<span class="admin-badge">GHL Ready</span>' : '<span class="admin-badge admin-badge-muted">GHL Missing</span>',
-    getStripeClient() ? '<span class="admin-badge">Stripe Ready</span>' : '<span class="admin-badge admin-badge-muted">Stripe Missing</span>',
-    GOOGLE_PLACES_API_KEY ? '<span class="admin-badge">Places Key Ready</span>' : '<span class="admin-badge admin-badge-muted">Places Key Missing</span>',
-  ].join(" ");
-  const memory = getMemoryUsageSnapshot();
-  const currentUserConfig = buildAdminUserAuthConfig(systemConfig, currentUser);
-  const totp = adminAuth.getTotpSecretMaterial(currentUserConfig);
-  const noticeBlock = options.notice
-    ? `<div class="admin-alert ${options.noticeType === "error" ? "admin-alert-error" : "admin-alert-info"}">${escapeHtml(
-        options.notice
-      )}</div>`
-    : "";
-  const creationFormBlock =
-    currentUser.role === "owner"
-      ? `<article class="admin-card">
-          <h3>Create a new user</h3>
-          <p class="admin-helper">A new user gets the standard first-login password <code>${escapeHtml(
-            adminUsers.getDefaultUserPasswordHint(process.env)
-          )}</code>. On their first login we force a password change and Authenticator onboarding.</p>
-          <form class="admin-form" method="post" action="${ADMIN_USERS_PATH}" style="margin-top:16px;">
-            <div class="admin-form-split">
-              <label class="admin-label">
-                First name
-                <input class="admin-input" type="text" name="firstName" value="${escapeHtmlText(
-                  options.userForm && options.userForm.firstName
-                )}" required>
-              </label>
-              <label class="admin-label">
-                Last name
-                <input class="admin-input" type="text" name="lastName" value="${escapeHtmlText(
-                  options.userForm && options.userForm.lastName
-                )}" required>
-              </label>
-            </div>
+    `${errorBlock}
+      ${infoBlock}
+      <div class="admin-section-grid admin-form-grid-two">
+        ${renderAdminCard(
+          "Credentials",
+          "Enter the admin email and password first. The second step will ask for a 6-digit code from your Authenticator app.",
+          `<form class="admin-form" method="post" action="${ADMIN_LOGIN_PATH}" autocomplete="on">
             <label class="admin-label">
               Email
-              <input class="admin-input" type="email" name="email" value="${escapeHtmlText(
-                options.userForm && options.userForm.email
-              )}" required>
+              <input class="admin-input" type="email" name="email" value="${escapeHtmlText(options.email || config.email)}" autocomplete="username" required>
+            </label>
+            <label class="admin-label">
+              Password
+              <input class="admin-input" type="password" name="password" autocomplete="current-password" required>
             </label>
             <div class="admin-inline-actions">
-              <button class="admin-button" type="submit">Create user</button>
+              <button class="admin-button" type="submit">Continue to 2FA</button>
+              <span class="admin-action-hint">Step 1 of 2. Successful credentials issue a short-lived challenge cookie.</span>
             </div>
-          </form>
-        </article>`
-      : `<article class="admin-card">
-          <h3>User management</h3>
-          <p class="admin-helper">Only the owner account can create new users. Your account can still sign in and use the secured admin area.</p>
-        </article>`;
-  return renderAdminLayout(
-    "Admin Dashboard",
-    `${noticeBlock}
-      <div class="admin-topbar">
-        <p>Signed in as <strong>${escapeHtml(adminUsers.getAdminUserDisplayName(currentUser))}</strong> (${escapeHtml(
-          currentUser.email
-        )})</p>
-        <form class="admin-logout-form" method="post" action="${ADMIN_LOGOUT_PATH}">
-          <button class="admin-button admin-button-secondary" type="submit">Log out</button>
-        </form>
-      </div>
-      <div class="admin-grid-wide" style="margin-bottom:16px;">
-        <article class="admin-card">
-          <h3>Users</h3>
-          <div class="admin-users-list">${renderAdminUsersList(store)}</div>
-        </article>
-        ${creationFormBlock}
-      </div>
-      <div class="admin-grid">
-        <article class="admin-card">
-          <h3>Security</h3>
-          <ul class="admin-list">
-            <li>Role: ${escapeHtml(currentUser.role)}</li>
-            <li>TOTP issuer: ${escapeHtml(systemConfig.issuer)}</li>
-            <li>Your TOTP mode: ${totp.derived ? "derived from server secret" : "personal explicit secret"}</li>
-            <li>Cookies: HttpOnly + SameSite=Strict${shouldUseSecureCookies(req) ? " + Secure" : ""}</li>
-          </ul>
-        </article>
-        <article class="admin-card">
-          <h3>Integrations</h3>
-          <p>${runtimeBadges}</p>
-        </article>
-        <article class="admin-card">
-          <h3>Server</h3>
-          <ul class="admin-list">
-            <li>Site origin: ${escapeHtml(SITE_ORIGIN)}</li>
-            <li>Server time: ${escapeHtml(new Date().toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "full", timeStyle: "long" }))}</li>
-            <li>Protocol: ${escapeHtml(getRequestProtocol(req))}</li>
-          </ul>
-        </article>
-        <article class="admin-card">
-          <h3>Memory</h3>
-          <ul class="admin-list">
-            <li>RSS: ${escapeHtml(`${memory.rss_mb} MB`)}</li>
-            <li>Heap used: ${escapeHtml(`${memory.heap_used_mb} MB`)}</li>
-            <li>External: ${escapeHtml(`${memory.external_mb} MB`)}</li>
-          </ul>
-        </article>
-        <article class="admin-card">
-          <h3>Quick Links</h3>
-          <ul class="admin-list">
-            <li><a href="/" target="_blank" rel="noreferrer">Open website homepage</a></li>
-            <li><a href="/quote" target="_blank" rel="noreferrer">Open quote form</a></li>
-            <li><a href="/faq" target="_blank" rel="noreferrer">Open FAQ page</a></li>
-          </ul>
-        </article>
+          </form>`,
+          { eyebrow: "Sign In" }
+        )}
+        ${renderAdminCard(
+          "What Happens Next",
+          "The flow stays intentionally small, similar to a clean shadcn auth block: card, field labels, focused input states, and one clear primary action.",
+          `<ul class="admin-feature-list">
+            <li>The submitted email must match the configured admin account exactly.</li>
+            <li>Password verification uses a server-side scrypt hash, not plaintext comparison.</li>
+            <li>After success, the server redirects you to <code>${ADMIN_2FA_PATH}</code> with a challenge cookie scoped to <code>/admin</code>.</li>
+          </ul>`,
+          { eyebrow: "Flow", muted: true }
+        )}
       </div>`,
     {
-      subtitle: "This secured area now supports multiple users. New users are created by the owner, start with a shared standard password, and must finish password + Authenticator setup on first login.",
+      subtitle: "Use your admin email and password first. The second step will ask for a 6-digit code from your Authenticator app.",
+      sidebar: renderAdminAuthSidebar("login"),
     }
   );
 }
 
-function buildAdminAuthHeaders(cookies = []) {
+function renderTwoFactorPage(config, options = {}) {
+  const errorBlock = options.error
+    ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
+    : "";
+  const secret = adminAuth.getTotpSecretMaterial(config);
+  const otpauthUri = adminAuth.buildOtpauthUri(config);
+  const secretMode = secret.derived
+    ? "This key is derived from your server secret and current admin credentials."
+    : "This key comes from ADMIN_TOTP_SECRET.";
+
+  return renderAdminLayout(
+    "Two-Factor Authentication",
+    `${errorBlock}
+      <div class="admin-section-grid admin-form-grid-two">
+        ${renderAdminCard(
+          "Authenticator Code",
+          "Enter the current 6-digit code from your authenticator app. If this is your first time, use the setup card on the right before verifying.",
+          `<form class="admin-form" method="post" action="${ADMIN_2FA_PATH}" autocomplete="off">
+            <label class="admin-label">
+              6-digit code
+              <input class="admin-input admin-input-code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" name="code" placeholder="123456" autocomplete="one-time-code" required>
+            </label>
+            <p class="admin-field-note">Step 2 of 2. The current code is tied to the configured issuer and rotates every 30 seconds.</p>
+            <div class="admin-inline-actions">
+              <button class="admin-button" type="submit">Verify and sign in</button>
+              <a class="admin-link-button admin-button-secondary" href="${ADMIN_LOGIN_PATH}">Back</a>
+            </div>
+          </form>`,
+          { eyebrow: "Verification" }
+        )}
+        ${renderAdminCard(
+          "Need to Set Up Your Authenticator App?",
+          `Add a new TOTP account in Google Authenticator, Microsoft Authenticator, 1Password, or a similar app using the values below. ${secretMode}`,
+          `<details class="admin-details" open>
+            <summary>Manual Setup Details</summary>
+            <div class="admin-form-grid admin-form-grid-two" style="margin-top:14px;">
+              ${renderAdminCard(
+                "Manual Setup",
+                "These values match the current admin issuer and account.",
+                `<div class="admin-property-list">
+                  <div class="admin-property-row">
+                    <span class="admin-property-label">Issuer</span>
+                    <span class="admin-property-value">${escapeHtml(config.issuer)}</span>
+                  </div>
+                  <div class="admin-property-row">
+                    <span class="admin-property-label">Account</span>
+                    <span class="admin-property-value">${escapeHtml(config.email)}</span>
+                  </div>
+                  <div class="admin-property-row">
+                    <span class="admin-property-label">Key</span>
+                    <span class="admin-property-value"><code>${escapeHtml(secret.base32)}</code></span>
+                  </div>
+                </div>`,
+                { eyebrow: "TOTP", muted: true }
+              )}
+              ${renderAdminCard(
+                "otpauth URI",
+                "You can paste this full URI into compatible authenticator tools.",
+                `<pre class="admin-code">${escapeHtml(otpauthUri)}</pre>`,
+                { eyebrow: "Advanced", muted: true }
+              )}
+            </div>
+          </details>`,
+          { eyebrow: "Setup", muted: true }
+        )}
+      </div>`,
+    {
+      subtitle: "Enter the current TOTP code from your Authenticator app. If this is your first time, expand the setup section below and add the account manually.",
+      sidebar: renderAdminAuthSidebar("2fa"),
+    }
+  );
+}
+
+function renderAdminPropertyList(rows = []) {
+  return `<div class="admin-property-list">
+    ${rows
+      .map(
+        (row) => `<div class="admin-property-row">
+          <span class="admin-property-label">${escapeHtml(row.label)}</span>
+          <span class="admin-property-value">${row.raw ? row.value : escapeHtml(row.value)}</span>
+        </div>`
+      )
+      .join("")}
+  </div>`;
+}
+
+function renderAdminSignedInTopbar(config, options = {}) {
+  const actions = [];
+  if (options.linkHref && options.linkLabel) {
+    actions.push(
+      `<a class="admin-link-button admin-button-secondary" href="${escapeHtmlAttribute(options.linkHref)}"${options.linkExternal ? ' target="_blank" rel="noreferrer"' : ""}>${escapeHtml(options.linkLabel)}</a>`
+    );
+  }
+  actions.push(
+    `<form class="admin-logout-form" method="post" action="${ADMIN_LOGOUT_PATH}">
+      <button class="admin-button admin-button-secondary" type="submit">Log out</button>
+    </form>`
+  );
+
+  return `<div class="admin-topbar">
+    <div>
+      <p>${escapeHtml(options.caption || "Signed in as")}</p>
+      <p class="admin-user-email">${escapeHtml(config.email)}</p>
+    </div>
+    <div class="admin-inline-actions">
+      ${actions.join("")}
+    </div>
+  </div>`;
+}
+
+function getAdminStatusBadges(signals) {
+  const leadBadge = !signals.leadConnector.available
+    ? renderAdminBadge("GHL Unavailable", "muted")
+    : signals.leadConnector.error
+      ? renderAdminBadge("GHL Invalid", "danger")
+      : signals.leadConnector.configured
+        ? renderAdminBadge("GHL Ready", "success")
+        : renderAdminBadge("GHL Missing", "muted");
+
+  return [
+    leadBadge,
+    signals.supabaseConfigured ? renderAdminBadge("Supabase Ready", "success") : renderAdminBadge("Supabase Missing", "muted"),
+    signals.stripeConfigured ? renderAdminBadge("Stripe Ready", "success") : renderAdminBadge("Stripe Missing", "muted"),
+    signals.quoteTokenConfigured ? renderAdminBadge("Quote Token Ready", "success") : renderAdminBadge("Quote Token Missing", "muted"),
+    signals.placesConfigured ? renderAdminBadge("Places Key Ready", "success") : renderAdminBadge("Places Key Missing", "muted"),
+    signals.perfProtected ? renderAdminBadge("Perf Protected", "outline") : renderAdminBadge("Perf Endpoint Off", "muted"),
+  ].join("");
+}
+
+function renderDashboardPage(req, config) {
+  const signals = getAdminIntegrationState();
+  const runtimeBadges = getAdminStatusBadges(signals);
+  const memory = getMemoryUsageSnapshot();
+  const totp = adminAuth.getTotpSecretMaterial(config);
+  const serverTime = new Date().toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    dateStyle: "full",
+    timeStyle: "long",
+  });
+
+  return renderAdminLayout(
+    "Admin Dashboard",
+    `${renderAdminSignedInTopbar(config, {
+      linkHref: QUOTE_PUBLIC_PATH,
+      linkLabel: "Open Quote Form",
+      linkExternal: true,
+    })}
+      <div class="admin-stats-grid">
+        ${renderAdminCard(
+          "Security",
+          "Current auth posture for the secured admin surface.",
+          `<p class="admin-metric-value">2 layers</p>
+          ${renderAdminPropertyList([
+            { label: "Password check", value: "Enabled" },
+            { label: "TOTP issuer", value: config.issuer },
+            { label: "TOTP mode", value: totp.derived ? "Derived from server secret" : "Explicit ADMIN_TOTP_SECRET" },
+            { label: "Session TTL", value: formatDurationLabel(adminAuth.SESSION_TTL_SECONDS) },
+          ])}`,
+          { eyebrow: "Overview" }
+        )}
+        ${renderAdminCard(
+          "Integrations",
+          "Live configuration signals for quote, payments, CRM, and places lookup.",
+          `<div class="admin-badge-row">${runtimeBadges}</div>
+          <p class="admin-card-copy">Use the sections below for deeper config details, quote pricing visibility, and runtime diagnostics.</p>`,
+          { eyebrow: "Status", muted: true }
+        )}
+        ${renderAdminCard(
+          "Server",
+          "Key request and origin details for the active process.",
+          `<p class="admin-metric-value">${escapeHtml(getRequestProtocol(req).toUpperCase())}</p>
+          ${renderAdminPropertyList([
+            { label: "Site origin", value: SITE_ORIGIN },
+            { label: "Server time", value: serverTime },
+            { label: "HTML warm mode", value: HTML_CACHE_WARM_MODE },
+            { label: "Perf window", value: formatDurationLabel(PERF_WINDOW_MS / 1000) },
+          ])}`,
+          { eyebrow: "Runtime" }
+        )}
+        ${renderAdminCard(
+          "Memory",
+          "A quick look at current process footprint.",
+          `<p class="admin-metric-value">${escapeHtml(`${memory.heap_used_mb} MB`)}</p>
+          ${renderAdminPropertyList([
+            { label: "RSS", value: `${memory.rss_mb} MB` },
+            { label: "Heap used", value: `${memory.heap_used_mb} MB` },
+            { label: "External", value: `${memory.external_mb} MB` },
+            { label: "Array buffers", value: `${memory.array_buffers_mb} MB` },
+          ])}`,
+          { eyebrow: "Process", muted: true }
+        )}
+      </div>
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "Internal Sections",
+          "The admin workspace now breaks the secure area into focused pages instead of a single overview.",
+          `<div class="admin-link-grid">
+            <a class="admin-link-tile" href="${ADMIN_QUOTE_OPS_PATH}">
+              <strong>Quote Ops</strong>
+              <span>Inspect canonical pricing, booking endpoints, and checkout/token readiness.</span>
+            </a>
+            <a class="admin-link-tile" href="${ADMIN_INTEGRATIONS_PATH}">
+              <strong>Integrations</strong>
+              <span>Review GHL, Stripe, Places, perf, and auth-related configuration signals.</span>
+            </a>
+            <a class="admin-link-tile" href="${ADMIN_RUNTIME_PATH}">
+              <strong>Runtime</strong>
+              <span>Check live request latency, event loop delay, thresholds, and server internals.</span>
+            </a>
+          </div>`,
+          { eyebrow: "Workspace" }
+        )}
+        ${renderAdminCard(
+          "Current Coverage",
+          "The secured admin area remains intentionally controlled while still giving operators useful visibility.",
+          `<ul class="admin-feature-list">
+            <li>Safe credential + TOTP access control for every route under <code>/admin</code>.</li>
+            <li>Dedicated sections for quote operations, integrations, and runtime diagnostics.</li>
+            <li>Shared shadcn-style shell with sidebar navigation, cards, badges, and concise operator views.</li>
+          </ul>`,
+          { eyebrow: "Roadmap", muted: true }
+        )}
+      </div>`,
+    {
+      kicker: "Operations Console",
+      subtitle: "This is the secured admin area. It now groups access control, quote operations, integration visibility, and runtime checks into focused pages.",
+      heroMeta: runtimeBadges,
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_ROOT_PATH, runtimeBadges),
+    }
+  );
+}
+
+function renderQuoteOpsStatusBadge(status) {
+  if (status === "success") return renderAdminBadge("Success", "success");
+  if (status === "warning") return renderAdminBadge("Warning", "default");
+  return renderAdminBadge("Error", "danger");
+}
+
+function renderQuoteOpsNotice(req) {
+  const reqUrl = getRequestUrl(req);
+  const notice = normalizeString(reqUrl.searchParams.get("notice"), 80).toLowerCase();
+  if (notice === "retry-success") {
+    return `<div class="admin-alert admin-alert-info">CRM retry completed for the selected quote entry.</div>`;
+  }
+  if (notice === "retry-failed") {
+    return `<div class="admin-alert admin-alert-error">CRM retry failed for the selected quote entry. Check the entry status below for the latest error.</div>`;
+  }
+  if (notice === "retry-missing") {
+    return `<div class="admin-alert admin-alert-error">The selected quote entry could not be found in the current in-memory ledger.</div>`;
+  }
+  return "";
+}
+
+function renderQuoteOpsEntryCard(entry, returnTo) {
+  const warningBlock = entry.warnings.length > 0
+    ? `<div class="admin-alert admin-alert-info">Warnings: ${escapeHtml(entry.warnings.join(", "))}</div>`
+    : "";
+  const errorBlock = entry.errorMessage
+    ? `<div class="admin-alert admin-alert-error">${escapeHtml(entry.errorMessage)}</div>`
+    : "";
+
+  return `<article class="admin-entry-card">
+    <div class="admin-entry-head">
+      <div>
+        <h3 class="admin-entry-title">${escapeHtml(entry.customerName || "Unnamed customer")}</h3>
+        <p class="admin-entry-copy">${escapeHtml(entry.serviceName || "Cleaning service")} at ${escapeHtml(formatCurrencyAmount(entry.totalPrice))}</p>
+      </div>
+      <div class="admin-entry-meta">
+        ${renderQuoteOpsStatusBadge(entry.status)}
+        ${entry.retryCount > 0 ? renderAdminBadge(`Retries ${entry.retryCount}`, "outline") : ""}
+      </div>
+    </div>
+    <div class="admin-entry-grid">
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Created</span>
+        <p class="admin-mini-value">${escapeHtml(new Date(entry.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }))}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Request ID</span>
+        <p class="admin-mini-value">${escapeHtml(entry.requestId || "Unknown")}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Service Type</span>
+        <p class="admin-mini-value">${escapeHtml(entry.serviceType || "Unknown")}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Schedule</span>
+        <p class="admin-mini-value">${escapeHtml([entry.selectedDate, entry.selectedTime].filter(Boolean).join(" at ") || "Not scheduled")}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Contact</span>
+        <p class="admin-mini-value">${escapeHtml(entry.customerPhone || "No phone")}${entry.customerEmail ? `<br>${escapeHtml(entry.customerEmail)}` : ""}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">CRM</span>
+        <p class="admin-mini-value">HTTP ${escapeHtml(String(entry.httpStatus || 0))}${entry.contactId ? `<br>Contact ${escapeHtml(entry.contactId)}` : ""}</p>
+      </div>
+    </div>
+    ${warningBlock}
+    ${errorBlock}
+    <div class="admin-inline-actions">
+      <form method="post" action="${ADMIN_QUOTE_OPS_RETRY_PATH}">
+        <input type="hidden" name="entryId" value="${escapeHtmlAttribute(entry.id)}">
+        <input type="hidden" name="returnTo" value="${escapeHtmlAttribute(returnTo)}">
+        <button class="admin-button" type="submit">Retry CRM</button>
+      </form>
+      <span class="admin-action-hint">${escapeHtml(entry.fullAddress || "Address not captured")}.</span>
+    </div>
+  </article>`;
+}
+
+async function renderQuoteOpsPage(req, config, quoteOpsLedger) {
+  const signals = getAdminIntegrationState();
+  const runtimeBadges = getAdminStatusBadges(signals);
+  const { reqUrl, filters } = getQuoteOpsFilters(req);
+  const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
+  const entries = filterQuoteOpsEntries(allEntries, filters);
+  const totalEntries = allEntries.length;
+  const successCount = allEntries.filter((entry) => entry.status === "success").length;
+  const warningCount = allEntries.filter((entry) => entry.status === "warning").length;
+  const errorCount = allEntries.filter((entry) => entry.status === "error").length;
+  const exportHref = buildAdminRedirectPath(ADMIN_QUOTE_OPS_EXPORT_PATH, {
+    status: filters.status !== "all" ? filters.status : "",
+    serviceType: filters.serviceType !== "all" ? filters.serviceType : "",
+    q: filters.q,
+  });
+  const currentReturnTo = `${reqUrl.pathname}${reqUrl.search}`;
+
+  return renderAdminLayout(
+    "Quote Operations",
+    `${renderAdminSignedInTopbar(config, {
+      linkHref: QUOTE_PUBLIC_PATH,
+      linkLabel: "Preview Quote Flow",
+      linkExternal: true,
+    })}
+      ${renderQuoteOpsNotice(req)}
+      <div class="admin-stats-grid">
+        ${renderAdminCard(
+          "Latest Entries",
+          "Quote submissions currently stored in the in-memory ops ledger for this process.",
+          `<p class="admin-metric-value">${escapeHtml(String(totalEntries))}</p>
+          <p class="admin-card-copy">Entries persist only for the lifetime of the current Node process and reset on restart or redeploy.</p>`,
+          { eyebrow: "Ledger" }
+        )}
+        ${renderAdminCard(
+          "Success",
+          "Submissions that completed without CRM warnings.",
+          `<p class="admin-metric-value">${escapeHtml(String(successCount))}</p>
+          <p class="admin-card-copy">Healthy quote submissions with canonical pricing and CRM sync.</p>`,
+          { eyebrow: "Status", muted: true }
+        )}
+        ${renderAdminCard(
+          "Warnings",
+          "Submissions that succeeded but reported partial sync issues.",
+          `<p class="admin-metric-value">${escapeHtml(String(warningCount))}</p>
+          <p class="admin-card-copy">Useful for cases like skipped notes or opportunity sync warnings.</p>`,
+          { eyebrow: "Status", muted: true }
+        )}
+        ${renderAdminCard(
+          "Errors",
+          "Submissions that failed and may need an admin retry.",
+          `<p class="admin-metric-value">${escapeHtml(String(errorCount))}</p>
+          <p class="admin-card-copy">Use the retry action below to resubmit the stored canonical payload to CRM.</p>`,
+          { eyebrow: "Status", muted: true }
+        )}
+      </div>
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "Submission Queue",
+          "Filter recent quote submissions, export the current view, and retry CRM sync from the stored canonical payload.",
+          `<form class="admin-form-grid admin-form-grid-two" method="get" action="${ADMIN_QUOTE_OPS_PATH}">
+            <label class="admin-label">
+              Search
+              <input class="admin-input" type="search" name="q" value="${escapeHtmlText(filters.q)}" placeholder="Name, phone, email, request ID">
+            </label>
+            <label class="admin-label">
+              Status
+              <select class="admin-input" name="status">
+                <option value="all"${filters.status === "all" ? " selected" : ""}>All statuses</option>
+                <option value="success"${filters.status === "success" ? " selected" : ""}>Success</option>
+                <option value="warning"${filters.status === "warning" ? " selected" : ""}>Warning</option>
+                <option value="error"${filters.status === "error" ? " selected" : ""}>Error</option>
+              </select>
+            </label>
+            <label class="admin-label">
+              Service Type
+              <select class="admin-input" name="serviceType">
+                <option value="all"${filters.serviceType === "all" ? " selected" : ""}>All services</option>
+                <option value="regular"${filters.serviceType === "regular" ? " selected" : ""}>Regular</option>
+                <option value="deep"${filters.serviceType === "deep" ? " selected" : ""}>Deep</option>
+                <option value="moving"${filters.serviceType === "moving" ? " selected" : ""}>Moving</option>
+              </select>
+            </label>
+            <div class="admin-inline-actions" style="align-self:end;">
+              <button class="admin-button" type="submit">Apply Filters</button>
+              <a class="admin-link-button admin-button-secondary" href="${ADMIN_QUOTE_OPS_PATH}">Reset</a>
+              <a class="admin-link-button admin-button-secondary" href="${exportHref}">Export CSV</a>
+            </div>
+          </form>
+          <div class="admin-divider"></div>
+          <div class="admin-entry-list">
+            ${entries.length > 0
+              ? entries.map((entry) => renderQuoteOpsEntryCard(entry, currentReturnTo)).join("")
+              : `<div class="admin-empty-state">No quote submissions match the current filters yet. Submit a quote through <code>${QUOTE_SUBMIT_ENDPOINT}</code> or open the public <code>${QUOTE_PUBLIC_PATH}</code> flow to seed the ledger.</div>`}
+          </div>`,
+          { eyebrow: "Queue" }
+        )}
+        ${renderAdminCard(
+          "Pricing Guardrails",
+          "The server clamps quote inputs to the supported options from the live calculator and then computes the canonical total before storing or retrying a submission.",
+          `${renderAdminPropertyList([
+            { label: "Room counts", value: formatCountList(Array.from(ALLOWED_ROOM_COUNTS.values())) },
+            { label: "Bathroom counts", value: formatCountList(Array.from(ALLOWED_BATHROOM_COUNTS.values())) },
+            { label: "Square-foot buckets", value: formatCountList(ALLOWED_SQUARE_FEET_BUCKETS) },
+            { label: "Regular base prices", value: `Weekly ${formatCurrencyAmount(PRICING.regular.basePrices.weekly)}, Biweekly ${formatCurrencyAmount(PRICING.regular.basePrices.biweekly)}, Monthly ${formatCurrencyAmount(PRICING.regular.basePrices.monthly)}` },
+          ])}
+          <ul class="admin-feature-list">
+            <li>Deep cleaning includes <code>baseboardCleaning</code> and <code>doorsCleaning</code> by default.</li>
+            <li>Moving clean presets also include <code>ovenCleaning</code> and <code>refrigeratorCleaning</code>.</li>
+            <li>Retry actions reuse the stored canonical payload, not the raw browser-submitted totals.</li>
+          </ul>`,
+          { eyebrow: "Rules", muted: true }
+        )}
+        ${renderAdminCard(
+          "Checkout & Tokenization",
+          "Payments and CRM submission are gated by server-side readiness checks.",
+          `${renderAdminPropertyList([
+            { label: "Quote token secret", value: formatBooleanLabel(signals.quoteTokenConfigured, "Configured", "Missing") },
+            { label: "Quote token TTL", value: formatDurationLabel(signals.quoteTokenTtlSeconds) },
+            { label: "Stripe checkout", value: formatBooleanLabel(signals.stripeConfigured, "Configured", "Missing") },
+            { label: "LeadConnector CRM", value: signals.leadConnector.error ? `Invalid: ${signals.leadConnector.error}` : formatBooleanLabel(signals.leadConnector.configured, "Configured", "Missing") },
+            { label: "Checkout amount window", value: `${formatCurrencyAmount(STRIPE_MIN_AMOUNT_CENTS / 100)} to ${formatCurrencyAmount(STRIPE_MAX_AMOUNT_CENTS / 100)}` },
+          ])}
+          <div class="admin-link-grid">
+            <a class="admin-link-tile" href="${QUOTE_PUBLIC_PATH}" target="_blank" rel="noreferrer">
+              <strong>${QUOTE_PUBLIC_PATH}</strong>
+              <span>Public quote experience where customers configure service and scheduling.</span>
+            </a>
+            <div class="admin-link-tile">
+              <strong>${QUOTE_SUBMIT_ENDPOINT}</strong>
+              <span>Primary POST endpoint that normalizes payloads and writes to CRM.</span>
+            </div>
+            <div class="admin-link-tile">
+              <strong>${STRIPE_CHECKOUT_ENDPOINT}</strong>
+              <span>POST endpoint that creates Stripe checkout sessions from canonical totals.</span>
+            </div>
+          </div>`,
+          { eyebrow: "Payments", muted: true }
+        )}
+      </div>`,
+    {
+      kicker: "Quote Workspace",
+      subtitle: "Use this page to inspect live quote submissions, filter by status, export the current queue, and retry CRM sync from stored canonical payloads.",
+      heroMeta: runtimeBadges,
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_QUOTE_OPS_PATH, runtimeBadges),
+    }
+  );
+}
+
+function renderIntegrationsPage(req, config) {
+  const signals = getAdminIntegrationState();
+  const runtimeBadges = getAdminStatusBadges(signals);
+  const leadConfig = signals.leadConnector.config;
+  const authConfig = adminAuth.loadAdminConfig(process.env);
+
+  return renderAdminLayout(
+    "Integrations",
+    `${renderAdminSignedInTopbar(config, {
+      linkHref: ADMIN_QUOTE_OPS_PATH,
+      linkLabel: "Open Quote Ops",
+    })}
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "LeadConnector / HighLevel",
+          signals.leadConnector.error
+            ? "The CRM config is present but currently invalid."
+            : "Current CRM wiring for quote submissions, note sync, and opportunity creation.",
+          `${signals.leadConnector.error ? `<div class="admin-alert admin-alert-error">${escapeHtml(signals.leadConnector.error)}</div>` : ""}
+          ${leadConfig
+            ? renderAdminPropertyList([
+                { label: "Configured", value: formatBooleanLabel(leadConfig.configured, "Yes", "No") },
+                { label: "API base URL", value: leadConfig.apiBaseUrl },
+                { label: "API version", value: leadConfig.apiVersion },
+                { label: "Location ID", value: leadConfig.locationId || "Missing" },
+                { label: "Contact source", value: leadConfig.source },
+                { label: "Tags", value: leadConfig.tags.join(", ") || "None" },
+                { label: "Request timeout", value: `${leadConfig.requestTimeoutMs} ms` },
+                { label: "Notes", value: formatBooleanLabel(leadConfig.enableNotes, "Enabled", "Disabled") },
+                { label: "Opportunity creation", value: formatBooleanLabel(leadConfig.createOpportunity, "Enabled", "Disabled") },
+                { label: "Pipeline", value: leadConfig.pipelineId || leadConfig.pipelineName },
+                { label: "Stage", value: leadConfig.pipelineStageId || leadConfig.pipelineStageName },
+              ])
+            : `<p class="admin-card-copy">LeadConnector config is not currently available in this process.</p>`}`,
+          { eyebrow: "CRM" }
+        )}
+        ${renderAdminCard(
+          "Payments, Tokens, and Persistence",
+          "Server-side payment, quote-token, and Supabase persistence prerequisites.",
+          `${renderAdminPropertyList([
+            { label: "Stripe", value: formatBooleanLabel(signals.stripeConfigured, "Configured", "Missing") },
+            { label: "Quote token secret", value: maskSecretPreview(getQuoteTokenSecret(process.env)) },
+            { label: "Quote token TTL", value: formatDurationLabel(signals.quoteTokenTtlSeconds) },
+            { label: "Supabase", value: formatBooleanLabel(signals.supabaseConfigured, "Configured", "Missing") },
+            { label: "Supabase URL", value: signals.supabaseUrl || "Missing" },
+            { label: "Quote ops table", value: signals.supabaseTableName || "quote_ops_entries" },
+            { label: "Checkout endpoint", value: STRIPE_CHECKOUT_ENDPOINT },
+            { label: "Allowed amount range", value: `${formatCurrencyAmount(STRIPE_MIN_AMOUNT_CENTS / 100)} to ${formatCurrencyAmount(STRIPE_MAX_AMOUNT_CENTS / 100)}` },
+          ])}`,
+          { eyebrow: "Payments", muted: true }
+        )}
+        ${renderAdminCard(
+          "Places, Perf, and Auth",
+          "Peripheral services and protected internal diagnostics.",
+          `${renderAdminPropertyList([
+            { label: "Google Places browser key", value: formatBooleanLabel(signals.placesConfigured, "Configured", "Missing") },
+            { label: "Protected perf endpoint", value: formatBooleanLabel(signals.perfProtected, "Ready", "Off") },
+            { label: "Perf endpoint enabled", value: formatBooleanLabel(signals.perfEndpointEnabled, "Yes", "No") },
+            { label: "Perf token present", value: formatBooleanLabel(signals.perfTokenPresent, "Yes", "No") },
+            { label: "Admin master secret", value: authConfig.masterSecret ? "Present" : "Missing" },
+            { label: "Admin TOTP secret mode", value: authConfig.configuredTotpSecret ? "Explicit ADMIN_TOTP_SECRET" : "Derived from admin secret chain" },
+          ])}`,
+          { eyebrow: "Support", muted: true }
+        )}
+        ${renderAdminCard(
+          "Discovery Behavior",
+          "Auto-discovery lets the backend resolve missing CRM IDs and field mappings when env config is intentionally light.",
+          `${leadConfig
+            ? renderAdminPropertyList([
+                { label: "Custom field map configured", value: formatBooleanLabel(Boolean(leadConfig.customFieldMap), "Yes", "No") },
+                { label: "Custom field auto-discovery", value: formatBooleanLabel(leadConfig.enableCustomFieldAutoDiscovery, "Enabled", "Disabled") },
+                { label: "Opportunity auto-discovery", value: formatBooleanLabel(leadConfig.enableOpportunityAutoDiscovery, "Enabled", "Disabled") },
+                { label: "Note max length", value: `${leadConfig.noteMaxLength} chars` },
+              ])
+            : `<p class="admin-card-copy">LeadConnector settings are unavailable, so discovery behavior cannot be summarized yet.</p>`}
+          <ul class="admin-feature-list">
+            <li>API secrets are never rendered directly in this page; only status and masked previews are shown.</li>
+            <li>Invalid CRM base URLs surface here before they break live quote submissions.</li>
+            <li>Use this page when checking whether deployments have the right env setup.</li>
+          </ul>`,
+          { eyebrow: "Behavior" }
+        )}
+      </div>`,
+    {
+      kicker: "Integration Surface",
+      subtitle: "Review how CRM, payments, tokenization, search, and protected diagnostics are configured in the current process.",
+      heroMeta: runtimeBadges,
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_INTEGRATIONS_PATH, runtimeBadges),
+    }
+  );
+}
+
+function renderRuntimePage(req, config, adminRuntime = {}) {
+  const signals = getAdminIntegrationState();
+  const runtimeBadges = getAdminStatusBadges(signals);
+  const requestSnapshot = adminRuntime.requestPerfWindow
+    ? adminRuntime.requestPerfWindow.snapshot()
+    : { window_ms: PERF_WINDOW_MS, total_requests: 0, p50_ms: 0, p95_ms: 0, p99_ms: 0, status_5xx: 0, status_5xx_rate: 0 };
+  const eventLoopSnapshot = adminRuntime.eventLoopStats
+    ? adminRuntime.eventLoopStats.readSnapshot(false)
+    : { min_ms: 0, mean_ms: 0, p95_ms: 0, p99_ms: 0, max_ms: 0 };
+  const memory = getMemoryUsageSnapshot();
+
+  return renderAdminLayout(
+    "Runtime",
+    `${renderAdminSignedInTopbar(config, {
+      linkHref: ADMIN_INTEGRATIONS_PATH,
+      linkLabel: "Review Integrations",
+    })}
+      <div class="admin-stats-grid">
+        ${renderAdminCard(
+          "Requests in Window",
+          "Rolling request snapshot captured by the in-process perf window.",
+          `<p class="admin-metric-value">${escapeHtml(String(requestSnapshot.total_requests))}</p>
+          ${renderAdminPropertyList([
+            { label: "Window", value: formatDurationLabel(requestSnapshot.window_ms / 1000) },
+            { label: "p50", value: `${requestSnapshot.p50_ms} ms` },
+            { label: "p95", value: `${requestSnapshot.p95_ms} ms` },
+            { label: "p99", value: `${requestSnapshot.p99_ms} ms` },
+          ])}`,
+          { eyebrow: "Traffic" }
+        )}
+        ${renderAdminCard(
+          "5xx Rate",
+          "Recent server error rate inside the perf window.",
+          `<p class="admin-metric-value">${escapeHtml(`${(requestSnapshot.status_5xx_rate * 100).toFixed(2)}%`)}</p>
+          ${renderAdminPropertyList([
+            { label: "5xx responses", value: String(requestSnapshot.status_5xx) },
+            { label: "Alert threshold", value: `${(ALERT_5XX_RATE * 100).toFixed(2)}%` },
+          ])}`,
+          { eyebrow: "Health", muted: true }
+        )}
+        ${renderAdminCard(
+          "Event Loop p95",
+          "Current event loop delay without resetting the histogram.",
+          `<p class="admin-metric-value">${escapeHtml(`${eventLoopSnapshot.p95_ms} ms`)}</p>
+          ${renderAdminPropertyList([
+            { label: "Mean", value: `${eventLoopSnapshot.mean_ms} ms` },
+            { label: "p99", value: `${eventLoopSnapshot.p99_ms} ms` },
+            { label: "Max", value: `${eventLoopSnapshot.max_ms} ms` },
+            { label: "Alert threshold", value: `${ALERT_EVENT_LOOP_P95_MS} ms` },
+          ])}`,
+          { eyebrow: "Latency" }
+        )}
+        ${renderAdminCard(
+          "Heap Used",
+          "Current memory footprint for this process.",
+          `<p class="admin-metric-value">${escapeHtml(`${memory.heap_used_mb} MB`)}</p>
+          ${renderAdminPropertyList([
+            { label: "RSS", value: `${memory.rss_mb} MB` },
+            { label: "External", value: `${memory.external_mb} MB` },
+            { label: "Array buffers", value: `${memory.array_buffers_mb} MB` },
+          ])}`,
+          { eyebrow: "Memory", muted: true }
+        )}
+      </div>
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "Perf Thresholds",
+          "These are the thresholds that drive periodic perf alerts in the current process.",
+          `${renderAdminPropertyList([
+            { label: "Request p95 threshold", value: `${ALERT_P95_MS} ms` },
+            { label: "Request p99 threshold", value: `${ALERT_P99_MS} ms` },
+            { label: "5xx rate threshold", value: `${(ALERT_5XX_RATE * 100).toFixed(2)}%` },
+            { label: "Event loop p95 threshold", value: `${ALERT_EVENT_LOOP_P95_MS} ms` },
+            { label: "Perf summary interval", value: formatDurationLabel(PERF_SUMMARY_INTERVAL_MS / 1000) },
+          ])}`,
+          { eyebrow: "Thresholds" }
+        )}
+        ${renderAdminCard(
+          "Runtime Controls",
+          "Operational settings that affect request logging, trust behavior, and warmup strategy.",
+          `${renderAdminPropertyList([
+            { label: "HTML warm mode", value: HTML_CACHE_WARM_MODE },
+            { label: "Request log buffer", value: `${REQUEST_LOG_BUFFER_LIMIT} lines` },
+            { label: "Request log flush interval", value: `${REQUEST_LOG_FLUSH_INTERVAL_MS} ms` },
+            { label: "Trust proxy headers", value: formatBooleanLabel(TRUST_PROXY_HEADERS, "Enabled", "Disabled") },
+            { label: "Trusted proxy count", value: String(TRUSTED_PROXY_IPS.size) },
+            { label: "Max perf samples", value: String(PERF_MAX_SAMPLES) },
+          ])}`,
+          { eyebrow: "Controls", muted: true }
+        )}
+        ${renderAdminCard(
+          "Protected Diagnostics Endpoint",
+          "The JSON perf endpoint stays private unless both the feature flag and the token are present.",
+          `${renderAdminPropertyList([
+            { label: "Endpoint path", value: "/__perf" },
+            { label: "Enabled", value: formatBooleanLabel(signals.perfEndpointEnabled, "Yes", "No") },
+            { label: "Token present", value: formatBooleanLabel(signals.perfTokenPresent, "Yes", "No") },
+            { label: "Access model", value: "Requires x-perf-token header" },
+          ])}
+          <p class="admin-card-copy">This page uses the same in-process metrics directly, so operators can inspect runtime health without exposing the JSON endpoint publicly.</p>`,
+          { eyebrow: "Diagnostics" }
+        )}
+      </div>`,
+    {
+      kicker: "Runtime Console",
+      subtitle: "Inspect in-process request latency, event loop delay, memory, and alert thresholds without leaving the secured admin area.",
+      heroMeta: runtimeBadges,
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_RUNTIME_PATH, runtimeBadges),
+    }
+  );
+}
+
+async function renderAdminAppPage(route, req, config, adminRuntime = {}, quoteOpsLedger = null) {
+  if (route === ADMIN_ROOT_PATH) return renderDashboardPage(req, config);
+  if (route === ADMIN_QUOTE_OPS_PATH) return renderQuoteOpsPage(req, config, quoteOpsLedger);
+  if (route === ADMIN_INTEGRATIONS_PATH) return renderIntegrationsPage(req, config);
+  if (route === ADMIN_RUNTIME_PATH) return renderRuntimePage(req, config, adminRuntime);
+  return renderDashboardPage(req, config);
+}
+
+function buildAdminAuthHeaders(req, cookies = []) {
   const headers = {};
   if (cookies.length > 0) {
     headers["Set-Cookie"] = cookies;
@@ -1466,59 +2851,119 @@ function enforceSlidingRateLimit(rateLimiter, req, res, requestStartNs, requestC
   return true;
 }
 
-async function handleAdminRequest(req, res, requestStartNs, requestContext, requestLogger) {
+async function handleAdminRequest(
+  req,
+  res,
+  requestStartNs,
+  requestContext,
+  requestLogger,
+  adminRuntime = {},
+  quoteOpsLedger = null
+) {
   requestContext.cacheHit = false;
   const adminState = getAdminAuthState(req);
-  const requestUrl = new URL(req.url || ADMIN_ROOT_PATH, `http://${req.headers.host || "localhost"}`);
-
-  if (!adminState.systemConfig) {
+  if (!adminState.config) {
     writeHtmlWithTiming(res, 503, renderAdminUnavailablePage(), requestStartNs, requestContext.cacheHit);
     return;
   }
 
-  if (adminState.error) {
-    writeHtmlWithTiming(
+  const { config, session, challenge, fingerprint } = adminState;
+
+  if (requestContext.route === ADMIN_QUOTE_OPS_EXPORT_PATH) {
+    if (req.method !== "GET") {
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET.</div>`), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+    if (!session) {
+      if (challenge) {
+        redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
+        return;
+      }
+      redirectWithTiming(res, 303, ADMIN_LOGIN_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    const { filters } = getQuoteOpsFilters(req);
+    const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
+    const exportEntries = filterQuoteOpsEntries(allEntries, filters);
+    const csvBody = quoteOpsLedger ? quoteOpsLedger.buildCsv(exportEntries) : '"id","status"\n';
+    writeHeadWithTiming(
       res,
-      500,
-      renderAdminUnavailablePage(`Could not load the admin user store: ${adminState.error.message}`),
+      200,
+      {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Content-Disposition": `attachment; filename="shynli-quote-ops-${new Date().toISOString().slice(0, 10)}.csv"`,
+      },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    res.end(csvBody);
+    return;
+  }
+
+  if (requestContext.route === ADMIN_QUOTE_OPS_RETRY_PATH) {
+    if (req.method !== "POST") {
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts POST.</div>`), requestStartNs, requestContext.cacheHit);
+      return;
+    }
+    if (!session) {
+      if (challenge) {
+        redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
+        return;
+      }
+      redirectWithTiming(res, 303, ADMIN_LOGIN_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
+    const entryId = normalizeString(formBody.entryId, 120);
+    const returnTo = buildQuoteOpsReturnPath(formBody.returnTo);
+
+    if (!quoteOpsLedger || !entryId) {
+      redirectWithTiming(
+        res,
+        303,
+        buildAdminRedirectPath(returnTo, { notice: "retry-missing" }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    const retryResult = await quoteOpsLedger.retrySubmission(entryId, {
+      getLeadConnectorClient,
+      userAgent: normalizeString(req.headers["user-agent"], 180),
+    });
+
+    redirectWithTiming(
+      res,
+      303,
+      buildAdminRedirectPath(returnTo, {
+        notice: retryResult && retryResult.ok ? "retry-success" : "retry-failed",
+      }),
       requestStartNs,
       requestContext.cacheHit
     );
     return;
   }
 
-  const { systemConfig, fingerprint } = adminState;
-  let { store, session, challenge, currentUser, challengeUser } = adminState;
-
-  if (requestContext.route === ADMIN_ROOT_PATH) {
+  if (ADMIN_APP_ROUTES.has(requestContext.route)) {
     if (req.method !== "GET") {
-      writeHtmlWithTiming(
-        res,
-        405,
-        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET.</div>`),
-        requestStartNs,
-        requestContext.cacheHit
-      );
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
-    if (session && currentUser) {
+    if (session) {
       writeHtmlWithTiming(
         res,
         200,
-        renderDashboardPage(req, systemConfig, currentUser, store, {
-          notice: normalizeString(requestUrl.searchParams.get("notice"), 240),
-          noticeType: normalizeString(requestUrl.searchParams.get("noticeType"), 16),
-        }),
+        await renderAdminAppPage(requestContext.route, req, config, adminRuntime, quoteOpsLedger),
         requestStartNs,
         requestContext.cacheHit
       );
       return;
     }
-    if (challenge && challenge.mode === "setup") {
-      redirectWithTiming(res, 303, ADMIN_SETUP_PATH, requestStartNs, requestContext.cacheHit);
-      return;
-    }
-    if (challenge && challenge.mode === "2fa") {
+    if (challenge) {
       redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
       return;
     }
@@ -1528,30 +2973,16 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
 
   if (requestContext.route === ADMIN_LOGIN_PATH) {
     if (req.method === "GET") {
-      if (session && currentUser) {
+      if (session) {
         redirectWithTiming(res, 303, ADMIN_ROOT_PATH, requestStartNs, requestContext.cacheHit);
         return;
       }
-      writeHtmlWithTiming(
-        res,
-        200,
-        renderLoginPage(systemConfig, {
-          info: normalizeString(requestUrl.searchParams.get("notice"), 240),
-        }),
-        requestStartNs,
-        requestContext.cacheHit
-      );
+      writeHtmlWithTiming(res, 200, renderLoginPage(config), requestStartNs, requestContext.cacheHit);
       return;
     }
 
     if (req.method !== "POST") {
-      writeHtmlWithTiming(
-        res,
-        405,
-        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`),
-        requestStartNs,
-        requestContext.cacheHit
-      );
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
 
@@ -1572,13 +3003,13 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
     const email = normalizeString(formBody.email, 320).toLowerCase();
     const password = normalizeString(formBody.password, 200);
-    const user = adminUsers.findAdminUserByEmail(store, email);
-    const validPassword = user && adminAuth.verifyPassword(password, user.passwordHash);
-    if (!user || !validPassword) {
+    const validEmail = email && email === config.email;
+    const validPassword = password && adminAuth.verifyPassword(password, config.passwordHash);
+    if (!validEmail || !validPassword) {
       writeHtmlWithTiming(
         res,
         401,
-        renderLoginPage(systemConfig, {
+        renderLoginPage(config, {
           error: "Wrong email or password. Please try again.",
           email,
         }),
@@ -1588,20 +3019,17 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
       return;
     }
 
-    const challengeMode = user.mustChangePassword ? "setup" : "2fa";
-    const challengeToken = adminAuth.createAdminChallengeToken(systemConfig, {
-      userId: user.id,
-      email: user.email,
+    const challengeToken = adminAuth.createAdminChallengeToken(config, {
+      email: config.email,
       fingerprint,
-      mode: challengeMode,
     });
     redirectWithTiming(
       res,
       303,
-      challengeMode === "setup" ? ADMIN_SETUP_PATH : ADMIN_2FA_PATH,
+      ADMIN_2FA_PATH,
       requestStartNs,
       requestContext.cacheHit,
-      buildAdminAuthHeaders([
+      buildAdminAuthHeaders(req, [
         serializeCookie(ADMIN_CHALLENGE_COOKIE, challengeToken, {
           ...getAdminCookieOptions(req),
           maxAge: adminAuth.CHALLENGE_TTL_SECONDS,
@@ -1612,192 +3040,26 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
     return;
   }
 
-  if (requestContext.route === ADMIN_SETUP_PATH) {
-    if (!challenge || !challengeUser) {
-      redirectWithTiming(
-        res,
-        303,
-        ADMIN_LOGIN_PATH,
-        requestStartNs,
-        requestContext.cacheHit,
-        buildAdminAuthHeaders([clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req))])
-      );
-      return;
-    }
-
-    if (challenge.mode !== "setup") {
-      redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
-      return;
-    }
-
-    const ensured = ensureAdminUserTotpSecret(store, challengeUser, systemConfig);
-    store = ensured.store;
-    challengeUser = ensured.user;
-    const userConfig = buildAdminUserAuthConfig(systemConfig, challengeUser);
-    const secret = adminAuth.getTotpSecretMaterial(userConfig).base32;
-    const otpauthUri = adminAuth.buildOtpauthUri(userConfig);
-    const qrMarkup = await buildAdminQrMarkup(otpauthUri);
-
-    if (req.method === "GET") {
-      writeHtmlWithTiming(
-        res,
-        200,
-        renderSetupPage(systemConfig, challengeUser, {
-          secret,
-          otpauthUri,
-          qrMarkup,
-        }),
-        requestStartNs,
-        requestContext.cacheHit
-      );
-      return;
-    }
-
-    if (req.method !== "POST") {
-      writeHtmlWithTiming(
-        res,
-        405,
-        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`),
-        requestStartNs,
-        requestContext.cacheHit
-      );
-      return;
-    }
-
-    if (
-      enforceSlidingRateLimit(
-        adminTwoFactorRateLimiter,
-        req,
-        res,
-        requestStartNs,
-        requestContext,
-        `${getClientAddress(req)}:setup:${challengeUser.id}`,
-        "Too many setup attempts. Please wait a few minutes before trying again."
-      )
-    ) {
-      return;
-    }
-
-    const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
-    const newPassword = String(formBody.newPassword || "");
-    const confirmPassword = String(formBody.confirmPassword || "");
-    const code = normalizeString(formBody.code, 16);
-    const passwordError =
-      newPassword.length < 10
-        ? "Choose a stronger password with at least 10 characters."
-        : newPassword !== confirmPassword
-          ? "The password confirmation does not match."
-          : "";
-
-    if (passwordError) {
-      writeHtmlWithTiming(
-        res,
-        400,
-        renderSetupPage(systemConfig, challengeUser, {
-          error: passwordError,
-          secret,
-          otpauthUri,
-          qrMarkup,
-        }),
-        requestStartNs,
-        requestContext.cacheHit
-      );
-      return;
-    }
-
-    if (!adminAuth.verifyTotpCode(code, userConfig)) {
-      writeHtmlWithTiming(
-        res,
-        401,
-        renderSetupPage(systemConfig, challengeUser, {
-          error: "That Authenticator code was not valid. Scan the QR code again and try once more.",
-          secret,
-          otpauthUri,
-          qrMarkup,
-        }),
-        requestStartNs,
-        requestContext.cacheHit
-      );
-      return;
-    }
-
-    const updated = adminUsers.updateAdminUser(store, challengeUser.id, (currentUserRecord) => ({
-      ...currentUserRecord,
-      passwordHash: adminAuth.hashPassword(newPassword),
-      mustChangePassword: false,
-      setupCompletedAt: new Date().toISOString(),
-      lastLoginAt: new Date().toISOString(),
-    }));
-    store = adminUsers.saveAdminUserStore(updated.store, {
-      env: process.env,
-      baseDir: SITE_DIR,
-      systemConfig,
-    });
-
-    const sessionToken = adminAuth.createAdminSessionToken(systemConfig, {
-      userId: updated.user.id,
-      email: updated.user.email,
-      fingerprint,
-    });
-    redirectWithTiming(
-      res,
-      303,
-      buildAdminRouteWithQuery(ADMIN_ROOT_PATH, {
-        notice: "Your password and Authenticator setup are now active.",
-        noticeType: "info",
-      }),
-      requestStartNs,
-      requestContext.cacheHit,
-      buildAdminAuthHeaders([
-        serializeCookie(ADMIN_SESSION_COOKIE, sessionToken, {
-          ...getAdminCookieOptions(req),
-          maxAge: adminAuth.SESSION_TTL_SECONDS,
-        }),
-        clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req)),
-      ])
-    );
-    return;
-  }
-
   if (requestContext.route === ADMIN_2FA_PATH) {
-    if (!challenge || !challengeUser) {
+    if (!challenge) {
       redirectWithTiming(
         res,
         303,
         ADMIN_LOGIN_PATH,
         requestStartNs,
         requestContext.cacheHit,
-        buildAdminAuthHeaders([clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req))])
+        buildAdminAuthHeaders(req, [clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req))])
       );
       return;
     }
-
-    if (challenge.mode === "setup") {
-      redirectWithTiming(res, 303, ADMIN_SETUP_PATH, requestStartNs, requestContext.cacheHit);
-      return;
-    }
-
-    const userConfig = buildAdminUserAuthConfig(systemConfig, challengeUser);
 
     if (req.method === "GET") {
-      writeHtmlWithTiming(
-        res,
-        200,
-        renderTwoFactorPage(challengeUser),
-        requestStartNs,
-        requestContext.cacheHit
-      );
+      writeHtmlWithTiming(res, 200, renderTwoFactorPage(config), requestStartNs, requestContext.cacheHit);
       return;
     }
 
     if (req.method !== "POST") {
-      writeHtmlWithTiming(
-        res,
-        405,
-        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`),
-        requestStartNs,
-        requestContext.cacheHit
-      );
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
 
@@ -1808,7 +3070,7 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
         res,
         requestStartNs,
         requestContext,
-        `${getClientAddress(req)}:2fa:${challengeUser.id}`,
+        `${getClientAddress(req)}:2fa`,
         "Too many verification attempts. Please wait a few minutes before trying again."
       )
     ) {
@@ -1817,11 +3079,11 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
 
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
     const code = normalizeString(formBody.code, 16);
-    if (!adminAuth.verifyTotpCode(code, userConfig)) {
+    if (!adminAuth.verifyTotpCode(code, config)) {
       writeHtmlWithTiming(
         res,
         401,
-        renderTwoFactorPage(challengeUser, {
+        renderTwoFactorPage(config, {
           error: "That code was not valid. Check the app and try again.",
         }),
         requestStartNs,
@@ -1830,19 +3092,8 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
       return;
     }
 
-    const updated = adminUsers.updateAdminUser(store, challengeUser.id, (currentUserRecord) => ({
-      ...currentUserRecord,
-      lastLoginAt: new Date().toISOString(),
-    }));
-    adminUsers.saveAdminUserStore(updated.store, {
-      env: process.env,
-      baseDir: SITE_DIR,
-      systemConfig,
-    });
-
-    const sessionToken = adminAuth.createAdminSessionToken(systemConfig, {
-      userId: challengeUser.id,
-      email: challengeUser.email,
+    const sessionToken = adminAuth.createAdminSessionToken(config, {
+      email: config.email,
       fingerprint,
     });
     redirectWithTiming(
@@ -1851,7 +3102,7 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
       ADMIN_ROOT_PATH,
       requestStartNs,
       requestContext.cacheHit,
-      buildAdminAuthHeaders([
+      buildAdminAuthHeaders(req, [
         serializeCookie(ADMIN_SESSION_COOKIE, sessionToken, {
           ...getAdminCookieOptions(req),
           maxAge: adminAuth.SESSION_TTL_SECONDS,
@@ -1862,88 +3113,18 @@ async function handleAdminRequest(req, res, requestStartNs, requestContext, requ
     return;
   }
 
-  if (requestContext.route === ADMIN_USERS_PATH) {
-    if (!session || !currentUser) {
-      redirectWithTiming(res, 303, ADMIN_LOGIN_PATH, requestStartNs, requestContext.cacheHit);
-      return;
-    }
-
-    if (currentUser.role !== "owner") {
-      writeHtmlWithTiming(
-        res,
-        403,
-        renderAdminLayout("Forbidden", `<div class="admin-alert admin-alert-error">Only the owner account can create new users.</div>`),
-        requestStartNs,
-        requestContext.cacheHit
-      );
-      return;
-    }
-
-    if (req.method !== "POST") {
-      redirectWithTiming(res, 303, ADMIN_ROOT_PATH, requestStartNs, requestContext.cacheHit);
-      return;
-    }
-
-    const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
-    try {
-      const created = adminUsers.createAdminUser(store, formBody, {
-        env: process.env,
-        systemConfig,
-        createdBy: currentUser.id,
-      });
-      adminUsers.saveAdminUserStore(created.store, {
-        env: process.env,
-        baseDir: SITE_DIR,
-        systemConfig,
-      });
-
-      redirectWithTiming(
-        res,
-        303,
-        buildAdminRouteWithQuery(ADMIN_ROOT_PATH, {
-          notice: `User ${created.user.email} was created successfully.`,
-          noticeType: "info",
-        }),
-        requestStartNs,
-        requestContext.cacheHit
-      );
-      return;
-    } catch (error) {
-      writeHtmlWithTiming(
-        res,
-        400,
-        renderDashboardPage(req, systemConfig, currentUser, store, {
-          notice: error && error.message ? error.message : "Could not create the user.",
-          noticeType: "error",
-          userForm: formBody,
-        }),
-        requestStartNs,
-        requestContext.cacheHit
-      );
-      return;
-    }
-  }
-
   if (requestContext.route === ADMIN_LOGOUT_PATH) {
     if (req.method !== "POST") {
-      writeHtmlWithTiming(
-        res,
-        405,
-        renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">Log out must be submitted with POST.</div>`),
-        requestStartNs,
-        requestContext.cacheHit
-      );
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">Log out must be submitted with POST.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
     redirectWithTiming(
       res,
       303,
-      buildAdminRouteWithQuery(ADMIN_LOGIN_PATH, {
-        notice: "You have been signed out.",
-      }),
+      ADMIN_LOGIN_PATH,
       requestStartNs,
       requestContext.cacheHit,
-      buildAdminAuthHeaders([
+      buildAdminAuthHeaders(req, [
         clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions(req)),
         clearCookie(ADMIN_CHALLENGE_COOKIE, getAdminCookieOptions(req)),
       ])
@@ -3677,7 +4858,8 @@ async function handleQuoteSubmissionRequest(
   res,
   requestStartNs,
   requestContext,
-  requestLogger
+  requestLogger,
+  quoteOpsLedger = null
 ) {
   requestContext.cacheHit = false;
 
@@ -3716,25 +4898,6 @@ async function handleQuoteSubmissionRequest(
     return;
   }
 
-  let leadConnector;
-  try {
-    leadConnector = getLeadConnectorClient();
-  } catch (error) {
-    requestLogger.log({
-      ts: new Date().toISOString(),
-      type: "quote_client_init_error",
-      message: error && error.message ? error.message : "Unknown LeadConnector init error",
-    });
-    writeJsonWithTiming(
-      res,
-      503,
-      { error: "Quote requests are temporarily unavailable." },
-      requestStartNs,
-      requestContext.cacheHit
-    );
-    return;
-  }
-
   const contactData = body?.contactData || body?.contact || {
     fullName: body?.fullName,
     phone: body?.phone,
@@ -3763,6 +4926,8 @@ async function handleQuoteSubmissionRequest(
     consent: body?.consent,
     formattedDateTime: body?.formattedDateTime,
   };
+  const requestId = normalizeString(req.headers["x-request-id"] || crypto.randomUUID(), 120);
+  const submittedAt = normalizeString(body?.submittedAt || new Date().toISOString(), 64);
 
   const pricing = calculateQuotePricing(calculatorData);
   const submittedTotalPrice = Number(calculatorData && calculatorData.totalPrice);
@@ -3791,14 +4956,65 @@ async function handleQuoteSubmissionRequest(
     totalPrice: pricing.totalPrice,
   };
 
+  let leadConnector;
+  try {
+    leadConnector = getLeadConnectorClient();
+  } catch (error) {
+    const safeMessage = "Quote requests are temporarily unavailable.";
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "quote_client_init_error",
+      message: error && error.message ? error.message : "Unknown LeadConnector init error",
+    });
+    if (quoteOpsLedger) {
+      await quoteOpsLedger.recordSubmission({
+        ok: false,
+        requestId,
+        sourceRoute: requestContext.route,
+        source: body?.source || "Website Quote",
+        customerName: contactData && contactData.fullName,
+        customerPhone: contactData && contactData.phone,
+        customerEmail: contactData && contactData.email,
+        serviceType: pricing.serviceType,
+        serviceName: pricing.serviceName,
+        totalPrice: pricing.totalPrice,
+        totalPriceCents: pricing.totalPriceCents,
+        selectedDate: canonicalCalculatorData.selectedDate,
+        selectedTime: canonicalCalculatorData.selectedTime,
+        fullAddress: canonicalCalculatorData.fullAddress || canonicalCalculatorData.address,
+        httpStatus: 503,
+        code: "CLIENT_INIT_ERROR",
+        retryable: false,
+        errorMessage: safeMessage,
+        payloadForRetry: {
+          contactData,
+          calculatorData: canonicalCalculatorData,
+          source: body?.source || "Website Quote",
+          pageUrl: `${SITE_ORIGIN}${QUOTE_PUBLIC_PATH}`,
+          requestId,
+          submittedAt,
+          userAgent: normalizeString(req.headers["user-agent"], 180),
+        },
+      });
+    }
+    writeJsonWithTiming(
+      res,
+      503,
+      { error: safeMessage },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
   const result = await leadConnector.submitQuoteSubmission({
     contactData,
     calculatorData: canonicalCalculatorData,
     source: body?.source || "Website Quote",
     pageUrl: `${SITE_ORIGIN}${QUOTE_PUBLIC_PATH}`,
-    requestId: normalizeString(req.headers["x-request-id"] || crypto.randomUUID(), 120),
+    requestId,
     userAgent: normalizeString(req.headers["user-agent"], 180),
-    submittedAt: normalizeString(body?.submittedAt || new Date().toISOString(), 64),
+    submittedAt,
   });
 
   if (!result.ok) {
@@ -3815,6 +5031,38 @@ async function handleQuoteSubmissionRequest(
       code: result.code,
       retryable: Boolean(result.retryable),
     });
+    if (quoteOpsLedger) {
+      await quoteOpsLedger.recordSubmission({
+        ok: false,
+        requestId,
+        sourceRoute: requestContext.route,
+        source: body?.source || "Website Quote",
+        customerName: contactData && contactData.fullName,
+        customerPhone: contactData && contactData.phone,
+        customerEmail: contactData && contactData.email,
+        serviceType: pricing.serviceType,
+        serviceName: pricing.serviceName,
+        totalPrice: pricing.totalPrice,
+        totalPriceCents: pricing.totalPriceCents,
+        selectedDate: canonicalCalculatorData.selectedDate,
+        selectedTime: canonicalCalculatorData.selectedTime,
+        fullAddress: canonicalCalculatorData.fullAddress || canonicalCalculatorData.address,
+        httpStatus: resultStatus,
+        code: result.code,
+        retryable: Boolean(result.retryable),
+        warnings: result.warnings,
+        errorMessage: safeErrorMessage,
+        payloadForRetry: {
+          contactData,
+          calculatorData: canonicalCalculatorData,
+          source: body?.source || "Website Quote",
+          pageUrl: `${SITE_ORIGIN}${QUOTE_PUBLIC_PATH}`,
+          requestId,
+          submittedAt,
+          userAgent: normalizeString(req.headers["user-agent"], 180),
+        },
+      });
+    }
     writeJsonWithTiming(
       res,
       resultStatus,
@@ -3851,6 +5099,43 @@ async function handleQuoteSubmissionRequest(
       ts: new Date().toISOString(),
       type: "quote_token_error",
       message: error && error.message ? error.message : "Unknown quote token error",
+    });
+  }
+
+  if (quoteOpsLedger) {
+    await quoteOpsLedger.recordSubmission({
+      ok: true,
+      requestId,
+      sourceRoute: requestContext.route,
+      source: body?.source || "Website Quote",
+      customerName: contactData && contactData.fullName,
+      customerPhone: contactData && contactData.phone,
+      customerEmail: contactData && contactData.email,
+      serviceType: pricing.serviceType,
+      serviceName: pricing.serviceName,
+      totalPrice: pricing.totalPrice,
+      totalPriceCents: pricing.totalPriceCents,
+      selectedDate: canonicalCalculatorData.selectedDate,
+      selectedTime: canonicalCalculatorData.selectedTime,
+      fullAddress: canonicalCalculatorData.fullAddress || canonicalCalculatorData.address,
+      httpStatus: Number(result.status) || 200,
+      code: result.code || "OK",
+      retryable: Boolean(result.retryable),
+      warnings: result.warnings,
+      contactId: result.contactId,
+      noteCreated: result.noteCreated,
+      opportunityCreated: result.opportunityCreated,
+      customFieldsUpdated: result.customFieldsUpdated,
+      usedExistingContact: result.usedExistingContact,
+      payloadForRetry: {
+        contactData,
+        calculatorData: canonicalCalculatorData,
+        source: body?.source || "Website Quote",
+        pageUrl: `${SITE_ORIGIN}${QUOTE_PUBLIC_PATH}`,
+        requestId,
+        submittedAt,
+        userAgent: normalizeString(req.headers["user-agent"], 180),
+      },
     });
   }
 
@@ -3916,6 +5201,7 @@ async function main() {
 
   const requestPerfWindow = createRequestPerfWindow();
   const eventLoopStats = createEventLoopStats();
+  const quoteOpsLedger = createQuoteOpsStore();
 
   const perfSummaryTimer = setInterval(() => {
     const requestSnapshot = requestPerfWindow.snapshot();
@@ -4038,15 +5324,11 @@ async function main() {
         return;
       }
 
-      if (
-        normalizedPath === ADMIN_ROOT_PATH ||
-        normalizedPath === ADMIN_LOGIN_PATH ||
-        normalizedPath === ADMIN_SETUP_PATH ||
-        normalizedPath === ADMIN_2FA_PATH ||
-        normalizedPath === ADMIN_USERS_PATH ||
-        normalizedPath === ADMIN_LOGOUT_PATH
-      ) {
-        await handleAdminRequest(req, res, requestStartNs, requestContext, requestLogger);
+      if (ADMIN_ALL_ROUTES.has(normalizedPath)) {
+        await handleAdminRequest(req, res, requestStartNs, requestContext, requestLogger, {
+          requestPerfWindow,
+          eventLoopStats,
+        }, quoteOpsLedger);
         return;
       }
 
@@ -4056,7 +5338,7 @@ async function main() {
       }
 
       if (normalizedPath === QUOTE_REQUEST_ENDPOINT || normalizedPath === QUOTE_SUBMIT_ENDPOINT) {
-        await handleQuoteSubmissionRequest(req, res, requestStartNs, requestContext, requestLogger);
+        await handleQuoteSubmissionRequest(req, res, requestStartNs, requestContext, requestLogger, quoteOpsLedger);
         return;
       }
 

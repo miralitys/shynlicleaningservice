@@ -1,0 +1,426 @@
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert/strict");
+
+const {
+  createLeadConnectorClient,
+  loadLeadConnectorConfig,
+  normalizeQuoteSubmission,
+} = require("../lib/leadconnector");
+
+function createResponse(status, body) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: {
+      get(name) {
+        return name.toLowerCase() === "content-type" ? "application/json; charset=utf-8" : null;
+      },
+    },
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  };
+}
+
+test("normalizes the existing quote payload into a safe CRM submission", () => {
+  const submission = normalizeQuoteSubmission({
+    contactData: {
+      fullName: "  Jane   Doe ",
+      phone: "(312) 555-0100",
+      email: "JANE@example.com",
+    },
+    calculatorData: {
+      serviceType: "deep",
+      frequency: "biweekly",
+      rooms: "4",
+      bathrooms: "2.5",
+      squareMeters: "1800",
+      services: ["ovenCleaning", "ovenCleaning", "insideCabinets"],
+      quantityServices: {
+        interiorWindowsCleaning: "2",
+        blindsCleaning: "1",
+      },
+      additionalDetails: "Please use hypoallergenic products.\nThanks.",
+      selectedDate: "2026-03-22",
+      selectedTime: "09:00",
+      formattedDateTime: "Sunday, March 22, 2026 9:00 AM",
+      address: "123 Main St",
+      city: "Romeoville",
+      state: "IL",
+      zipCode: "60446",
+      totalPrice: "149.99",
+      consent: true,
+    },
+    source: "Website Quote",
+  });
+
+  assert.equal(submission.contact.fullName, "Jane Doe");
+  assert.equal(submission.contact.phone, "3125550100");
+  assert.equal(submission.contact.phoneE164, "+13125550100");
+  assert.equal(submission.contact.email, "jane@example.com");
+  assert.equal(submission.quote.serviceType, "deep");
+  assert.equal(submission.quote.frequency, "biweekly");
+  assert.deepEqual(submission.quote.services, ["ovenCleaning", "insideCabinets"]);
+  assert.equal(submission.quote.totalPrice, 150);
+  assert.equal(submission.quote.consent, true);
+  assert.equal(submission.meta.source, "Website Quote");
+});
+
+test("loads LeadConnector config and rejects unsafe base URLs", () => {
+  const config = loadLeadConnectorConfig({
+    GHL_API_KEY: "key",
+    GHL_LOCATION_ID: "loc",
+    GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+  });
+
+  assert.equal(config.configured, true);
+  assert.equal(config.apiBaseUrl, "https://services.leadconnectorhq.com");
+
+  assert.throws(
+    () =>
+      loadLeadConnectorConfig({
+        GHL_API_KEY: "key",
+        GHL_LOCATION_ID: "loc",
+        GHL_API_BASE_URL: "http://example.com",
+      }),
+    /https/
+  );
+});
+
+test("submits a quote, creates the contact, and writes a note", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+      redirect: options.redirect,
+    });
+
+    if (String(url).includes("/contacts/") && options.method === "POST") {
+      return createResponse(200, { contact: { id: "contact-1" } });
+    }
+
+    if (String(url).includes("/contacts/contact-1") && options.method === "PUT") {
+      return createResponse(200, { id: "contact-1" });
+    }
+
+    if (String(url).includes("/notes")) {
+      return createResponse(200, { id: "note-1" });
+    }
+
+    if (String(url).includes("/opportunities")) {
+      return createResponse(200, { id: "opp-1" });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_CUSTOM_FIELDS_JSON: JSON.stringify({ rooms: "cf-rooms" }),
+      GHL_CREATE_OPPORTUNITY: "0",
+    },
+    fetch,
+  });
+
+  const result = await client.submitQuoteSubmission({
+    contactData: {
+      fullName: "Jane Doe",
+      phone: "312-555-0100",
+    },
+    calculatorData: {
+      serviceType: "regular",
+      rooms: 3,
+      totalPrice: 120,
+      selectedDate: "2026-03-22",
+      selectedTime: "09:00",
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-1");
+  assert.equal(result.customFieldsUpdated, true);
+  assert.equal(result.noteCreated, true);
+  assert.equal(result.opportunityCreated, false);
+  assert.equal(calls.length, 3);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[0].redirect, "error");
+  assert.equal(calls[0].headers.Authorization, "Bearer test-key");
+  assert.equal(calls[0].headers.Version, "2021-07-28");
+  assert.equal(calls[1].method, "PUT");
+  assert.match(calls[1].body, /cf-rooms/);
+  assert.equal(calls[2].method, "POST");
+  assert.match(calls[2].body, /WEBSITE QUOTE SUBMISSION/);
+});
+
+test("falls back to updating an existing contact after a duplicate response", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      body: options.body,
+    });
+
+    if (String(url).endsWith("/contacts/") && options.method === "POST") {
+      return createResponse(400, { message: "duplicate contact" });
+    }
+
+    if (String(url).includes("/contacts/?phone=") && options.method === "GET") {
+      return createResponse(200, { contacts: [{ id: "contact-2" }] });
+    }
+
+    if (String(url).includes("/contacts/contact-2") && options.method === "PUT") {
+      return createResponse(200, { id: "contact-2" });
+    }
+
+    if (String(url).includes("/notes")) {
+      return createResponse(200, { id: "note-2" });
+    }
+
+    if (String(url).includes("/opportunities")) {
+      return createResponse(200, { id: "opp-2" });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_CUSTOM_FIELDS_JSON: JSON.stringify({ rooms: "cf-rooms" }),
+      GHL_CREATE_OPPORTUNITY: "0",
+    },
+    fetch,
+  });
+
+  const result = await client.submitQuoteSubmission({
+    contactData: {
+      fullName: "Jane Doe",
+      phone: "3125550100",
+    },
+    calculatorData: {
+      rooms: 2,
+      totalPrice: 95,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.usedExistingContact, true);
+  assert.equal(result.contactId, "contact-2");
+  assert.equal(result.customFieldsUpdated, true);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[1].method, "GET");
+  assert.equal(calls[2].method, "PUT");
+  assert.equal(calls[3].method, "PUT");
+});
+
+test("falls back to updating an existing contact after any client-side create failure", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      body: options.body,
+    });
+
+    if (String(url).endsWith("/contacts/") && options.method === "POST") {
+      return createResponse(400, { message: "contact validation failed" });
+    }
+
+    if (String(url).includes("/contacts/?phone=") && options.method === "GET") {
+      return createResponse(200, { contacts: [{ id: "contact-2b" }] });
+    }
+
+    if (String(url).includes("/contacts/contact-2b") && options.method === "PUT") {
+      return createResponse(200, { id: "contact-2b" });
+    }
+
+    if (String(url).includes("/notes")) {
+      return createResponse(200, { id: "note-2b" });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_CUSTOM_FIELDS_JSON: JSON.stringify({ rooms: "cf-rooms" }),
+      GHL_CREATE_OPPORTUNITY: "0",
+    },
+    fetch,
+  });
+
+  const result = await client.submitQuoteSubmission({
+    contactData: {
+      fullName: "Jane Doe",
+      phone: "3125550101",
+    },
+    calculatorData: {
+      rooms: 2,
+      totalPrice: 95,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.usedExistingContact, true);
+  assert.equal(result.contactId, "contact-2b");
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[1].method, "GET");
+  assert.equal(calls[2].method, "PUT");
+  assert.equal(calls[3].method, "PUT");
+});
+
+test("auto-discovers custom fields when env mapping is not configured", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/") && options.method === "POST") {
+      return createResponse(200, { contact: { id: "contact-3" } });
+    }
+
+    if (String(url).includes("/locations/loc-1/customFields") && options.method === "GET") {
+      return createResponse(200, {
+        customFields: [
+          { id: "cf-service-type", name: "contact.service_type", objectType: "contact" },
+          { id: "cf-rooms", name: "Bedrooms", objectType: "contact" },
+          { id: "cf-windows", name: "contact.interior_windows_cleaning", objectType: "contact" },
+        ],
+      });
+    }
+
+    if (String(url).includes("/contacts/contact-3") && options.method === "PUT") {
+      return createResponse(200, { id: "contact-3" });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "0",
+    },
+    fetch,
+  });
+
+  const result = await client.submitQuoteSubmission({
+    contactData: {
+      fullName: "Jane Doe",
+      phone: "3125550100",
+    },
+    calculatorData: {
+      serviceType: "regular",
+      rooms: 3,
+      quantityServices: {
+        interiorWindowsCleaning: 2,
+      },
+      totalPrice: 120,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-3");
+  assert.equal(result.customFieldsUpdated, true);
+  assert.equal(result.skipped.notes, true);
+  assert.match(calls[2].body, /cf-service-type/);
+  assert.match(calls[2].body, /cf-rooms/);
+  assert.match(calls[2].body, /cf-windows/);
+});
+
+test("auto-discovers opportunity pipeline and stage by configured names", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/") && options.method === "POST") {
+      return createResponse(200, { contact: { id: "contact-4" } });
+    }
+
+    if (String(url).includes("/contacts/contact-4") && options.method === "PUT") {
+      return createResponse(200, { id: "contact-4" });
+    }
+
+    if (String(url).includes("/opportunities/pipelines") && options.method === "GET") {
+      return createResponse(200, {
+        pipelines: [
+          {
+            id: "pipe-1",
+            name: "Main",
+            stages: [
+              { id: "stage-1", name: "New Lead" },
+              { id: "stage-2", name: "Won" },
+            ],
+          },
+        ],
+      });
+    }
+
+    if (String(url).includes("/opportunities/") && options.method === "POST") {
+      return createResponse(200, { id: "opp-4" });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_CUSTOM_FIELDS_JSON: JSON.stringify({ rooms: "cf-rooms" }),
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "1",
+      GHL_PIPELINE_NAME: "Pipelines Main",
+      GHL_PIPELINE_STAGE_NAME: "New Lead",
+    },
+    fetch,
+  });
+
+  const result = await client.submitQuoteSubmission({
+    contactData: {
+      fullName: "Jane Doe",
+      phone: "3125550100",
+    },
+    calculatorData: {
+      rooms: 2,
+      totalPrice: 95,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-4");
+  assert.equal(result.opportunityCreated, true);
+  assert.equal(result.opportunitySyncReason, "");
+  assert.equal(result.skipped.opportunity, false);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[1].method, "PUT");
+  assert.equal(calls[2].method, "GET");
+  assert.match(calls[2].url, /\/opportunities\/pipelines/);
+  assert.equal(calls[3].method, "POST");
+  assert.match(calls[3].body, /"pipelineId":"pipe-1"/);
+  assert.match(calls[3].body, /"pipelineStageId":"stage-1"/);
+});
