@@ -4,6 +4,7 @@ create table if not exists public.admin_staff (
   role text,
   phone text,
   email text,
+  address text,
   status text not null check (status in ('active', 'inactive', 'on_leave')),
   notes text,
   created_at timestamptz not null default now(),
@@ -18,6 +19,9 @@ create index if not exists admin_staff_name_idx
 
 create index if not exists admin_staff_email_idx
   on public.admin_staff (email);
+
+alter table if exists public.admin_staff
+  add column if not exists address text;
 
 create table if not exists public.admin_staff_assignments (
   entry_id uuid primary key references public.quote_ops_entries (id) on delete cascade,

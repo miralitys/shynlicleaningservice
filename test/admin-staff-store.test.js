@@ -66,6 +66,7 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
       name: "Anna Petrova",
       role: "Team Lead",
       email: "anna@example.com",
+      address: "215 North Elm Street, Naperville, IL",
       status: "active",
     });
     const olga = await store.createStaff({
@@ -86,6 +87,7 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
     let snapshot = await store.getSnapshot();
     assert.equal(snapshot.staff.length, 2);
     assert.equal(snapshot.assignments.length, 1);
+    assert.equal(snapshot.staff[0].address, "215 North Elm Street, Naperville, IL");
     assert.deepEqual(snapshot.assignments[0].staffIds.sort(), [anna.id, olga.id].sort());
 
     await store.deleteStaff(anna.id);
@@ -121,6 +123,7 @@ test("uses the Supabase-backed store implementation when the client is configure
     name: "Anna Petrova",
     role: "Team Lead",
     email: "anna@example.com",
+    address: "215 North Elm Street, Naperville, IL",
     status: "active",
   });
   const diana = await store.createStaff({
@@ -150,10 +153,12 @@ test("uses the Supabase-backed store implementation when the client is configure
   assert.deepEqual(snapshot.assignments[0].staffIds, [diana.id]);
 
   await store.updateStaff(diana.id, {
+    address: "742 Cedar Avenue, Aurora, IL 60506",
     status: "on_leave",
     notes: "Needs a remote sync check",
   });
   snapshot = await store.getSnapshot();
+  assert.equal(snapshot.staff[0].address, "742 Cedar Avenue, Aurora, IL 60506");
   assert.equal(snapshot.staff[0].status, "on_leave");
   assert.match(snapshot.staff[0].notes, /remote sync/i);
 

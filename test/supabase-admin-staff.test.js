@@ -121,6 +121,7 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
                 customer_name: "Anna Petrova",
                 customer_email: "anna@example.com",
                 customer_phone: "+1 (630) 555-0101",
+                full_address: "215 North Elm Street, Naperville, IL",
                 service_name: "Team Lead",
                 code: "active",
                 error_message: "Quote-ops fallback row",
@@ -133,6 +134,7 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
                     role: "Team Lead",
                     phone: "+1 (630) 555-0101",
                     email: "anna@example.com",
+                    address: "215 North Elm Street, Naperville, IL",
                     status: "active",
                     notes: "Quote-ops fallback row",
                     createdAt: "2026-04-11T16:36:16.391Z",
@@ -187,6 +189,7 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
 
   assert.equal(snapshot.staff.length, 1);
   assert.equal(snapshot.staff[0].name, "Anna Petrova");
+  assert.equal(snapshot.staff[0].address, "215 North Elm Street, Naperville, IL");
   assert.equal(snapshot.assignments.length, 1);
   assert.deepEqual(snapshot.assignments[0].staffIds, [staffId]);
   assert.ok(calls.some((call) => call.url.includes("/rest/v1/quote_ops_entries")));
@@ -233,6 +236,7 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
     role: "Cleaner",
     email: "olga@example.com",
     phone: "+1 (630) 555-0102",
+    address: "742 Cedar Avenue, Aurora, IL 60506",
     status: "active",
     notes: "Remote fallback upsert",
     createdAt: "2026-04-11T16:36:16.393Z",
@@ -244,5 +248,7 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
   const payload = JSON.parse(fallbackWrite.options.body);
   assert.equal(payload.kind, QUOTE_OPS_STAFF_KIND);
   assert.equal(payload.customer_name, "Olga Martinez");
+  assert.equal(payload.full_address, "742 Cedar Avenue, Aurora, IL 60506");
   assert.equal(payload.code, "active");
+  assert.equal(payload.payload_for_retry.staff.address, "742 Cedar Avenue, Aurora, IL 60506");
 });

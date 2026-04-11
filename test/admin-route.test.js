@@ -382,6 +382,7 @@ test("creates staff members and assigns them to orders through the staff workspa
         role: "Team Lead",
         phone: "312-555-0199",
         email: "olga@example.com",
+        address: "742 Cedar Avenue, Aurora, IL 60506",
         status: "active",
         notes: "Prefers morning jobs",
       }),
@@ -404,10 +405,12 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /Точно удалить\?/);
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
+    assert.match(staffBody, /name="address"/);
     assert.match(staffBody, /aria-label="Удалить сотрудника"/);
     assert.doesNotMatch(staffBody, /Удаление очистит его назначения в графике/);
     assert.match(staffBody, /Olga Stone/);
     assert.match(staffBody, /Team Lead/);
+    assert.match(staffBody, /742 Cedar Avenue, Aurora, IL 60506/);
     assert.match(staffBody, /Jane Doe/);
 
     const staffIdMatch = staffBody.match(/name="staffId" value="([^"]+)"/);
@@ -450,6 +453,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.staff.length, 1);
     assert.equal(storePayload.assignments.length, 1);
+    assert.equal(storePayload.staff[0].address, "742 Cedar Avenue, Aurora, IL 60506");
     assert.equal(storePayload.assignments[0].entryId, entryId);
     assert.deepEqual(storePayload.assignments[0].staffIds, [staffId]);
 
