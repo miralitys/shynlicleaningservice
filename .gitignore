@@ -4,4 +4,5 @@ node_modules/
 .DS_Store
 coverage/
 *.log
-
+data/admin-settings-store.json
+data/admin-staff-store.json

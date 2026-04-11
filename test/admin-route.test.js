@@ -324,6 +324,156 @@ test("renders checklist templates in settings and persists checklist updates", a
   }
 });
 
+test("creates staff members and assigns them to orders through the staff workspace", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-route-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-staff-123",
+        },
+      },
+    },
+  ]);
+  const storePath = path.join(tempDir, "admin-staff-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: storePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "staff-request-1",
+      fullName: "Jane Doe",
+      phone: "312-555-0100",
+      email: "jane@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-03-25",
+      selectedTime: "12:00",
+      fullAddress: "123 Main St, Romeoville, IL 60446",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-staff",
+        name: "Olga Stone",
+        role: "Team Lead",
+        phone: "312-555-0199",
+        email: "olga@example.com",
+        status: "active",
+        notes: "Prefers morning jobs",
+      }),
+    });
+    assert.equal(createStaffResponse.status, 303);
+    assert.match(createStaffResponse.headers.get("location") || "", /notice=staff-created/);
+
+    const staffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffBody = await staffResponse.text();
+    assert.equal(staffResponse.status, 200);
+    assert.match(staffBody, /Olga Stone/);
+    assert.match(staffBody, /Team Lead/);
+    assert.match(staffBody, /Jane Doe/);
+
+    const staffIdMatch = staffBody.match(/name="staffId" value="([^"]+)"/);
+    assert.ok(staffIdMatch);
+    const staffId = staffIdMatch[1];
+
+    const entryIdMatch = staffBody.match(/name="entryId" value="([^"]+)"/);
+    assert.ok(entryIdMatch);
+    const entryId = entryIdMatch[1];
+
+    const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", entryId],
+        ["staffIds", staffId],
+        ["status", "confirmed"],
+        ["notes", "Bring ladder"],
+      ]),
+    });
+    assert.equal(assignResponse.status, 303);
+    assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
+
+    const updatedStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const updatedStaffBody = await updatedStaffResponse.text();
+    assert.equal(updatedStaffResponse.status, 200);
+    assert.match(updatedStaffBody, /Подтверждено/);
+    assert.match(updatedStaffBody, /Bring ladder/);
+    assert.match(updatedStaffBody, /Olga Stone/);
+
+    const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
+    assert.equal(storePayload.staff.length, 1);
+    assert.equal(storePayload.assignments.length, 1);
+    assert.equal(storePayload.assignments[0].entryId, entryId);
+    assert.deepEqual(storePayload.assignments[0].staffIds, [staffId]);
+
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Olga Stone/);
+    assert.match(ordersBody, /Сотрудники и график/);
+
+    const clearResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "clear-assignment",
+        entryId,
+      }),
+    });
+    assert.equal(clearResponse.status, 303);
+    assert.match(clearResponse.headers.get("location") || "", /notice=assignment-cleared/);
+
+    const clearedStorePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
+    assert.equal(clearedStorePayload.assignments.length, 0);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("shows recent quote submissions in admin quote ops, exports CSV, and retries CRM sync", async () => {
   const fetchStub = createFetchStub([
     {

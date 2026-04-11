@@ -3560,7 +3560,15 @@ function renderOrdersNotice(req) {
   return "";
 }
 
-function renderOrderEntryCard(order, returnTo) {
+function renderOrderEntryCard(order, returnTo, options = {}) {
+  const planningItem = options.planningItem || null;
+  const staffPageHref = options.staffPageHref || ADMIN_STAFF_PATH;
+  const planningTeamLabel =
+    planningItem && planningItem.assignedStaff.length > 0
+      ? planningItem.assignedStaff.map((staffRecord) => staffRecord.name).join(", ")
+      : "";
+  const assignedLabel = planningTeamLabel || order.assignedStaff || "Не назначен";
+
   return `<article class="admin-entry-card">
     <div class="admin-entry-head">
       <div>
@@ -3568,6 +3576,7 @@ function renderOrderEntryCard(order, returnTo) {
         <p class="admin-entry-copy">${escapeHtml(order.serviceLabel)} • ${escapeHtml(formatCurrencyAmount(order.totalPrice))}</p>
       </div>
       <div class="admin-entry-meta">
+        ${planningItem ? renderAssignmentStatusBadge(planningItem.assignmentStatus) : ""}
         ${renderOrderStatusBadge(order.orderStatus)}
         ${renderAdminBadge(order.serviceLabel, "outline")}
         ${order.frequency ? renderAdminBadge(order.frequencyLabel, "outline") : ""}
@@ -3588,8 +3597,8 @@ function renderOrderEntryCard(order, returnTo) {
         <p class="admin-mini-value">${escapeHtml(order.frequencyLabel)}</p>
       </div>
       <div class="admin-mini-stat">
-        <span class="admin-mini-label">Сотрудник</span>
-        <p class="admin-mini-value">${escapeHtml(order.assignedStaff || "Не назначен")}</p>
+        <span class="admin-mini-label">Команда</span>
+        <p class="admin-mini-value">${escapeHtml(assignedLabel)}</p>
       </div>
       <div class="admin-mini-stat">
         <span class="admin-mini-label">Контакты</span>
@@ -3615,8 +3624,8 @@ function renderOrderEntryCard(order, returnTo) {
         </select>
       </label>
       <label class="admin-label">
-        Кто назначен
-        <input class="admin-input" type="text" name="assignedStaff" value="${escapeHtmlText(order.assignedStaff)}" placeholder="Имя сотрудника">
+        Ответственный / заметка
+        <input class="admin-input" type="text" name="assignedStaff" value="${escapeHtmlText(order.assignedStaff)}" placeholder="Текстовая пометка, если нужна">
       </label>
       <label class="admin-label">
         Дата уборки
@@ -3637,19 +3646,40 @@ function renderOrderEntryCard(order, returnTo) {
       </label>
       <div class="admin-inline-actions admin-form-actions">
         <button class="admin-button" type="submit">Сохранить заказ</button>
-        <span class="admin-action-hint">Учитываем тип уборки, дату, повторяемость, статус и назначенного сотрудника.</span>
+        <a class="admin-link-button admin-button-secondary" href="${escapeHtmlAttribute(staffPageHref)}">Сотрудники и график</a>
+        <span class="admin-action-hint">Точную команду и статусы смен удобнее вести в разделе «Сотрудники».</span>
       </div>
     </form>
   </article>`;
 }
 
-async function renderOrdersPage(req, config, quoteOpsLedger) {
+async function renderOrdersPage(req, config, quoteOpsLedger, staffStore) {
   const { reqUrl, filters } = getOrdersFilters(req);
   const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
-  const allOrders = collectAdminOrderRecords(allEntries);
+  const staffSnapshot = staffStore ? await staffStore.getSnapshot() : { staff: [], assignments: [] };
+  const planning = buildStaffPlanningContext(allEntries, staffSnapshot);
+  const planningByEntryId = planning.orderItemsByEntryId;
+  const allOrders = collectAdminOrderRecords(allEntries).map((order) => {
+    const planningItem = planningByEntryId.get(order.id) || null;
+    if (!planningItem) return order;
+
+    const assignedTeamLabel =
+      planningItem.assignedStaff.length > 0
+        ? planningItem.assignedStaff.map((staffRecord) => staffRecord.name).join(", ")
+        : "";
+
+    return {
+      ...order,
+      assignedStaff: assignedTeamLabel || order.assignedStaff,
+      isAssigned: Boolean(assignedTeamLabel || order.assignedStaff),
+      scheduleLabel: planningItem.scheduleLabel || order.scheduleLabel,
+      hasSchedule: planningItem.hasSchedule || order.hasSchedule,
+      planningItem,
+    };
+  });
   const orders = filterAdminOrderRecords(allOrders, filters);
   const totalOrders = allOrders.length;
-  const scheduledCount = allOrders.filter((order) => order.orderStatus === "scheduled").length;
+  const scheduledCount = allOrders.filter((order) => order.hasSchedule).length;
   const recurringCount = allOrders.filter((order) => order.isRecurring).length;
   const assignedCount = allOrders.filter((order) => order.isAssigned).length;
   const attentionCount = allOrders.filter((order) => order.needsAttention).length;
@@ -3660,8 +3690,8 @@ async function renderOrdersPage(req, config, quoteOpsLedger) {
   return renderAdminLayout(
     "Заказы",
     `${renderAdminSignedInTopbar(config, {
-      linkHref: ADMIN_QUOTE_OPS_PATH,
-      linkLabel: "Открыть заявки",
+      linkHref: ADMIN_STAFF_PATH,
+      linkLabel: "Открыть сотрудников",
     })}
       ${renderOrdersNotice(req)}
       <div class="admin-stats-grid">
@@ -3672,10 +3702,16 @@ async function renderOrdersPage(req, config, quoteOpsLedger) {
           { eyebrow: "Заказы" }
         )}
         ${renderAdminCard(
-          "Scheduled",
-          "Заказы с подтверждённой датой или временем.",
+          "В графике",
+          "Заказы с датой или временем уборки.",
           `<p class="admin-metric-value">${escapeHtml(String(scheduledCount))}</p>`,
-          { eyebrow: "Статус", muted: true }
+          { eyebrow: "График", muted: true }
+        )}
+        ${renderAdminCard(
+          "Есть команда",
+          "Заказы, у которых уже есть назначение по команде.",
+          `<p class="admin-metric-value">${escapeHtml(String(assignedCount))}</p>`,
+          { eyebrow: "Команда", muted: true }
         )}
         ${renderAdminCard(
           "Recurring",
@@ -3683,16 +3719,10 @@ async function renderOrdersPage(req, config, quoteOpsLedger) {
           `<p class="admin-metric-value">${escapeHtml(String(recurringCount))}</p>`,
           { eyebrow: "Повторяемость", muted: true }
         )}
-        ${renderAdminCard(
-          "Assigned",
-          "Заказы, у которых уже есть исполнитель.",
-          `<p class="admin-metric-value">${escapeHtml(String(assignedCount))}</p>`,
-          { eyebrow: "Сотрудники", muted: true }
-        )}
       </div>
       ${renderAdminCard(
         "Список заказов",
-        "Фильтруйте и обновляйте статус, дату, повторяемость и сотрудника.",
+        "Фильтруйте и обновляйте статус, дату и повторяемость. Назначения команды видны прямо в карточках.",
         `<form class="admin-form-grid admin-form-grid-two" method="get" action="${ADMIN_ORDERS_PATH}">
           <label class="admin-label">
             Поиск
@@ -3744,7 +3774,14 @@ async function renderOrdersPage(req, config, quoteOpsLedger) {
         <div class="admin-divider"></div>
         <div class="admin-entry-list">
           ${orders.length > 0
-            ? orders.map((order) => renderOrderEntryCard(order, currentReturnTo)).join("")
+            ? orders
+                .map((order) =>
+                  renderOrderEntryCard(order, currentReturnTo, {
+                    planningItem: planningByEntryId.get(order.id) || null,
+                    staffPageHref: ADMIN_STAFF_PATH,
+                  })
+                )
+                .join("")
             : `<div class="admin-empty-state">По текущему фильтру заказов нет.</div>`}
         </div>`,
         { eyebrow: "Управление" }
@@ -3761,89 +3798,381 @@ async function renderOrdersPage(req, config, quoteOpsLedger) {
             { label: "Canceled", value: String(statusCounts.canceled) },
             { label: "Rescheduled", value: String(statusCounts.rescheduled) },
             { label: "CRM требует внимания", value: String(attentionCount) },
+            { label: "Есть команда", value: String(assignedCount) },
             { label: "Сумма заказов", value: formatCurrencyAmount(revenuePipeline) },
           ])}`,
           { eyebrow: "Статусы", muted: true }
         )}
         ${renderAdminCard(
           "Что учитываем",
-          "Поля, которые теперь ведём прямо в разделе заказов.",
+          "Поля, которые теперь ведём прямо в разделе заказов и сотрудников.",
           `<ul class="admin-feature-list">
             <li>Тип уборки: standard, deep, move-in/out.</li>
             <li>Дата и время визита.</li>
             <li>Повторяемость: weekly, bi-weekly, monthly.</li>
             <li>Статус заказа: new, scheduled, in progress, completed, canceled, rescheduled.</li>
-            <li>Назначенный сотрудник.</li>
+            <li>Команда и график смен ведутся в разделе «Сотрудники».</li>
           </ul>`,
           { eyebrow: "Модель заказа", muted: true }
         )}
       </div>`,
     {
       kicker: "Заказы",
-      subtitle: "Рабочий список заказов с датой, повторяемостью, статусом и назначенным сотрудником.",
+      subtitle: "Рабочий список заказов с датой, повторяемостью, статусом и реальной привязкой к команде.",
       sidebar: renderAdminAppSidebar(ADMIN_ORDERS_PATH),
     }
   );
 }
 
-function renderStaffPage(req, config) {
+function renderStaffNotice(req) {
+  const reqUrl = getRequestUrl(req);
+  const notice = normalizeString(reqUrl.searchParams.get("notice"), 80).toLowerCase();
+  if (notice === "staff-created") {
+    return `<div class="admin-alert admin-alert-info">Сотрудник добавлен в команду.</div>`;
+  }
+  if (notice === "staff-updated") {
+    return `<div class="admin-alert admin-alert-info">Карточка сотрудника обновлена.</div>`;
+  }
+  if (notice === "staff-deleted") {
+    return `<div class="admin-alert admin-alert-info">Сотрудник удалён, его назначения очищены.</div>`;
+  }
+  if (notice === "assignment-saved") {
+    return `<div class="admin-alert admin-alert-info">Назначение и график сохранены.</div>`;
+  }
+  if (notice === "assignment-cleared") {
+    return `<div class="admin-alert admin-alert-info">Назначение очищено.</div>`;
+  }
+  if (notice === "staff-failed") {
+    return `<div class="admin-alert admin-alert-error">Не удалось сохранить изменения. Проверьте форму и попробуйте снова.</div>`;
+  }
+  return "";
+}
+
+function renderStaffMemberCard(staffSummary) {
+  const contactLabel = [staffSummary.phone, staffSummary.email].filter(Boolean).join(" • ") || "Контакты не указаны";
+  const nextShiftLabel = staffSummary.nextOrder ? staffSummary.nextOrder.scheduleLabel : "Пока без смены";
+  const workloadLabel = staffSummary.scheduledCount > 0
+    ? `${formatOrderCountLabel(staffSummary.scheduledCount)} в графике`
+    : "Пока без заказов";
+
+  return `<article class="admin-entry-card">
+    <div class="admin-entry-head">
+      <div>
+        <h3 class="admin-entry-title">${escapeHtml(staffSummary.name)}</h3>
+        <p class="admin-entry-copy">${escapeHtml(staffSummary.role || "Роль не указана")}</p>
+      </div>
+      <div class="admin-entry-meta">
+        ${renderStaffStatusBadge(staffSummary.status)}
+      </div>
+    </div>
+    <div class="admin-entry-grid">
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Контакты</span>
+        <p class="admin-mini-value">${escapeHtml(contactLabel)}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Нагрузка</span>
+        <p class="admin-mini-value">${escapeHtml(workloadLabel)}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">На 7 дней</span>
+        <p class="admin-mini-value">${escapeHtml(formatOrderCountLabel(staffSummary.upcomingWeekCount))}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Следующая смена</span>
+        <p class="admin-mini-value">${escapeHtml(nextShiftLabel)}</p>
+      </div>
+    </div>
+    ${staffSummary.notes ? `<p class="admin-card-copy">${escapeHtml(staffSummary.notes)}</p>` : ""}
+    <details class="admin-details">
+      <summary>Изменить карточку</summary>
+      <form class="admin-form-grid" method="post" action="${ADMIN_STAFF_PATH}" style="margin-top:14px;">
+        <input type="hidden" name="action" value="update-staff">
+        <input type="hidden" name="staffId" value="${escapeHtmlAttribute(staffSummary.id)}">
+        <div class="admin-form-grid admin-form-grid-two">
+          <label class="admin-label">
+            Имя
+            <input class="admin-input" type="text" name="name" value="${escapeHtmlText(staffSummary.name)}" required>
+          </label>
+          <label class="admin-label">
+            Роль
+            <input class="admin-input" type="text" name="role" value="${escapeHtmlText(staffSummary.role)}" placeholder="Cleaner, Team Lead, Driver">
+          </label>
+          <label class="admin-label">
+            Телефон
+            <input class="admin-input" type="tel" name="phone" value="${escapeHtmlText(staffSummary.phone)}" placeholder="+1 (630) ...">
+          </label>
+          <label class="admin-label">
+            Email
+            <input class="admin-input" type="email" name="email" value="${escapeHtmlText(staffSummary.email)}" placeholder="team@shynli.com">
+          </label>
+          <label class="admin-label">
+            Статус
+            <select class="admin-input" name="status">
+              ${STAFF_STATUS_VALUES.map((status) => `<option value="${escapeHtmlAttribute(status)}"${staffSummary.status === status ? " selected" : ""}>${escapeHtml(formatStaffStatusLabel(status))}</option>`).join("")}
+            </select>
+          </label>
+        </div>
+        <label class="admin-label">
+          Заметки
+          <textarea class="admin-input" name="notes" placeholder="Районы, предпочтительные смены, ключи, транспорт">${escapeHtml(staffSummary.notes)}</textarea>
+        </label>
+        <div class="admin-inline-actions">
+          <button class="admin-button" type="submit">Сохранить карточку</button>
+        </div>
+      </form>
+      <form class="admin-inline-actions" method="post" action="${ADMIN_STAFF_PATH}" style="margin-top:12px;">
+        <input type="hidden" name="action" value="delete-staff">
+        <input type="hidden" name="staffId" value="${escapeHtmlAttribute(staffSummary.id)}">
+        <button class="admin-button admin-button-secondary" type="submit">Удалить сотрудника</button>
+        <span class="admin-action-hint">Удаление очистит его назначения в графике.</span>
+      </form>
+    </details>
+  </article>`;
+}
+
+function renderStaffAssignmentCard(orderItem, staffRecords) {
+  const selectableStaff = staffRecords.filter((record) => record.status === "active" || orderItem.assignedStaff.some((item) => item.id === record.id));
+  const assignedIds = orderItem.assignment ? orderItem.assignment.staffIds : [];
+  const currentTeamMarkup =
+    orderItem.assignedStaff.length > 0
+      ? orderItem.assignedStaff.map((record) => renderAdminBadge(record.name, "outline")).join("")
+      : renderAdminBadge("Команда не назначена", "muted");
+  const assignmentNotes = orderItem.assignment && orderItem.assignment.notes
+    ? `<p class="admin-card-copy">${escapeHtml(orderItem.assignment.notes)}</p>`
+    : "";
+  const missingStaffBlock = orderItem.missingStaffIds.length > 0
+    ? `<div class="admin-alert admin-alert-error">В назначении есть сотрудник, которого уже нет в команде. Сохраните карточку заказа заново.</div>`
+    : "";
+
+  return `<article class="admin-entry-card">
+    <div class="admin-entry-head">
+      <div>
+        <h3 class="admin-entry-title">${escapeHtml(orderItem.entry.customerName || "Клиент")}</h3>
+        <p class="admin-entry-copy">${escapeHtml(formatAdminServiceLabel(orderItem.entry.serviceName || orderItem.entry.serviceType))} • ${escapeHtml(formatCurrencyAmount(orderItem.entry.totalPrice))}</p>
+      </div>
+      <div class="admin-entry-meta">
+        ${renderAssignmentStatusBadge(orderItem.assignmentStatus)}
+        ${renderQuoteOpsStatusBadge(orderItem.entry.status)}
+      </div>
+    </div>
+    <div class="admin-badge-row">
+      ${currentTeamMarkup}
+    </div>
+    <div class="admin-entry-grid">
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Дата и время</span>
+        <p class="admin-mini-value">${escapeHtml(orderItem.scheduleLabel)}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Адрес</span>
+        <p class="admin-mini-value">${escapeHtml(orderItem.entry.fullAddress || "Адрес не указан")}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Контакты</span>
+        <p class="admin-mini-value">${escapeHtml(orderItem.entry.customerPhone || orderItem.entry.customerEmail || "Контакты не указаны")}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Заявка</span>
+        <p class="admin-mini-value">${escapeHtml(orderItem.entry.requestId || orderItem.entry.id)}</p>
+      </div>
+    </div>
+    ${missingStaffBlock}
+    ${assignmentNotes}
+    <details class="admin-details">
+      <summary>Назначить команду и смену</summary>
+      <form class="admin-form-grid" method="post" action="${ADMIN_STAFF_PATH}" style="margin-top:14px;">
+        <input type="hidden" name="action" value="save-assignment">
+        <input type="hidden" name="entryId" value="${escapeHtmlAttribute(orderItem.entry.id)}">
+        <div>
+          <p class="admin-field-note" style="margin-bottom:10px;">Оставьте дату и время пустыми, если нужно использовать график из самого заказа.</p>
+          ${selectableStaff.length > 0
+            ? `<div class="admin-checkbox-grid">
+                ${selectableStaff
+                  .map(
+                    (record) => `<label class="admin-checkbox">
+                      <input type="checkbox" name="staffIds" value="${escapeHtmlAttribute(record.id)}"${assignedIds.includes(record.id) ? " checked" : ""}>
+                      <span>
+                        <strong>${escapeHtml(record.name)}</strong>
+                        <small>${escapeHtml([record.role, formatStaffStatusLabel(record.status)].filter(Boolean).join(" • "))}</small>
+                      </span>
+                    </label>`
+                  )
+                  .join("")}
+              </div>`
+            : `<div class="admin-empty-state">Сначала добавьте хотя бы одного сотрудника в команду.</div>`}
+        </div>
+        <div class="admin-form-grid admin-form-grid-two">
+          <label class="admin-label">
+            Дата смены
+            <input class="admin-input" type="date" name="scheduleDate" value="${escapeHtmlAttribute(orderItem.assignment ? orderItem.assignment.scheduleDate : "")}">
+          </label>
+          <label class="admin-label">
+            Время смены
+            <input class="admin-input" type="time" name="scheduleTime" value="${escapeHtmlAttribute(orderItem.assignment ? orderItem.assignment.scheduleTime : "")}">
+          </label>
+          <label class="admin-label">
+            Статус
+            <select class="admin-input" name="status">
+              ${ASSIGNMENT_STATUS_VALUES.map((status) => `<option value="${escapeHtmlAttribute(status)}"${orderItem.assignmentStatus === status ? " selected" : ""}>${escapeHtml(formatAssignmentStatusLabel(status))}</option>`).join("")}
+            </select>
+          </label>
+        </div>
+        <label class="admin-label">
+          Комментарий
+          <textarea class="admin-input" name="notes" placeholder="Ключи, инструкции по доступу, комментарий для команды">${escapeHtml(orderItem.assignment ? orderItem.assignment.notes : "")}</textarea>
+        </label>
+        <div class="admin-inline-actions">
+          <button class="admin-button" type="submit">Сохранить назначение</button>
+        </div>
+      </form>
+      ${orderItem.assignment
+        ? `<form class="admin-inline-actions" method="post" action="${ADMIN_STAFF_PATH}" style="margin-top:12px;">
+            <input type="hidden" name="action" value="clear-assignment">
+            <input type="hidden" name="entryId" value="${escapeHtmlAttribute(orderItem.entry.id)}">
+            <button class="admin-button admin-button-secondary" type="submit">Очистить назначение</button>
+            <span class="admin-action-hint">Уберёт команду, статус и комментарий по этой смене.</span>
+          </form>`
+        : ""}
+    </details>
+  </article>`;
+}
+
+async function renderStaffPage(req, config, quoteOpsLedger, staffStore) {
+  const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
+  const staffSnapshot = staffStore ? await staffStore.getSnapshot() : { staff: [], assignments: [] };
+  const planning = buildStaffPlanningContext(allEntries, staffSnapshot);
+  const upcomingOrders = planning.orderItems.slice(0, 12);
+  const shiftsPreview = planning.scheduledOrders.slice(0, 6);
+
   return renderAdminLayout(
     "Сотрудники",
     `${renderAdminSignedInTopbar(config, {
       linkHref: ADMIN_ORDERS_PATH,
       linkLabel: "Открыть заказы",
     })}
+      ${renderStaffNotice(req)}
       <div class="admin-stats-grid">
         ${renderAdminCard(
           "Сотрудники",
-          "Список сотрудников появится здесь.",
-          `<p class="admin-metric-value">0</p>`,
+          "Все сотрудники, которые есть в команде.",
+          `<p class="admin-metric-value">${escapeHtml(String(planning.staff.length))}</p>`,
           { eyebrow: "Команда" }
         )}
         ${renderAdminCard(
-          "Роли",
-          "Раздел подготовлен для ролей и доступа.",
-          `<p class="admin-metric-value">Скоро</p>`,
-          { eyebrow: "Роли", muted: true }
+          "Активны",
+          "Сотрудники, которых можно ставить в график.",
+          `<p class="admin-metric-value">${escapeHtml(String(planning.activeStaffCount))}</p>`,
+          { eyebrow: "Статус", muted: true }
         )}
         ${renderAdminCard(
-          "График",
-          "Здесь можно будет вести расписание.",
-          `<p class="admin-metric-value">Скоро</p>`,
+          "Назначены",
+          "Заказы, где уже есть команда.",
+          `<p class="admin-metric-value">${escapeHtml(String(planning.assignedScheduledCount))}</p>`,
           { eyebrow: "График", muted: true }
         )}
         ${renderAdminCard(
-          "Статус",
-          "Раздел уже добавлен в админку.",
-          `<p class="admin-metric-value">Готово</p>`,
-          { eyebrow: "Статус", muted: true }
+          "Без команды",
+          "Запланированные заказы, которые ещё ждут назначения.",
+          `<p class="admin-metric-value">${escapeHtml(String(planning.unassignedScheduledCount))}</p>`,
+          { eyebrow: "Пробелы", muted: true }
         )}
       </div>
       <div class="admin-section-grid">
         ${renderAdminCard(
-          "Раздел сотрудников",
-          "Здесь будут карточки сотрудников и их роли.",
-          `<ul class="admin-feature-list">
-            <li>Список сотрудников.</li>
-            <li>Роли и статусы.</li>
-            <li>График и заметки.</li>
-          </ul>`,
+          "Добавить сотрудника",
+          "Создайте карточку сотрудника, чтобы он появился в графике и назначениях.",
+          `<form class="admin-form-grid" method="post" action="${ADMIN_STAFF_PATH}">
+            <input type="hidden" name="action" value="create-staff">
+            <div class="admin-form-grid admin-form-grid-two">
+              <label class="admin-label">
+                Имя
+                <input class="admin-input" type="text" name="name" placeholder="Anna Petrova" required>
+              </label>
+              <label class="admin-label">
+                Роль
+                <input class="admin-input" type="text" name="role" placeholder="Cleaner, Team Lead">
+              </label>
+              <label class="admin-label">
+                Телефон
+                <input class="admin-input" type="tel" name="phone" placeholder="+1 (630) ...">
+              </label>
+              <label class="admin-label">
+                Email
+                <input class="admin-input" type="email" name="email" placeholder="team@shynli.com">
+              </label>
+              <label class="admin-label">
+                Статус
+                <select class="admin-input" name="status">
+                  ${STAFF_STATUS_VALUES.map((status) => `<option value="${escapeHtmlAttribute(status)}">${escapeHtml(formatStaffStatusLabel(status))}</option>`).join("")}
+                </select>
+              </label>
+            </div>
+            <label class="admin-label">
+              Заметки
+              <textarea class="admin-input" name="notes" placeholder="Районы, доступность, предпочтительные смены, ключи"></textarea>
+            </label>
+            <div class="admin-inline-actions">
+              <button class="admin-button" type="submit">Добавить сотрудника</button>
+            </div>
+          </form>`,
           { eyebrow: "Команда" }
         )}
         ${renderAdminCard(
-          "Сейчас",
-          "Раздел уже на месте и готов к заполнению.",
+          "Команда",
+          "Карточки сотрудников, контакты и текущая нагрузка.",
+          planning.staffSummaries.length > 0
+            ? `<div class="admin-entry-list">
+                ${planning.staffSummaries.map((record) => renderStaffMemberCard(record)).join("")}
+              </div>`
+            : `<div class="admin-empty-state">Пока сотрудников нет. Добавьте первую карточку, и сможете сразу назначать команду на заказы.</div>`,
+          { eyebrow: "Список", muted: true }
+        )}
+      </div>
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "Назначения и график",
+          "Свяжите сотрудников с заказами и зафиксируйте смены.",
+          upcomingOrders.length > 0
+            ? `<div class="admin-entry-list">
+                ${upcomingOrders.map((item) => renderStaffAssignmentCard(item, planning.staff)).join("")}
+              </div>`
+            : `<div class="admin-empty-state">Пока заказов нет. Как только появятся заявки, здесь можно будет назначать команду и вести график.</div>`,
+          { eyebrow: "График" }
+        )}
+        ${renderAdminCard(
+          "Ближайшая загрузка",
+          "Короткая сводка по сменам и состоянию команды.",
           `${renderAdminPropertyList([
-            { label: "Статус", value: "Раздел создан" },
-            { label: "Данные", value: "Будут добавлены позже" },
-            { label: "Назначение", value: "Работа с командой" },
-          ])}`,
-          { eyebrow: "Инфо", muted: true }
+            { label: "Всего сотрудников", value: formatStaffCountLabel(planning.staff.length) },
+            { label: "Активны", value: formatStaffCountLabel(planning.activeStaffCount) },
+            { label: "Заказы в графике", value: formatOrderCountLabel(planning.scheduledOrders.length) },
+            { label: "Без команды", value: formatOrderCountLabel(planning.unassignedScheduledCount) },
+          ])}
+          ${shiftsPreview.length > 0
+            ? `<div class="admin-link-grid">
+                ${shiftsPreview
+                  .map(
+                    (item) => `<div class="admin-link-tile">
+                      <strong>${escapeHtml(item.entry.customerName || "Клиент")}</strong>
+                      <span>${escapeHtml(item.scheduleLabel)}</span>
+                      <span>${escapeHtml(item.assignedStaff.length > 0 ? item.assignedStaff.map((record) => record.name).join(", ") : "Команда не назначена")}</span>
+                    </div>`
+                  )
+                  .join("")}
+              </div>`
+            : `<div class="admin-empty-state">Пока нет смен с датой и временем. Они подтянутся из заказов автоматически.</div>`}
+          <ul class="admin-feature-list">
+            <li>Назначения привязаны к конкретным заказам, а не к отдельным заметкам.</li>
+            <li>Если дату и время не указывать вручную, раздел использует график из заказа.</li>
+            <li>Статус смены помогает видеть, что подтверждено, завершено или требует внимания.</li>
+          </ul>`,
+          { eyebrow: "Сводка", muted: true }
         )}
       </div>`,
     {
       kicker: "Сотрудники",
-      subtitle: "Раздел для команды и ролей.",
+      subtitle: "Рабочий инструмент для команды: карточки сотрудников, привязка к заказам и график смен.",
       sidebar: renderAdminAppSidebar(ADMIN_STAFF_PATH),
     }
   );
@@ -4209,11 +4538,11 @@ function renderRuntimePage(req, config, adminRuntime = {}) {
   return renderIntegrationsPage(req, config, adminRuntime);
 }
 
-async function renderAdminAppPage(route, req, config, adminRuntime = {}, quoteOpsLedger = null) {
+async function renderAdminAppPage(route, req, config, adminRuntime = {}, quoteOpsLedger = null, staffStore = null) {
   if (route === ADMIN_ROOT_PATH) return renderDashboardPage(req, config, quoteOpsLedger);
   if (route === ADMIN_CLIENTS_PATH) return renderClientsPage(req, config, quoteOpsLedger);
-  if (route === ADMIN_ORDERS_PATH) return renderOrdersPage(req, config, quoteOpsLedger);
-  if (route === ADMIN_STAFF_PATH) return renderStaffPage(req, config);
+  if (route === ADMIN_ORDERS_PATH) return renderOrdersPage(req, config, quoteOpsLedger, staffStore);
+  if (route === ADMIN_STAFF_PATH) return renderStaffPage(req, config, quoteOpsLedger, staffStore);
   if (route === ADMIN_SETTINGS_PATH) return renderSettingsPage(req, config, adminRuntime.settingsStore);
   if (route === ADMIN_QUOTE_OPS_PATH) return renderQuoteOpsPage(req, config, quoteOpsLedger);
   if (route === ADMIN_INTEGRATIONS_PATH) return renderDashboardPage(req, config, quoteOpsLedger);
@@ -4258,7 +4587,8 @@ async function handleAdminRequest(
   requestLogger,
   adminRuntime = {},
   quoteOpsLedger = null,
-  settingsStore = null
+  settingsStore = null,
+  staffStore = null
 ) {
   requestContext.cacheHit = false;
   const adminState = getAdminAuthState(req);
@@ -4404,6 +4734,135 @@ async function handleAdminRequest(
     }
   }
 
+  if (requestContext.route === ADMIN_STAFF_PATH && req.method === "POST") {
+    if (!session) {
+      if (challenge) {
+        redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
+        return;
+      }
+      redirectWithTiming(res, 303, ADMIN_LOGIN_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    const formBody = parseFormBody(await readTextBody(req, 12 * 1024));
+    const action = getFormValue(formBody, "action", 80).toLowerCase();
+
+    if (!staffStore) {
+      redirectWithTiming(
+        res,
+        303,
+        buildAdminRedirectPath(ADMIN_STAFF_PATH, { notice: "staff-failed" }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    try {
+      if (action === "create-staff") {
+        await staffStore.createStaff({
+          name: getFormValue(formBody, "name", 120),
+          role: getFormValue(formBody, "role", 80),
+          phone: getFormValue(formBody, "phone", 80),
+          email: getFormValue(formBody, "email", 200),
+          status: getFormValue(formBody, "status", 32),
+          notes: getFormValue(formBody, "notes", 800),
+        });
+        redirectWithTiming(
+          res,
+          303,
+          buildAdminRedirectPath(ADMIN_STAFF_PATH, { notice: "staff-created" }),
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        return;
+      }
+
+      if (action === "update-staff") {
+        await staffStore.updateStaff(getFormValue(formBody, "staffId", 120), {
+          name: getFormValue(formBody, "name", 120),
+          role: getFormValue(formBody, "role", 80),
+          phone: getFormValue(formBody, "phone", 80),
+          email: getFormValue(formBody, "email", 200),
+          status: getFormValue(formBody, "status", 32),
+          notes: getFormValue(formBody, "notes", 800),
+        });
+        redirectWithTiming(
+          res,
+          303,
+          buildAdminRedirectPath(ADMIN_STAFF_PATH, { notice: "staff-updated" }),
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        return;
+      }
+
+      if (action === "delete-staff") {
+        await staffStore.deleteStaff(getFormValue(formBody, "staffId", 120));
+        redirectWithTiming(
+          res,
+          303,
+          buildAdminRedirectPath(ADMIN_STAFF_PATH, { notice: "staff-deleted" }),
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        return;
+      }
+
+      if (action === "save-assignment") {
+        const entryId = getFormValue(formBody, "entryId", 120);
+        const entry = quoteOpsLedger ? await quoteOpsLedger.getEntry(entryId) : null;
+        if (!entry) {
+          redirectWithTiming(
+            res,
+            303,
+            buildAdminRedirectPath(ADMIN_STAFF_PATH, { notice: "staff-failed" }),
+            requestStartNs,
+            requestContext.cacheHit
+          );
+          return;
+        }
+
+        await staffStore.setAssignment(entryId, {
+          staffIds: getFormValues(formBody, "staffIds", 6, 120),
+          scheduleDate: getFormValue(formBody, "scheduleDate", 32),
+          scheduleTime: getFormValue(formBody, "scheduleTime", 32),
+          status: getFormValue(formBody, "status", 32),
+          notes: getFormValue(formBody, "notes", 800),
+        });
+        redirectWithTiming(
+          res,
+          303,
+          buildAdminRedirectPath(ADMIN_STAFF_PATH, { notice: "assignment-saved" }),
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        return;
+      }
+
+      if (action === "clear-assignment") {
+        await staffStore.clearAssignment(getFormValue(formBody, "entryId", 120));
+        redirectWithTiming(
+          res,
+          303,
+          buildAdminRedirectPath(ADMIN_STAFF_PATH, { notice: "assignment-cleared" }),
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        return;
+      }
+    } catch {}
+
+    redirectWithTiming(
+      res,
+      303,
+      buildAdminRedirectPath(ADMIN_STAFF_PATH, { notice: "staff-failed" }),
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
+  }
+
   if (requestContext.route === ADMIN_SETTINGS_PATH && req.method === "POST") {
     if (!session) {
       if (challenge) {
@@ -4486,7 +4945,7 @@ async function handleAdminRequest(
       writeHtmlWithTiming(
         res,
         200,
-        await renderAdminAppPage(requestContext.route, req, config, adminRuntime, quoteOpsLedger),
+        await renderAdminAppPage(requestContext.route, req, config, adminRuntime, quoteOpsLedger, staffStore),
         requestStartNs,
         requestContext.cacheHit
       );
@@ -6747,6 +7206,7 @@ async function main() {
   const eventLoopStats = createEventLoopStats();
   const quoteOpsLedger = createQuoteOpsStore();
   const settingsStore = createAdminSettingsStore();
+  const staffStore = createAdminStaffStore();
 
   const perfSummaryTimer = setInterval(() => {
     const requestSnapshot = requestPerfWindow.snapshot();
@@ -6874,7 +7334,8 @@ async function main() {
           requestPerfWindow,
           eventLoopStats,
           settingsStore,
-        }, quoteOpsLedger, settingsStore);
+          staffStore,
+        }, quoteOpsLedger, settingsStore, staffStore);
         return;
       }
 
