@@ -432,6 +432,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
     assert.match(staffBody, /class="admin-table admin-team-calendar-table"/);
     assert.match(staffBody, /data-admin-team-calendar="true"/);
+    assert.match(staffBody, /data-admin-team-calendar-scroll="true"/);
+    assert.match(staffBody, /admin-team-calendar-wrap-dragging/);
     assert.match(staffBody, /class="admin-table admin-staff-schedule-table"/);
     assert.match(staffBody, /class="admin-table-row-clickable"/);
     assert.match(staffBody, /data-admin-dialog-row="true"/);
