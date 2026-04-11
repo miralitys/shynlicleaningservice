@@ -1386,7 +1386,7 @@ function renderAdminAuthSidebar(activeStep) {
     </div>`;
 }
 
-function renderAdminAppSidebar(config, req, activePath) {
+function renderAdminAppSidebar(activePath) {
   return `
     <div class="admin-sidebar-card">
       <div class="admin-brand">
@@ -1402,14 +1402,7 @@ function renderAdminAppSidebar(config, req, activePath) {
       </nav>
     </div>
     <div class="admin-sidebar-card admin-sidebar-card-muted">
-      <p class="admin-sidebar-label">Аккаунт</p>
-      <div class="admin-property-list">
-        <div class="admin-property-row">
-          <span class="admin-property-label">Почта</span>
-          <span class="admin-property-value">${escapeHtml(config.email)}</span>
-        </div>
-      </div>
-      <div class="admin-divider"></div>
+      <p class="admin-sidebar-label">Быстрый доступ</p>
       <div class="admin-link-grid">
         <a class="admin-link-tile" href="/" target="_blank" rel="noreferrer">
           <strong>Сайт</strong>
@@ -2319,25 +2312,6 @@ function renderAdminSignedInTopbar(config, options = {}) {
   </div>`;
 }
 
-function getAdminStatusBadges(signals) {
-  const leadBadge = !signals.leadConnector.available
-    ? renderAdminBadge("GHL Unavailable", "muted")
-    : signals.leadConnector.error
-      ? renderAdminBadge("GHL Invalid", "danger")
-      : signals.leadConnector.configured
-        ? renderAdminBadge("GHL Ready", "success")
-        : renderAdminBadge("GHL Missing", "muted");
-
-  return [
-    leadBadge,
-    signals.supabaseConfigured ? renderAdminBadge("Supabase Ready", "success") : renderAdminBadge("Supabase Missing", "muted"),
-    signals.stripeConfigured ? renderAdminBadge("Stripe Ready", "success") : renderAdminBadge("Stripe Missing", "muted"),
-    signals.quoteTokenConfigured ? renderAdminBadge("Quote Token Ready", "success") : renderAdminBadge("Quote Token Missing", "muted"),
-    signals.placesConfigured ? renderAdminBadge("Places Key Ready", "success") : renderAdminBadge("Places Key Missing", "muted"),
-    signals.perfProtected ? renderAdminBadge("Perf Protected", "outline") : renderAdminBadge("Perf Endpoint Off", "muted"),
-  ].join("");
-}
-
 function collectAdminClientRecords(entries = []) {
   const clients = new Map();
 
@@ -2472,7 +2446,7 @@ async function renderDashboardPage(req, config, quoteOpsLedger) {
     {
       kicker: "SHYNLI",
       subtitle: "Рабочая панель для клиентов, заказов, сотрудников и заявок.",
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_ROOT_PATH),
+      sidebar: renderAdminAppSidebar(ADMIN_ROOT_PATH),
     }
   );
 }
@@ -2556,7 +2530,7 @@ async function renderClientsPage(req, config, quoteOpsLedger) {
     {
       kicker: "Клиенты",
       subtitle: "Список клиентов и их контакты.",
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_CLIENTS_PATH),
+      sidebar: renderAdminAppSidebar(ADMIN_CLIENTS_PATH),
     }
   );
 }
@@ -2639,7 +2613,7 @@ async function renderOrdersPage(req, config, quoteOpsLedger) {
     {
       kicker: "Заказы",
       subtitle: "Текущие заказы, даты и суммы.",
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_ORDERS_PATH),
+      sidebar: renderAdminAppSidebar(ADMIN_ORDERS_PATH),
     }
   );
 }
@@ -2702,7 +2676,7 @@ function renderStaffPage(req, config) {
     {
       kicker: "Сотрудники",
       subtitle: "Раздел для команды и ролей.",
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_STAFF_PATH),
+      sidebar: renderAdminAppSidebar(ADMIN_STAFF_PATH),
     }
   );
 }
@@ -2890,7 +2864,7 @@ async function renderQuoteOpsPage(req, config, quoteOpsLedger) {
     {
       kicker: "Заявки",
       subtitle: "Все заявки с сайта в одном месте.",
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_QUOTE_OPS_PATH),
+      sidebar: renderAdminAppSidebar(ADMIN_QUOTE_OPS_PATH),
     }
   );
 }
@@ -2911,7 +2885,7 @@ function renderIntegrationsPage(req, config) {
     {
       kicker: "SHYNLI",
       subtitle: "Технические разделы скрыты.",
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_ROOT_PATH),
+      sidebar: renderAdminAppSidebar(ADMIN_ROOT_PATH),
     }
   );
 }
