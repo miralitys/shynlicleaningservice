@@ -665,6 +665,9 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
     assert.match(quoteOpsBody, /123 Main St, Romeoville, IL 60446/);
     assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
+    assert.doesNotMatch(quoteOpsBody, /Persistent storage active/i);
+    assert.doesNotMatch(quoteOpsBody, /Подключено к Supabase/i);
+    assert.doesNotMatch(quoteOpsBody, /quote_ops_entries/i);
 
     const exportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
       headers: {
@@ -911,6 +914,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(clientsBody, /client-request-2/);
     assert.match(clientsBody, /client-request-3/);
     assert.match(clientsBody, /Фильтры/i);
+    assert.doesNotMatch(clientsBody, /Диагностика/i);
     assert.match(clientsBody, /Поиск по имени, email или телефону/i);
     assert.match(clientsBody, /Клик по имени открывает профиль/i);
     assert.doesNotMatch(clientsBody, /Карточка клиента/i);
@@ -1070,7 +1074,7 @@ test("renders the clients table with filters and request history", async () => {
   }
 });
 
-test("shows quote ops diagnostics when Supabase reads fail on the clients page", async () => {
+test("keeps quote ops diagnostics hidden on the clients page when Supabase reads fail", async () => {
   const fetchStub = createFetchStub([
     {
       method: "GET",
@@ -1101,10 +1105,11 @@ test("shows quote ops diagnostics when Supabase reads fail on the clients page",
     const body = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(body, /Supabase/i);
-    assert.match(body, /Чтение: fallback в память/i);
-    assert.match(body, /Ошибка чтения Supabase: supabase read failed/i);
-    assert.match(body, /quote_ops_entries/i);
+    assert.match(body, /База клиентов/i);
+    assert.doesNotMatch(body, /Supabase/i);
+    assert.doesNotMatch(body, /Чтение: fallback в память/i);
+    assert.doesNotMatch(body, /Ошибка чтения Supabase: supabase read failed/i);
+    assert.doesNotMatch(body, /quote_ops_entries/i);
   } finally {
     await stopServer(started.child);
   }
