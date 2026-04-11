@@ -2352,6 +2352,13 @@ function renderAdminLayout(title, content, options = {}) {
     select.admin-input {
       padding-right: 40px;
     }
+    textarea.admin-input {
+      min-height: 120px;
+      height: auto;
+      padding-top: 12px;
+      padding-bottom: 12px;
+      resize: vertical;
+    }
     .admin-input:focus {
       outline: none;
       border-color: rgba(158, 67, 90, 0.48);
@@ -2372,6 +2379,39 @@ function renderAdminLayout(title, content, options = {}) {
     }
     .admin-form-actions {
       grid-column: 1 / -1;
+    }
+    .admin-checkbox-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .admin-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.84);
+      cursor: pointer;
+    }
+    .admin-checkbox input {
+      margin-top: 3px;
+      accent-color: var(--accent);
+    }
+    .admin-checkbox span {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+    .admin-checkbox strong {
+      font-size: 14px;
+      line-height: 1.3;
+    }
+    .admin-checkbox small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
     }
     .admin-entry-list {
       display: grid;
@@ -4173,6 +4213,7 @@ async function renderAdminAppPage(route, req, config, adminRuntime = {}, quoteOp
   if (route === ADMIN_CLIENTS_PATH) return renderClientsPage(req, config, quoteOpsLedger);
   if (route === ADMIN_ORDERS_PATH) return renderOrdersPage(req, config, quoteOpsLedger);
   if (route === ADMIN_STAFF_PATH) return renderStaffPage(req, config);
+  if (route === ADMIN_SETTINGS_PATH) return renderSettingsPage(req, config, adminRuntime.settingsStore);
   if (route === ADMIN_QUOTE_OPS_PATH) return renderQuoteOpsPage(req, config, quoteOpsLedger);
   if (route === ADMIN_INTEGRATIONS_PATH) return renderDashboardPage(req, config, quoteOpsLedger);
   if (route === ADMIN_RUNTIME_PATH) return renderDashboardPage(req, config, quoteOpsLedger);
@@ -4215,7 +4256,8 @@ async function handleAdminRequest(
   requestContext,
   requestLogger,
   adminRuntime = {},
-  quoteOpsLedger = null
+  quoteOpsLedger = null,
+  settingsStore = null
 ) {
   requestContext.cacheHit = false;
   const adminState = getAdminAuthState(req);
@@ -4359,6 +4401,79 @@ async function handleAdminRequest(
       );
       return;
     }
+  }
+
+  if (requestContext.route === ADMIN_SETTINGS_PATH && req.method === "POST") {
+    if (!session) {
+      if (challenge) {
+        redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
+        return;
+      }
+      redirectWithTiming(res, 303, ADMIN_LOGIN_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    const formBody = parseFormBody(await readTextBody(req, 16 * 1024));
+    const action = getFormValue(formBody, "action", 80).toLowerCase();
+    const serviceType = getFormValue(formBody, "serviceType", 32).toLowerCase();
+
+    if (!settingsStore) {
+      redirectWithTiming(
+        res,
+        303,
+        buildSettingsRedirectPath(serviceType, "error"),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    try {
+      if (action === "save_checklist_state") {
+        await settingsStore.setCompletedItems(serviceType, getFormValues(formBody, "completedItemIds", 200, 120));
+        redirectWithTiming(
+          res,
+          303,
+          buildSettingsRedirectPath(serviceType, "saved"),
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        return;
+      }
+
+      if (action === "add_checklist_item") {
+        await settingsStore.addChecklistItem(serviceType, getFormValue(formBody, "itemLabel", 240));
+        redirectWithTiming(
+          res,
+          303,
+          buildSettingsRedirectPath(serviceType, "added"),
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        return;
+      }
+
+      if (action === "reset_checklist_state") {
+        await settingsStore.resetChecklist(serviceType);
+        redirectWithTiming(
+          res,
+          303,
+          buildSettingsRedirectPath(serviceType, "reset"),
+          requestStartNs,
+          requestContext.cacheHit
+        );
+        return;
+      }
+    } catch {}
+
+    redirectWithTiming(
+      res,
+      303,
+      buildSettingsRedirectPath(serviceType, "error"),
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    return;
   }
 
   if (ADMIN_APP_ROUTES.has(requestContext.route)) {
@@ -6630,6 +6745,7 @@ async function main() {
   const requestPerfWindow = createRequestPerfWindow();
   const eventLoopStats = createEventLoopStats();
   const quoteOpsLedger = createQuoteOpsStore();
+  const settingsStore = createAdminSettingsStore();
 
   const perfSummaryTimer = setInterval(() => {
     const requestSnapshot = requestPerfWindow.snapshot();
@@ -6756,7 +6872,8 @@ async function main() {
         await handleAdminRequest(req, res, requestStartNs, requestContext, requestLogger, {
           requestPerfWindow,
           eventLoopStats,
-        }, quoteOpsLedger);
+          settingsStore,
+        }, quoteOpsLedger, settingsStore);
         return;
       }
 
