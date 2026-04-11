@@ -410,8 +410,14 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
     assert.match(staffBody, /aria-label="Открыть карточку сотрудника /);
     assert.match(staffBody, /class="admin-table-link">Olga Stone<\/span>/);
+    assert.match(staffBody, /Olga Stone <span class="admin-staff-dialog-title-role">\(Team Lead\)<\/span>/);
+    assert.match(staffBody, /\+1\(312\)555-0199 • olga@example.com/);
     assert.doesNotMatch(staffBody, /<th>Действие<\/th>/);
     assert.doesNotMatch(staffBody, /<p class="admin-kicker">Сотрудники<\/p>/);
+    assert.doesNotMatch(staffBody, /Контакты и локация/);
+    assert.doesNotMatch(staffBody, /Редактирование карточки/);
+    assert.match(staffBody, /data-admin-toggle-target="admin-staff-edit-dialog-.*-edit-panel"/);
+    assert.match(staffBody, />Редактировать<\/button>/);
     assert.match(staffBody, /name="address"/);
     assert.match(staffBody, /data-admin-address-autocomplete="true"/);
     assert.match(staffBody, /data-admin-address-suggestions/);
