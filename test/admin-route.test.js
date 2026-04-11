@@ -617,6 +617,10 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.match(ordersBody, /Jane Doe/);
     assert.match(ordersBody, /Weekly/);
     assert.match(ordersBody, /Scheduled/);
+    assert.match(ordersBody, /admin-compact-summary-strip/);
+    assert.match(ordersBody, /Ближайшие выезды/);
+    assert.doesNotMatch(ordersBody, /admin-kicker">Заказы</);
+    assert.doesNotMatch(ordersBody, /admin-card-eyebrow">Заказы</);
     assert.match(ordersBody, /Поля из формы клиента/);
     assert.match(ordersBody, /admin-delete-button/);
     assert.match(ordersBody, /Inside Cabinets Cleaning/);
