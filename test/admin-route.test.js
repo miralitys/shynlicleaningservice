@@ -428,6 +428,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /<dialog class="admin-dialog admin-confirm-dialog" id="admin-confirm-dialog"/);
     assert.match(staffBody, /Точно удалить\?/);
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
+    assert.match(staffBody, /class="admin-table admin-team-calendar-table"/);
+    assert.match(staffBody, /data-admin-team-calendar="true"/);
     assert.match(staffBody, /class="admin-table admin-staff-schedule-table"/);
     assert.match(staffBody, /class="admin-table-row-clickable"/);
     assert.match(staffBody, /data-admin-dialog-row="true"/);
@@ -716,6 +718,16 @@ test("connects a cleaner to Google Calendar and syncs confirmed assignments into
     assert.equal(assignResponse.status, 303);
     assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
 
+    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?calendarStart=2026-04-18`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const calendarPageBody = await calendarPageResponse.text();
+    assert.equal(calendarPageResponse.status, 200);
+    assert.match(calendarPageBody, /class="admin-table admin-team-calendar-table"/);
+    assert.match(calendarPageBody, /class="admin-team-calendar-entry-title">Emily Johnson<\/strong>/);
+
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.staff[0].calendar.accountEmail, "cleaner.one@gmail.com");
     assert.equal(storePayload.staff[0].calendar.workCalendarId, "work-cal-1");
@@ -899,6 +911,16 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
     assert.equal(assignResponse.status, 303);
     assert.match(assignResponse.headers.get("location") || "", /notice=assignment-conflict/);
     assert.match(assignResponse.headers.get("location") || "", /staff=Diana/);
+
+    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?calendarStart=2026-04-18`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const calendarPageBody = await calendarPageResponse.text();
+    assert.equal(calendarPageResponse.status, 200);
+    assert.match(calendarPageBody, /admin-team-calendar-entry-unavailable/);
+    assert.match(calendarPageBody, /class="admin-team-calendar-entry-title">Day off<\/strong>/);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.assignments.length, 0);
