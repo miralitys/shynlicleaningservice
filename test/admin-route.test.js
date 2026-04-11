@@ -22,6 +22,10 @@ function getCookieValue(setCookies, name) {
   return target.split(";")[0].slice(name.length + 1);
 }
 
+function getInlineScripts(html) {
+  return Array.from(html.matchAll(/<script(?:[^>]*)>([\s\S]*?)<\/script>/g), (match) => match[1]).filter(Boolean);
+}
+
 async function createAdminSession(baseUrl, config) {
   const loginResponse = await fetch(`${baseUrl}/admin/login`, {
     method: "POST",
@@ -101,6 +105,9 @@ test("serves the admin login page when admin secrets are configured", async () =
     assert.equal(response.status, 200);
     assert.match(body, /Вход в админку/i);
     assert.match(body, /Продолжить/i);
+    for (const script of getInlineScripts(body)) {
+      assert.doesNotThrow(() => new Function(script));
+    }
   } finally {
     await stopServer(started.child);
   }
