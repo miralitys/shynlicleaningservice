@@ -405,8 +405,11 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /<dialog class="admin-dialog admin-confirm-dialog" id="admin-confirm-dialog"/);
     assert.match(staffBody, /Точно удалить\?/);
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
+    assert.match(staffBody, /class="admin-table-row-clickable"/);
+    assert.match(staffBody, /data-admin-dialog-row="true"/);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
-    assert.match(staffBody, /admin-table-link admin-table-link-button/);
+    assert.match(staffBody, /aria-label="Открыть карточку сотрудника /);
+    assert.match(staffBody, /class="admin-table-link">Olga Stone<\/span>/);
     assert.doesNotMatch(staffBody, /<th>Действие<\/th>/);
     assert.doesNotMatch(staffBody, /<p class="admin-kicker">Сотрудники<\/p>/);
     assert.match(staffBody, /name="address"/);
