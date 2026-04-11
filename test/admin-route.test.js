@@ -423,6 +423,9 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(staffResponse.status, 200);
     assert.match(staffBody, /class="admin-compact-summary-strip"/);
     assert.doesNotMatch(staffBody, /class="admin-stats-grid"/);
+    assert.match(staffBody, /href="\/admin\/staff\?section=team"/);
+    assert.match(staffBody, /href="\/admin\/staff\?section=calendar&calendarStart=/);
+    assert.match(staffBody, /href="\/admin\/staff\?section=assignments"/);
     assert.match(staffBody, /href="\/admin\/settings\?section=users"/);
     assert.match(staffBody, />Создать сотрудника</);
     assert.doesNotMatch(staffBody, /data-admin-dialog-open="admin-staff-create-dialog"/);
@@ -430,17 +433,12 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /<dialog class="admin-dialog admin-confirm-dialog" id="admin-confirm-dialog"/);
     assert.match(staffBody, /Точно удалить\?/);
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
-    assert.match(staffBody, /class="admin-table admin-team-calendar-table"/);
-    assert.match(staffBody, /data-admin-team-calendar="true"/);
-    assert.match(staffBody, /data-admin-team-calendar-scroll="true"/);
-    assert.match(staffBody, /admin-team-calendar-wrap-dragging/);
-    assert.match(staffBody, /class="admin-table admin-staff-schedule-table"/);
+    assert.doesNotMatch(staffBody, /class="admin-table admin-team-calendar-table"/);
+    assert.doesNotMatch(staffBody, /class="admin-table admin-staff-schedule-table"/);
     assert.match(staffBody, /class="admin-table-row-clickable"/);
     assert.match(staffBody, /data-admin-dialog-row="true"/);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
-    assert.match(staffBody, /data-admin-dialog-open="admin-staff-assignment-dialog-/);
     assert.match(staffBody, /aria-label="Открыть карточку сотрудника /);
-    assert.match(staffBody, /aria-label="Открыть назначение Jane Doe"/);
     assert.match(staffBody, /class="admin-table-link">Olga Stone<\/span>/);
     assert.match(staffBody, /Olga Stone <span class="admin-staff-dialog-title-role">\(Team Lead\)<\/span>/);
     assert.match(staffBody, /\+1\(312\)555-0199 • olga@example.com/);
@@ -505,6 +503,32 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(updatedStaffBody, /Подтверждено/);
     assert.match(updatedStaffBody, /Bring ladder/);
     assert.match(updatedStaffBody, /Olga Stone/);
+
+    const calendarSectionResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-03-25`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const calendarSectionBody = await calendarSectionResponse.text();
+    assert.equal(calendarSectionResponse.status, 200);
+    assert.match(calendarSectionBody, /class="admin-table admin-team-calendar-table"/);
+    assert.match(calendarSectionBody, /data-admin-team-calendar="true"/);
+    assert.match(calendarSectionBody, /data-admin-team-calendar-scroll="true"/);
+    assert.match(calendarSectionBody, /admin-team-calendar-wrap-dragging/);
+    assert.match(calendarSectionBody, /class="admin-team-calendar-entry admin-team-calendar-entry-button admin-team-calendar-entry-order/);
+    assert.match(calendarSectionBody, /data-admin-dialog-open="admin-staff-assignment-dialog-/);
+    assert.match(calendarSectionBody, /aria-label="Открыть заказ Jane Doe"/);
+    assert.match(calendarSectionBody, /class="admin-dialog admin-dialog-wide" id="admin-staff-assignment-dialog-/);
+
+    const assignmentsSectionResponse = await fetch(`${started.baseUrl}/admin/staff?section=assignments`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const assignmentsSectionBody = await assignmentsSectionResponse.text();
+    assert.equal(assignmentsSectionResponse.status, 200);
+    assert.match(assignmentsSectionBody, /class="admin-table admin-staff-schedule-table"/);
+    assert.doesNotMatch(assignmentsSectionBody, /class="admin-table admin-staff-table"/);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.staff.length, 1);
@@ -722,7 +746,7 @@ test("connects a cleaner to Google Calendar and syncs confirmed assignments into
     assert.equal(assignResponse.status, 303);
     assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
 
-    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?calendarStart=2026-04-18`, {
+    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-04-18`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -916,7 +940,7 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
     assert.match(assignResponse.headers.get("location") || "", /notice=assignment-conflict/);
     assert.match(assignResponse.headers.get("location") || "", /staff=Diana/);
 
-    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?calendarStart=2026-04-18`, {
+    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-04-18`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -924,6 +948,7 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
     const calendarPageBody = await calendarPageResponse.text();
     assert.equal(calendarPageResponse.status, 200);
     assert.match(calendarPageBody, /admin-team-calendar-entry-unavailable/);
+    assert.match(calendarPageBody, /class="admin-team-calendar-entry-time">All day<\/span>/);
     assert.match(calendarPageBody, /class="admin-team-calendar-entry-title">Day off<\/strong>/);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
@@ -1418,13 +1443,20 @@ test("renders the clients table with filters and request history", async () => {
     });
     assert.equal(createStaffResponse.status, 303);
 
-    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+    const staffTeamPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
     });
-    const staffPageBody = await staffPageResponse.text();
-    const staffIdMatch = staffPageBody.match(/name="staffId" value="([^"]+)"/);
+    const staffTeamPageBody = await staffTeamPageResponse.text();
+    const staffIdMatch = staffTeamPageBody.match(/name="staffId" value="([^"]+)"/);
+
+    const staffAssignmentsPageResponse = await fetch(`${started.baseUrl}/admin/staff?section=assignments`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffAssignmentsPageResponse.text();
     const janeRowDialogIdMatch = staffPageBody.match(
       /<tr\b(?:(?!<\/tr>).)*?data-admin-dialog-open="([^"]+)"(?:(?!<\/tr>).)*?client-request-2(?:(?!<\/tr>).)*?<\/tr>/s
     );
