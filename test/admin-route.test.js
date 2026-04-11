@@ -729,6 +729,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
     assert.match(quoteOpsBody, /data-admin-auto-submit="true"/);
     assert.match(quoteOpsBody, /data-admin-auto-submit-delay="320"/);
+    const adminScriptMatch = quoteOpsBody.match(/<script>\s*\(\(\) => \{([\s\S]*?)\}\)\(\);\s*<\/script>/);
+    assert.ok(adminScriptMatch);
+    assert.doesNotThrow(() => new Function(`(() => {${adminScriptMatch[1]}})();`));
     assert.match(quoteOpsBody, /123 Main St, Romeoville, IL 60446/);
     assert.match(quoteOpsBody, /\+1\(312\)555-0100/);
     assert.match(quoteOpsBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
