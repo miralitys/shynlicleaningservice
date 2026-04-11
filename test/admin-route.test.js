@@ -694,7 +694,7 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
   }
 });
 
-test("shows a persistent storage warning on admin orders when Supabase falls back to memory", async () => {
+test("keeps storage diagnostics hidden on admin orders when Supabase falls back to memory", async () => {
   const fetchStub = createFetchStub([
     {
       method: "GET",
@@ -772,8 +772,9 @@ test("shows a persistent storage warning on admin orders when Supabase falls bac
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Storage Warning/);
-    assert.match(ordersBody, /локальный fallback/i);
-    assert.match(ordersBody, /quote_ops_entries does not exist/i);
+    assert.doesNotMatch(ordersBody, /Persistent storage active/i);
+    assert.doesNotMatch(ordersBody, /локальный fallback/i);
+    assert.doesNotMatch(ordersBody, /quote_ops_entries/i);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
