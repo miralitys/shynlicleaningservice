@@ -392,7 +392,7 @@ test("creates staff members and assigns them to orders through the staff workspa
         action: "create-staff",
         name: "Olga Stone",
         role: "Team Lead",
-        phone: "312-555-0199",
+        phone: "13125550199123456789",
         email: "olga@example.com",
         address: "742 Cedar Avenue, Aurora, IL 60506",
         status: "active",
@@ -441,6 +441,9 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /data-admin-address-suggestions/);
     assert.match(staffBody, /places_test_key/);
     assert.match(staffBody, /__adminGooglePlacesReady/);
+    assert.match(staffBody, /data-admin-phone-input="true"/);
+    assert.match(staffBody, /maxlength="15"/);
+    assert.match(staffBody, /placeholder="\+1\(000\)000-0000"/);
     assert.match(staffBody, /aria-label="Удалить сотрудника"/);
     assert.doesNotMatch(staffBody, /Удаление очистит его назначения в графике/);
     assert.match(staffBody, /Olga Stone/);
@@ -488,6 +491,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.staff.length, 1);
     assert.equal(storePayload.assignments.length, 1);
+    assert.equal(storePayload.staff[0].phone, "+1(312)555-0199");
     assert.equal(storePayload.staff[0].address, "742 Cedar Avenue, Aurora, IL 60506");
     assert.equal(storePayload.assignments[0].entryId, entryId);
     assert.deepEqual(storePayload.assignments[0].staffIds, [staffId]);
