@@ -20,6 +20,71 @@ function getCookieValue(setCookies, name) {
   return target.split(";")[0].slice(name.length + 1);
 }
 
+async function createAdminSession(baseUrl, config) {
+  const loginResponse = await fetch(`${baseUrl}/admin/login`, {
+    method: "POST",
+    redirect: "manual",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      email: config.email,
+      password: "1HKLOR1!",
+    }),
+  });
+
+  assert.equal(loginResponse.status, 303);
+  assert.equal(loginResponse.headers.get("location"), "/admin/2fa");
+
+  const challengeCookieValue = getCookieValue(getSetCookies(loginResponse), "shynli_admin_challenge");
+  assert.ok(challengeCookieValue);
+
+  const code = generateTotpCode(config);
+  const twoFactorResponse = await fetch(`${baseUrl}/admin/2fa`, {
+    method: "POST",
+    redirect: "manual",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      cookie: `shynli_admin_challenge=${challengeCookieValue}`,
+    },
+    body: new URLSearchParams({ code }),
+  });
+
+  assert.equal(twoFactorResponse.status, 303);
+  assert.equal(twoFactorResponse.headers.get("location"), "/admin");
+
+  const sessionCookieValue = getCookieValue(getSetCookies(twoFactorResponse), "shynli_admin_session");
+  assert.ok(sessionCookieValue);
+  return sessionCookieValue;
+}
+
+async function submitQuote(baseUrl, options) {
+  return fetch(`${baseUrl}/api/quote/submit`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-request-id": options.requestId,
+    },
+    body: JSON.stringify({
+      contact: {
+        fullName: options.fullName,
+        phone: options.phone,
+        email: options.email,
+      },
+      quote: {
+        serviceType: options.serviceType || "deep",
+        rooms: options.rooms || 4,
+        bathrooms: options.bathrooms || 2,
+        squareMeters: options.squareMeters || 1600,
+        selectedDate: options.selectedDate || "2026-03-22",
+        selectedTime: options.selectedTime || "09:00",
+        fullAddress: options.fullAddress,
+        consent: true,
+      },
+    }),
+  });
+}
+
 test("serves the admin login page when admin secrets are configured", async () => {
   const started = await startServer({
     env: {
@@ -268,6 +333,135 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
       .filter(Boolean)
       .map((line) => JSON.parse(line));
     assert.equal(calls.length, 2);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
+test("renders the clients table with filters and request history", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-clients-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteSubmissions = [
+      {
+        requestId: "client-request-1",
+        fullName: "John Smith",
+        phone: "312-555-0109",
+        email: "john@example.com",
+        serviceType: "regular",
+        selectedDate: "2026-03-20",
+        selectedTime: "10:30",
+        fullAddress: "456 Oak Ave, Naperville, IL 60540",
+      },
+      {
+        requestId: "client-request-2",
+        fullName: "Jane Doe",
+        phone: "312-555-0100",
+        email: "jane@example.com",
+        serviceType: "deep",
+        selectedDate: "2026-03-22",
+        selectedTime: "09:00",
+        fullAddress: "123 Main St, Romeoville, IL 60446",
+      },
+      {
+        requestId: "client-request-3",
+        fullName: "Jane Doe",
+        phone: "312-555-0100",
+        email: "jane@example.com",
+        serviceType: "moving",
+        rooms: 5,
+        bathrooms: 3,
+        squareMeters: 2200,
+        selectedDate: "2026-03-29",
+        selectedTime: "13:00",
+        fullAddress: "789 Cedar Ln, Plainfield, IL 60544",
+      },
+    ];
+
+    for (const quote of quoteSubmissions) {
+      const quoteResponse = await submitQuote(started.baseUrl, quote);
+      assert.equal(quoteResponse.status, 201);
+    }
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const clientsResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const clientsBody = await clientsResponse.text();
+
+    assert.equal(clientsResponse.status, 200);
+    assert.match(clientsBody, /База клиентов/i);
+    assert.match(clientsBody, /Последняя заявка/i);
+    assert.match(clientsBody, /Сумма заказов/i);
+    assert.match(clientsBody, /Jane Doe/);
+    assert.match(clientsBody, /John Smith/);
+    assert.match(clientsBody, /client-request-2/);
+    assert.match(clientsBody, /client-request-3/);
+
+    const nameFilterResponse = await fetch(`${started.baseUrl}/admin/clients?name=John`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const nameFilterBody = await nameFilterResponse.text();
+    assert.equal(nameFilterResponse.status, 200);
+    assert.match(nameFilterBody, /John Smith/);
+    assert.doesNotMatch(nameFilterBody, /Jane Doe/);
+
+    const emailFilterResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const emailFilterBody = await emailFilterResponse.text();
+    assert.equal(emailFilterResponse.status, 200);
+    assert.match(emailFilterBody, /Jane Doe/);
+    assert.match(emailFilterBody, /client-request-2/);
+    assert.match(emailFilterBody, /client-request-3/);
+    assert.doesNotMatch(emailFilterBody, /John Smith/);
+
+    const phoneFilterResponse = await fetch(`${started.baseUrl}/admin/clients?phone=3125550109`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const phoneFilterBody = await phoneFilterResponse.text();
+    assert.equal(phoneFilterResponse.status, 200);
+    assert.match(phoneFilterBody, /John Smith/);
+    assert.doesNotMatch(phoneFilterBody, /Jane Doe/);
+
+    const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
+    const calls = captureRaw
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    assert.equal(calls.length, 3);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

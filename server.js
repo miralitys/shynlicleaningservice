@@ -66,6 +66,11 @@ try {
 } catch (error) {
   adminAuth = null;
 }
+const {
+  ASSIGNMENT_STATUS_VALUES,
+  STAFF_STATUS_VALUES,
+  createAdminStaffStore,
+} = require("./lib/admin-staff-store");
 let QRCode;
 try {
   QRCode = require("qrcode");
@@ -129,6 +134,9 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
     label: "Заявки",
   },
 ]);
+const ORDER_STATUS_VALUES = new Set(["new", "scheduled", "in-progress", "completed", "canceled", "rescheduled"]);
+const ORDER_FREQUENCY_VALUES = new Set(["weekly", "biweekly", "monthly"]);
+const ORDER_ASSIGNMENT_VALUES = new Set(["all", "assigned", "unassigned"]);
 const QUOTE_PUBLIC_PATH = "/quote";
 const REDIRECT_ROUTES = new Map([
   ["/home-simple", "/"],
@@ -634,6 +642,11 @@ function createQuoteOpsLedger(limit = QUOTE_OPS_LEDGER_LIMIT) {
     listEntries(filters = {}) {
       return filterQuoteOpsEntries(entries, filters);
     },
+    updateOrderEntry(entryId, updates = {}) {
+      const entry = entryById.get(normalizeString(entryId, 120));
+      if (!entry) return null;
+      return applyOrderEntryUpdates(entry, updates);
+    },
     buildCsv(entriesToExport = []) {
       const headers = [
         "id",
@@ -775,6 +788,27 @@ function createQuoteOpsStore(options = {}) {
         } catch {}
       }
       return result;
+    },
+    async updateOrderEntry(entryId, updates = {}) {
+      let entry = null;
+      if (remoteEnabled) {
+        try {
+          entry = await supabaseClient.fetchEntryById(entryId);
+        } catch {}
+      }
+      if (!entry) {
+        entry = localLedger.getEntry(entryId);
+      }
+      if (!entry) return null;
+
+      const updatedEntry = applyOrderEntryUpdates(entry, updates);
+      localLedger.updateOrderEntry(entryId, updates);
+
+      if (remoteEnabled) {
+        await supabaseClient.upsertEntry(updatedEntry);
+      }
+
+      return updatedEntry;
     },
   };
 }
@@ -1076,8 +1110,41 @@ function parseFormBody(rawBody) {
   const params = new URLSearchParams(String(rawBody || ""));
   const output = {};
   for (const [key, value] of params.entries()) {
-    output[key] = value;
+    if (!(key in output)) {
+      output[key] = value;
+      continue;
+    }
+    if (Array.isArray(output[key])) {
+      output[key].push(value);
+      continue;
+    }
+    output[key] = [output[key], value];
   }
+  return output;
+}
+
+function getFormValue(formBody, key, maxLength = 500) {
+  const value = formBody ? formBody[key] : "";
+  if (Array.isArray(value)) {
+    return normalizeString(value[value.length - 1], maxLength);
+  }
+  return normalizeString(value, maxLength);
+}
+
+function getFormValues(formBody, key, maxItems = 8, maxLength = 120) {
+  const value = formBody ? formBody[key] : [];
+  const items = Array.isArray(value) ? value : value ? [value] : [];
+  const seen = new Set();
+  const output = [];
+
+  for (const item of items) {
+    const normalized = normalizeString(item, maxLength);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    output.push(normalized);
+    if (output.length >= maxItems) break;
+  }
+
   return output;
 }
 
@@ -1232,6 +1299,489 @@ function formatAdminServiceLabel(value) {
   return normalizeString(value, 120);
 }
 
+function formatRussianPlural(count, one, few, many) {
+  const absolute = Math.abs(Number(count || 0));
+  const mod100 = absolute % 100;
+  const mod10 = absolute % 10;
+  if (mod100 >= 11 && mod100 <= 19) return many;
+  if (mod10 === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4) return few;
+  return many;
+}
+
+function formatOrderCountLabel(count) {
+  return `${count} ${formatRussianPlural(count, "заказ", "заказа", "заказов")}`;
+}
+
+function formatStaffCountLabel(count) {
+  return `${count} ${formatRussianPlural(count, "сотрудник", "сотрудника", "сотрудников")}`;
+}
+
+function formatAdminCalendarDate(value) {
+  const normalized = normalizeString(value, 32);
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return normalized || "Не указано";
+  const [, year, month, day] = match;
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12, 0, 0));
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function formatAdminScheduleLabel(dateValue, timeValue) {
+  const normalizedDate = normalizeString(dateValue, 32);
+  const normalizedTime = normalizeString(timeValue, 32);
+  if (!normalizedDate && !normalizedTime) return "Дата не указана";
+  if (!normalizedDate) return normalizedTime ? `Время: ${normalizedTime}` : "Дата не указана";
+  if (!normalizedTime) return formatAdminCalendarDate(normalizedDate);
+  return `${formatAdminCalendarDate(normalizedDate)} в ${normalizedTime}`;
+}
+
+function toAdminScheduleTimestamp(dateValue, timeValue) {
+  const normalizedDate = normalizeString(dateValue, 32);
+  const match = normalizedDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return NaN;
+  const [, year, month, day] = match;
+  const timeMatch = normalizeString(timeValue, 32).match(/^(\d{1,2}):(\d{2})/);
+  const hours = timeMatch ? Number(timeMatch[1]) : 12;
+  const minutes = timeMatch ? Number(timeMatch[2]) : 0;
+  return Date.UTC(Number(year), Number(month) - 1, Number(day), hours, minutes, 0);
+}
+
+function formatStaffStatusLabel(status) {
+  if (status === "inactive") return "Не активен";
+  if (status === "on_leave") return "В отпуске";
+  return "Активен";
+}
+
+function formatAssignmentStatusLabel(status) {
+  if (status === "confirmed") return "Подтверждено";
+  if (status === "completed") return "Завершено";
+  if (status === "issue") return "Нужно проверить";
+  return "Запланировано";
+}
+
+function renderStaffStatusBadge(status) {
+  if (status === "inactive") return renderAdminBadge(formatStaffStatusLabel(status), "muted");
+  if (status === "on_leave") return renderAdminBadge(formatStaffStatusLabel(status), "outline");
+  return renderAdminBadge(formatStaffStatusLabel(status), "success");
+}
+
+function renderAssignmentStatusBadge(status) {
+  if (status === "completed") return renderAdminBadge(formatAssignmentStatusLabel(status), "success");
+  if (status === "confirmed") return renderAdminBadge(formatAssignmentStatusLabel(status), "default");
+  if (status === "issue") return renderAdminBadge(formatAssignmentStatusLabel(status), "danger");
+  return renderAdminBadge(formatAssignmentStatusLabel(status), "outline");
+}
+
+function buildStaffReturnPath(value) {
+  const candidate = normalizeString(value, 1000);
+  if (!candidate) return ADMIN_STAFF_PATH;
+
+  try {
+    const parsed = new URL(candidate, SITE_ORIGIN);
+    if (parsed.pathname !== ADMIN_STAFF_PATH) return ADMIN_STAFF_PATH;
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return ADMIN_STAFF_PATH;
+  }
+}
+
+function buildStaffPlanningContext(entries = [], staffSnapshot = {}) {
+  const staff = Array.isArray(staffSnapshot.staff) ? staffSnapshot.staff.slice() : [];
+  const assignments = Array.isArray(staffSnapshot.assignments) ? staffSnapshot.assignments.slice() : [];
+  const staffById = new Map(staff.map((record) => [record.id, record]));
+  const assignmentsByEntryId = new Map(assignments.map((record) => [record.entryId, record]));
+  const orderItems = entries
+    .map((entry) => {
+      const assignment = assignmentsByEntryId.get(entry.id) || null;
+      const assignedStaff = assignment
+        ? assignment.staffIds.map((staffId) => staffById.get(staffId)).filter(Boolean)
+        : [];
+      const missingStaffIds = assignment
+        ? assignment.staffIds.filter((staffId) => !staffById.has(staffId))
+        : [];
+      const scheduleDate = normalizeString((assignment && assignment.scheduleDate) || entry.selectedDate, 32);
+      const scheduleTime = normalizeString((assignment && assignment.scheduleTime) || entry.selectedTime, 32);
+      return {
+        entry,
+        assignment,
+        assignedStaff,
+        missingStaffIds,
+        scheduleDate,
+        scheduleTime,
+        hasSchedule: Boolean(scheduleDate || scheduleTime),
+        scheduleTimestamp: toAdminScheduleTimestamp(scheduleDate, scheduleTime),
+        scheduleLabel: formatAdminScheduleLabel(scheduleDate, scheduleTime),
+        assignmentStatus: assignment ? assignment.status : "planned",
+      };
+    })
+    .sort((left, right) => {
+      const leftHasTimestamp = Number.isFinite(left.scheduleTimestamp);
+      const rightHasTimestamp = Number.isFinite(right.scheduleTimestamp);
+      if (leftHasTimestamp && rightHasTimestamp && left.scheduleTimestamp !== right.scheduleTimestamp) {
+        return left.scheduleTimestamp - right.scheduleTimestamp;
+      }
+      if (left.hasSchedule !== right.hasSchedule) {
+        return left.hasSchedule ? -1 : 1;
+      }
+      const leftCreatedAt = Date.parse(left.entry.createdAt || "");
+      const rightCreatedAt = Date.parse(right.entry.createdAt || "");
+      return (Number.isFinite(rightCreatedAt) ? rightCreatedAt : 0) - (Number.isFinite(leftCreatedAt) ? leftCreatedAt : 0);
+    });
+
+  const now = Date.now();
+  const weekAhead = now + (7 * 24 * 60 * 60 * 1000);
+  const orderItemsByEntryId = new Map(orderItems.map((item) => [item.entry.id, item]));
+  const staffSummaries = staff.map((record) => {
+    const assignedOrders = orderItems.filter((item) => item.assignedStaff.some((staffRecord) => staffRecord.id === record.id));
+    const scheduledOrders = assignedOrders.filter((item) => item.hasSchedule);
+    const datedOrders = scheduledOrders.filter((item) => Number.isFinite(item.scheduleTimestamp));
+    const nextOrder = datedOrders.length > 0 ? datedOrders[0] : scheduledOrders[0] || null;
+    const upcomingWeekCount = datedOrders.filter((item) => item.scheduleTimestamp >= now && item.scheduleTimestamp <= weekAhead).length;
+    return {
+      ...record,
+      assignedOrders,
+      scheduledOrders,
+      assignedCount: assignedOrders.length,
+      scheduledCount: scheduledOrders.length,
+      upcomingWeekCount,
+      nextOrder,
+    };
+  });
+
+  const scheduledOrders = orderItems.filter((item) => item.hasSchedule);
+  const assignedScheduledCount = scheduledOrders.filter((item) => item.assignedStaff.length > 0).length;
+  const unassignedScheduledCount = scheduledOrders.filter((item) => item.assignedStaff.length === 0).length;
+
+  return {
+    staff,
+    assignments,
+    staffById,
+    assignmentsByEntryId,
+    orderItems,
+    orderItemsByEntryId,
+    staffSummaries,
+    scheduledOrders,
+    assignedScheduledCount,
+    unassignedScheduledCount,
+    activeStaffCount: staff.filter((record) => record.status === "active").length,
+  };
+}
+
+function normalizeOrderServiceType(value, fallback = "standard") {
+  const normalized = normalizeString(value, 40)
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/_/g, "-");
+  if (!normalized) return fallback;
+  if (normalized === "deep") return "deep";
+  if (
+    normalized === "moving" ||
+    normalized === "move-in/out" ||
+    normalized === "move-in-out" ||
+    normalized === "moveout" ||
+    normalized === "moveinout"
+  ) {
+    return "move-in/out";
+  }
+  if (normalized === "regular" || normalized === "standard") return "standard";
+  return fallback;
+}
+
+function formatOrderServiceTypeLabel(value) {
+  const normalized = normalizeOrderServiceType(value);
+  if (normalized === "deep") return "Deep";
+  if (normalized === "move-in/out") return "Move-in/out";
+  return "Standard";
+}
+
+function normalizeOrderFrequency(value, fallback = "") {
+  const normalized = normalizeString(value, 40)
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+  if (!normalized) return fallback;
+  if (normalized === "weekly") return "weekly";
+  if (normalized === "monthly") return "monthly";
+  if (normalized === "biweekly") return "biweekly";
+  return fallback;
+}
+
+function formatOrderFrequencyLabel(value) {
+  const normalized = normalizeOrderFrequency(value, "");
+  if (normalized === "weekly") return "Weekly";
+  if (normalized === "monthly") return "Monthly";
+  if (normalized === "biweekly") return "Bi-weekly";
+  return "Not set";
+}
+
+function normalizeOrderStatus(value, fallback = "") {
+  const normalized = normalizeString(value, 40).toLowerCase();
+  const compact = normalized.replace(/[\s_-]+/g, "");
+  if (!compact) return fallback;
+  if (compact === "new") return "new";
+  if (compact === "scheduled") return "scheduled";
+  if (compact === "inprogress") return "in-progress";
+  if (compact === "completed") return "completed";
+  if (compact === "canceled" || compact === "cancelled") return "canceled";
+  if (compact === "rescheduled") return "rescheduled";
+  return fallback;
+}
+
+function formatOrderStatusLabel(value) {
+  const normalized = normalizeOrderStatus(value, "new");
+  if (normalized === "scheduled") return "Scheduled";
+  if (normalized === "in-progress") return "In progress";
+  if (normalized === "completed") return "Completed";
+  if (normalized === "canceled") return "Canceled";
+  if (normalized === "rescheduled") return "Rescheduled";
+  return "New";
+}
+
+function getEntryPayload(entry = {}) {
+  return entry && entry.payloadForRetry && typeof entry.payloadForRetry === "object" ? entry.payloadForRetry : {};
+}
+
+function getEntryCalculatorData(entry = {}) {
+  const payload = getEntryPayload(entry);
+  return payload.calculatorData && typeof payload.calculatorData === "object" ? payload.calculatorData : {};
+}
+
+function getEntryAdminOrderData(entry = {}) {
+  const payload = getEntryPayload(entry);
+  return payload.adminOrder && typeof payload.adminOrder === "object" ? payload.adminOrder : {};
+}
+
+function getOrderSelectedDate(entry = {}) {
+  const calculatorData = getEntryCalculatorData(entry);
+  return normalizeString(entry.selectedDate || calculatorData.selectedDate, 32);
+}
+
+function getOrderSelectedTime(entry = {}) {
+  const calculatorData = getEntryCalculatorData(entry);
+  return normalizeString(entry.selectedTime || calculatorData.selectedTime, 32);
+}
+
+function getOrderServiceType(entry = {}) {
+  const calculatorData = getEntryCalculatorData(entry);
+  return normalizeOrderServiceType(entry.serviceType || calculatorData.serviceType);
+}
+
+function getOrderFrequency(entry = {}) {
+  const calculatorData = getEntryCalculatorData(entry);
+  const adminOrder = getEntryAdminOrderData(entry);
+  return normalizeOrderFrequency(adminOrder.frequency || calculatorData.frequency, "");
+}
+
+function getOrderAssignedStaff(entry = {}) {
+  const adminOrder = getEntryAdminOrderData(entry);
+  return normalizeString(adminOrder.assignedStaff || adminOrder.assignee, 120);
+}
+
+function getOrderStatus(entry = {}) {
+  const adminOrder = getEntryAdminOrderData(entry);
+  const explicitStatus = normalizeOrderStatus(adminOrder.status, "");
+  if (explicitStatus) return explicitStatus;
+  if (getOrderSelectedDate(entry) || getOrderSelectedTime(entry)) return "scheduled";
+  return "new";
+}
+
+function formatAdminCalendarDate(value) {
+  const raw = normalizeString(value, 32);
+  if (!raw) return "";
+  const date = new Date(`${raw}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleDateString("ru-RU", {
+    dateStyle: "medium",
+  });
+}
+
+function formatOrderScheduleLabel(selectedDate, selectedTime) {
+  const parts = [];
+  const dateLabel = formatAdminCalendarDate(selectedDate);
+  const timeLabel = normalizeString(selectedTime, 32);
+  if (dateLabel) parts.push(dateLabel);
+  if (timeLabel) parts.push(timeLabel);
+  return parts.join(" в ") || "Не указаны";
+}
+
+function getOrderSearchHaystack(order) {
+  return [
+    order.customerName,
+    order.customerPhone,
+    order.customerEmail,
+    order.requestId,
+    order.fullAddress,
+    order.assignedStaff,
+    order.serviceLabel,
+    order.frequencyLabel,
+    order.orderStatusLabel,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function collectAdminOrderRecords(entries = []) {
+  return entries.map((entry) => {
+    const serviceType = getOrderServiceType(entry);
+    const selectedDate = getOrderSelectedDate(entry);
+    const selectedTime = getOrderSelectedTime(entry);
+    const frequency = getOrderFrequency(entry);
+    const assignedStaff = getOrderAssignedStaff(entry);
+    const orderStatus = getOrderStatus(entry);
+
+    return {
+      entry,
+      id: normalizeString(entry.id, 120),
+      customerName: normalizeString(entry.customerName || "Клиент", 250),
+      customerPhone: normalizeString(entry.customerPhone, 80),
+      customerEmail: normalizeString(entry.customerEmail, 250),
+      requestId: normalizeString(entry.requestId, 120),
+      fullAddress: normalizeString(entry.fullAddress, 500),
+      createdAt: normalizeString(entry.createdAt, 80),
+      serviceType,
+      serviceLabel: formatOrderServiceTypeLabel(serviceType),
+      frequency,
+      frequencyLabel: formatOrderFrequencyLabel(frequency),
+      orderStatus,
+      orderStatusLabel: formatOrderStatusLabel(orderStatus),
+      assignedStaff,
+      selectedDate,
+      selectedTime,
+      scheduleLabel: formatOrderScheduleLabel(selectedDate, selectedTime),
+      hasSchedule: Boolean(selectedDate || selectedTime),
+      totalPrice: Number(entry.totalPrice || 0),
+      crmStatus: normalizeString(entry.status, 32),
+      needsAttention: normalizeString(entry.status, 32) !== "success",
+      isAssigned: Boolean(assignedStaff),
+      isRecurring: Boolean(frequency),
+    };
+  });
+}
+
+function filterAdminOrderRecords(orderRecords = [], filters = {}) {
+  const status = normalizeString(filters.status, 40).toLowerCase();
+  const serviceType = normalizeString(filters.serviceType, 40).toLowerCase();
+  const frequency = normalizeString(filters.frequency, 40).toLowerCase();
+  const assignment = normalizeString(filters.assignment, 40).toLowerCase();
+  const query = normalizeString(filters.q, 200).toLowerCase();
+
+  return orderRecords.filter((order) => {
+    if (status && status !== "all" && order.orderStatus !== normalizeOrderStatus(status, "")) return false;
+    if (serviceType && serviceType !== "all" && order.serviceType !== normalizeOrderServiceType(serviceType, "")) return false;
+    if (frequency && frequency !== "all" && order.frequency !== normalizeOrderFrequency(frequency, "")) return false;
+    if (assignment === "assigned" && !order.isAssigned) return false;
+    if (assignment === "unassigned" && order.isAssigned) return false;
+    if (query && !getOrderSearchHaystack(order).includes(query)) return false;
+    return true;
+  });
+}
+
+function countOrdersByStatus(orderRecords = []) {
+  const counts = {
+    new: 0,
+    scheduled: 0,
+    "in-progress": 0,
+    completed: 0,
+    canceled: 0,
+    rescheduled: 0,
+  };
+
+  for (const order of orderRecords) {
+    if (Object.prototype.hasOwnProperty.call(counts, order.orderStatus)) {
+      counts[order.orderStatus] += 1;
+    }
+  }
+
+  return counts;
+}
+
+function getOrdersFilters(req) {
+  const reqUrl = getRequestUrl(req);
+  const rawStatus = normalizeString(reqUrl.searchParams.get("status"), 40).toLowerCase();
+  const rawServiceType = normalizeString(reqUrl.searchParams.get("serviceType"), 40).toLowerCase();
+  const rawFrequency = normalizeString(reqUrl.searchParams.get("frequency"), 40).toLowerCase();
+  const rawAssignment = normalizeString(reqUrl.searchParams.get("assignment"), 40).toLowerCase();
+  const q = normalizeString(reqUrl.searchParams.get("q"), 200);
+
+  return {
+    reqUrl,
+    filters: {
+      status: rawStatus === "all" ? "all" : normalizeOrderStatus(rawStatus, "") || "all",
+      serviceType:
+        rawServiceType === "all" ? "all" : normalizeOrderServiceType(rawServiceType, "") || "all",
+      frequency: rawFrequency === "all" ? "all" : normalizeOrderFrequency(rawFrequency, "") || "all",
+      assignment: ORDER_ASSIGNMENT_VALUES.has(rawAssignment) ? rawAssignment : "all",
+      q,
+    },
+  };
+}
+
+function buildOrdersReturnPath(value) {
+  const candidate = normalizeString(value, 1000);
+  if (!candidate) return ADMIN_ORDERS_PATH;
+
+  try {
+    const parsed = new URL(candidate, SITE_ORIGIN);
+    if (parsed.pathname !== ADMIN_ORDERS_PATH) return ADMIN_ORDERS_PATH;
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return ADMIN_ORDERS_PATH;
+  }
+}
+
+function applyOrderEntryUpdates(entry, updates = {}) {
+  if (!entry || typeof entry !== "object") return null;
+
+  const payload = {
+    ...getEntryPayload(entry),
+  };
+  const calculatorData = {
+    ...getEntryCalculatorData(entry),
+  };
+  const currentAdminOrder = getEntryAdminOrderData(entry);
+  const adminOrder = {
+    ...currentAdminOrder,
+  };
+  const timestamp = new Date().toISOString();
+
+  const selectedDate = normalizeString(updates.selectedDate, 32);
+  const selectedTime = normalizeString(updates.selectedTime, 32);
+  const frequency = normalizeOrderFrequency(updates.frequency, "");
+  const assignedStaff = normalizeString(updates.assignedStaff, 120);
+  const orderStatus = normalizeOrderStatus(
+    updates.orderStatus,
+    normalizeOrderStatus(adminOrder.status, "") || getOrderStatus(entry)
+  );
+
+  entry.selectedDate = selectedDate;
+  entry.selectedTime = selectedTime;
+  entry.updatedAt = timestamp;
+
+  calculatorData.selectedDate = selectedDate;
+  calculatorData.selectedTime = selectedTime;
+  if (frequency) {
+    calculatorData.frequency = frequency;
+  } else {
+    delete calculatorData.frequency;
+  }
+
+  adminOrder.status = orderStatus;
+  adminOrder.frequency = frequency;
+  adminOrder.assignedStaff = assignedStaff;
+  adminOrder.updatedAt = timestamp;
+  if (!adminOrder.createdAt) adminOrder.createdAt = timestamp;
+
+  payload.calculatorData = calculatorData;
+  payload.adminOrder = adminOrder;
+  entry.payloadForRetry = payload;
+
+  return entry;
+}
+
 function maskSecretPreview(value, visibleEnd = 4) {
   const raw = normalizeString(value, 512);
   if (!raw) return "Missing";
@@ -1257,6 +1807,40 @@ function getQuoteOpsFilters(req) {
       q,
     },
   };
+}
+
+function normalizePhoneFilterValue(value) {
+  return normalizeString(value, 80).replace(/\D+/g, "");
+}
+
+function getAdminClientsFilters(req) {
+  const reqUrl = getRequestUrl(req);
+  const name = normalizeString(reqUrl.searchParams.get("name"), 200);
+  const email = normalizeString(reqUrl.searchParams.get("email"), 250).toLowerCase();
+  const phone = normalizeString(reqUrl.searchParams.get("phone"), 80);
+  const client = normalizeString(reqUrl.searchParams.get("client"), 250).toLowerCase();
+  return {
+    reqUrl,
+    filters: {
+      name,
+      email,
+      phone,
+      client,
+    },
+  };
+}
+
+function filterAdminClientRecords(clientRecords = [], filters = {}) {
+  const name = normalizeString(filters.name, 200).toLowerCase();
+  const email = normalizeString(filters.email, 250).toLowerCase();
+  const phone = normalizePhoneFilterValue(filters.phone);
+
+  return clientRecords.filter((client) => {
+    if (name && !normalizeString(client.name, 250).toLowerCase().includes(name)) return false;
+    if (email && !normalizeString(client.email, 250).toLowerCase().includes(email)) return false;
+    if (phone && !normalizePhoneFilterValue(client.phone).includes(phone)) return false;
+    return true;
+  });
 }
 
 function buildQuoteOpsReturnPath(value) {
@@ -1727,6 +2311,10 @@ function renderAdminLayout(title, content, options = {}) {
     .admin-form-grid-two {
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
+    .admin-form-grid-three {
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      align-items: end;
+    }
     .admin-label {
       display: grid;
       gap: 8px;
@@ -1775,9 +2363,158 @@ function renderAdminLayout(title, content, options = {}) {
       gap: 12px;
       align-items: center;
     }
+    .admin-form-actions {
+      grid-column: 1 / -1;
+    }
     .admin-entry-list {
       display: grid;
       gap: 14px;
+    }
+    .admin-clients-layout {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.95fr);
+      align-items: start;
+    }
+    .admin-sticky-card {
+      position: sticky;
+      top: 24px;
+    }
+    .admin-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.82);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.36);
+    }
+    .admin-table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }
+    .admin-table th,
+    .admin-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(228, 228, 231, 0.92);
+      vertical-align: top;
+      text-align: left;
+    }
+    .admin-table th {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(250,250,251,0.94);
+      white-space: nowrap;
+    }
+    .admin-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+    .admin-table tbody tr:hover td {
+      background: rgba(158, 67, 90, 0.04);
+    }
+    .admin-table-row-active td {
+      background: rgba(158, 67, 90, 0.08);
+    }
+    .admin-table-link {
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .admin-table-link:hover {
+      text-decoration: underline;
+      text-decoration-color: rgba(158, 67, 90, 0.28);
+    }
+    .admin-table-stack {
+      display: grid;
+      gap: 4px;
+    }
+    .admin-table-muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .admin-table-number {
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .admin-table-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.9);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .admin-table-action:hover {
+      border-color: rgba(158, 67, 90, 0.24);
+      background: rgba(255,255,255,0.98);
+    }
+    .admin-client-identity {
+      display: grid;
+      gap: 10px;
+    }
+    .admin-client-title {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .admin-subsection-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .admin-subsection-title {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+    .admin-history-list {
+      display: grid;
+      gap: 12px;
+    }
+    .admin-history-item {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(228, 228, 231, 0.92);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.84);
+    }
+    .admin-history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .admin-history-title,
+    .admin-history-copy {
+      margin: 0;
+    }
+    .admin-history-title {
+      font-size: 15px;
+      line-height: 1.35;
+    }
+    .admin-history-copy {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .admin-history-meta {
+      display: grid;
+      gap: 6px;
+      color: var(--muted-foreground);
+      font-size: 13px;
+      line-height: 1.6;
     }
     .admin-entry-card {
       border: 1px solid var(--border);
@@ -2077,6 +2814,12 @@ function renderAdminLayout(title, content, options = {}) {
       .admin-sidebar {
         position: static;
       }
+      .admin-clients-layout {
+        grid-template-columns: 1fr;
+      }
+      .admin-sticky-card {
+        position: static;
+      }
     }
     @media (max-width: 720px) {
       body {
@@ -2323,6 +3066,20 @@ function collectAdminClientRecords(entries = []) {
     if (!clientKey) continue;
 
     const latestService = normalizeString(entry.serviceName || entry.serviceType || "Уборка", 120);
+    const latestStatus = normalizeString(entry.status, 32).toLowerCase();
+    const totalPrice = Number(entry.totalPrice);
+    const safeTotalPrice = Number.isFinite(totalPrice) ? totalPrice : 0;
+    const historyEntry = {
+      id: normalizeString(entry.id, 120),
+      requestId: normalizeString(entry.requestId, 120),
+      createdAt: normalizeString(entry.createdAt, 80),
+      serviceName: latestService,
+      totalPrice: safeTotalPrice,
+      selectedDate: normalizeString(entry.selectedDate, 32),
+      selectedTime: normalizeString(entry.selectedTime, 32),
+      fullAddress: normalizeString(entry.fullAddress, 500),
+      status: latestStatus,
+    };
     const existing = clients.get(clientKey);
 
     if (!existing) {
@@ -2335,15 +3092,19 @@ function collectAdminClientRecords(entries = []) {
         latestCreatedAt: normalizeString(entry.createdAt, 80),
         latestService,
         requestCount: 1,
-        totalRevenue: Number(entry.totalPrice || 0),
-        statuses: new Set([normalizeString(entry.status, 32)].filter(Boolean)),
+        latestStatus,
+        latestRequestId: normalizeString(entry.requestId, 120),
+        totalRevenue: safeTotalPrice,
+        statuses: new Set([latestStatus].filter(Boolean)),
+        entries: [historyEntry],
       });
       continue;
     }
 
     existing.requestCount += 1;
-    existing.totalRevenue += Number(entry.totalPrice || 0);
-    existing.statuses.add(normalizeString(entry.status, 32));
+    existing.totalRevenue += safeTotalPrice;
+    if (latestStatus) existing.statuses.add(latestStatus);
+    existing.entries.push(historyEntry);
 
     const existingTime = Date.parse(existing.latestCreatedAt || "");
     const nextTime = Date.parse(entry.createdAt || "");
@@ -2354,14 +3115,104 @@ function collectAdminClientRecords(entries = []) {
       existing.address = normalizeString(entry.fullAddress || existing.address, 500);
       existing.latestCreatedAt = normalizeString(entry.createdAt || existing.latestCreatedAt, 80);
       existing.latestService = latestService || existing.latestService;
+      existing.latestStatus = latestStatus || existing.latestStatus;
+      existing.latestRequestId = normalizeString(entry.requestId || existing.latestRequestId, 120);
     }
   }
 
-  return Array.from(clients.values()).sort((left, right) => {
-    const leftTime = Date.parse(left.latestCreatedAt || "");
-    const rightTime = Date.parse(right.latestCreatedAt || "");
-    return (Number.isFinite(rightTime) ? rightTime : 0) - (Number.isFinite(leftTime) ? leftTime : 0);
+  return Array.from(clients.values())
+    .map((client) => ({
+      ...client,
+      statuses: Array.from(client.statuses).filter(Boolean),
+      entries: client.entries.sort((left, right) => {
+        const leftTime = Date.parse(left.createdAt || "");
+        const rightTime = Date.parse(right.createdAt || "");
+        return (Number.isFinite(rightTime) ? rightTime : 0) - (Number.isFinite(leftTime) ? leftTime : 0);
+      }),
+    }))
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.latestCreatedAt || "");
+      const rightTime = Date.parse(right.latestCreatedAt || "");
+      return (Number.isFinite(rightTime) ? rightTime : 0) - (Number.isFinite(leftTime) ? leftTime : 0);
+    });
+}
+
+function renderAdminClientStatusBadge(status) {
+  const normalized = normalizeString(status, 32).toLowerCase();
+  if (!normalized) return renderAdminBadge("Без статуса", "muted");
+  return renderQuoteOpsStatusBadge(normalized);
+}
+
+function renderAdminClientHistoryItem(entry) {
+  const scheduledLabel = [entry.selectedDate, entry.selectedTime].filter(Boolean).join(" в ") || "Дата не указана";
+  return `<article class="admin-history-item">
+    <div class="admin-history-head">
+      <div>
+        <h3 class="admin-history-title">${escapeHtml(formatAdminServiceLabel(entry.serviceName))}</h3>
+        <p class="admin-history-copy">${escapeHtml(formatAdminDateTime(entry.createdAt))} • ${escapeHtml(formatCurrencyAmount(entry.totalPrice))}</p>
+      </div>
+      <div class="admin-entry-meta">
+        ${renderAdminClientStatusBadge(entry.status)}
+      </div>
+    </div>
+    <div class="admin-history-meta">
+      <span>${escapeHtml(`Номер заявки: ${entry.requestId || "не указан"}`)}</span>
+      <span>${escapeHtml(`Дата уборки: ${scheduledLabel}`)}</span>
+      <span>${escapeHtml(`Адрес: ${entry.fullAddress || "не указан"}`)}</span>
+    </div>
+  </article>`;
+}
+
+function renderAdminClientDetailCard(client) {
+  if (!client) {
+    return renderAdminCard(
+      "Карточка клиента",
+      "Выберите клиента в таблице, чтобы открыть историю заявок и сумму заказов.",
+      `<div class="admin-empty-state">После выбора клиента здесь появятся контакты, общая сумма заказов и полная история заявок.</div>`,
+      { eyebrow: "Клиент", muted: true }
+    );
+  }
+
+  const quoteOpsHref = buildAdminRedirectPath(ADMIN_QUOTE_OPS_PATH, {
+    q: client.email || client.phone || client.name,
   });
+  const statusBadges = client.statuses.length > 0
+    ? client.statuses.map((status) => renderAdminClientStatusBadge(status)).join("")
+    : renderAdminBadge("Без статуса", "muted");
+
+  return renderAdminCard(
+    "Карточка клиента",
+    "Контакты, сумма заказов и вся история обращений.",
+    `<div class="admin-client-identity">
+      <div>
+        <h3 class="admin-client-title">${escapeHtml(client.name || "Клиент")}</h3>
+        <p class="admin-card-copy">Последняя заявка: ${escapeHtml(formatAdminDateTime(client.latestCreatedAt))}</p>
+      </div>
+      <div class="admin-badge-row">
+        ${statusBadges}
+      </div>
+    </div>
+    ${renderAdminPropertyList([
+      { label: "Email", value: client.email || "Не указан" },
+      { label: "Телефон", value: client.phone || "Не указан" },
+      { label: "Всего заявок", value: String(client.requestCount) },
+      { label: "Сумма заказов", value: formatCurrencyAmount(client.totalRevenue) },
+      { label: "Последняя услуга", value: formatAdminServiceLabel(client.latestService) },
+      { label: "Адрес", value: client.address || "Не указан" },
+    ])}
+    <div class="admin-inline-actions">
+      <a class="admin-link-button admin-button-secondary" href="${escapeHtmlAttribute(quoteOpsHref)}">Открыть заявки клиента</a>
+    </div>
+    <div class="admin-divider"></div>
+    <div class="admin-subsection-head">
+      <h3 class="admin-subsection-title">История заявок</h3>
+      <span class="admin-action-hint">${escapeHtml(client.requestCount === 1 ? "1 заявка" : `${client.requestCount} заявок`)}</span>
+    </div>
+    <div class="admin-history-list">
+      ${client.entries.map((entry) => renderAdminClientHistoryItem(entry)).join("")}
+    </div>`,
+    { eyebrow: "Клиент", muted: true }
+  );
 }
 
 async function renderDashboardPage(req, config, quoteOpsLedger) {
@@ -2452,17 +3303,24 @@ async function renderDashboardPage(req, config, quoteOpsLedger) {
 }
 
 async function renderClientsPage(req, config, quoteOpsLedger) {
+  const { filters } = getAdminClientsFilters(req);
   const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
   const clientRecords = collectAdminClientRecords(allEntries);
+  const filteredClients = filterAdminClientRecords(clientRecords, filters);
   const clientsWithEmail = clientRecords.filter((client) => Boolean(client.email)).length;
-  const clientsWithPhone = clientRecords.filter((client) => Boolean(client.phone)).length;
   const repeatClients = clientRecords.filter((client) => client.requestCount > 1).length;
+  const selectedClient = filteredClients.find((client) => client.key === filters.client) || filteredClients[0] || null;
+  const selectedClientKey = selectedClient ? selectedClient.key : "";
+  const resetHref = buildAdminRedirectPath(ADMIN_CLIENTS_PATH, selectedClientKey ? { client: selectedClientKey } : {});
+  const emptyStateMessage = clientRecords.length === 0
+    ? "Пока клиентов нет. Как только появятся новые заявки, этот раздел заполнится автоматически."
+    : "По текущим фильтрам клиентов не найдено.";
 
   return renderAdminLayout(
     "Клиенты",
     `${renderAdminSignedInTopbar(config, {
-      linkHref: ADMIN_ORDERS_PATH,
-      linkLabel: "Открыть заказы",
+      linkHref: ADMIN_QUOTE_OPS_PATH,
+      linkLabel: "Открыть заявки",
     })}
       <div class="admin-stats-grid">
         ${renderAdminCard(
@@ -2472,16 +3330,10 @@ async function renderClientsPage(req, config, quoteOpsLedger) {
           { eyebrow: "Клиенты" }
         )}
         ${renderAdminCard(
-          "Есть email",
-          "Клиенты, которым можно написать.",
-          `<p class="admin-metric-value">${escapeHtml(String(clientsWithEmail))}</p>`,
-          { eyebrow: "Контакты", muted: true }
-        )}
-        ${renderAdminCard(
-          "Есть телефон",
-          "Клиенты, которым можно позвонить.",
-          `<p class="admin-metric-value">${escapeHtml(String(clientsWithPhone))}</p>`,
-          { eyebrow: "Контакты", muted: true }
+          "Найдено сейчас",
+          "Клиенты, подходящие под текущие фильтры.",
+          `<p class="admin-metric-value">${escapeHtml(String(filteredClients.length))}</p>`,
+          { eyebrow: "Поиск", muted: true }
         )}
         ${renderAdminCard(
           "Повторные обращения",
@@ -2489,57 +3341,230 @@ async function renderClientsPage(req, config, quoteOpsLedger) {
           `<p class="admin-metric-value">${escapeHtml(String(repeatClients))}</p>`,
           { eyebrow: "Повторы", muted: true }
         )}
+        ${renderAdminCard(
+          "Есть email",
+          "Клиенты, которым можно написать.",
+          `<p class="admin-metric-value">${escapeHtml(String(clientsWithEmail))}</p>`,
+          { eyebrow: "Контакты", muted: true }
+        )}
       </div>
-      <div class="admin-section-grid">
+      <div class="admin-clients-layout">
         ${renderAdminCard(
-          "Список клиентов",
-          "Последние клиенты из заявок сайта.",
-          clientRecords.length > 0
-            ? `<div class="admin-link-grid">
-                ${clientRecords
-                  .slice(0, 6)
-                  .map(
-                    (client) => `<div class="admin-link-tile">
-                      <strong>${escapeHtml(client.name || "Клиент")}</strong>
-                      <span>${escapeHtml(formatAdminServiceLabel(client.latestService))} • ${escapeHtml(formatAdminDateTime(client.latestCreatedAt))}</span>
-                      <span>${escapeHtml(client.email || client.phone || "Контакты не указаны")}</span>
-                      <span>${escapeHtml(client.requestCount === 1 ? "1 заявка" : `${client.requestCount} заявок`)}</span>
-                    </div>`
-                  )
-                  .join("")}
+          "База клиентов",
+          "Полный список клиентов с поиском по имени, email и телефону.",
+          `<form class="admin-form-grid admin-form-grid-three" method="get" action="${ADMIN_CLIENTS_PATH}">
+            <label class="admin-label">
+              Имя
+              <input class="admin-input" type="search" name="name" value="${escapeHtmlText(filters.name)}" placeholder="Например, Jane">
+            </label>
+            <label class="admin-label">
+              Email
+              <input class="admin-input" type="search" name="email" value="${escapeHtmlText(filters.email)}" placeholder="name@example.com">
+            </label>
+            <label class="admin-label">
+              Телефон
+              <input class="admin-input" type="search" name="phone" value="${escapeHtmlText(filters.phone)}" placeholder="3125550100">
+            </label>
+            <div class="admin-inline-actions" style="align-self:end;">
+              <button class="admin-button" type="submit">Применить</button>
+              <a class="admin-link-button admin-button-secondary" href="${resetHref}">Сбросить</a>
+            </div>
+          </form>
+          <div class="admin-toolbar">
+            <span class="admin-action-hint">Найдено ${escapeHtml(String(filteredClients.length))} из ${escapeHtml(String(clientRecords.length))} клиентов.</span>
+            <span class="admin-action-hint">${selectedClient ? `Открыта карточка: ${escapeHtml(selectedClient.name || "Клиент")}` : "Выберите клиента из списка, чтобы посмотреть историю."}</span>
+          </div>
+          ${filteredClients.length > 0
+            ? `<div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Клиент</th>
+                      <th>Контакты</th>
+                      <th>Последняя заявка</th>
+                      <th>Последняя услуга</th>
+                      <th>Заявок</th>
+                      <th>Сумма</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filteredClients
+                      .map((client) => {
+                        const rowHref = buildAdminRedirectPath(ADMIN_CLIENTS_PATH, {
+                          name: filters.name,
+                          email: filters.email,
+                          phone: filters.phone,
+                          client: client.key,
+                        });
+                        return `<tr class="${client.key === selectedClientKey ? "admin-table-row-active" : ""}">
+                          <td>
+                            <div class="admin-table-stack">
+                              <a class="admin-table-link" href="${escapeHtmlAttribute(rowHref)}">${escapeHtml(client.name || "Клиент")}</a>
+                              <span class="admin-table-muted">${escapeHtml(client.address || "Адрес не указан")}</span>
+                            </div>
+                          </td>
+                          <td>
+                            ${client.email || client.phone
+                              ? `<div class="admin-table-stack">
+                                  ${client.email ? `<span>${escapeHtml(client.email)}</span>` : ""}
+                                  ${client.phone ? `<span>${escapeHtml(client.phone)}</span>` : ""}
+                                </div>`
+                              : `<span class="admin-table-muted">Контакты не указаны</span>`}
+                          </td>
+                          <td>
+                            <div class="admin-table-stack">
+                              <span>${renderAdminClientStatusBadge(client.latestStatus)}</span>
+                              <span>${escapeHtml(formatAdminDateTime(client.latestCreatedAt))}</span>
+                              <span class="admin-table-muted">${escapeHtml(client.latestRequestId || "Номер не указан")}</span>
+                            </div>
+                          </td>
+                          <td>${escapeHtml(formatAdminServiceLabel(client.latestService))}</td>
+                          <td class="admin-table-number">${escapeHtml(String(client.requestCount))}</td>
+                          <td class="admin-table-number">${escapeHtml(formatCurrencyAmount(client.totalRevenue))}</td>
+                          <td><a class="admin-table-action" href="${escapeHtmlAttribute(rowHref)}">Открыть</a></td>
+                        </tr>`;
+                      })
+                      .join("")}
+                  </tbody>
+                </table>
               </div>`
-            : `<div class="admin-empty-state">Пока клиентов нет. Как только появятся новые заявки, этот раздел заполнится автоматически.</div>`,
-          { eyebrow: "Список" }
+            : `<div class="admin-empty-state">${emptyStateMessage}</div>`}`,
+          { eyebrow: "Клиенты" }
         )}
-        ${renderAdminCard(
-          "Что есть в разделе",
-          "Короткая сводка по текущей базе клиентов.",
-          `${renderAdminPropertyList([
-            { label: "Всего клиентов", value: String(clientRecords.length) },
-            { label: "Сумма по клиентам", value: formatCurrencyAmount(clientRecords.reduce((sum, client) => sum + client.totalRevenue, 0)) },
-            { label: "Повторные клиенты", value: String(repeatClients) },
-          ])}
-          <ul class="admin-feature-list">
-            <li>Здесь удобно быстро находить клиента и его контакты.</li>
-            <li>Для просмотра всех заявок используйте раздел «Заявки».</li>
-            <li>Раздел остаётся простым и без лишней технической информации.</li>
-          </ul>`,
-          { eyebrow: "Сводка", muted: true }
-        )}
+        <div class="admin-sticky-card">
+          ${renderAdminClientDetailCard(selectedClient)}
+        </div>
       </div>`,
     {
       kicker: "Клиенты",
-      subtitle: "Список клиентов и их контакты.",
+      subtitle: "Полный список клиентов, фильтры и история заявок.",
       sidebar: renderAdminAppSidebar(ADMIN_CLIENTS_PATH),
     }
   );
 }
 
+function renderOrderStatusBadge(status) {
+  const normalized = normalizeOrderStatus(status, "new");
+  if (normalized === "completed") return renderAdminBadge("Completed", "success");
+  if (normalized === "canceled") return renderAdminBadge("Canceled", "danger");
+  if (normalized === "rescheduled") return renderAdminBadge("Rescheduled", "outline");
+  if (normalized === "in-progress") return renderAdminBadge("In progress", "default");
+  if (normalized === "scheduled") return renderAdminBadge("Scheduled", "outline");
+  return renderAdminBadge("New", "muted");
+}
+
+function renderOrdersNotice(req) {
+  const reqUrl = getRequestUrl(req);
+  const notice = normalizeString(reqUrl.searchParams.get("notice"), 80).toLowerCase();
+  if (notice === "order-saved") {
+    return `<div class="admin-alert admin-alert-info">Заказ обновлён.</div>`;
+  }
+  if (notice === "order-missing") {
+    return `<div class="admin-alert admin-alert-error">Заказ не найден.</div>`;
+  }
+  if (notice === "order-save-failed") {
+    return `<div class="admin-alert admin-alert-error">Не удалось сохранить заказ. Попробуйте ещё раз.</div>`;
+  }
+  return "";
+}
+
+function renderOrderEntryCard(order, returnTo) {
+  return `<article class="admin-entry-card">
+    <div class="admin-entry-head">
+      <div>
+        <h3 class="admin-entry-title">${escapeHtml(order.customerName || "Клиент")}</h3>
+        <p class="admin-entry-copy">${escapeHtml(order.serviceLabel)} • ${escapeHtml(formatCurrencyAmount(order.totalPrice))}</p>
+      </div>
+      <div class="admin-entry-meta">
+        ${renderOrderStatusBadge(order.orderStatus)}
+        ${renderAdminBadge(order.serviceLabel, "outline")}
+        ${order.frequency ? renderAdminBadge(order.frequencyLabel, "outline") : ""}
+        ${renderQuoteOpsStatusBadge(order.crmStatus)}
+      </div>
+    </div>
+    <div class="admin-entry-grid">
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Номер заказа</span>
+        <p class="admin-mini-value">${escapeHtml(order.requestId || "Не указан")}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Дата и время</span>
+        <p class="admin-mini-value">${escapeHtml(order.scheduleLabel)}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Повторяемость</span>
+        <p class="admin-mini-value">${escapeHtml(order.frequencyLabel)}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Сотрудник</span>
+        <p class="admin-mini-value">${escapeHtml(order.assignedStaff || "Не назначен")}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Контакты</span>
+        <p class="admin-mini-value">${escapeHtml(order.customerPhone || "Телефон не указан")}${order.customerEmail ? `<br>${escapeHtml(order.customerEmail)}` : ""}</p>
+      </div>
+      <div class="admin-mini-stat">
+        <span class="admin-mini-label">Адрес</span>
+        <p class="admin-mini-value">${escapeHtml(order.fullAddress || "Не указан")}</p>
+      </div>
+    </div>
+    <form class="admin-form-grid admin-form-grid-two" method="post" action="${ADMIN_ORDERS_PATH}">
+      <input type="hidden" name="entryId" value="${escapeHtmlAttribute(order.id)}">
+      <input type="hidden" name="returnTo" value="${escapeHtmlAttribute(returnTo)}">
+      <label class="admin-label">
+        Статус заказа
+        <select class="admin-input" name="orderStatus">
+          <option value="new"${order.orderStatus === "new" ? " selected" : ""}>New</option>
+          <option value="scheduled"${order.orderStatus === "scheduled" ? " selected" : ""}>Scheduled</option>
+          <option value="in-progress"${order.orderStatus === "in-progress" ? " selected" : ""}>In progress</option>
+          <option value="completed"${order.orderStatus === "completed" ? " selected" : ""}>Completed</option>
+          <option value="canceled"${order.orderStatus === "canceled" ? " selected" : ""}>Canceled</option>
+          <option value="rescheduled"${order.orderStatus === "rescheduled" ? " selected" : ""}>Rescheduled</option>
+        </select>
+      </label>
+      <label class="admin-label">
+        Кто назначен
+        <input class="admin-input" type="text" name="assignedStaff" value="${escapeHtmlText(order.assignedStaff)}" placeholder="Имя сотрудника">
+      </label>
+      <label class="admin-label">
+        Дата уборки
+        <input class="admin-input" type="date" name="selectedDate" value="${escapeHtmlAttribute(order.selectedDate)}">
+      </label>
+      <label class="admin-label">
+        Время уборки
+        <input class="admin-input" type="time" name="selectedTime" value="${escapeHtmlAttribute(order.selectedTime)}">
+      </label>
+      <label class="admin-label">
+        Повторяемость
+        <select class="admin-input" name="frequency">
+          <option value=""${!order.frequency ? " selected" : ""}>Not set</option>
+          <option value="weekly"${order.frequency === "weekly" ? " selected" : ""}>Weekly</option>
+          <option value="biweekly"${order.frequency === "biweekly" ? " selected" : ""}>Bi-weekly</option>
+          <option value="monthly"${order.frequency === "monthly" ? " selected" : ""}>Monthly</option>
+        </select>
+      </label>
+      <div class="admin-inline-actions admin-form-actions">
+        <button class="admin-button" type="submit">Сохранить заказ</button>
+        <span class="admin-action-hint">Учитываем тип уборки, дату, повторяемость, статус и назначенного сотрудника.</span>
+      </div>
+    </form>
+  </article>`;
+}
+
 async function renderOrdersPage(req, config, quoteOpsLedger) {
+  const { reqUrl, filters } = getOrdersFilters(req);
   const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
-  const scheduledEntries = allEntries.filter((entry) => Boolean(entry.selectedDate || entry.selectedTime));
-  const attentionCount = allEntries.filter((entry) => entry.status !== "success").length;
-  const revenuePipeline = allEntries.reduce((sum, entry) => sum + Number(entry.totalPrice || 0), 0);
+  const allOrders = collectAdminOrderRecords(allEntries);
+  const orders = filterAdminOrderRecords(allOrders, filters);
+  const totalOrders = allOrders.length;
+  const scheduledCount = allOrders.filter((order) => order.orderStatus === "scheduled").length;
+  const recurringCount = allOrders.filter((order) => order.isRecurring).length;
+  const assignedCount = allOrders.filter((order) => order.isAssigned).length;
+  const attentionCount = allOrders.filter((order) => order.needsAttention).length;
+  const revenuePipeline = allOrders.reduce((sum, order) => sum + Number(order.totalPrice || 0), 0);
+  const statusCounts = countOrdersByStatus(allOrders);
+  const currentReturnTo = `${reqUrl.pathname}${reqUrl.search}`;
 
   return renderAdminLayout(
     "Заказы",
@@ -2547,72 +3572,124 @@ async function renderOrdersPage(req, config, quoteOpsLedger) {
       linkHref: ADMIN_QUOTE_OPS_PATH,
       linkLabel: "Открыть заявки",
     })}
+      ${renderOrdersNotice(req)}
       <div class="admin-stats-grid">
         ${renderAdminCard(
           "Всего заказов",
-          "Все заказы и заявки в работе.",
-          `<p class="admin-metric-value">${escapeHtml(String(allEntries.length))}</p>`,
+          "Все заказы и заявки, которые сейчас ведём.",
+          `<p class="admin-metric-value">${escapeHtml(String(totalOrders))}</p>`,
           { eyebrow: "Заказы" }
         )}
         ${renderAdminCard(
-          "Есть дата",
-          "Заказы, где уже выбраны день или время.",
-          `<p class="admin-metric-value">${escapeHtml(String(scheduledEntries.length))}</p>`,
-          { eyebrow: "График", muted: true }
+          "Scheduled",
+          "Заказы с подтверждённой датой или временем.",
+          `<p class="admin-metric-value">${escapeHtml(String(scheduledCount))}</p>`,
+          { eyebrow: "Статус", muted: true }
         )}
         ${renderAdminCard(
-          "Нужно проверить",
-          "Заказы, которым требуется внимание.",
-          `<p class="admin-metric-value">${escapeHtml(String(attentionCount))}</p>`,
-          { eyebrow: "Проверка", muted: true }
+          "Recurring",
+          "Weekly, bi-weekly или monthly заказы.",
+          `<p class="admin-metric-value">${escapeHtml(String(recurringCount))}</p>`,
+          { eyebrow: "Повторяемость", muted: true }
         )}
         ${renderAdminCard(
-          "Сумма",
-          "Общая сумма по текущим заказам.",
-          `<p class="admin-metric-value">${escapeHtml(formatCurrencyAmount(revenuePipeline))}</p>`,
-          { eyebrow: "Сумма", muted: true }
+          "Assigned",
+          "Заказы, у которых уже есть исполнитель.",
+          `<p class="admin-metric-value">${escapeHtml(String(assignedCount))}</p>`,
+          { eyebrow: "Сотрудники", muted: true }
         )}
       </div>
+      ${renderAdminCard(
+        "Список заказов",
+        "Фильтруйте и обновляйте статус, дату, повторяемость и сотрудника.",
+        `<form class="admin-form-grid admin-form-grid-two" method="get" action="${ADMIN_ORDERS_PATH}">
+          <label class="admin-label">
+            Поиск
+            <input class="admin-input" type="search" name="q" value="${escapeHtmlText(filters.q)}" placeholder="Клиент, телефон, адрес, сотрудник, номер">
+          </label>
+          <label class="admin-label">
+            Статус
+            <select class="admin-input" name="status">
+              <option value="all"${filters.status === "all" ? " selected" : ""}>Все</option>
+              <option value="new"${filters.status === "new" ? " selected" : ""}>New</option>
+              <option value="scheduled"${filters.status === "scheduled" ? " selected" : ""}>Scheduled</option>
+              <option value="in-progress"${filters.status === "in-progress" ? " selected" : ""}>In progress</option>
+              <option value="completed"${filters.status === "completed" ? " selected" : ""}>Completed</option>
+              <option value="canceled"${filters.status === "canceled" ? " selected" : ""}>Canceled</option>
+              <option value="rescheduled"${filters.status === "rescheduled" ? " selected" : ""}>Rescheduled</option>
+            </select>
+          </label>
+          <label class="admin-label">
+            Тип уборки
+            <select class="admin-input" name="serviceType">
+              <option value="all"${filters.serviceType === "all" ? " selected" : ""}>Все</option>
+              <option value="standard"${filters.serviceType === "standard" ? " selected" : ""}>Standard</option>
+              <option value="deep"${filters.serviceType === "deep" ? " selected" : ""}>Deep</option>
+              <option value="move-in/out"${filters.serviceType === "move-in/out" ? " selected" : ""}>Move-in/out</option>
+            </select>
+          </label>
+          <label class="admin-label">
+            Повторяемость
+            <select class="admin-input" name="frequency">
+              <option value="all"${filters.frequency === "all" ? " selected" : ""}>Все</option>
+              <option value="weekly"${filters.frequency === "weekly" ? " selected" : ""}>Weekly</option>
+              <option value="biweekly"${filters.frequency === "biweekly" ? " selected" : ""}>Bi-weekly</option>
+              <option value="monthly"${filters.frequency === "monthly" ? " selected" : ""}>Monthly</option>
+            </select>
+          </label>
+          <label class="admin-label">
+            Назначение
+            <select class="admin-input" name="assignment">
+              <option value="all"${filters.assignment === "all" ? " selected" : ""}>Все</option>
+              <option value="assigned"${filters.assignment === "assigned" ? " selected" : ""}>Назначен</option>
+              <option value="unassigned"${filters.assignment === "unassigned" ? " selected" : ""}>Не назначен</option>
+            </select>
+          </label>
+          <div class="admin-inline-actions admin-form-actions">
+            <button class="admin-button" type="submit">Применить</button>
+            <a class="admin-link-button admin-button-secondary" href="${ADMIN_ORDERS_PATH}">Сбросить</a>
+          </div>
+        </form>
+        <div class="admin-divider"></div>
+        <div class="admin-entry-list">
+          ${orders.length > 0
+            ? orders.map((order) => renderOrderEntryCard(order, currentReturnTo)).join("")
+            : `<div class="admin-empty-state">По текущему фильтру заказов нет.</div>`}
+        </div>`,
+        { eyebrow: "Управление" }
+      )}
       <div class="admin-section-grid">
         ${renderAdminCard(
-          "Последние заказы",
-          "Последние заявки и даты уборки.",
-          allEntries.length > 0
-            ? `<div class="admin-link-grid">
-                ${allEntries
-                  .slice(0, 6)
-                  .map(
-                    (entry) => `<div class="admin-link-tile">
-                      <strong>${escapeHtml(entry.customerName || "Клиент")}</strong>
-                      <span>${escapeHtml(formatAdminServiceLabel(entry.serviceName || entry.serviceType))} • ${escapeHtml(formatCurrencyAmount(entry.totalPrice))}</span>
-                      <span>${escapeHtml([entry.selectedDate, entry.selectedTime].filter(Boolean).join(" в ") || "Дата не указана")}</span>
-                      <span>${renderQuoteOpsStatusBadge(entry.status)} ${entry.fullAddress ? escapeHtml(entry.fullAddress) : "Адрес не указан"}</span>
-                    </div>`
-                  )
-                  .join("")}
-              </div>`
-            : `<div class="admin-empty-state">Пока заказов нет. Как только появятся новые заявки, они отобразятся здесь.</div>`,
-          { eyebrow: "Список" }
+          "Сводка по статусам",
+          "Быстрая картина по текущему состоянию заказов.",
+          `${renderAdminPropertyList([
+            { label: "New", value: String(statusCounts.new) },
+            { label: "Scheduled", value: String(statusCounts.scheduled) },
+            { label: "In progress", value: String(statusCounts["in-progress"]) },
+            { label: "Completed", value: String(statusCounts.completed) },
+            { label: "Canceled", value: String(statusCounts.canceled) },
+            { label: "Rescheduled", value: String(statusCounts.rescheduled) },
+            { label: "CRM требует внимания", value: String(attentionCount) },
+            { label: "Сумма заказов", value: formatCurrencyAmount(revenuePipeline) },
+          ])}`,
+          { eyebrow: "Статусы", muted: true }
         )}
         ${renderAdminCard(
-          "Что есть в разделе",
-          "Короткая сводка по текущим заказам.",
-          `${renderAdminPropertyList([
-            { label: "Всего заказов", value: String(allEntries.length) },
-            { label: "Есть дата", value: String(scheduledEntries.length) },
-            { label: "Нужно проверить", value: String(attentionCount) },
-          ])}
-          <ul class="admin-feature-list">
-            <li>Здесь собраны заказы и выбранные даты.</li>
-            <li>Для подробной работы со всеми заявками используйте раздел «Заявки».</li>
-            <li>Интерфейс оставлен простым и понятным.</li>
+          "Что учитываем",
+          "Поля, которые теперь ведём прямо в разделе заказов.",
+          `<ul class="admin-feature-list">
+            <li>Тип уборки: standard, deep, move-in/out.</li>
+            <li>Дата и время визита.</li>
+            <li>Повторяемость: weekly, bi-weekly, monthly.</li>
+            <li>Статус заказа: new, scheduled, in progress, completed, canceled, rescheduled.</li>
+            <li>Назначенный сотрудник.</li>
           </ul>`,
-          { eyebrow: "Сводка", muted: true }
+          { eyebrow: "Модель заказа", muted: true }
         )}
       </div>`,
     {
       kicker: "Заказы",
-      subtitle: "Текущие заказы, даты и суммы.",
+      subtitle: "Рабочий список заказов с датой, повторяемостью, статусом и назначенным сотрудником.",
       sidebar: renderAdminAppSidebar(ADMIN_ORDERS_PATH),
     }
   );
@@ -3000,8 +4077,8 @@ async function handleAdminRequest(
     }
 
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
-    const entryId = normalizeString(formBody.entryId, 120);
-    const returnTo = buildQuoteOpsReturnPath(formBody.returnTo);
+    const entryId = getFormValue(formBody, "entryId", 120);
+    const returnTo = buildQuoteOpsReturnPath(getFormValue(formBody, "returnTo", 1000));
 
     if (!quoteOpsLedger || !entryId) {
       redirectWithTiming(
@@ -3029,6 +4106,62 @@ async function handleAdminRequest(
       requestContext.cacheHit
     );
     return;
+  }
+
+  if (requestContext.route === ADMIN_ORDERS_PATH && req.method === "POST") {
+    if (!session) {
+      if (challenge) {
+        redirectWithTiming(res, 303, ADMIN_2FA_PATH, requestStartNs, requestContext.cacheHit);
+        return;
+      }
+      redirectWithTiming(res, 303, ADMIN_LOGIN_PATH, requestStartNs, requestContext.cacheHit);
+      return;
+    }
+
+    const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
+    const entryId = normalizeString(formBody.entryId, 120);
+    const returnTo = buildOrdersReturnPath(formBody.returnTo);
+
+    if (!quoteOpsLedger || !entryId) {
+      redirectWithTiming(
+        res,
+        303,
+        buildAdminRedirectPath(returnTo, { notice: "order-missing" }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
+
+    try {
+      const updatedEntry = await quoteOpsLedger.updateOrderEntry(entryId, {
+        orderStatus: formBody.orderStatus,
+        assignedStaff: formBody.assignedStaff,
+        selectedDate: formBody.selectedDate,
+        selectedTime: formBody.selectedTime,
+        frequency: formBody.frequency,
+      });
+
+      redirectWithTiming(
+        res,
+        303,
+        buildAdminRedirectPath(returnTo, {
+          notice: updatedEntry ? "order-saved" : "order-missing",
+        }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    } catch {
+      redirectWithTiming(
+        res,
+        303,
+        buildAdminRedirectPath(returnTo, { notice: "order-save-failed" }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
+      return;
+    }
   }
 
   if (ADMIN_APP_ROUTES.has(requestContext.route)) {
@@ -3084,8 +4217,8 @@ async function handleAdminRequest(
     }
 
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
-    const email = normalizeString(formBody.email, 320).toLowerCase();
-    const password = normalizeString(formBody.password, 200);
+    const email = getFormValue(formBody, "email", 320).toLowerCase();
+    const password = getFormValue(formBody, "password", 200);
     const validEmail = email && email === config.email;
     const validPassword = password && adminAuth.verifyPassword(password, config.passwordHash);
     if (!validEmail || !validPassword) {
@@ -3170,7 +4303,7 @@ async function handleAdminRequest(
     }
 
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
-    const code = normalizeString(formBody.code, 16);
+    const code = getFormValue(formBody, "code", 16);
     if (!adminAuth.verifyTotpCode(code, config)) {
       const secret = adminAuth.getTotpSecretMaterial(config);
       const otpauthUri = adminAuth.buildOtpauthUri(config);
