@@ -245,7 +245,8 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
           email: "jane@example.com",
         },
         quote: {
-          serviceType: "deep",
+          serviceType: "regular",
+          frequency: "weekly",
           rooms: 4,
           bathrooms: 2,
           squareMeters: 1600,
@@ -286,6 +287,54 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     const sessionCookieValue = getCookieValue(getSetCookies(twoFactorResponse), "shynli_admin_session");
     assert.ok(sessionCookieValue);
 
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Jane Doe/);
+    assert.match(ordersBody, /Weekly/);
+    assert.match(ordersBody, /Scheduled/);
+
+    const entryIdMatch = ordersBody.match(/name="entryId" value="([^"]+)"/);
+    assert.ok(entryIdMatch);
+    const entryId = entryIdMatch[1];
+
+    const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: "/admin/orders",
+        orderStatus: "rescheduled",
+        assignedStaff: "Maria",
+        selectedDate: "2026-03-24",
+        selectedTime: "11:30",
+        frequency: "monthly",
+      }),
+    });
+    assert.equal(saveOrderResponse.status, 303);
+    assert.match(saveOrderResponse.headers.get("location") || "", /notice=order-saved/);
+
+    const updatedOrdersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const updatedOrdersBody = await updatedOrdersResponse.text();
+    assert.equal(updatedOrdersResponse.status, 200);
+    assert.match(updatedOrdersBody, /Rescheduled/);
+    assert.match(updatedOrdersBody, /Maria/);
+    assert.match(updatedOrdersBody, /Monthly/);
+    assert.match(updatedOrdersBody, /value="2026-03-24"/);
+    assert.match(updatedOrdersBody, /value="11:30"/);
+
     const quoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -295,10 +344,6 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.equal(quoteOpsResponse.status, 200);
     assert.match(quoteOpsBody, /Jane Doe/);
     assert.match(quoteOpsBody, /ops-request-1/);
-
-    const entryIdMatch = quoteOpsBody.match(/name="entryId" value="([^"]+)"/);
-    assert.ok(entryIdMatch);
-    const entryId = entryIdMatch[1];
 
     const exportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
       headers: {
