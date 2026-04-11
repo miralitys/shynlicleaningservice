@@ -988,12 +988,12 @@ test("renders the clients table with filters and request history", async () => {
     assert.doesNotMatch(clientsBody, /База клиентов/i);
     assert.match(clientsBody, /Jane Doe/);
     assert.match(clientsBody, /John Smith/);
-    assert.match(clientsBody, /client-request-2/);
-    assert.match(clientsBody, /client-request-3/);
     assert.match(clientsBody, /\+1\(312\)555-0100/);
     assert.match(clientsBody, /\+1\(312\)555-0109/);
     assert.doesNotMatch(clientsBody, /Фильтры/i);
     assert.doesNotMatch(clientsBody, /Диагностика/i);
+    assert.doesNotMatch(clientsBody, /<th>Email<\/th>/);
+    assert.doesNotMatch(clientsBody, /<th>Создан<\/th>/);
     assert.match(clientsBody, /Поиск по имени, email или телефону/i);
     assert.match(clientsBody, /Клик по строке открывает профиль/i);
     assert.match(clientsBody, /data-admin-row-href="\/admin\/clients\?client=/);
@@ -1058,8 +1058,6 @@ test("renders the clients table with filters and request history", async () => {
     const emailFilterBody = await emailFilterResponse.text();
     assert.equal(emailFilterResponse.status, 200);
     assert.match(emailFilterBody, /Jane Doe/);
-    assert.match(emailFilterBody, /client-request-2/);
-    assert.match(emailFilterBody, /client-request-3/);
     assert.equal((emailFilterBody.match(/>Jane Doe<\/a>/g) || []).length, 2);
     assert.doesNotMatch(emailFilterBody, /Карточка клиента/i);
     assert.doesNotMatch(emailFilterBody, /John Smith/);
@@ -1114,8 +1112,6 @@ test("renders the clients table with filters and request history", async () => {
     assert.equal(deletedClientsResponse.status, 200);
     assert.match(deletedClientsBody, /John Smith/);
     assert.match(deletedClientsBody, /Jane Doe/);
-    assert.doesNotMatch(deletedClientsBody, /client-request-2/);
-    assert.match(deletedClientsBody, /client-request-3/);
     assert.match(deletedClientsBody, /789 Cedar Ln, Plainfield, IL 60544/);
     assert.doesNotMatch(deletedClientsBody, /123 Main St, Romeoville, IL 60446/);
 
