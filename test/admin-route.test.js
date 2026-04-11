@@ -499,11 +499,24 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
         },
       },
     },
+    {
+      method: "PUT",
+      match: "/contacts/contact-ops-123",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-ops-123",
+        },
+      },
+    },
   ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
+    GHL_CUSTOM_FIELDS_JSON: JSON.stringify({
+      fullAddress: "cf_full_address",
+    }),
     GHL_ENABLE_NOTES: "0",
     GHL_CREATE_OPPORTUNITY: "0",
     SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
@@ -624,6 +637,11 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.equal(quoteOpsResponse.status, 200);
     assert.match(quoteOpsBody, /Jane Doe/);
     assert.match(quoteOpsBody, /ops-request-1/);
+    assert.match(quoteOpsBody, /Поиск и фильтры/);
+    assert.match(quoteOpsBody, /Успешно отправленные заявки/);
+    assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
+    assert.match(quoteOpsBody, /123 Main St, Romeoville, IL 60446/);
+    assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
 
     const exportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
       headers: {
@@ -693,7 +711,7 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    assert.equal(calls.length, 2);
+    assert.equal(calls.length, 4);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -861,32 +879,44 @@ test("renders the clients table with filters and request history", async () => {
       },
     });
     const clientsBody = await clientsResponse.text();
+    const janeRomeovilleClientKey = "jane doe|123 main st, romeoville, il 60446";
 
     assert.equal(clientsResponse.status, 200);
     assert.match(clientsBody, /База клиентов/i);
     assert.match(clientsBody, /Jane Doe/);
     assert.match(clientsBody, /John Smith/);
+    assert.match(clientsBody, /client-request-2/);
     assert.match(clientsBody, /client-request-3/);
     assert.match(clientsBody, /Фильтры/i);
     assert.match(clientsBody, /Поиск по имени, email или телефону/i);
     assert.match(clientsBody, /Клик по имени открывает профиль/i);
     assert.doesNotMatch(clientsBody, /Карточка клиента/i);
+    assert.equal((clientsBody.match(/>Jane Doe<\/a>/g) || []).length, 2);
 
-    const selectedClientResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com&client=jane%40example.com`, {
-      headers: {
-        cookie: `shynli_admin_session=${sessionCookieValue}`,
-      },
-    });
+    const selectedClientResponse = await fetch(
+      `${started.baseUrl}/admin/clients?client=${encodeURIComponent(janeRomeovilleClientKey)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
     const selectedClientBody = await selectedClientResponse.text();
+    const selectedClientDialog = selectedClientBody.match(
+      /<dialog[\s\S]*?id="admin-client-detail-dialog"[\s\S]*?<\/dialog>/
+    )?.[0];
     assert.equal(selectedClientResponse.status, 200);
+    assert.ok(selectedClientDialog);
     assert.match(selectedClientBody, /class="admin-dialog admin-dialog-wide"/);
     assert.match(selectedClientBody, /id="admin-client-detail-dialog"/);
-    assert.match(selectedClientBody, /data-admin-dialog-return-url="\/admin\/clients\?email=jane%40example\.com"/);
-    assert.match(selectedClientBody, /Сводка по заявке/i);
-    assert.match(selectedClientBody, /Контакты/i);
-    assert.match(selectedClientBody, /Сумма заказов/i);
-    assert.match(selectedClientBody, /client-request-2/);
-    assert.match(selectedClientBody, /client-request-3/);
+    assert.match(selectedClientBody, /data-admin-dialog-return-url="\/admin\/clients"/);
+    assert.match(selectedClientDialog, /Сводка по заявке/i);
+    assert.match(selectedClientDialog, /Контакты/i);
+    assert.match(selectedClientDialog, /Сумма заказов/i);
+    assert.match(selectedClientDialog, /client-request-2/);
+    assert.doesNotMatch(selectedClientDialog, /client-request-3/);
+    assert.match(selectedClientDialog, /123 Main St, Romeoville, IL 60446/);
+    assert.doesNotMatch(selectedClientDialog, /789 Cedar Ln, Plainfield, IL 60544/);
     assert.doesNotMatch(selectedClientBody, /Карточка клиента/i);
     assert.doesNotMatch(selectedClientBody, /id="client-card"/);
 
@@ -921,6 +951,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(emailFilterBody, /Jane Doe/);
     assert.match(emailFilterBody, /client-request-2/);
     assert.match(emailFilterBody, /client-request-3/);
+    assert.equal((emailFilterBody.match(/>Jane Doe<\/a>/g) || []).length, 2);
     assert.doesNotMatch(emailFilterBody, /Карточка клиента/i);
     assert.doesNotMatch(emailFilterBody, /John Smith/);
 
@@ -934,16 +965,20 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(phoneFilterBody, /John Smith/);
     assert.doesNotMatch(phoneFilterBody, /Jane Doe/);
 
-    const deleteSourceResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com&client=jane%40example.com`, {
-      headers: {
-        cookie: `shynli_admin_session=${sessionCookieValue}`,
-      },
-    });
+    const deleteSourceResponse = await fetch(
+      `${started.baseUrl}/admin/clients?client=${encodeURIComponent(janeRomeovilleClientKey)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
     const deleteSourceBody = await deleteSourceResponse.text();
     assert.equal(deleteSourceResponse.status, 200);
     const clientKeyMatch = deleteSourceBody.match(/name="clientKey" value="([^"]+)"/);
     assert.ok(clientKeyMatch);
     const clientKey = clientKeyMatch[1];
+    assert.equal(clientKey, janeRomeovilleClientKey);
 
     const deleteClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
       method: "POST",
@@ -955,7 +990,7 @@ test("renders the clients table with filters and request history", async () => {
       body: new URLSearchParams({
         action: "delete-client",
         clientKey,
-        returnTo: "/admin/clients?email=jane@example.com",
+        returnTo: `/admin/clients?client=${encodeURIComponent(janeRomeovilleClientKey)}`,
       }),
     });
     assert.equal(deleteClientResponse.status, 303);
@@ -969,9 +1004,11 @@ test("renders the clients table with filters and request history", async () => {
     const deletedClientsBody = await deletedClientsResponse.text();
     assert.equal(deletedClientsResponse.status, 200);
     assert.match(deletedClientsBody, /John Smith/);
-    assert.doesNotMatch(deletedClientsBody, /Jane Doe/);
+    assert.match(deletedClientsBody, /Jane Doe/);
     assert.doesNotMatch(deletedClientsBody, /client-request-2/);
-    assert.doesNotMatch(deletedClientsBody, /client-request-3/);
+    assert.match(deletedClientsBody, /client-request-3/);
+    assert.match(deletedClientsBody, /789 Cedar Ln, Plainfield, IL 60544/);
+    assert.doesNotMatch(deletedClientsBody, /123 Main St, Romeoville, IL 60446/);
 
     const deletedOrdersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       headers: {
@@ -981,9 +1018,9 @@ test("renders the clients table with filters and request history", async () => {
     const deletedOrdersBody = await deletedOrdersResponse.text();
     assert.equal(deletedOrdersResponse.status, 200);
     assert.match(deletedOrdersBody, /John Smith/);
-    assert.doesNotMatch(deletedOrdersBody, /Jane Doe/);
+    assert.match(deletedOrdersBody, /Jane Doe/);
     assert.doesNotMatch(deletedOrdersBody, /client-request-2/);
-    assert.doesNotMatch(deletedOrdersBody, /client-request-3/);
+    assert.match(deletedOrdersBody, /client-request-3/);
 
     const deletedQuoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       headers: {
@@ -993,9 +1030,9 @@ test("renders the clients table with filters and request history", async () => {
     const deletedQuoteOpsBody = await deletedQuoteOpsResponse.text();
     assert.equal(deletedQuoteOpsResponse.status, 200);
     assert.match(deletedQuoteOpsBody, /John Smith/);
-    assert.doesNotMatch(deletedQuoteOpsBody, /Jane Doe/);
+    assert.match(deletedQuoteOpsBody, /Jane Doe/);
     assert.doesNotMatch(deletedQuoteOpsBody, /client-request-2/);
-    assert.doesNotMatch(deletedQuoteOpsBody, /client-request-3/);
+    assert.match(deletedQuoteOpsBody, /client-request-3/);
 
     const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
     const calls = captureRaw
