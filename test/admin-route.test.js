@@ -253,6 +253,8 @@ test("renders checklist templates in settings and persists checklist updates", a
     });
     const settingsBody = await settingsResponse.text();
     assert.equal(settingsResponse.status, 200);
+    assert.match(settingsBody, /Чек-листы/i);
+    assert.match(settingsBody, /Пользователи/i);
     assert.match(settingsBody, /Шаблоны чек-листов/i);
     assert.match(settingsBody, /Регулярная уборка/i);
     assert.match(settingsBody, /Генеральная уборка/i);
@@ -1720,7 +1722,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const staffId = staffStorePayload.staff[0].id;
     assert.ok(staffId);
 
-    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=users`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -1730,6 +1732,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(settingsBody, /Пользователи/i);
     assert.match(settingsBody, /Создать пользователя/i);
     assert.match(settingsBody, /\/account\/login/);
+    assert.doesNotMatch(settingsBody, /Шаблоны чек-листов/i);
 
     const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
