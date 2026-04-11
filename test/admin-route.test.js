@@ -396,10 +396,13 @@ test("creates staff members and assigns them to orders through the staff workspa
     });
     const staffBody = await staffResponse.text();
     assert.equal(staffResponse.status, 200);
+    assert.match(staffBody, /class="admin-compact-summary-strip"/);
+    assert.doesNotMatch(staffBody, /class="admin-stats-grid"/);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-create-dialog"/);
     assert.match(staffBody, /<dialog class="admin-dialog" id="admin-staff-create-dialog"/);
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
+    assert.match(staffBody, /aria-label="Удалить сотрудника"/);
     assert.match(staffBody, /Olga Stone/);
     assert.match(staffBody, /Team Lead/);
     assert.match(staffBody, /Jane Doe/);
