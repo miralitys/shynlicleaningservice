@@ -68,6 +68,21 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
       email: "anna@example.com",
       address: "215 North Elm Street, Naperville, IL",
       status: "active",
+      calendar: {
+        provider: "google",
+        status: "connected",
+        accountEmail: "anna.cleaner@gmail.com",
+        workCalendarId: "work-cal-1",
+        unavailableCalendarId: "dayoff-cal-1",
+        tokenCipher: {
+          version: 1,
+          salt: "aa",
+          iv: "bb",
+          tag: "cc",
+          data: "dGVzdA==",
+        },
+        tokenExpiresAt: "2026-04-11T18:00:00.000Z",
+      },
     });
     const olga = await store.createStaff({
       name: "Olga Martinez",
@@ -82,13 +97,28 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
       scheduleTime: "09:30",
       status: "confirmed",
       notes: "Bring deep-clean kit",
+      calendarSync: {
+        google: {
+          byStaffId: {
+            [anna.id]: {
+              eventId: "evt-anna-1",
+              calendarId: "work-cal-1",
+            },
+          },
+        },
+      },
     });
 
     let snapshot = await store.getSnapshot();
     assert.equal(snapshot.staff.length, 2);
     assert.equal(snapshot.assignments.length, 1);
     assert.equal(snapshot.staff[0].address, "215 North Elm Street, Naperville, IL");
+    assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
     assert.deepEqual(snapshot.assignments[0].staffIds.sort(), [anna.id, olga.id].sort());
+    assert.equal(
+      snapshot.assignments[0].calendarSync.google.byStaffId[anna.id].eventId,
+      "evt-anna-1"
+    );
 
     await store.deleteStaff(anna.id);
 
@@ -125,6 +155,21 @@ test("uses the Supabase-backed store implementation when the client is configure
     email: "anna@example.com",
     address: "215 North Elm Street, Naperville, IL",
     status: "active",
+    calendar: {
+      provider: "google",
+      status: "connected",
+      accountEmail: "anna.cleaner@gmail.com",
+      workCalendarId: "work-cal-1",
+      unavailableCalendarId: "dayoff-cal-1",
+      tokenCipher: {
+        version: 1,
+        salt: "aa",
+        iv: "bb",
+        tag: "cc",
+        data: "dGVzdA==",
+      },
+      tokenExpiresAt: "2026-04-11T18:00:00.000Z",
+    },
   });
   const diana = await store.createStaff({
     name: "Diana Brooks",
@@ -139,12 +184,24 @@ test("uses the Supabase-backed store implementation when the client is configure
     scheduleTime: "11:00",
     status: "confirmed",
     notes: "Remote assignment",
+    calendarSync: {
+      google: {
+        byStaffId: {
+          [anna.id]: {
+            eventId: "evt-remote-1",
+            calendarId: "work-cal-1",
+          },
+        },
+      },
+    },
   });
 
   let snapshot = await store.getSnapshot();
   assert.equal(snapshot.staff.length, 2);
   assert.equal(snapshot.assignments.length, 1);
   assert.equal(snapshot.assignments[0].status, "confirmed");
+  assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
+  assert.equal(snapshot.assignments[0].calendarSync.google.byStaffId[anna.id].eventId, "evt-remote-1");
 
   await store.deleteStaff(anna.id);
   snapshot = await store.getSnapshot();

@@ -54,6 +54,7 @@
   - `lib/admin-auth.js`
   - `lib/admin/domain.js`
   - `lib/admin/handlers.js`
+  - `lib/admin-google-calendar.js`
   - `lib/admin/render-pages.js`
   - `lib/admin/render-shared.js`
   - `lib/admin-settings-store.js`
@@ -79,6 +80,7 @@
   - `docs/system/*`
 - Tests:
   - `test/admin-auth.test.js`
+  - `test/admin-google-calendar.test.js`
   - `test/admin-staff-store.test.js`
   - `test/admin-route.test.js`
   - `test/admin-settings-store.test.js`
@@ -135,6 +137,16 @@
 2. If Supabase env is configured, staff and assignments are read/written through `lib/supabase-admin-staff.js`.
 3. If Supabase is not configured, staff planning falls back to the local JSON store for the running app.
 
+### Google Calendar flow
+1. `lib/admin-google-calendar.js` provides Google OAuth, token refresh, managed calendar setup, event sync, and unavailable/day-off reads.
+2. Each connected cleaner gets two managed Google calendars:
+   - `SHYNLI Work` for company-managed confirmed jobs;
+   - `SHYNLI Unavailable` for cleaner-managed day off / blocked time.
+3. `GET /admin/staff/google/connect` starts the OAuth flow for one cleaner.
+4. `GET /admin/google-calendar/callback` finishes OAuth without relying on the admin session cookie, using a signed state token instead.
+5. When an assignment is saved as `confirmed`, the system creates or updates a matching event in that cleaner's `SHYNLI Work` calendar.
+6. Before assignment save, the server reads `SHYNLI Unavailable`; if the cleaner marked that slot unavailable, the assignment is blocked.
+
 ### Stripe flow
 1. Client POSTs `quoteToken` to `/api/stripe/checkout-session`.
 2. Server rate-limits the request, validates body size/shape, and verifies the signed token.
@@ -158,9 +170,9 @@
 - Supabase admin staff rows
   - the `admin_staff` and `admin_staff_assignments` row shapes mirrored by `lib/supabase-admin-staff.js`.
 - staff record
-  - internal cleaner/operator data: name, role, phone, email, status, notes.
+  - internal cleaner/operator data: name, role, phone, email, status, notes, and optional Google Calendar connection metadata.
 - assignment record
-  - links a quote-op entry to staff IDs, scheduled date/time, assignment status, and notes.
+  - links a quote-op entry to staff IDs, scheduled date/time, assignment status, notes, and optional Google event-link metadata per staff member.
 - checklist template
   - service-type-specific checklist with ordered items and completion state.
 
@@ -180,6 +192,8 @@
   - `GET /admin/clients`
   - `GET/POST /admin/orders`
   - `GET/POST /admin/staff`
+  - `GET /admin/staff/google/connect`
+  - `GET /admin/google-calendar/callback`
   - `GET/POST /admin/settings`
   - `GET /admin/quote-ops`
   - `GET /admin/quote-ops/export.csv`
@@ -189,6 +203,7 @@
   - LeadConnector / GHL via `GHL_*`
   - Supabase via `SUPABASE_*` for optional quote-ops and staff persistence
   - Google Places browser autocomplete via runtime-injected `GOOGLE_PLACES_API_KEY`
+  - Google Calendar OAuth + Calendar API via `GOOGLE_CALENDAR_CLIENT_ID` and `GOOGLE_CALENDAR_CLIENT_SECRET`
   - Cloudflare purge API via `scripts/purge-cloudflare-html-cache.mjs`
 - Deployment:
   - Render web service via `render.yaml`
@@ -202,11 +217,14 @@
   - `npm start`
 - Local tests:
   - `npm test`
-  - current status: `71/71` green
+  - current status: `82/82` green
 - Important env:
   - `HOST`, `PORT`, `PUBLIC_SITE_ORIGIN`
   - `STRIPE_SECRET_KEY`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`
   - `GOOGLE_PLACES_API_KEY`
+  - `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`, `GOOGLE_CALENDAR_REDIRECT_PATH`
+  - `GOOGLE_CALENDAR_TIME_ZONE`, `GOOGLE_CALENDAR_DEFAULT_EVENT_DURATION_MINUTES`
+  - `GOOGLE_CALENDAR_WORK_NAME`, `GOOGLE_CALENDAR_UNAVAILABLE_NAME`
   - `QUOTE_SIGNING_SECRET`, `QUOTE_TOKEN_TTL_SECONDS`
   - `GHL_*`
   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_QUOTE_OPS_TABLE`

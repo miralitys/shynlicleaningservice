@@ -532,6 +532,371 @@ test("creates staff members and assigns them to orders through the staff workspa
   }
 });
 
+test("connects a cleaner to Google Calendar and syncs confirmed assignments into SHYNLI Work", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-google-calendar-route-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-google-123",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "oauth2.googleapis.com/token",
+      status: 200,
+      body: {
+        access_token: "google-access-1",
+        refresh_token: "google-refresh-1",
+        expires_in: 3600,
+        token_type: "Bearer",
+      },
+    },
+    {
+      method: "GET",
+      match: "/users/me/calendarList",
+      status: 200,
+      body: {
+        items: [
+          {
+            id: "cleaner.one@gmail.com",
+            primary: true,
+            summary: "cleaner.one@gmail.com",
+          },
+          {
+            id: "work-cal-1",
+            summary: "SHYNLI Work",
+          },
+          {
+            id: "dayoff-cal-1",
+            summary: "SHYNLI Unavailable",
+          },
+        ],
+      },
+    },
+    {
+      method: "GET",
+      match: "/calendars/dayoff-cal-1/events",
+      status: 200,
+      body: {
+        items: [],
+      },
+    },
+    {
+      method: "POST",
+      match: "/calendars/work-cal-1/events",
+      status: 200,
+      body: {
+        id: "work-event-1",
+        htmlLink: "https://calendar.google.com/event?eid=work-event-1",
+      },
+    },
+  ]);
+  const storePath = path.join(tempDir, "admin-staff-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: storePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    GOOGLE_CALENDAR_CLIENT_ID: "google-client-id",
+    GOOGLE_CALENDAR_CLIENT_SECRET: "google-client-secret",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "google-calendar-request-1",
+      fullName: "Emily Johnson",
+      phone: "312-555-0198",
+      email: "emily@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-04-18",
+      selectedTime: "09:00",
+      fullAddress: "215 North Elm Street, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-staff",
+        name: "Anna Petrova",
+        role: "Cleaner",
+        phone: "13125550199",
+        email: "cleaner.one@gmail.com",
+        status: "active",
+      }),
+    });
+    assert.equal(createStaffResponse.status, 303);
+
+    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffPageResponse.text();
+    assert.equal(staffPageResponse.status, 200);
+    assert.match(staffPageBody, /Подключить Google Calendar/);
+
+    const staffIdMatch = staffPageBody.match(/name="staffId" value="([^"]+)"/);
+    assert.ok(staffIdMatch);
+    const staffId = staffIdMatch[1];
+
+    const entryIdMatch = staffPageBody.match(/name="entryId" value="([^"]+)"/);
+    assert.ok(entryIdMatch);
+    const entryId = entryIdMatch[1];
+
+    const connectResponse = await fetch(
+      `${started.baseUrl}/admin/staff/google/connect?staffId=${encodeURIComponent(staffId)}`,
+      {
+        redirect: "manual",
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    assert.equal(connectResponse.status, 303);
+    const googleLocation = connectResponse.headers.get("location") || "";
+    assert.match(googleLocation, /^https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth/);
+    const googleUrl = new URL(googleLocation);
+    const state = googleUrl.searchParams.get("state") || "";
+    assert.ok(state);
+
+    const callbackResponse = await fetch(
+      `${started.baseUrl}/admin/google-calendar/callback?code=test-code&state=${encodeURIComponent(state)}`,
+      {
+        redirect: "manual",
+      }
+    );
+    assert.equal(callbackResponse.status, 303);
+    assert.match(callbackResponse.headers.get("location") || "", /notice=calendar-connected/);
+
+    const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", entryId],
+        ["staffIds", staffId],
+        ["status", "confirmed"],
+        ["notes", "Bring green kit"],
+      ]),
+    });
+    assert.equal(assignResponse.status, 303);
+    assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
+
+    const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
+    assert.equal(storePayload.staff[0].calendar.accountEmail, "cleaner.one@gmail.com");
+    assert.equal(storePayload.staff[0].calendar.workCalendarId, "work-cal-1");
+    assert.equal(storePayload.assignments[0].calendarSync.google.byStaffId[staffId].eventId, "work-event-1");
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    assert.ok(
+      captureLines.some(
+        (record) =>
+          record.method === "POST" &&
+          record.url.includes("/calendars/work-cal-1/events") &&
+          /SHYNLI: Emily Johnson/i.test(record.body)
+      )
+    );
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavailable", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-google-calendar-conflict-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-google-456",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "oauth2.googleapis.com/token",
+      status: 200,
+      body: {
+        access_token: "google-access-2",
+        refresh_token: "google-refresh-2",
+        expires_in: 3600,
+        token_type: "Bearer",
+      },
+    },
+    {
+      method: "GET",
+      match: "/users/me/calendarList",
+      status: 200,
+      body: {
+        items: [
+          {
+            id: "cleaner.two@gmail.com",
+            primary: true,
+            summary: "cleaner.two@gmail.com",
+          },
+          {
+            id: "work-cal-2",
+            summary: "SHYNLI Work",
+          },
+          {
+            id: "dayoff-cal-2",
+            summary: "SHYNLI Unavailable",
+          },
+        ],
+      },
+    },
+    {
+      method: "GET",
+      match: "/calendars/dayoff-cal-2/events",
+      status: 200,
+      body: {
+        items: [
+          {
+            id: "dayoff-1",
+            summary: "Day off",
+            start: { date: "2026-04-18" },
+            end: { date: "2026-04-19" },
+          },
+        ],
+      },
+    },
+  ]);
+  const storePath = path.join(tempDir, "admin-staff-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: storePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    GOOGLE_CALENDAR_CLIENT_ID: "google-client-id",
+    GOOGLE_CALENDAR_CLIENT_SECRET: "google-client-secret",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "google-calendar-request-2",
+      fullName: "Sophia Lee",
+      phone: "312-555-0112",
+      email: "sophia@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-04-18",
+      selectedTime: "10:00",
+      fullAddress: "742 Cedar Avenue, Aurora, IL 60506",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-staff",
+        name: "Diana Brooks",
+        role: "Cleaner",
+        phone: "13125550177",
+        email: "cleaner.two@gmail.com",
+        status: "active",
+      }),
+    });
+
+    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffPageResponse.text();
+    const staffId = (staffPageBody.match(/name="staffId" value="([^"]+)"/) || [])[1];
+    const entryId = (staffPageBody.match(/name="entryId" value="([^"]+)"/) || [])[1];
+    assert.ok(staffId);
+    assert.ok(entryId);
+
+    const connectResponse = await fetch(
+      `${started.baseUrl}/admin/staff/google/connect?staffId=${encodeURIComponent(staffId)}`,
+      {
+        redirect: "manual",
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const googleUrl = new URL(connectResponse.headers.get("location"));
+    const state = googleUrl.searchParams.get("state") || "";
+    assert.ok(state);
+
+    const callbackResponse = await fetch(
+      `${started.baseUrl}/admin/google-calendar/callback?code=test-code-2&state=${encodeURIComponent(state)}`,
+      {
+        redirect: "manual",
+      }
+    );
+    assert.equal(callbackResponse.status, 303);
+
+    const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", entryId],
+        ["staffIds", staffId],
+        ["status", "confirmed"],
+      ]),
+    });
+    assert.equal(assignResponse.status, 303);
+    assert.match(assignResponse.headers.get("location") || "", /notice=assignment-conflict/);
+    assert.match(assignResponse.headers.get("location") || "", /staff=Diana/);
+
+    const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
+    assert.equal(storePayload.assignments.length, 0);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("shows recent quote submissions in admin quote ops and retries CRM sync", async () => {
   const fetchStub = createFetchStub([
     {

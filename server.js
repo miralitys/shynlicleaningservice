@@ -12,6 +12,10 @@ const { createAdminDomainHelpers } = require("./lib/admin/domain");
 const { createAdminRequestHandler } = require("./lib/admin/handlers");
 const { createAdminPageRenderers } = require("./lib/admin/render-pages");
 const { createAdminSharedRenderers } = require("./lib/admin/render-shared");
+const {
+  createAdminGoogleCalendarClient,
+  createAdminGoogleCalendarIntegration,
+} = require("./lib/admin-google-calendar");
 const { createRequestHelpers } = require("./lib/http/request");
 const { createTimingHelpers } = require("./lib/http/timing");
 const { createSiteStaticHelpers } = require("./lib/site/assets");
@@ -118,9 +122,11 @@ const ADMIN_LOGOUT_PATH = "/admin/logout";
 const ADMIN_CLIENTS_PATH = "/admin/clients";
 const ADMIN_ORDERS_PATH = "/admin/orders";
 const ADMIN_STAFF_PATH = "/admin/staff";
+const ADMIN_STAFF_GOOGLE_CONNECT_PATH = "/admin/staff/google/connect";
 const ADMIN_SETTINGS_PATH = "/admin/settings";
 const ADMIN_QUOTE_OPS_PATH = "/admin/quote-ops";
 const ADMIN_QUOTE_OPS_RETRY_PATH = "/admin/quote-ops/retry";
+const ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH = "/admin/google-calendar/callback";
 const ADMIN_INTEGRATIONS_PATH = "/admin/integrations";
 const ADMIN_RUNTIME_PATH = "/admin/runtime";
 const ADMIN_SESSION_COOKIE = "shynli_admin_session";
@@ -135,6 +141,8 @@ const ADMIN_APP_ROUTES = new Set([
 ]);
 const ADMIN_ALL_ROUTES = new Set([
   ...ADMIN_APP_ROUTES,
+  ADMIN_STAFF_GOOGLE_CONNECT_PATH,
+  ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
   ADMIN_LOGIN_PATH,
   ADMIN_2FA_PATH,
@@ -181,7 +189,12 @@ const REDIRECT_ROUTES = new Map([
 const SITE_ORIGIN = normalizeConfiguredOrigin(
   process.env.PUBLIC_SITE_ORIGIN || process.env.SITE_BASE_URL || "https://shynlicleaningservice.com"
 );
-const NOINDEX_ROUTES = new Set(["/home-calculator", "/oauth/callback", "/quote"]);
+const NOINDEX_ROUTES = new Set([
+  "/home-calculator",
+  "/oauth/callback",
+  "/quote",
+  ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
+]);
 const BREADCRUMB_LABELS = new Map([
   ["/about-us", "About Us"],
   ["/blog", "Blog"],
@@ -489,11 +502,13 @@ const {
 const adminPageRenderers = createAdminPageRenderers({
   ADMIN_CLIENTS_PATH,
   ADMIN_INTEGRATIONS_PATH,
+  ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_ORDERS_PATH,
   ADMIN_ROOT_PATH,
   ADMIN_RUNTIME_PATH,
   ADMIN_SETTINGS_PATH,
   ADMIN_STAFF_PATH,
+  ADMIN_STAFF_GOOGLE_CONNECT_PATH,
   ADMIN_QUOTE_OPS_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
   ASSIGNMENT_STATUS_VALUES,
@@ -541,6 +556,7 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_APP_ROUTES,
   ADMIN_CHALLENGE_COOKIE,
   ADMIN_CLIENTS_PATH,
+  ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_LOGIN_PATH,
   ADMIN_LOGOUT_PATH,
   ADMIN_ORDERS_PATH,
@@ -549,6 +565,7 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_SESSION_COOKIE,
   ADMIN_SETTINGS_PATH,
   ADMIN_STAFF_PATH,
+  ADMIN_STAFF_GOOGLE_CONNECT_PATH,
   QUOTE_OPS_LEDGER_LIMIT,
   adminAuth,
   adminLoginRateLimiter,
@@ -717,6 +734,16 @@ async function main() {
     env: process.env,
     fetch: global.fetch,
   });
+  const googleCalendarClient = createAdminGoogleCalendarClient({
+    env: process.env,
+    fetch: global.fetch,
+    siteOrigin: SITE_ORIGIN,
+  });
+  const googleCalendarIntegration = createAdminGoogleCalendarIntegration({
+    client: googleCalendarClient,
+    quoteOpsLedger,
+    staffStore,
+  });
 
   const perfSummaryTimer = setInterval(() => {
     const requestSnapshot = requestPerfWindow.snapshot();
@@ -776,6 +803,7 @@ async function main() {
     await handleSiteRequest(req, res, requestStartNs, requestContext, requestLogger, {
       eventLoopStats,
       htmlCache,
+      googleCalendarIntegration,
       quoteOpsLedger,
       requestPerfWindow,
       runtimeIndex,

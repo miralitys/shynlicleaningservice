@@ -137,6 +137,20 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
                     address: "215 North Elm Street, Naperville, IL",
                     status: "active",
                     notes: "Quote-ops fallback row",
+                    calendar: {
+                      provider: "google",
+                      status: "connected",
+                      accountEmail: "anna.cleaner@gmail.com",
+                      workCalendarId: "work-cal-1",
+                      unavailableCalendarId: "dayoff-cal-1",
+                      tokenCipher: {
+                        version: 1,
+                        salt: "aa",
+                        iv: "bb",
+                        tag: "cc",
+                        data: "dGVzdA==",
+                      },
+                    },
                     createdAt: "2026-04-11T16:36:16.391Z",
                     updatedAt: "2026-04-11T16:36:16.391Z",
                   },
@@ -172,6 +186,16 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
                     scheduleTime: "09:00",
                     status: "confirmed",
                     notes: "Fallback assignment",
+                    calendarSync: {
+                      google: {
+                        byStaffId: {
+                          [staffId]: {
+                            eventId: "evt-fallback-1",
+                            calendarId: "work-cal-1",
+                          },
+                        },
+                      },
+                    },
                     createdAt: "2026-04-11T16:55:37.517Z",
                     updatedAt: "2026-04-11T16:55:37.517Z",
                   },
@@ -190,8 +214,10 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
   assert.equal(snapshot.staff.length, 1);
   assert.equal(snapshot.staff[0].name, "Anna Petrova");
   assert.equal(snapshot.staff[0].address, "215 North Elm Street, Naperville, IL");
+  assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
   assert.equal(snapshot.assignments.length, 1);
   assert.deepEqual(snapshot.assignments[0].staffIds, [staffId]);
+  assert.equal(snapshot.assignments[0].calendarSync.google.byStaffId[staffId].eventId, "evt-fallback-1");
   assert.ok(calls.some((call) => call.url.includes("/rest/v1/quote_ops_entries")));
 });
 
@@ -239,6 +265,20 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
     address: "742 Cedar Avenue, Aurora, IL 60506",
     status: "active",
     notes: "Remote fallback upsert",
+    calendar: {
+      provider: "google",
+      status: "connected",
+      accountEmail: "olga.cleaner@gmail.com",
+      workCalendarId: "work-cal-2",
+      unavailableCalendarId: "dayoff-cal-2",
+      tokenCipher: {
+        version: 1,
+        salt: "aa",
+        iv: "bb",
+        tag: "cc",
+        data: "dGVzdA==",
+      },
+    },
     createdAt: "2026-04-11T16:36:16.393Z",
     updatedAt: "2026-04-11T16:36:16.393Z",
   });
@@ -251,4 +291,5 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
   assert.equal(payload.full_address, "742 Cedar Avenue, Aurora, IL 60506");
   assert.equal(payload.code, "active");
   assert.equal(payload.payload_for_retry.staff.address, "742 Cedar Avenue, Aurora, IL 60506");
+  assert.equal(payload.payload_for_retry.staff.calendar.accountEmail, "olga.cleaner@gmail.com");
 });
