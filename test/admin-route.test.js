@@ -418,6 +418,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.doesNotMatch(staffBody, /Редактирование карточки/);
     assert.match(staffBody, /data-admin-toggle-target="admin-staff-edit-dialog-.*-edit-panel"/);
     assert.match(staffBody, /class="admin-icon-button admin-edit-button"/);
+    assert.match(staffBody, /data-admin-toggle-icon="true"/);
     assert.match(staffBody, /aria-label="Редактировать сотрудника"/);
     assert.match(staffBody, /data-admin-toggle-panel hidden/);
     assert.match(staffBody, /name="address"/);
