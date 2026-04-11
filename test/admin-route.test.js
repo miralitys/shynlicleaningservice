@@ -881,3 +881,43 @@ test("renders the clients table with filters and request history", async () => {
     fetchStub.cleanup();
   }
 });
+
+test("shows quote ops diagnostics when Supabase reads fail on the clients page", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/rest/v1/quote_ops_entries",
+      status: 500,
+      body: {
+        message: "supabase read failed",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    SUPABASE_URL: "https://example.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "sb_secret_example123",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const response = await fetch(`${started.baseUrl}/admin/clients`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const body = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(body, /Supabase/i);
+    assert.match(body, /Чтение: fallback в память/i);
+    assert.match(body, /Ошибка чтения Supabase: supabase read failed/i);
+    assert.match(body, /quote_ops_entries/i);
+  } finally {
+    await stopServer(started.child);
+  }
+});
