@@ -737,6 +737,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
     assert.match(quoteOpsBody, /class="admin-table-row-clickable"/);
     assert.match(quoteOpsBody, /data-admin-dialog-row="true"/);
+    assert.match(quoteOpsBody, /CRM и отправка/);
+    assert.match(quoteOpsBody, /Что заказал клиент/);
     assert.match(quoteOpsBody, /Поля из формы клиента/);
     assert.match(quoteOpsBody, /Gate code 2040/);
     assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
