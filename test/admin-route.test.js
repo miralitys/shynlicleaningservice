@@ -690,7 +690,7 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
   }
 });
 
-test("shows a persistent storage warning on admin orders when Supabase falls back to memory", async () => {
+test("keeps storage diagnostics hidden on admin orders when Supabase falls back to memory", async () => {
   const fetchStub = createFetchStub([
     {
       method: "GET",
@@ -768,8 +768,9 @@ test("shows a persistent storage warning on admin orders when Supabase falls bac
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Storage Warning/);
-    assert.match(ordersBody, /локальный fallback/i);
-    assert.match(ordersBody, /quote_ops_entries does not exist/i);
+    assert.doesNotMatch(ordersBody, /Persistent storage active/i);
+    assert.doesNotMatch(ordersBody, /локальный fallback/i);
+    assert.doesNotMatch(ordersBody, /quote_ops_entries/i);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -968,7 +969,7 @@ test("renders the clients table with filters and request history", async () => {
   }
 });
 
-test("shows quote ops diagnostics when Supabase reads fail on the clients page", async () => {
+test("keeps quote ops diagnostics hidden when Supabase reads fail on the clients page", async () => {
   const fetchStub = createFetchStub([
     {
       method: "GET",
@@ -999,10 +1000,10 @@ test("shows quote ops diagnostics when Supabase reads fail on the clients page",
     const body = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(body, /Supabase/i);
-    assert.match(body, /Чтение: fallback в память/i);
-    assert.match(body, /Ошибка чтения Supabase: supabase read failed/i);
-    assert.match(body, /quote_ops_entries/i);
+    assert.doesNotMatch(body, /Supabase/i);
+    assert.doesNotMatch(body, /Чтение: fallback в память/i);
+    assert.doesNotMatch(body, /Ошибка чтения Supabase/i);
+    assert.doesNotMatch(body, /quote_ops_entries/i);
   } finally {
     await stopServer(started.child);
   }
