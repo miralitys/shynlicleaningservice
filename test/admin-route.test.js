@@ -697,7 +697,7 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
   }
 });
 
-test("keeps storage diagnostics hidden on admin orders when Supabase falls back to memory", async () => {
+test("shows a persistent storage warning on admin orders when Supabase falls back to memory", async () => {
   const fetchStub = createFetchStub([
     {
       method: "GET",
@@ -775,9 +775,8 @@ test("keeps storage diagnostics hidden on admin orders when Supabase falls back 
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Storage Warning/);
-    assert.doesNotMatch(ordersBody, /Persistent storage active/i);
-    assert.doesNotMatch(ordersBody, /локальный fallback/i);
-    assert.doesNotMatch(ordersBody, /quote_ops_entries/i);
+    assert.match(ordersBody, /локальный fallback/i);
+    assert.match(ordersBody, /quote_ops_entries does not exist/i);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -866,7 +865,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(clientsBody, /client-request-3/);
     assert.match(clientsBody, /Фильтры/i);
     assert.match(clientsBody, /Поиск по имени, email или телефону/i);
-    assert.match(clientsBody, /Нажмите на имя клиента, чтобы открыть карточку/i);
+    assert.match(clientsBody, /Клик по имени открывает профиль/i);
     assert.doesNotMatch(clientsBody, /Карточка клиента/i);
 
     const selectedClientResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com&client=jane%40example.com`, {
@@ -879,10 +878,12 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientBody, /class="admin-dialog admin-dialog-wide"/);
     assert.match(selectedClientBody, /id="admin-client-detail-dialog"/);
     assert.match(selectedClientBody, /data-admin-dialog-return-url="\/admin\/clients\?email=jane%40example\.com"/);
-    assert.match(selectedClientBody, /Карточка клиента/i);
+    assert.match(selectedClientBody, /Сводка по заявке/i);
+    assert.match(selectedClientBody, /Контакты/i);
     assert.match(selectedClientBody, /Сумма заказов/i);
     assert.match(selectedClientBody, /client-request-2/);
     assert.match(selectedClientBody, /client-request-3/);
+    assert.doesNotMatch(selectedClientBody, /Карточка клиента/i);
     assert.doesNotMatch(selectedClientBody, /id="client-card"/);
 
     const nameFilterResponse = await fetch(`${started.baseUrl}/admin/clients?name=John`, {
