@@ -120,7 +120,6 @@ const ADMIN_ORDERS_PATH = "/admin/orders";
 const ADMIN_STAFF_PATH = "/admin/staff";
 const ADMIN_SETTINGS_PATH = "/admin/settings";
 const ADMIN_QUOTE_OPS_PATH = "/admin/quote-ops";
-const ADMIN_QUOTE_OPS_EXPORT_PATH = "/admin/quote-ops/export.csv";
 const ADMIN_QUOTE_OPS_RETRY_PATH = "/admin/quote-ops/retry";
 const ADMIN_INTEGRATIONS_PATH = "/admin/integrations";
 const ADMIN_RUNTIME_PATH = "/admin/runtime";
@@ -136,7 +135,6 @@ const ADMIN_APP_ROUTES = new Set([
 ]);
 const ADMIN_ALL_ROUTES = new Set([
   ...ADMIN_APP_ROUTES,
-  ADMIN_QUOTE_OPS_EXPORT_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
   ADMIN_LOGIN_PATH,
   ADMIN_2FA_PATH,
@@ -492,7 +490,6 @@ const adminPageRenderers = createAdminPageRenderers({
   ADMIN_RUNTIME_PATH,
   ADMIN_SETTINGS_PATH,
   ADMIN_STAFF_PATH,
-  ADMIN_QUOTE_OPS_EXPORT_PATH,
   ADMIN_QUOTE_OPS_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
   ASSIGNMENT_STATUS_VALUES,
@@ -539,7 +536,6 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_LOGIN_PATH,
   ADMIN_LOGOUT_PATH,
   ADMIN_ORDERS_PATH,
-  ADMIN_QUOTE_OPS_EXPORT_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
   ADMIN_ROOT_PATH,
   ADMIN_SESSION_COOKIE,

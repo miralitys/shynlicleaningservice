@@ -499,7 +499,7 @@ test("creates staff members and assigns them to orders through the staff workspa
   }
 });
 
-test("shows recent quote submissions in admin quote ops, exports CSV, and retries CRM sync", async () => {
+test("shows recent quote submissions in admin quote ops and retries CRM sync", async () => {
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -678,25 +678,30 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.equal(quoteOpsResponse.status, 200);
     assert.match(quoteOpsBody, /Jane Doe/);
     assert.match(quoteOpsBody, /ops-request-1/);
+    assert.match(quoteOpsBody, /Лента заявок/);
     assert.match(quoteOpsBody, /Поиск и фильтры/);
     assert.match(quoteOpsBody, /Успешно отправленные заявки/);
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
     assert.match(quoteOpsBody, /123 Main St, Romeoville, IL 60446/);
+    assert.match(quoteOpsBody, /\+1\(312\)555-0100/);
+    assert.match(quoteOpsBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
+    assert.match(quoteOpsBody, /Поля из формы клиента/);
+    assert.match(quoteOpsBody, /Gate code 2040/);
     assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
     assert.doesNotMatch(quoteOpsBody, /Persistent storage active/i);
     assert.doesNotMatch(quoteOpsBody, /Подключено к Supabase/i);
     assert.doesNotMatch(quoteOpsBody, /quote_ops_entries/i);
+    assert.doesNotMatch(quoteOpsBody, /Скачать CSV/);
+    assert.doesNotMatch(quoteOpsBody, /в текущей выборке/);
+    assert.doesNotMatch(quoteOpsBody, /Критичных заявок нет/);
+    assert.doesNotMatch(quoteOpsBody, /Последняя:/);
 
-    const exportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
+    const removedExportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
     });
-    const exportBody = await exportResponse.text();
-    assert.equal(exportResponse.status, 200);
-    assert.match(exportResponse.headers.get("content-type") || "", /text\/csv/i);
-    assert.match(exportBody, /Jane Doe/);
-    assert.match(exportBody, /ops-request-1/);
+    assert.equal(removedExportResponse.status, 404);
 
     const retryResponse = await fetch(`${started.baseUrl}/admin/quote-ops/retry`, {
       method: "POST",
