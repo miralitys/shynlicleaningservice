@@ -642,6 +642,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /March 22, 2026 at 09:00/);
     assert.match(ordersBody, /Please call on arrival/);
     assert.match(ordersBody, /Gate code 2040/);
+    assert.match(ordersBody, /Команда не назначена/);
+    assert.doesNotMatch(ordersBody, /Команда назначена/);
     assert.doesNotMatch(ordersBody, /CRM без ошибок/);
     assert.doesNotMatch(ordersBody, /Успешно/);
     assert.doesNotMatch(ordersBody, /Удаление убирает запись из рабочих разделов админки/);
