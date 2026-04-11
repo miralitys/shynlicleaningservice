@@ -5,7 +5,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { loadAdminConfig, generateTotpCode } = require("../lib/admin-auth");
+const { hashPassword, loadAdminConfig, generateTotpCode } = require("../lib/admin-auth");
 const { createFetchStub, createSmtpTestServer, startServer, stopServer } = require("./server-test-helpers");
 
 function getSetCookies(response) {
@@ -2137,6 +2137,74 @@ test("allows managers into admin workspace but blocks delete actions", async () 
     assert.equal(deleteUserResponse.status, 403);
     assert.match(deleteUserBody, /Недостаточно прав/i);
     assert.match(deleteUserBody, /Удаление доступно только администратору/i);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("shows a readable SMTP invite error in the users settings page", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-invite-error-route-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    await fs.writeFile(
+      staffStorePath,
+      `${JSON.stringify({
+        staff: [
+          {
+            id: "staff-relay-1",
+            name: "Relay Tester",
+            role: "Cleaner",
+            status: "active",
+            email: "relay.tester@example.com",
+          },
+        ],
+        assignments: [],
+      }, null, 2)}\n`,
+      "utf8"
+    );
+    await fs.writeFile(
+      usersStorePath,
+      `${JSON.stringify({
+        users: [
+          {
+            id: "user-relay-1",
+            staffId: "staff-relay-1",
+            email: "relay.tester@example.com",
+            phone: "+1(312)555-0111",
+            passwordHash: hashPassword("StrongPass123!"),
+            status: "active",
+            role: "cleaner",
+            emailVerificationRequired: false,
+            emailVerifiedAt: new Date().toISOString(),
+            inviteEmailLastError:
+              "ACCOUNT_INVITE_EMAIL_SEND_FAILED:535-5.7.8 Username and Password not accepted.",
+          },
+        ],
+      }, null, 2)}\n`,
+      "utf8"
+    );
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=users`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const settingsBody = await settingsResponse.text();
+
+    assert.equal(settingsResponse.status, 200);
+    assert.match(settingsBody, /Письмо не ушло/i);
+    assert.match(settingsBody, /SMTP не принял логин или app password/i);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
