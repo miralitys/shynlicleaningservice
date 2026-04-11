@@ -683,7 +683,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /Jane Doe/);
     assert.match(quoteOpsBody, /ops-request-1/);
     assert.match(quoteOpsBody, /Лента заявок/);
-    assert.match(quoteOpsBody, /Поиск и фильтры/);
+    assert.match(quoteOpsBody, /Быстро найти нужную заявку/);
     assert.match(quoteOpsBody, /Успешно отправленные заявки/);
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
     assert.match(quoteOpsBody, /123 Main St, Romeoville, IL 60446/);
