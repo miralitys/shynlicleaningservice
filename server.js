@@ -148,12 +148,16 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
     label: "Обзор",
   },
   {
-    path: ADMIN_CLIENTS_PATH,
-    label: "Клиенты",
+    path: ADMIN_QUOTE_OPS_PATH,
+    label: "Заявки",
   },
   {
     path: ADMIN_ORDERS_PATH,
     label: "Заказы",
+  },
+  {
+    path: ADMIN_CLIENTS_PATH,
+    label: "Клиенты",
   },
   {
     path: ADMIN_STAFF_PATH,
@@ -161,11 +165,7 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
   },
   {
     path: ADMIN_SETTINGS_PATH,
-    label: "Settings",
-  },
-  {
-    path: ADMIN_QUOTE_OPS_PATH,
-    label: "Заявки",
+    label: "Настройки",
   },
 ]);
 const ORDER_STATUS_VALUES = new Set(["new", "scheduled", "in-progress", "completed", "canceled", "rescheduled"]);
