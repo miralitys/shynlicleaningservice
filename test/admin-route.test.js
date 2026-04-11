@@ -639,7 +639,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /Interior Windows Cleaning/);
     assert.match(ordersBody, /Apt 4B/);
     assert.match(ordersBody, /Romeoville/);
-    assert.match(ordersBody, /March 22, 2026 at 09:00/);
+    assert.match(ordersBody, /03\/22\/2026, 09:00 AM/);
     assert.match(ordersBody, /Please call on arrival/);
     assert.match(ordersBody, /Gate code 2040/);
     assert.match(ordersBody, /Команда не назначена/);
