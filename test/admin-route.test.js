@@ -690,6 +690,92 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
   }
 });
 
+test("shows a persistent storage warning on admin orders when Supabase falls back to memory", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/rest/v1/admin_staff_assignments",
+      status: 200,
+      body: [],
+    },
+    {
+      method: "GET",
+      match: "/rest/v1/admin_staff",
+      status: 200,
+      body: [],
+    },
+    {
+      method: "GET",
+      match: "/rest/v1/quote_ops_entries",
+      status: 500,
+      body: {
+        message: "relation public.quote_ops_entries does not exist",
+      },
+    },
+    {
+      method: "POST",
+      match: "/rest/v1/quote_ops_entries",
+      status: 500,
+      body: {
+        message: "relation public.quote_ops_entries does not exist",
+      },
+    },
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-storage-warning-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    SUPABASE_URL: "https://example.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "sb_secret_example123",
+    SUPABASE_QUOTE_OPS_TABLE: "quote_ops_entries",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "storage-warning-request-1",
+      fullName: "Storage Warning",
+      phone: "312-555-0199",
+      email: "storage-warning@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-03-25",
+      selectedTime: "15:00",
+      fullAddress: "910 Warning St, Aurora, IL 60505",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Storage Warning/);
+    assert.match(ordersBody, /локальный fallback/i);
+    assert.match(ordersBody, /quote_ops_entries does not exist/i);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("renders the clients table with filters and request history", async () => {
   const fetchStub = createFetchStub([
     {
