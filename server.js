@@ -82,6 +82,9 @@ const ADMIN_ROOT_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
 const ADMIN_2FA_PATH = "/admin/2fa";
 const ADMIN_LOGOUT_PATH = "/admin/logout";
+const ADMIN_CLIENTS_PATH = "/admin/clients";
+const ADMIN_ORDERS_PATH = "/admin/orders";
+const ADMIN_STAFF_PATH = "/admin/staff";
 const ADMIN_QUOTE_OPS_PATH = "/admin/quote-ops";
 const ADMIN_QUOTE_OPS_EXPORT_PATH = "/admin/quote-ops/export.csv";
 const ADMIN_QUOTE_OPS_RETRY_PATH = "/admin/quote-ops/retry";
@@ -91,6 +94,9 @@ const ADMIN_SESSION_COOKIE = "shynli_admin_session";
 const ADMIN_CHALLENGE_COOKIE = "shynli_admin_challenge";
 const ADMIN_APP_ROUTES = new Set([
   ADMIN_ROOT_PATH,
+  ADMIN_CLIENTS_PATH,
+  ADMIN_ORDERS_PATH,
+  ADMIN_STAFF_PATH,
   ADMIN_QUOTE_OPS_PATH,
   ADMIN_INTEGRATIONS_PATH,
   ADMIN_RUNTIME_PATH,
@@ -107,6 +113,18 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
     path: ADMIN_ROOT_PATH,
     label: "Overview",
+  },
+  {
+    path: ADMIN_CLIENTS_PATH,
+    label: "Clients",
+  },
+  {
+    path: ADMIN_ORDERS_PATH,
+    label: "Orders",
+  },
+  {
+    path: ADMIN_STAFF_PATH,
+    label: "Staff",
   },
   {
     path: ADMIN_QUOTE_OPS_PATH,
@@ -1203,6 +1221,16 @@ function formatDurationLabel(totalSeconds) {
   return `${seconds}s`;
 }
 
+function formatAdminDateTime(value) {
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+  return date.toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
 function maskSecretPreview(value, visibleEnd = 4) {
   const raw = normalizeString(value, 512);
   if (!raw) return "Missing";
@@ -1368,7 +1396,7 @@ function renderAdminAppSidebar(config, req, activePath, statusBadges) {
           <h2 class="admin-sidebar-title">Admin Dashboard</h2>
         </div>
       </div>
-      <p class="admin-sidebar-copy">A shadcn-style operator shell for secure access, quote operations, integration visibility, and runtime diagnostics.</p>
+      <p class="admin-sidebar-copy">A shadcn-style operator shell for clients, orders, staffing, quote operations, integration visibility, and runtime diagnostics.</p>
       <nav class="admin-nav">
         ${ADMIN_APP_NAV_ITEMS.map((item) => `<a class="admin-nav-link${item.path === activePath ? " admin-nav-link-active" : ""}" href="${item.path}">${escapeHtml(item.label)}</a>`).join("")}
       </nav>
@@ -2335,6 +2363,58 @@ function getAdminStatusBadges(signals) {
   ].join("");
 }
 
+function collectAdminClientRecords(entries = []) {
+  const clients = new Map();
+
+  for (const entry of entries) {
+    const clientKey = normalizeString(
+      entry.customerEmail || entry.customerPhone || entry.contactId || entry.requestId || entry.id,
+      250
+    ).toLowerCase();
+    if (!clientKey) continue;
+
+    const latestService = normalizeString(entry.serviceName || entry.serviceType || "Cleaning Service", 120);
+    const existing = clients.get(clientKey);
+
+    if (!existing) {
+      clients.set(clientKey, {
+        key: clientKey,
+        name: normalizeString(entry.customerName || "Unnamed customer", 250),
+        email: normalizeString(entry.customerEmail, 250),
+        phone: normalizeString(entry.customerPhone, 80),
+        address: normalizeString(entry.fullAddress, 500),
+        latestCreatedAt: normalizeString(entry.createdAt, 80),
+        latestService,
+        requestCount: 1,
+        totalRevenue: Number(entry.totalPrice || 0),
+        statuses: new Set([normalizeString(entry.status, 32)].filter(Boolean)),
+      });
+      continue;
+    }
+
+    existing.requestCount += 1;
+    existing.totalRevenue += Number(entry.totalPrice || 0);
+    existing.statuses.add(normalizeString(entry.status, 32));
+
+    const existingTime = Date.parse(existing.latestCreatedAt || "");
+    const nextTime = Date.parse(entry.createdAt || "");
+    if (!Number.isFinite(existingTime) || (Number.isFinite(nextTime) && nextTime >= existingTime)) {
+      existing.name = normalizeString(entry.customerName || existing.name, 250);
+      existing.email = normalizeString(entry.customerEmail || existing.email, 250);
+      existing.phone = normalizeString(entry.customerPhone || existing.phone, 80);
+      existing.address = normalizeString(entry.fullAddress || existing.address, 500);
+      existing.latestCreatedAt = normalizeString(entry.createdAt || existing.latestCreatedAt, 80);
+      existing.latestService = latestService || existing.latestService;
+    }
+  }
+
+  return Array.from(clients.values()).sort((left, right) => {
+    const leftTime = Date.parse(left.latestCreatedAt || "");
+    const rightTime = Date.parse(right.latestCreatedAt || "");
+    return (Number.isFinite(rightTime) ? rightTime : 0) - (Number.isFinite(leftTime) ? leftTime : 0);
+  });
+}
+
 function renderDashboardPage(req, config) {
   const signals = getAdminIntegrationState();
   const runtimeBadges = getAdminStatusBadges(signals);
@@ -2403,6 +2483,18 @@ function renderDashboardPage(req, config) {
           "Internal Sections",
           "The admin workspace now breaks the secure area into focused pages instead of a single overview.",
           `<div class="admin-link-grid">
+            <a class="admin-link-tile" href="${ADMIN_CLIENTS_PATH}">
+              <strong>Clients</strong>
+              <span>See the customer directory seeded from the existing quote and booking flow.</span>
+            </a>
+            <a class="admin-link-tile" href="${ADMIN_ORDERS_PATH}">
+              <strong>Orders</strong>
+              <span>Review incoming booking requests, scheduling signals, and revenue pipeline.</span>
+            </a>
+            <a class="admin-link-tile" href="${ADMIN_STAFF_PATH}">
+              <strong>Staff</strong>
+              <span>Prepare the crew, assignments, and internal permissions module.</span>
+            </a>
             <a class="admin-link-tile" href="${ADMIN_QUOTE_OPS_PATH}">
               <strong>Quote Ops</strong>
               <span>Inspect canonical pricing, booking endpoints, and checkout/token readiness.</span>
@@ -2423,7 +2515,7 @@ function renderDashboardPage(req, config) {
           "The secured admin area remains intentionally controlled while still giving operators useful visibility.",
           `<ul class="admin-feature-list">
             <li>Safe credential + TOTP access control for every route under <code>/admin</code>.</li>
-            <li>Dedicated sections for quote operations, integrations, and runtime diagnostics.</li>
+            <li>Dedicated sections for clients, orders, staff operations, quote ops, integrations, and runtime diagnostics.</li>
             <li>Shared shadcn-style shell with sidebar navigation, cards, badges, and concise operator views.</li>
           </ul>`,
           { eyebrow: "Roadmap", muted: true }
@@ -2431,9 +2523,262 @@ function renderDashboardPage(req, config) {
       </div>`,
     {
       kicker: "Operations Console",
-      subtitle: "This is the secured admin area. It now groups access control, quote operations, integration visibility, and runtime checks into focused pages.",
+      subtitle: "This is the secured admin area. It now groups clients, orders, staffing, quote operations, integration visibility, and runtime checks into focused pages.",
       heroMeta: runtimeBadges,
       sidebar: renderAdminAppSidebar(config, req, ADMIN_ROOT_PATH, runtimeBadges),
+    }
+  );
+}
+
+async function renderClientsPage(req, config, quoteOpsLedger) {
+  const signals = getAdminIntegrationState();
+  const runtimeBadges = getAdminStatusBadges(signals);
+  const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
+  const clientRecords = collectAdminClientRecords(allEntries);
+  const clientsWithEmail = clientRecords.filter((client) => Boolean(client.email)).length;
+  const clientsWithPhone = clientRecords.filter((client) => Boolean(client.phone)).length;
+  const totalRequests = clientRecords.reduce((sum, client) => sum + client.requestCount, 0);
+
+  return renderAdminLayout(
+    "Clients",
+    `${renderAdminSignedInTopbar(config, {
+      linkHref: ADMIN_ORDERS_PATH,
+      linkLabel: "Open Orders",
+    })}
+      <div class="admin-stats-grid">
+        ${renderAdminCard(
+          "Known Clients",
+          "Unique customer records inferred from quote and booking activity already stored by the backend.",
+          `<p class="admin-metric-value">${escapeHtml(String(clientRecords.length))}</p>
+          <p class="admin-card-copy">This view deduplicates customers by email, phone, CRM contact, or request identity when available.</p>`,
+          { eyebrow: "Directory" }
+        )}
+        ${renderAdminCard(
+          "With Email",
+          "Clients that can be reached by email from the current server-side records.",
+          `<p class="admin-metric-value">${escapeHtml(String(clientsWithEmail))}</p>
+          <p class="admin-card-copy">Useful for follow-ups, reminders, and nurture flows once CRM actions expand.</p>`,
+          { eyebrow: "Contact", muted: true }
+        )}
+        ${renderAdminCard(
+          "With Phone",
+          "Clients that currently include a phone number in the intake flow.",
+          `<p class="admin-metric-value">${escapeHtml(String(clientsWithPhone))}</p>
+          <p class="admin-card-copy">Phone coverage gives the team a reliable fallback when email is missing.</p>`,
+          { eyebrow: "Contact", muted: true }
+        )}
+        ${renderAdminCard(
+          "Linked Requests",
+          "Total quote or booking submissions currently associated with the discovered client directory.",
+          `<p class="admin-metric-value">${escapeHtml(String(totalRequests))}</p>
+          <p class="admin-card-copy">Each new quote automatically enriches this client view without extra admin data entry.</p>`,
+          { eyebrow: "Activity", muted: true }
+        )}
+      </div>
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "Recent Client Directory",
+          "A lightweight client directory seeded from the live quote ledger so operators can start navigating customers immediately.",
+          clientRecords.length > 0
+            ? `<div class="admin-link-grid">
+                ${clientRecords
+                  .slice(0, 6)
+                  .map(
+                    (client) => `<div class="admin-link-tile">
+                      <strong>${escapeHtml(client.name || "Unnamed customer")}</strong>
+                      <span>${escapeHtml(client.latestService || "Cleaning Service")} • ${escapeHtml(formatAdminDateTime(client.latestCreatedAt))}</span>
+                      <span>${escapeHtml(client.email || client.phone || "No direct contact captured yet")}</span>
+                      <span>${escapeHtml(client.requestCount === 1 ? "1 linked request" : `${client.requestCount} linked requests`)}</span>
+                    </div>`
+                  )
+                  .join("")}
+              </div>`
+            : `<div class="admin-empty-state">No clients have been captured yet. Once someone submits the public quote flow, this directory will start filling automatically.</div>`,
+          { eyebrow: "Directory" }
+        )}
+        ${renderAdminCard(
+          "What This Section Covers",
+          "This page is ready to grow into a fuller customer workspace without inventing fake data before the backend is ready.",
+          `${renderAdminPropertyList([
+            { label: "Current source", value: "Quote ops ledger and Supabase quote persistence" },
+            { label: "Latest revenue snapshot", value: formatCurrencyAmount(clientRecords.reduce((sum, client) => sum + client.totalRevenue, 0)) },
+            { label: "Future fit", value: "CRM contact history, reminders, notes, and segmentation" },
+          ])}
+          <ul class="admin-feature-list">
+            <li>The directory is intentionally read-only for now so it stays aligned with the server-tracked quote records.</li>
+            <li>Once deeper CRM sync lands, this page can evolve into full client profiles without changing the secured layout.</li>
+            <li>Use <code>Quote Ops</code> for retry and export actions; use this page for quick customer visibility.</li>
+          </ul>`,
+          { eyebrow: "Coverage", muted: true }
+        )}
+      </div>`,
+    {
+      kicker: "Client Workspace",
+      subtitle: "Browse the customer directory generated from live quote activity while keeping the admin shell focused and secure.",
+      heroMeta: runtimeBadges,
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_CLIENTS_PATH, runtimeBadges),
+    }
+  );
+}
+
+async function renderOrdersPage(req, config, quoteOpsLedger) {
+  const signals = getAdminIntegrationState();
+  const runtimeBadges = getAdminStatusBadges(signals);
+  const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
+  const scheduledEntries = allEntries.filter((entry) => Boolean(entry.selectedDate || entry.selectedTime));
+  const attentionCount = allEntries.filter((entry) => entry.status !== "success").length;
+  const revenuePipeline = allEntries.reduce((sum, entry) => sum + Number(entry.totalPrice || 0), 0);
+
+  return renderAdminLayout(
+    "Orders",
+    `${renderAdminSignedInTopbar(config, {
+      linkHref: ADMIN_QUOTE_OPS_PATH,
+      linkLabel: "Open Quote Ops",
+    })}
+      <div class="admin-stats-grid">
+        ${renderAdminCard(
+          "Order Intake",
+          "The current booking pipeline inferred from quote submissions already reaching the backend.",
+          `<p class="admin-metric-value">${escapeHtml(String(allEntries.length))}</p>
+          <p class="admin-card-copy">This section treats each stored quote submission as an incoming order candidate until deeper booking states are wired.</p>`,
+          { eyebrow: "Pipeline" }
+        )}
+        ${renderAdminCard(
+          "Scheduled",
+          "Requests that already include a preferred date or time window.",
+          `<p class="admin-metric-value">${escapeHtml(String(scheduledEntries.length))}</p>
+          <p class="admin-card-copy">Scheduling details are captured from the quote flow and can later drive job assignment logic.</p>`,
+          { eyebrow: "Scheduling", muted: true }
+        )}
+        ${renderAdminCard(
+          "Needs Attention",
+          "Requests with warning or error states that may need operator review.",
+          `<p class="admin-metric-value">${escapeHtml(String(attentionCount))}</p>
+          <p class="admin-card-copy">These are the same records that surface retry actions and export coverage inside Quote Ops.</p>`,
+          { eyebrow: "Triage", muted: true }
+        )}
+        ${renderAdminCard(
+          "Revenue Pipeline",
+          "Total value represented by the currently stored booking requests.",
+          `<p class="admin-metric-value">${escapeHtml(formatCurrencyAmount(revenuePipeline))}</p>
+          <p class="admin-card-copy">This is a live snapshot of quote-backed order value, not a finalized accounting ledger.</p>`,
+          { eyebrow: "Revenue", muted: true }
+        )}
+      </div>
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "Latest Booking Requests",
+          "A quick operator view of the most recent order candidates, including service, timing, and sync status.",
+          allEntries.length > 0
+            ? `<div class="admin-link-grid">
+                ${allEntries
+                  .slice(0, 6)
+                  .map(
+                    (entry) => `<div class="admin-link-tile">
+                      <strong>${escapeHtml(entry.customerName || "Unnamed customer")}</strong>
+                      <span>${escapeHtml(entry.serviceName || entry.serviceType || "Cleaning Service")} • ${escapeHtml(formatCurrencyAmount(entry.totalPrice))}</span>
+                      <span>${escapeHtml([entry.selectedDate, entry.selectedTime].filter(Boolean).join(" at ") || "Schedule not selected yet")}</span>
+                      <span>${renderQuoteOpsStatusBadge(entry.status)} ${entry.fullAddress ? escapeHtml(entry.fullAddress) : "Address not captured yet"}</span>
+                    </div>`
+                  )
+                  .join("")}
+              </div>`
+            : `<div class="admin-empty-state">No orders are available yet. Submit a test quote through the public flow and this page will immediately pick it up.</div>`,
+          { eyebrow: "Queue" }
+        )}
+        ${renderAdminCard(
+          "How Orders Map Today",
+          "This section is deliberately honest about the current backend: it reuses live quote intake until a dedicated order lifecycle exists.",
+          `${renderAdminPropertyList([
+            { label: "Primary source", value: "Quote submission ledger" },
+            { label: "Export + retry tools", value: "Handled in Quote Ops" },
+            { label: "Future milestones", value: "Confirmed booking state, staff assignment, payment completion, and job history" },
+          ])}
+          <ul class="admin-feature-list">
+            <li>Nothing here fabricates order data; it only reflects what the server has already stored and normalized.</li>
+            <li>When a fuller operations workflow lands, this page can become the main order board without changing its route.</li>
+            <li>The public <code>/quote</code> flow remains the fastest way to seed real test data for this section.</li>
+          </ul>`,
+          { eyebrow: "Scope", muted: true }
+        )}
+      </div>`,
+    {
+      kicker: "Order Workspace",
+      subtitle: "Track incoming booking requests and scheduling signals while the deeper order lifecycle is still being assembled.",
+      heroMeta: runtimeBadges,
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_ORDERS_PATH, runtimeBadges),
+    }
+  );
+}
+
+function renderStaffPage(req, config) {
+  const signals = getAdminIntegrationState();
+  const runtimeBadges = getAdminStatusBadges(signals);
+
+  return renderAdminLayout(
+    "Staff",
+    `${renderAdminSignedInTopbar(config, {
+      linkHref: ADMIN_INTEGRATIONS_PATH,
+      linkLabel: "Review Integrations",
+    })}
+      <div class="admin-stats-grid">
+        ${renderAdminCard(
+          "Staff Records",
+          "No separate employee directory has been wired into the backend yet.",
+          `<p class="admin-metric-value">0</p>
+          <p class="admin-card-copy">This route exists now so the staff workspace can grow in place without reshaping the rest of the admin shell later.</p>`,
+          { eyebrow: "Roster" }
+        )}
+        ${renderAdminCard(
+          "Assignments",
+          "Job assignment and crew scheduling are not connected yet.",
+          `<p class="admin-metric-value">Pending</p>
+          <p class="admin-card-copy">The future order lifecycle can attach crew assignments here once staff records are available.</p>`,
+          { eyebrow: "Ops", muted: true }
+        )}
+        ${renderAdminCard(
+          "Permissions",
+          "Admin access is already protected even before finer staff roles are introduced.",
+          `<p class="admin-metric-value">Protected</p>
+          <p class="admin-card-copy">Every staff-facing route still inherits the existing password + TOTP admin boundary.</p>`,
+          { eyebrow: "Security", muted: true }
+        )}
+        ${renderAdminCard(
+          "Next Integration",
+          "The most natural next step is wiring this page to a real roster source.",
+          `<p class="admin-metric-value">CRM / Ops</p>
+          <p class="admin-card-copy">Calendar, CRM, or a dedicated staff table can become the source of truth when you are ready.</p>`,
+          { eyebrow: "Planning", muted: true }
+        )}
+      </div>
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "Staff Module Ready",
+          "The route, navigation, and secured layout now exist, so the team can start shaping an employee module without waiting on a future redesign.",
+          `<ul class="admin-feature-list">
+            <li>Use this workspace for employee records, role definitions, availability windows, and team assignments.</li>
+            <li>The current page intentionally avoids fake staff data and instead gives the module a stable home in the admin nav.</li>
+            <li>Once a roster source exists, this route can switch from empty state to live records without changing the URL.</li>
+          </ul>`,
+          { eyebrow: "Module" }
+        )}
+        ${renderAdminCard(
+          "Recommended Fields",
+          "A clean first version of the staff module could start with these server-side fields and workflows.",
+          `${renderAdminPropertyList([
+            { label: "Core profile", value: "Full name, phone, email, role, status" },
+            { label: "Operations", value: "Service skills, service area, working hours" },
+            { label: "Assignment links", value: "Order history, availability, route coverage" },
+            { label: "Admin controls", value: "Permissions, notes, onboarding, active/inactive state" },
+          ])}`,
+          { eyebrow: "Schema", muted: true }
+        )}
+      </div>`,
+    {
+      kicker: "Staff Workspace",
+      subtitle: "A dedicated section for employees now exists in the admin shell, ready for roster and assignment data when you decide to wire it in.",
+      heroMeta: runtimeBadges,
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_STAFF_PATH, runtimeBadges),
     }
   );
 }
@@ -2871,6 +3216,9 @@ function renderRuntimePage(req, config, adminRuntime = {}) {
 
 async function renderAdminAppPage(route, req, config, adminRuntime = {}, quoteOpsLedger = null) {
   if (route === ADMIN_ROOT_PATH) return renderDashboardPage(req, config);
+  if (route === ADMIN_CLIENTS_PATH) return renderClientsPage(req, config, quoteOpsLedger);
+  if (route === ADMIN_ORDERS_PATH) return renderOrdersPage(req, config, quoteOpsLedger);
+  if (route === ADMIN_STAFF_PATH) return renderStaffPage(req, config);
   if (route === ADMIN_QUOTE_OPS_PATH) return renderQuoteOpsPage(req, config, quoteOpsLedger);
   if (route === ADMIN_INTEGRATIONS_PATH) return renderIntegrationsPage(req, config);
   if (route === ADMIN_RUNTIME_PATH) return renderRuntimePage(req, config, adminRuntime);

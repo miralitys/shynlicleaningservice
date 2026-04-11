@@ -100,6 +100,9 @@ test("completes the admin login and TOTP verification flow", async () => {
     assert.match(dashboardBody, /Signed in as/i);
 
     const adminPages = [
+      { path: "/admin/clients", pattern: /Clients/i },
+      { path: "/admin/orders", pattern: /Orders/i },
+      { path: "/admin/staff", pattern: /Staff/i },
       { path: "/admin/quote-ops", pattern: /Quote Operations/i },
       { path: "/admin/integrations", pattern: /Integrations/i },
       { path: "/admin/runtime", pattern: /Runtime/i },
