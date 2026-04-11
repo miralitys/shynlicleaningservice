@@ -689,12 +689,15 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /123 Main St, Romeoville, IL 60446/);
     assert.match(quoteOpsBody, /\+1\(312\)555-0100/);
     assert.match(quoteOpsBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
+    assert.match(quoteOpsBody, /class="admin-table-row-clickable"/);
+    assert.match(quoteOpsBody, /data-admin-dialog-row="true"/);
     assert.match(quoteOpsBody, /Поля из формы клиента/);
     assert.match(quoteOpsBody, /Gate code 2040/);
     assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
     assert.doesNotMatch(quoteOpsBody, /Persistent storage active/i);
     assert.doesNotMatch(quoteOpsBody, /Подключено к Supabase/i);
     assert.doesNotMatch(quoteOpsBody, /quote_ops_entries/i);
+    assert.doesNotMatch(quoteOpsBody, /<th>Действие<\/th>/);
     assert.doesNotMatch(quoteOpsBody, /Скачать CSV/);
     assert.doesNotMatch(quoteOpsBody, /в текущей выборке/);
     assert.doesNotMatch(quoteOpsBody, /Критичных заявок нет/);
