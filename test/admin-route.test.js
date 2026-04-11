@@ -980,7 +980,8 @@ test("renders the clients table with filters and request history", async () => {
     const janeRomeovilleClientKey = "jane doe|123 main st, romeoville, il 60446";
 
     assert.equal(clientsResponse.status, 200);
-    assert.match(clientsBody, /База клиентов/i);
+    assert.match(clientsBody, /<h1 class="admin-title">Клиенты<\/h1>/);
+    assert.doesNotMatch(clientsBody, /База клиентов/i);
     assert.match(clientsBody, /Jane Doe/);
     assert.match(clientsBody, /John Smith/);
     assert.match(clientsBody, /client-request-2/);
@@ -990,7 +991,8 @@ test("renders the clients table with filters and request history", async () => {
     assert.doesNotMatch(clientsBody, /Фильтры/i);
     assert.doesNotMatch(clientsBody, /Диагностика/i);
     assert.match(clientsBody, /Поиск по имени, email или телефону/i);
-    assert.match(clientsBody, /Клик по имени открывает профиль/i);
+    assert.match(clientsBody, /Клик по строке открывает профиль/i);
+    assert.match(clientsBody, /data-admin-row-href="\/admin\/clients\?client=/);
     assert.doesNotMatch(clientsBody, /Карточка клиента/i);
     assert.equal((clientsBody.match(/>Jane Doe<\/a>/g) || []).length, 2);
 
@@ -1182,7 +1184,8 @@ test("keeps quote ops diagnostics hidden on the clients page when Supabase reads
     const body = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(body, /База клиентов/i);
+    assert.match(body, /<h1 class="admin-title">Клиенты<\/h1>/);
+    assert.doesNotMatch(body, /База клиентов/i);
     assert.doesNotMatch(body, /Supabase/i);
     assert.doesNotMatch(body, /Чтение: fallback в память/i);
     assert.doesNotMatch(body, /Ошибка чтения Supabase: supabase read failed/i);
