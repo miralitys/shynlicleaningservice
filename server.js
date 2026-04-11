@@ -8,6 +8,7 @@ const fsp = require("fs/promises");
 const path = require("path");
 const { URL } = require("url");
 const accountAuth = require("./lib/account-auth");
+const { loadAccountInviteEmailConfig, sendAccountInviteEmail } = require("./lib/account-invite-email");
 const { createAccountRequestHandler } = require("./lib/account/handlers");
 const { createAccountRenderers } = require("./lib/account/render");
 const { createApiHandlers } = require("./lib/api/handlers");
@@ -138,6 +139,7 @@ const ADMIN_CHALLENGE_COOKIE = "shynli_admin_challenge";
 const ACCOUNT_ROOT_PATH = "/account";
 const ACCOUNT_LOGIN_PATH = "/account/login";
 const ACCOUNT_LOGOUT_PATH = "/account/logout";
+const ACCOUNT_VERIFY_EMAIL_PATH = "/account/verify-email";
 const USER_SESSION_COOKIE = "shynli_user_session";
 const ADMIN_APP_ROUTES = new Set([
   ADMIN_ROOT_PATH,
@@ -160,6 +162,7 @@ const ACCOUNT_ALL_ROUTES = new Set([
   ACCOUNT_ROOT_PATH,
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
+  ACCOUNT_VERIFY_EMAIL_PATH,
 ]);
 const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
@@ -567,6 +570,8 @@ const adminPageRenderers = createAdminPageRenderers({
 });
 
 const handleAdminRequest = createAdminRequestHandler({
+  ACCOUNT_LOGIN_PATH,
+  ACCOUNT_VERIFY_EMAIL_PATH,
   ADMIN_2FA_PATH,
   ADMIN_APP_ROUTES,
   ADMIN_CHALLENGE_COOKIE,
@@ -586,9 +591,22 @@ const handleAdminRequest = createAdminRequestHandler({
   ACCOUNT_ROOT_PATH,
   QUOTE_OPS_LEDGER_LIMIT,
   USER_SESSION_COOKIE,
+  SITE_ORIGIN,
   adminAuth,
   accountAuth,
   adminLoginRateLimiter,
+  accountInviteEmail: {
+    isConfigured() {
+      return loadAccountInviteEmailConfig(process.env).configured;
+    },
+    sendInvite(payload) {
+      return sendAccountInviteEmail({
+        ...payload,
+        env: process.env,
+        fetch: global.fetch,
+      });
+    },
+  },
   adminPageRenderers,
   adminSharedRenderers,
   adminTwoFactorRateLimiter,
@@ -638,6 +656,7 @@ const handleAccountRequest = createAccountRequestHandler({
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_ROOT_PATH,
+  ACCOUNT_VERIFY_EMAIL_PATH,
   USER_SESSION_COOKIE,
   USER_SESSION_TTL_SECONDS: accountAuth.USER_SESSION_TTL_SECONDS,
   adminAuth,
@@ -874,6 +893,11 @@ async function main() {
       usersStore,
       settingsStore,
       staffStore,
+      accountInviteEmail: {
+        isConfigured() {
+          return loadAccountInviteEmailConfig(process.env).configured;
+        },
+      },
     });
   });
 

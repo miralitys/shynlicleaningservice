@@ -426,8 +426,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /href="\/admin\/staff\?section=team"/);
     assert.match(staffBody, /href="\/admin\/staff\?section=calendar&calendarStart=/);
     assert.match(staffBody, /href="\/admin\/staff\?section=assignments"/);
-    assert.match(staffBody, /href="\/admin\/settings\?section=users"/);
-    assert.match(staffBody, />Создать сотрудника</);
+    assert.doesNotMatch(staffBody, /href="\/admin\/settings\?section=users"/);
+    assert.doesNotMatch(staffBody, />Добавить сотрудника</);
     assert.doesNotMatch(staffBody, /data-admin-dialog-open="admin-staff-create-dialog"/);
     assert.doesNotMatch(staffBody, /<dialog class="admin-dialog" id="admin-staff-create-dialog"/);
     assert.match(staffBody, /<dialog class="admin-dialog admin-confirm-dialog" id="admin-confirm-dialog"/);
@@ -1762,9 +1762,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const settingsBody = await settingsResponse.text();
     assert.equal(settingsResponse.status, 200);
     assert.match(settingsBody, /Пользователи/i);
-    assert.match(settingsBody, /Создать сотрудника и кабинет/i);
-    assert.match(settingsBody, /Имя сотрудника/i);
-    assert.match(settingsBody, /\/account\/login/);
+    assert.match(settingsBody, />Добавить сотрудника</);
+    assert.match(settingsBody, /data-admin-dialog-open="admin-user-create-dialog"/);
+    assert.match(settingsBody, /<dialog class="admin-dialog" id="admin-user-create-dialog"/);
     assert.doesNotMatch(settingsBody, /Шаблоны чек-листов/i);
 
     const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
@@ -1790,7 +1790,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     assert.equal(createUserResponse.status, 303);
     const createdUserLocation = createUserResponse.headers.get("location") || "";
-    assert.match(createdUserLocation, /notice=user-created/);
+    assert.match(createdUserLocation, /notice=user-created-email-skipped/);
 
     const updatedSettingsResponse = await fetch(`${started.baseUrl}${createdUserLocation.replace(/#.*$/, "")}`, {
       headers: {
@@ -1799,7 +1799,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     const updatedSettingsBody = await updatedSettingsResponse.text();
     assert.equal(updatedSettingsResponse.status, 200);
-    assert.match(updatedSettingsBody, /Пользователь создан/i);
+    assert.match(updatedSettingsBody, /Автоматическая отправка письма сейчас не настроена/i);
     assert.match(updatedSettingsBody, /alina\.staff@example\.com/i);
     assert.match(updatedSettingsBody, /Alina Carter/);
 
@@ -1816,6 +1816,8 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(usersStorePayload.users[0].staffId, staffId);
     assert.equal(usersStorePayload.users[0].email, "alina.staff@example.com");
     assert.equal(usersStorePayload.users[0].role, "cleaner");
+    assert.equal(usersStorePayload.users[0].emailVerificationRequired, false);
+    assert.ok(usersStorePayload.users[0].emailVerifiedAt);
     assert.match(usersStorePayload.users[0].passwordHash, /^scrypt\$/);
 
     const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
@@ -2128,5 +2130,133 @@ test("allows managers into admin workspace but blocks delete actions", async () 
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("sends an invite email and requires confirmation before first employee login when email delivery is configured", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-account-invite-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "https://api.resend.com/emails",
+      status: 200,
+      body: {
+        id: "email_123",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+    RESEND_API_KEY: "re_test_123",
+    ACCOUNT_INVITE_EMAIL_FROM: "hello@shynli.com",
+    ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynli.com",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Invite Cleaner",
+        staffRole: "Cleaner",
+        role: "cleaner",
+        status: "active",
+        staffStatus: "active",
+        email: "invite.cleaner@example.com",
+        phone: "3125550101",
+        address: "1289 Rhodes Ln, Naperville, IL 60540",
+        notes: "Invite email test",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+    assert.match(createUserResponse.headers.get("location") || "", /notice=user-created-email-sent/);
+
+    const usersAfterCreate = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(usersAfterCreate.users.length, 1);
+    assert.equal(usersAfterCreate.users[0].emailVerificationRequired, true);
+    assert.equal(usersAfterCreate.users[0].emailVerifiedAt, "");
+    assert.ok(usersAfterCreate.users[0].inviteEmailSentAt);
+
+    const capturedFetchCalls = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const resendCall = capturedFetchCalls.find((record) => record.url === "https://api.resend.com/emails");
+    assert.ok(resendCall);
+
+    const resendPayload = JSON.parse(resendCall.body);
+    assert.deepEqual(resendPayload.to, ["invite.cleaner@example.com"]);
+    assert.equal(resendPayload.from, "hello@shynli.com");
+    assert.equal(resendPayload.reply_to, "info@shynli.com");
+    const verifyUrlMatch = resendPayload.text.match(/https?:\/\/[^\s]+\/account\/verify-email\?token=[^\s]+/);
+    assert.ok(verifyUrlMatch);
+    const verifyUrl = new URL(verifyUrlMatch[0]);
+    const verificationToken = verifyUrl.searchParams.get("token");
+    assert.ok(verificationToken);
+
+    const blockedLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "invite.cleaner@example.com",
+        password: "StrongPass123!",
+      }),
+    });
+    const blockedLoginBody = await blockedLoginResponse.text();
+    assert.equal(blockedLoginResponse.status, 401);
+    assert.match(blockedLoginBody, /Подтвердите email по ссылке из письма/i);
+
+    const verifyResponse = await fetch(
+      `${started.baseUrl}/account/verify-email?token=${encodeURIComponent(verificationToken)}`,
+      {
+        redirect: "manual",
+      }
+    );
+    assert.equal(verifyResponse.status, 303);
+    assert.equal(verifyResponse.headers.get("location"), "/account/login?notice=email-verified");
+
+    const verifiedLoginPageResponse = await fetch(`${started.baseUrl}/account/login?notice=email-verified`);
+    const verifiedLoginPageBody = await verifiedLoginPageResponse.text();
+    assert.equal(verifiedLoginPageResponse.status, 200);
+    assert.match(verifiedLoginPageBody, /Email подтверждён/i);
+
+    const successfulLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "invite.cleaner@example.com",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(successfulLoginResponse.status, 303);
+    assert.equal(successfulLoginResponse.headers.get("location"), "/account");
+
+    const usersAfterVerify = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.ok(usersAfterVerify.users[0].emailVerifiedAt);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+    fetchStub.cleanup();
   }
 });

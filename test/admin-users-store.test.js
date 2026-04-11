@@ -32,6 +32,8 @@ test("stores user accounts for employee portals", async () => {
     assert.equal(user.phone, "+1(312)555-0199");
     assert.equal(user.status, "active");
     assert.equal(user.role, "manager");
+    assert.equal(user.emailVerificationRequired, false);
+    assert.equal(user.emailVerifiedAt, "");
     assert.ok(user.id);
     assert.equal("passwordHash" in user, false);
 
@@ -62,11 +64,19 @@ test("stores user accounts for employee portals", async () => {
       phone: "+1(331)555-0110",
       status: "inactive",
       role: "cleaner",
+      emailVerificationRequired: true,
+      emailVerifiedAt: "",
+      inviteEmailSentAt: "2026-04-11T12:00:00.000Z",
+      role: "cleaner",
       passwordHash: hashPassword("ChangedPassword456!"),
     });
     assert.equal(updated.email, "anna.peterson@example.com");
     assert.equal(updated.phone, "+1(331)555-0110");
     assert.equal(updated.status, "inactive");
+    assert.equal(updated.role, "cleaner");
+    assert.equal(updated.emailVerificationRequired, true);
+    assert.equal(updated.emailVerifiedAt, "");
+    assert.equal(updated.inviteEmailSentAt, "2026-04-11T12:00:00.000Z");
     assert.equal(updated.role, "cleaner");
 
     const byId = await store.getUserById(user.id, { includeSecret: true });
