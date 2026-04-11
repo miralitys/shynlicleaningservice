@@ -398,6 +398,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(staffResponse.status, 200);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-create-dialog"/);
     assert.match(staffBody, /<dialog class="admin-dialog" id="admin-staff-create-dialog"/);
+    assert.match(staffBody, /class="admin-table admin-staff-table"/);
+    assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
     assert.match(staffBody, /Olga Stone/);
     assert.match(staffBody, /Team Lead/);
     assert.match(staffBody, /Jane Doe/);
