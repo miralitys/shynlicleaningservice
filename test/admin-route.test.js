@@ -484,7 +484,9 @@ test("creates staff members and assigns them to orders through the staff workspa
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Olga Stone/);
-    assert.match(ordersBody, /Сотрудники и график/);
+    assert.doesNotMatch(ordersBody, /Сотрудники и график/);
+    assert.match(ordersBody, /<select class="admin-input" name="assignedStaff">/);
+    assert.match(ordersBody, /<option value="Olga Stone" selected>Olga Stone<\/option>/);
 
     const clearResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
