@@ -9,7 +9,30 @@ const {
   sendAccountInviteEmail,
 } = require("../lib/account-invite-email");
 
-test("loads resend invite-email config from env", () => {
+test("loads SMTP invite-email config from env", () => {
+  const config = loadAccountInviteEmailConfig({
+    ACCOUNT_INVITE_SMTP_HOST: "smtp-relay.gmail.com",
+    ACCOUNT_INVITE_SMTP_PORT: "587",
+    ACCOUNT_INVITE_SMTP_USER: "relay@shynlicleaningservice.com",
+    ACCOUNT_INVITE_SMTP_PASSWORD: "secret",
+    ACCOUNT_INVITE_EMAIL_FROM: "hello@shynlicleaningservice.com",
+    ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynlicleaningservice.com",
+  });
+
+  assert.equal(config.configured, true);
+  assert.equal(config.provider, "smtp");
+  assert.equal(config.fromEmail, "hello@shynlicleaningservice.com");
+  assert.equal(config.replyToEmail, "info@shynlicleaningservice.com");
+  assert.equal(config.smtpHost, "smtp-relay.gmail.com");
+  assert.equal(config.smtpPort, 587);
+  assert.equal(config.smtpRequireTls, true);
+  assert.deepEqual(
+    { user: config.smtpUser, pass: config.smtpPassword },
+    { user: "relay@shynlicleaningservice.com", pass: "secret" }
+  );
+});
+
+test("falls back to legacy resend invite-email config when SMTP is not set", () => {
   const config = loadAccountInviteEmailConfig({
     RESEND_API_KEY: "re_test_123",
     ACCOUNT_INVITE_EMAIL_FROM: "hello@shynli.com",
@@ -19,7 +42,6 @@ test("loads resend invite-email config from env", () => {
   assert.equal(config.configured, true);
   assert.equal(config.provider, "resend");
   assert.equal(config.fromEmail, "hello@shynli.com");
-  assert.equal(config.replyToEmail, "info@shynli.com");
 });
 
 test("builds invite email copy with verify and login links", () => {
@@ -35,37 +57,42 @@ test("builds invite email copy with verify and login links", () => {
   assert.match(copy.html, /https:\/\/example\.com\/account\/login/);
 });
 
-test("sends invite email through resend", async () => {
+test("sends invite email through SMTP relay", async () => {
   const calls = [];
   const response = await sendAccountInviteEmail({
     env: {
-      RESEND_API_KEY: "re_test_123",
-      ACCOUNT_INVITE_EMAIL_FROM: "hello@shynli.com",
-      ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynli.com",
+      ACCOUNT_INVITE_SMTP_HOST: "smtp-relay.gmail.com",
+      ACCOUNT_INVITE_SMTP_PORT: "587",
+      ACCOUNT_INVITE_SMTP_USER: "relay@shynlicleaningservice.com",
+      ACCOUNT_INVITE_SMTP_PASSWORD: "secret",
+      ACCOUNT_INVITE_EMAIL_FROM: "hello@shynlicleaningservice.com",
+      ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynlicleaningservice.com",
     },
-    fetch: async (url, options = {}) => {
-      calls.push({ url, options });
-      return {
-        ok: true,
-        status: 200,
-        text: async () => JSON.stringify({ id: "email_123" }),
-      };
-    },
+    createTransport: (transportConfig) => ({
+      async sendMail(message) {
+        calls.push({ transportConfig, message });
+        return { messageId: "<smtp-message-123@example.com>" };
+      },
+      close() {},
+    }),
     toEmail: "cleaner@example.com",
     staffName: "Anna Petrova",
     verifyUrl: "https://example.com/account/verify-email?token=abc",
     loginUrl: "https://example.com/account/login",
   });
 
-  assert.equal(response.id, "email_123");
+  assert.equal(response.id, "<smtp-message-123@example.com>");
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, "https://api.resend.com/emails");
-  assert.equal(calls[0].options.method, "POST");
-
-  const payload = JSON.parse(calls[0].options.body);
-  assert.deepEqual(payload.to, ["cleaner@example.com"]);
-  assert.equal(payload.from, "hello@shynli.com");
-  assert.equal(payload.reply_to, "info@shynli.com");
-  assert.equal(payload.subject, "Confirm your SHYNLI employee email");
-  assert.match(payload.text, /verify-email\?token=abc/);
+  assert.equal(calls[0].transportConfig.host, "smtp-relay.gmail.com");
+  assert.equal(calls[0].transportConfig.port, 587);
+  assert.equal(calls[0].transportConfig.requireTLS, true);
+  assert.deepEqual(calls[0].transportConfig.auth, {
+    user: "relay@shynlicleaningservice.com",
+    pass: "secret",
+  });
+  assert.equal(calls[0].message.to, "cleaner@example.com");
+  assert.equal(calls[0].message.from, "hello@shynlicleaningservice.com");
+  assert.equal(calls[0].message.replyTo, "info@shynlicleaningservice.com");
+  assert.equal(calls[0].message.subject, "Confirm your SHYNLI employee email");
+  assert.match(calls[0].message.text, /verify-email\?token=abc/);
 });

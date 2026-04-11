@@ -270,6 +270,121 @@ module.exports = async function fetchStub(url, options = {}) {
   };
 }
 
+async function createSmtpTestServer() {
+  const messages = [];
+  const server = net.createServer((socket) => {
+    socket.setEncoding("utf8");
+    socket.write("220 localhost ESMTP shynli-test\r\n");
+
+    let buffer = "";
+    let dataMode = false;
+    let currentMessage = {
+      from: "",
+      to: [],
+      raw: "",
+    };
+
+    function resetMessage() {
+      currentMessage = {
+        from: "",
+        to: [],
+        raw: "",
+      };
+      dataMode = false;
+    }
+
+    function handleCommand(line) {
+      const upper = line.toUpperCase();
+
+      if (dataMode) {
+        if (line === ".") {
+          messages.push({
+            from: currentMessage.from,
+            to: [...currentMessage.to],
+            raw: currentMessage.raw,
+          });
+          resetMessage();
+          socket.write("250 2.0.0 queued\r\n");
+          return;
+        }
+
+        currentMessage.raw += `${line}\r\n`;
+        return;
+      }
+
+      if (upper.startsWith("EHLO") || upper.startsWith("HELO")) {
+        socket.write("250-localhost\r\n250 OK\r\n");
+        return;
+      }
+
+      if (upper.startsWith("MAIL FROM:")) {
+        currentMessage.from = line.slice(10).trim();
+        socket.write("250 2.1.0 OK\r\n");
+        return;
+      }
+
+      if (upper.startsWith("RCPT TO:")) {
+        currentMessage.to.push(line.slice(8).trim());
+        socket.write("250 2.1.5 OK\r\n");
+        return;
+      }
+
+      if (upper === "DATA") {
+        dataMode = true;
+        socket.write("354 End data with <CR><LF>.<CR><LF>\r\n");
+        return;
+      }
+
+      if (upper === "RSET") {
+        resetMessage();
+        socket.write("250 2.0.0 OK\r\n");
+        return;
+      }
+
+      if (upper === "NOOP") {
+        socket.write("250 2.0.0 OK\r\n");
+        return;
+      }
+
+      if (upper === "QUIT") {
+        socket.write("221 2.0.0 Bye\r\n");
+        socket.end();
+        return;
+      }
+
+      socket.write("250 OK\r\n");
+    }
+
+    socket.on("data", (chunk) => {
+      buffer += chunk;
+
+      while (buffer.includes("\r\n")) {
+        const boundary = buffer.indexOf("\r\n");
+        const line = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+        handleCommand(line);
+      }
+    });
+  });
+
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, HOST, () => resolve());
+  });
+
+  const address = server.address();
+  const port = address && typeof address === "object" ? address.port : 0;
+
+  return {
+    host: HOST,
+    port,
+    messages,
+    async close() {
+      await new Promise((resolve) => server.close(() => resolve()));
+    },
+  };
+}
+
 async function readJsonFile(filePath) {
   const raw = await fsp.readFile(filePath, "utf8");
   return JSON.parse(raw);
@@ -279,6 +394,7 @@ module.exports = {
   PROJECT_ROOT,
   HOST,
   createFetchStub,
+  createSmtpTestServer,
   createStripeStub,
   readJsonFile,
   startServer,

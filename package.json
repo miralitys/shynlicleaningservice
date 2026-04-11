@@ -12,6 +12,7 @@
     "node": "20.x"
   },
   "dependencies": {
+    "nodemailer": "^6.10.1",
     "qrcode": "^1.5.4",
     "stripe": "^20.4.0"
   }

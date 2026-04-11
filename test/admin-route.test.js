@@ -6,7 +6,7 @@ const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { loadAdminConfig, generateTotpCode } = require("../lib/admin-auth");
-const { createFetchStub, startServer, stopServer } = require("./server-test-helpers");
+const { createFetchStub, createSmtpTestServer, startServer, stopServer } = require("./server-test-helpers");
 
 function getSetCookies(response) {
   const header = response.headers.get("set-cookie") || "";
@@ -28,6 +28,16 @@ function getInlineScripts(html) {
 
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeEmailSource(value) {
+  return String(value || "").replace(/=\r?\n/g, "");
+}
+
+function decodeQuotedPrintable(value) {
+  return normalizeEmailSource(value).replace(/=([A-F0-9]{2})/gi, (_, hex) =>
+    String.fromCharCode(Number.parseInt(hex, 16))
+  );
 }
 
 function getStaffAssignmentEntryIdByCustomerName(html, customerName) {
@@ -2137,24 +2147,16 @@ test("sends an invite email and requires confirmation before first employee logi
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-account-invite-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const usersStorePath = path.join(tempDir, "admin-users-store.json");
-  const fetchStub = createFetchStub([
-    {
-      method: "POST",
-      match: "https://api.resend.com/emails",
-      status: 200,
-      body: {
-        id: "email_123",
-      },
-    },
-  ]);
+  const smtpServer = await createSmtpTestServer();
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     ADMIN_STAFF_STORE_PATH: staffStorePath,
     ADMIN_USERS_STORE_PATH: usersStorePath,
-    RESEND_API_KEY: "re_test_123",
     ACCOUNT_INVITE_EMAIL_FROM: "hello@shynli.com",
     ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynli.com",
-    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    ACCOUNT_INVITE_SMTP_HOST: smtpServer.host,
+    ACCOUNT_INVITE_SMTP_PORT: String(smtpServer.port),
+    ACCOUNT_INVITE_SMTP_REQUIRE_TLS: "0",
   };
   const started = await startServer({ env });
   const config = loadAdminConfig(env);
@@ -2192,19 +2194,13 @@ test("sends an invite email and requires confirmation before first employee logi
     assert.equal(usersAfterCreate.users[0].emailVerifiedAt, "");
     assert.ok(usersAfterCreate.users[0].inviteEmailSentAt);
 
-    const capturedFetchCalls = (await fs.readFile(fetchStub.captureFile, "utf8"))
-      .trim()
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => JSON.parse(line));
-    const resendCall = capturedFetchCalls.find((record) => record.url === "https://api.resend.com/emails");
-    assert.ok(resendCall);
-
-    const resendPayload = JSON.parse(resendCall.body);
-    assert.deepEqual(resendPayload.to, ["invite.cleaner@example.com"]);
-    assert.equal(resendPayload.from, "hello@shynli.com");
-    assert.equal(resendPayload.reply_to, "info@shynli.com");
-    const verifyUrlMatch = resendPayload.text.match(/https?:\/\/[^\s]+\/account\/verify-email\?token=[^\s]+/);
+    assert.equal(smtpServer.messages.length, 1);
+    assert.equal(smtpServer.messages[0].from, "<hello@shynli.com>");
+    assert.deepEqual(smtpServer.messages[0].to, ["<invite.cleaner@example.com>"]);
+    const rawEmail = decodeQuotedPrintable(smtpServer.messages[0].raw);
+    assert.match(rawEmail, /Reply-To: info@shynli\.com/);
+    assert.match(rawEmail, /Subject: Confirm your SHYNLI employee email/);
+    const verifyUrlMatch = rawEmail.match(/https?:\/\/[^\s]+\/account\/verify-email\?token=[^\s=]+/);
     assert.ok(verifyUrlMatch);
     const verifyUrl = new URL(verifyUrlMatch[0]);
     const verificationToken = verifyUrl.searchParams.get("token");
@@ -2256,7 +2252,7 @@ test("sends an invite email and requires confirmation before first employee logi
     assert.ok(usersAfterVerify.users[0].emailVerifiedAt);
   } finally {
     await stopServer(started.child);
+    await smtpServer.close();
     await fs.rm(tempDir, { recursive: true, force: true });
-    fetchStub.cleanup();
   }
 });
