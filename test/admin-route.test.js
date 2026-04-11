@@ -713,6 +713,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(quoteOpsBody, /Подключено к Supabase/i);
     assert.doesNotMatch(quoteOpsBody, /quote_ops_entries/i);
     assert.doesNotMatch(quoteOpsBody, /<th>Действие<\/th>/);
+    assert.doesNotMatch(quoteOpsBody, /<th>CRM<\/th>/);
     assert.doesNotMatch(quoteOpsBody, /Скачать CSV/);
     assert.doesNotMatch(quoteOpsBody, /в текущей выборке/);
     assert.doesNotMatch(quoteOpsBody, /Критичных заявок нет/);
