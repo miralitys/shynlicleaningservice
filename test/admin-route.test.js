@@ -1,6 +1,8 @@
 "use strict";
 
 const fs = require("node:fs/promises");
+const os = require("node:os");
+const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { loadAdminConfig, generateTotpCode } = require("../lib/admin-auth");
@@ -168,6 +170,7 @@ test("completes the admin login and TOTP verification flow", async () => {
       { path: "/admin/clients", pattern: /Клиенты/i },
       { path: "/admin/orders", pattern: /Заказы/i },
       { path: "/admin/staff", pattern: /Сотрудники/i },
+      { path: "/admin/settings", pattern: /Шаблоны чек-листов/i },
       { path: "/admin/quote-ops", pattern: /Заявки/i },
     ];
 
@@ -204,6 +207,120 @@ test("completes the admin login and TOTP verification flow", async () => {
     assert.equal(logoutResponse.headers.get("location"), "/admin/login");
   } finally {
     await stopServer(started.child);
+  }
+});
+
+test("renders checklist templates in settings and persists checklist updates", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-settings-route-"));
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_SETTINGS_STORE_PATH: path.join(tempDir, "admin-settings-store.json"),
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const settingsBody = await settingsResponse.text();
+    assert.equal(settingsResponse.status, 200);
+    assert.match(settingsBody, /Шаблоны чек-листов/i);
+    assert.match(settingsBody, /Регулярная уборка/i);
+    assert.match(settingsBody, /Генеральная уборка/i);
+    assert.match(settingsBody, /Уборка перед переездом/i);
+
+    const firstItemMatch = settingsBody.match(/name="completedItemIds" value="([^"]+)"/);
+    assert.ok(firstItemMatch);
+    const firstItemId = firstItemMatch[1];
+
+    const saveResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save_checklist_state",
+        serviceType: "regular",
+        completedItemIds: firstItemId,
+      }),
+    });
+    assert.equal(saveResponse.status, 303);
+    const saveLocation = saveResponse.headers.get("location") || "";
+    assert.match(saveLocation, /notice=saved/);
+
+    const savedResponse = await fetch(`${started.baseUrl}${saveLocation.replace(/#.*$/, "")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const savedBody = await savedResponse.text();
+    assert.equal(savedResponse.status, 200);
+    assert.match(savedBody, /Отметки чек-листа сохранены/i);
+    assert.match(savedBody, new RegExp(`value="${firstItemId}"[^>]*checked`, "i"));
+
+    const customLabel = "Проверить зеркала в прихожей";
+    const addResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "add_checklist_item",
+        serviceType: "regular",
+        itemLabel: customLabel,
+      }),
+    });
+    assert.equal(addResponse.status, 303);
+    const addLocation = addResponse.headers.get("location") || "";
+    assert.match(addLocation, /notice=added/);
+
+    const updatedResponse = await fetch(`${started.baseUrl}${addLocation.replace(/#.*$/, "")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const updatedBody = await updatedResponse.text();
+    assert.equal(updatedResponse.status, 200);
+    assert.match(updatedBody, /Новый пункт добавлен в шаблон/i);
+    assert.match(updatedBody, new RegExp(customLabel, "i"));
+
+    const resetResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "reset_checklist_state",
+        serviceType: "regular",
+      }),
+    });
+    assert.equal(resetResponse.status, 303);
+    const resetLocation = resetResponse.headers.get("location") || "";
+    assert.match(resetLocation, /notice=reset/);
+
+    const resetPageResponse = await fetch(`${started.baseUrl}${resetLocation.replace(/#.*$/, "")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const resetBody = await resetPageResponse.text();
+    assert.equal(resetPageResponse.status, 200);
+    assert.match(resetBody, /Все отметки по этому шаблону сброшены/i);
+    assert.doesNotMatch(resetBody, new RegExp(`value="${firstItemId}"[^>]*checked`, "i"));
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 

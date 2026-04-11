@@ -3882,7 +3882,8 @@ function renderSettingsTemplateCard(template) {
   return renderAdminCard(
     template.title,
     template.description,
-    `<p class="admin-checklist-summary">Выполнено ${escapeHtml(String(completedCount))} из ${escapeHtml(String(template.items.length))}</p>
+    `<div id="settings-${escapeHtmlAttribute(template.serviceType)}"></div>
+    <p class="admin-checklist-summary">Выполнено ${escapeHtml(String(completedCount))} из ${escapeHtml(String(template.items.length))}</p>
     <form class="admin-form" method="post" action="${ADMIN_SETTINGS_PATH}">
       <input type="hidden" name="action" value="save_checklist_state">
       <input type="hidden" name="serviceType" value="${escapeHtmlAttribute(template.serviceType)}">
