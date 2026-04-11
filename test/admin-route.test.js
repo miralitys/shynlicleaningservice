@@ -1079,6 +1079,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /client-request-2/);
     assert.match(selectedClientDialog, /Команда: Olga Stone/);
     assert.match(selectedClientDialog, /Редактировать/i);
+    assert.match(selectedClientDialog, /<a class="admin-button" href="\/admin\/orders\?q=client-request-2&amp;order=/i);
     assert.match(selectedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
     assert.doesNotMatch(selectedClientDialog, /<h3 class="admin-subsection-title">Контакты<\/h3>/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100/);
