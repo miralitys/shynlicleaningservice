@@ -32,8 +32,8 @@ test("serves the admin login page when admin secrets are configured", async () =
     const body = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(body, /Admin Login/i);
-    assert.match(body, /Continue to 2FA/i);
+    assert.match(body, /Вход в админку/i);
+    assert.match(body, /Продолжить/i);
   } finally {
     await stopServer(started.child);
   }
@@ -96,16 +96,14 @@ test("completes the admin login and TOTP verification flow", async () => {
     });
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
-    assert.match(dashboardBody, /Admin Dashboard/i);
-    assert.match(dashboardBody, /Signed in as/i);
+    assert.match(dashboardBody, /Обзор/i);
+    assert.match(dashboardBody, /Вы вошли как/i);
 
     const adminPages = [
-      { path: "/admin/clients", pattern: /Clients/i },
-      { path: "/admin/orders", pattern: /Orders/i },
-      { path: "/admin/staff", pattern: /Staff/i },
-      { path: "/admin/quote-ops", pattern: /Quote Operations/i },
-      { path: "/admin/integrations", pattern: /Integrations/i },
-      { path: "/admin/runtime", pattern: /Runtime/i },
+      { path: "/admin/clients", pattern: /Клиенты/i },
+      { path: "/admin/orders", pattern: /Заказы/i },
+      { path: "/admin/staff", pattern: /Сотрудники/i },
+      { path: "/admin/quote-ops", pattern: /Заявки/i },
     ];
 
     for (const page of adminPages) {
@@ -117,6 +115,17 @@ test("completes the admin login and TOTP verification flow", async () => {
       const body = await response.text();
       assert.equal(response.status, 200);
       assert.match(body, page.pattern);
+    }
+
+    for (const path of ["/admin/integrations", "/admin/runtime"]) {
+      const response = await fetch(`${started.baseUrl}${path}`, {
+        redirect: "manual",
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      });
+      assert.equal(response.status, 301);
+      assert.equal(response.headers.get("location"), "/admin");
     }
 
     const logoutResponse = await fetch(`${started.baseUrl}/admin/logout`, {

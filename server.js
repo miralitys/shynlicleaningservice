@@ -98,8 +98,6 @@ const ADMIN_APP_ROUTES = new Set([
   ADMIN_ORDERS_PATH,
   ADMIN_STAFF_PATH,
   ADMIN_QUOTE_OPS_PATH,
-  ADMIN_INTEGRATIONS_PATH,
-  ADMIN_RUNTIME_PATH,
 ]);
 const ADMIN_ALL_ROUTES = new Set([
   ...ADMIN_APP_ROUTES,
@@ -112,31 +110,23 @@ const ADMIN_ALL_ROUTES = new Set([
 const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
     path: ADMIN_ROOT_PATH,
-    label: "Overview",
+    label: "Обзор",
   },
   {
     path: ADMIN_CLIENTS_PATH,
-    label: "Clients",
+    label: "Клиенты",
   },
   {
     path: ADMIN_ORDERS_PATH,
-    label: "Orders",
+    label: "Заказы",
   },
   {
     path: ADMIN_STAFF_PATH,
-    label: "Staff",
+    label: "Сотрудники",
   },
   {
     path: ADMIN_QUOTE_OPS_PATH,
-    label: "Quote Ops",
-  },
-  {
-    path: ADMIN_INTEGRATIONS_PATH,
-    label: "Integrations",
-  },
-  {
-    path: ADMIN_RUNTIME_PATH,
-    label: "Runtime",
+    label: "Заявки",
   },
 ]);
 const QUOTE_PUBLIC_PATH = "/quote";
@@ -145,6 +135,8 @@ const REDIRECT_ROUTES = new Map([
   ["/действуй", "/quote"],
   ["/admin/setup", ADMIN_ROOT_PATH],
   ["/admin/users", ADMIN_ROOT_PATH],
+  [ADMIN_INTEGRATIONS_PATH, ADMIN_ROOT_PATH],
+  [ADMIN_RUNTIME_PATH, ADMIN_ROOT_PATH],
 ]);
 const SITE_ORIGIN = normalizeConfiguredOrigin(
   process.env.PUBLIC_SITE_ORIGIN || process.env.SITE_BASE_URL || "https://shynlicleaningservice.com"
@@ -1222,13 +1214,22 @@ function formatDurationLabel(totalSeconds) {
 }
 
 function formatAdminDateTime(value) {
-  if (!value) return "Unknown";
+  if (!value) return "Не указано";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unknown";
-  return date.toLocaleString("en-US", {
+  if (Number.isNaN(date.getTime())) return "Не указано";
+  return date.toLocaleString("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short",
   });
+}
+
+function formatAdminServiceLabel(value) {
+  const normalized = normalizeString(value, 120).toLowerCase();
+  if (!normalized) return "Уборка";
+  if (normalized.includes("regular")) return "Регулярная уборка";
+  if (normalized.includes("deep")) return "Генеральная уборка";
+  if (normalized.includes("moving") || normalized.includes("move")) return "Уборка перед переездом";
+  return normalizeString(value, 120);
 }
 
 function maskSecretPreview(value, visibleEnd = 4) {
@@ -1334,20 +1335,20 @@ function renderAdminAuthSidebar(activeStep) {
     {
       key: "login",
       index: "01",
-      title: "Credentials",
-      description: "Confirm the admin email and password before any TOTP prompt appears.",
+      title: "Вход",
+      description: "Введите почту и пароль.",
     },
     {
       key: "2fa",
       index: "02",
-      title: "Authenticator",
-      description: "Use the current 6-digit code from Google Authenticator, 1Password, or a similar app.",
+      title: "Код",
+      description: "Подтвердите вход кодом из приложения.",
     },
     {
       key: "dashboard",
       index: "03",
-      title: "Dashboard",
-      description: "Open the secured overview for runtime visibility and future internal tools.",
+      title: "Панель",
+      description: "После подтверждения откроется админка.",
     },
   ];
 
@@ -1357,10 +1358,10 @@ function renderAdminAuthSidebar(activeStep) {
         <div class="admin-brand-mark">S</div>
         <div>
           <p class="admin-sidebar-label">SHYNLI</p>
-          <h2 class="admin-sidebar-title">Admin Workspace</h2>
+          <h2 class="admin-sidebar-title">Панель управления</h2>
         </div>
       </div>
-      <p class="admin-sidebar-copy">A framework-free admin shell restyled with shadcn/ui card, input, button, and badge patterns.</p>
+      <p class="admin-sidebar-copy">Вход в рабочую панель SHYNLI.</p>
       <div class="admin-step-list">
         ${steps
           .map(
@@ -1376,73 +1377,62 @@ function renderAdminAuthSidebar(activeStep) {
       </div>
     </div>
     <div class="admin-sidebar-card admin-sidebar-card-muted">
-      <p class="admin-sidebar-label">Security Defaults</p>
+      <p class="admin-sidebar-label">Как войти</p>
       <ul class="admin-feature-list">
-        <li>Password verification happens before the second factor challenge.</li>
-        <li>TOTP codes rotate every 30 seconds and accept only a narrow validation window.</li>
-        <li>Admin cookies stay HttpOnly and SameSite=Strict for every route under <code>/admin</code>.</li>
+        <li>Сначала введите почту и пароль.</li>
+        <li>Затем подтвердите вход кодом из приложения.</li>
+        <li>Если приложение ещё не настроено, используйте QR-код на следующем шаге.</li>
       </ul>
     </div>`;
 }
 
-function renderAdminAppSidebar(config, req, activePath, statusBadges) {
-  const cookieMode = `HttpOnly + SameSite=Strict${shouldUseSecureCookies(req) ? " + Secure" : ""}`;
+function renderAdminAppSidebar(config, req, activePath) {
   return `
     <div class="admin-sidebar-card">
       <div class="admin-brand">
         <div class="admin-brand-mark">S</div>
         <div>
           <p class="admin-sidebar-label">SHYNLI</p>
-          <h2 class="admin-sidebar-title">Admin Dashboard</h2>
+          <h2 class="admin-sidebar-title">Панель управления</h2>
         </div>
       </div>
-      <p class="admin-sidebar-copy">A shadcn-style operator shell for clients, orders, staffing, quote operations, integration visibility, and runtime diagnostics.</p>
+      <p class="admin-sidebar-copy">Основные рабочие разделы.</p>
       <nav class="admin-nav">
         ${ADMIN_APP_NAV_ITEMS.map((item) => `<a class="admin-nav-link${item.path === activePath ? " admin-nav-link-active" : ""}" href="${item.path}">${escapeHtml(item.label)}</a>`).join("")}
       </nav>
     </div>
     <div class="admin-sidebar-card admin-sidebar-card-muted">
-      <p class="admin-sidebar-label">Access Posture</p>
-      <div class="admin-badge-row">${statusBadges}</div>
-      <div class="admin-divider"></div>
+      <p class="admin-sidebar-label">Аккаунт</p>
       <div class="admin-property-list">
         <div class="admin-property-row">
-          <span class="admin-property-label">Account</span>
+          <span class="admin-property-label">Почта</span>
           <span class="admin-property-value">${escapeHtml(config.email)}</span>
-        </div>
-        <div class="admin-property-row">
-          <span class="admin-property-label">Protocol</span>
-          <span class="admin-property-value">${escapeHtml(getRequestProtocol(req))}</span>
-        </div>
-        <div class="admin-property-row">
-          <span class="admin-property-label">Cookies</span>
-          <span class="admin-property-value">${escapeHtml(cookieMode)}</span>
         </div>
       </div>
       <div class="admin-divider"></div>
       <div class="admin-link-grid">
         <a class="admin-link-tile" href="/" target="_blank" rel="noreferrer">
-          <strong>Website Homepage</strong>
-          <span>Open the public marketing site in a new tab.</span>
+          <strong>Сайт</strong>
+          <span>Открыть главную страницу.</span>
         </a>
         <a class="admin-link-tile" href="${QUOTE_PUBLIC_PATH}" target="_blank" rel="noreferrer">
-          <strong>Quote Form</strong>
-          <span>Preview the public quote flow and checkout handoff.</span>
+          <strong>Форма заявки</strong>
+          <span>Открыть публичную форму.</span>
         </a>
       </div>
     </div>`;
 }
 
 function renderAdminLayout(title, content, options = {}) {
-  const pageTitle = `${title} | SHYNLI Admin`;
+  const pageTitle = `${title} | SHYNLI`;
   const subtitle = options.subtitle ? `<p class="admin-subtitle">${escapeHtml(options.subtitle)}</p>` : "";
   const heroMeta = options.heroMeta ? `<div class="admin-hero-meta">${options.heroMeta}</div>` : "";
-  const kicker = escapeHtml(options.kicker || "Secure Access");
+  const kicker = escapeHtml(options.kicker || "SHYNLI");
   const sidebar = options.sidebar ? `<aside class="admin-sidebar">${options.sidebar}</aside>` : "";
   const shellClass = options.sidebar ? "admin-shell admin-shell-with-sidebar" : "admin-shell";
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -2152,21 +2142,16 @@ function renderAdminLayout(title, content, options = {}) {
 
 function renderAdminUnavailablePage() {
   return renderAdminLayout(
-    "Admin Unavailable",
+    "Админка недоступна",
     `${renderAdminCard(
-      "Configuration Required",
-      "The route is already wired, but secure authentication cannot start until the server has a private signing secret.",
-      `<div class="admin-alert admin-alert-error">Admin access needs a server-side secret before it can be enabled. Configure <code>ADMIN_MASTER_SECRET</code>, or make sure one of <code>QUOTE_SIGNING_SECRET</code>, <code>GHL_API_KEY</code>, or <code>STRIPE_SECRET_KEY</code> is available on the server.</div>
-      <ul class="admin-feature-list">
-        <li><code>ADMIN_MASTER_SECRET</code> is the preferred source for signing challenge and session cookies.</li>
-        <li>If you do not set it explicitly, the server can fall back to <code>QUOTE_SIGNING_SECRET</code>, <code>GHL_API_KEY</code>, or <code>STRIPE_SECRET_KEY</code>.</li>
-        <li>Once a signing secret exists, the login and TOTP steps become available immediately.</li>
-      </ul>`,
-      { eyebrow: "Status", muted: true }
+      "Вход временно недоступен",
+      "Нужные настройки для входа пока не завершены.",
+      `<div class="admin-alert admin-alert-error">Админка сейчас недоступна. Пожалуйста, обратитесь к разработчику.</div>`,
+      { eyebrow: "Статус", muted: true }
     )}`,
     {
-      kicker: "Configuration",
-      subtitle: "The admin shell is ready. It just needs one private signing secret before secure access can begin.",
+      kicker: "SHYNLI",
+      subtitle: "Как только настройки будут готовы, вход снова заработает.",
       sidebar: renderAdminAuthSidebar("login"),
     }
   );
@@ -2181,42 +2166,42 @@ function renderLoginPage(config, options = {}) {
     : "";
 
   return renderAdminLayout(
-    "Admin Login",
+    "Вход в админку",
     `${errorBlock}
       ${infoBlock}
       <div class="admin-section-grid admin-form-grid-two">
         ${renderAdminCard(
-          "Credentials",
-          "Enter the admin email and password first. The second step will ask for a 6-digit code from your Authenticator app.",
+          "Вход",
+          "Введите почту и пароль.",
           `<form class="admin-form" method="post" action="${ADMIN_LOGIN_PATH}" autocomplete="on">
             <label class="admin-label">
-              Email
+              Почта
               <input class="admin-input" type="email" name="email" value="${escapeHtmlText(options.email || config.email)}" autocomplete="username" required>
             </label>
             <label class="admin-label">
-              Password
+              Пароль
               <input class="admin-input" type="password" name="password" autocomplete="current-password" required>
             </label>
             <div class="admin-inline-actions">
-              <button class="admin-button" type="submit">Continue to 2FA</button>
-              <span class="admin-action-hint">Step 1 of 2. Successful credentials issue a short-lived challenge cookie.</span>
+              <button class="admin-button" type="submit">Продолжить</button>
+              <span class="admin-action-hint">Шаг 1 из 2.</span>
             </div>
           </form>`,
-          { eyebrow: "Sign In" }
+          { eyebrow: "Вход" }
         )}
         ${renderAdminCard(
-          "What Happens Next",
-          "The flow stays intentionally small, similar to a clean shadcn auth block: card, field labels, focused input states, and one clear primary action.",
+          "Дальше",
+          "После пароля понадобится код из приложения.",
           `<ul class="admin-feature-list">
-            <li>The submitted email must match the configured admin account exactly.</li>
-            <li>Password verification uses a server-side scrypt hash, not plaintext comparison.</li>
-            <li>After success, the server redirects you to <code>${ADMIN_2FA_PATH}</code> with a challenge cookie scoped to <code>/admin</code>.</li>
+            <li>Если приложение ещё не настроено, на следующем шаге появится QR-код.</li>
+            <li>Для входа нужен текущий 6-значный код.</li>
+            <li>После подтверждения откроется админка.</li>
           </ul>`,
-          { eyebrow: "Flow", muted: true }
+          { eyebrow: "Подсказка", muted: true }
         )}
       </div>`,
     {
-      subtitle: "Use your admin email and password first. The second step will ask for a 6-digit code from your Authenticator app.",
+      subtitle: "Введите почту и пароль, затем подтвердите вход кодом из приложения.",
       sidebar: renderAdminAuthSidebar("login"),
     }
   );
@@ -2227,81 +2212,71 @@ function renderTwoFactorPage(config, options = {}) {
     ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
     : "";
   const secret = options.secret || adminAuth.getTotpSecretMaterial(config);
-  const otpauthUri = options.otpauthUri || adminAuth.buildOtpauthUri(config);
   const qrMarkup = options.qrMarkup || "";
-  const secretMode = secret.derived
-    ? "This key is derived from your server secret and current admin credentials."
-    : "This key comes from ADMIN_TOTP_SECRET.";
 
   return renderAdminLayout(
-    "Two-Factor Authentication",
+    "Подтверждение входа",
     `${errorBlock}
       <div class="admin-section-grid admin-form-grid-two">
         ${renderAdminCard(
-          "Authenticator Code",
-          "Enter the current 6-digit code from your authenticator app. If this is your first time, use the setup card on the right before verifying.",
+          "Код из приложения",
+          "Введите текущий 6-значный код.",
           `<form class="admin-form" method="post" action="${ADMIN_2FA_PATH}" autocomplete="off">
             <label class="admin-label">
-              6-digit code
+              Код
               <input class="admin-input admin-input-code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" name="code" placeholder="123456" autocomplete="one-time-code" required>
             </label>
-            <p class="admin-field-note">Step 2 of 2. The current code is tied to the configured issuer and rotates every 30 seconds.</p>
+            <p class="admin-field-note">Шаг 2 из 2.</p>
             <div class="admin-inline-actions">
-              <button class="admin-button" type="submit">Verify and sign in</button>
-              <a class="admin-link-button admin-button-secondary" href="${ADMIN_LOGIN_PATH}">Back</a>
+              <button class="admin-button" type="submit">Подтвердить вход</button>
+              <a class="admin-link-button admin-button-secondary" href="${ADMIN_LOGIN_PATH}">Назад</a>
             </div>
           </form>`,
-          { eyebrow: "Verification" }
+          { eyebrow: "Код" }
         )}
         ${renderAdminCard(
-          "Need to Set Up Your Authenticator App?",
-          `Add a new TOTP account in Google Authenticator, Microsoft Authenticator, 1Password, or a similar app using the values below. ${secretMode}`,
+          "Настройка приложения",
+          "Если приложение ещё не подключено, используйте QR-код или ключ ниже.",
           `<details class="admin-details" open>
-            <summary>Setup Details</summary>
+            <summary>QR-код и ключ</summary>
             <div class="admin-form-grid admin-form-grid-two" style="margin-top:14px;">
               ${renderAdminCard(
-                "Scan QR Code",
-                "Open your authenticator app and scan this QR code for the fastest setup.",
+                "QR-код",
+                "Откройте приложение и отсканируйте код.",
                 qrMarkup
                   ? `<div class="admin-qr-card">
                       ${qrMarkup}
-                      <p class="admin-field-note">Works with Google Authenticator, Microsoft Authenticator, 1Password, and similar apps.</p>
+                      <p class="admin-field-note">Подойдёт Google Authenticator, 1Password и похожие приложения.</p>
                     </div>`
-                  : `<p class="admin-field-note">QR generation is unavailable on this server. Use the manual setup values instead.</p>`,
+                  : `<p class="admin-field-note">Если QR-код не появился, используйте ключ вручную.</p>`,
                 { eyebrow: "QR", muted: true }
               )}
               ${renderAdminCard(
-                "Manual Setup",
-                "These values match the current admin issuer and account.",
+                "Ключ вручную",
+                "Введите эти данные в приложении, если QR-код не используется.",
                 `<div class="admin-property-list">
                   <div class="admin-property-row">
-                    <span class="admin-property-label">Issuer</span>
+                    <span class="admin-property-label">Сервис</span>
                     <span class="admin-property-value">${escapeHtml(config.issuer)}</span>
                   </div>
                   <div class="admin-property-row">
-                    <span class="admin-property-label">Account</span>
+                    <span class="admin-property-label">Аккаунт</span>
                     <span class="admin-property-value">${escapeHtml(config.email)}</span>
                   </div>
                   <div class="admin-property-row">
-                    <span class="admin-property-label">Key</span>
+                    <span class="admin-property-label">Ключ</span>
                     <span class="admin-property-value"><code>${escapeHtml(secret.base32)}</code></span>
                   </div>
                 </div>`,
-                { eyebrow: "TOTP", muted: true }
-              )}
-              ${renderAdminCard(
-                "otpauth URI",
-                "You can paste this full URI into compatible authenticator tools.",
-                `<pre class="admin-code">${escapeHtml(otpauthUri)}</pre>`,
-                { eyebrow: "Advanced", muted: true }
+                { eyebrow: "Ключ", muted: true }
               )}
             </div>
           </details>`,
-          { eyebrow: "Setup", muted: true }
+          { eyebrow: "Настройка", muted: true }
         )}
       </div>`,
     {
-      subtitle: "Enter the current TOTP code from your Authenticator app. If this is your first time, expand the setup section below and add the account manually.",
+      subtitle: "Введите код из приложения для подтверждения входа.",
       sidebar: renderAdminAuthSidebar("2fa"),
     }
   );
@@ -2329,13 +2304,13 @@ function renderAdminSignedInTopbar(config, options = {}) {
   }
   actions.push(
     `<form class="admin-logout-form" method="post" action="${ADMIN_LOGOUT_PATH}">
-      <button class="admin-button admin-button-secondary" type="submit">Log out</button>
+      <button class="admin-button admin-button-secondary" type="submit">Выйти</button>
     </form>`
   );
 
   return `<div class="admin-topbar">
     <div>
-      <p>${escapeHtml(options.caption || "Signed in as")}</p>
+      <p>${escapeHtml(options.caption || "Вы вошли как")}</p>
       <p class="admin-user-email">${escapeHtml(config.email)}</p>
     </div>
     <div class="admin-inline-actions">
@@ -2373,13 +2348,13 @@ function collectAdminClientRecords(entries = []) {
     ).toLowerCase();
     if (!clientKey) continue;
 
-    const latestService = normalizeString(entry.serviceName || entry.serviceType || "Cleaning Service", 120);
+    const latestService = normalizeString(entry.serviceName || entry.serviceType || "Уборка", 120);
     const existing = clients.get(clientKey);
 
     if (!existing) {
       clients.set(clientKey, {
         key: clientKey,
-        name: normalizeString(entry.customerName || "Unnamed customer", 250),
+        name: normalizeString(entry.customerName || "Клиент", 250),
         email: normalizeString(entry.customerEmail, 250),
         phone: normalizeString(entry.customerPhone, 80),
         address: normalizeString(entry.fullAddress, 500),
@@ -2415,398 +2390,347 @@ function collectAdminClientRecords(entries = []) {
   });
 }
 
-function renderDashboardPage(req, config) {
-  const signals = getAdminIntegrationState();
-  const runtimeBadges = getAdminStatusBadges(signals);
-  const memory = getMemoryUsageSnapshot();
-  const totp = adminAuth.getTotpSecretMaterial(config);
-  const serverTime = new Date().toLocaleString("en-US", {
-    timeZone: "America/Chicago",
-    dateStyle: "full",
-    timeStyle: "long",
-  });
+async function renderDashboardPage(req, config, quoteOpsLedger) {
+  const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
+  const clientRecords = collectAdminClientRecords(allEntries);
+  const scheduledCount = allEntries.filter((entry) => Boolean(entry.selectedDate || entry.selectedTime)).length;
+  const attentionCount = allEntries.filter((entry) => entry.status !== "success").length;
 
   return renderAdminLayout(
-    "Admin Dashboard",
+    "Обзор",
     `${renderAdminSignedInTopbar(config, {
       linkHref: QUOTE_PUBLIC_PATH,
-      linkLabel: "Open Quote Form",
+      linkLabel: "Открыть форму заявки",
       linkExternal: true,
     })}
       <div class="admin-stats-grid">
         ${renderAdminCard(
-          "Security",
-          "Current auth posture for the secured admin surface.",
-          `<p class="admin-metric-value">2 layers</p>
-          ${renderAdminPropertyList([
-            { label: "Password check", value: "Enabled" },
-            { label: "TOTP issuer", value: config.issuer },
-            { label: "TOTP mode", value: totp.derived ? "Derived from server secret" : "Explicit ADMIN_TOTP_SECRET" },
-            { label: "Session TTL", value: formatDurationLabel(adminAuth.SESSION_TTL_SECONDS) },
-          ])}`,
-          { eyebrow: "Overview" }
+          "Клиенты",
+          "Все клиенты из текущих заявок.",
+          `<p class="admin-metric-value">${escapeHtml(String(clientRecords.length))}</p>`,
+          { eyebrow: "Обзор" }
         )}
         ${renderAdminCard(
-          "Integrations",
-          "Live configuration signals for quote, payments, CRM, and places lookup.",
-          `<div class="admin-badge-row">${runtimeBadges}</div>
-          <p class="admin-card-copy">Use the sections below for deeper config details, quote pricing visibility, and runtime diagnostics.</p>`,
-          { eyebrow: "Status", muted: true }
+          "Заказы",
+          "Все заявки и заказы в работе.",
+          `<p class="admin-metric-value">${escapeHtml(String(allEntries.length))}</p>`,
+          { eyebrow: "Обзор", muted: true }
         )}
         ${renderAdminCard(
-          "Server",
-          "Key request and origin details for the active process.",
-          `<p class="admin-metric-value">${escapeHtml(getRequestProtocol(req).toUpperCase())}</p>
-          ${renderAdminPropertyList([
-            { label: "Site origin", value: SITE_ORIGIN },
-            { label: "Server time", value: serverTime },
-            { label: "HTML warm mode", value: HTML_CACHE_WARM_MODE },
-            { label: "Perf window", value: formatDurationLabel(PERF_WINDOW_MS / 1000) },
-          ])}`,
-          { eyebrow: "Runtime" }
+          "Назначена дата",
+          "Заявки, где уже выбраны день или время.",
+          `<p class="admin-metric-value">${escapeHtml(String(scheduledCount))}</p>`,
+          { eyebrow: "Обзор", muted: true }
         )}
         ${renderAdminCard(
-          "Memory",
-          "A quick look at current process footprint.",
-          `<p class="admin-metric-value">${escapeHtml(`${memory.heap_used_mb} MB`)}</p>
-          ${renderAdminPropertyList([
-            { label: "RSS", value: `${memory.rss_mb} MB` },
-            { label: "Heap used", value: `${memory.heap_used_mb} MB` },
-            { label: "External", value: `${memory.external_mb} MB` },
-            { label: "Array buffers", value: `${memory.array_buffers_mb} MB` },
-          ])}`,
-          { eyebrow: "Process", muted: true }
+          "Нужно проверить",
+          "Заявки, которым требуется внимание.",
+          `<p class="admin-metric-value">${escapeHtml(String(attentionCount))}</p>`,
+          { eyebrow: "Обзор", muted: true }
         )}
       </div>
       <div class="admin-section-grid">
         ${renderAdminCard(
-          "Internal Sections",
-          "The admin workspace now breaks the secure area into focused pages instead of a single overview.",
+          "Разделы",
+          "Основные рабочие страницы админки.",
           `<div class="admin-link-grid">
             <a class="admin-link-tile" href="${ADMIN_CLIENTS_PATH}">
-              <strong>Clients</strong>
-              <span>See the customer directory seeded from the existing quote and booking flow.</span>
+              <strong>Клиенты</strong>
+              <span>База клиентов и контактов.</span>
             </a>
             <a class="admin-link-tile" href="${ADMIN_ORDERS_PATH}">
-              <strong>Orders</strong>
-              <span>Review incoming booking requests, scheduling signals, and revenue pipeline.</span>
+              <strong>Заказы</strong>
+              <span>Текущие заказы и даты.</span>
             </a>
             <a class="admin-link-tile" href="${ADMIN_STAFF_PATH}">
-              <strong>Staff</strong>
-              <span>Prepare the crew, assignments, and internal permissions module.</span>
+              <strong>Сотрудники</strong>
+              <span>Команда и роли.</span>
             </a>
             <a class="admin-link-tile" href="${ADMIN_QUOTE_OPS_PATH}">
-              <strong>Quote Ops</strong>
-              <span>Inspect canonical pricing, booking endpoints, and checkout/token readiness.</span>
-            </a>
-            <a class="admin-link-tile" href="${ADMIN_INTEGRATIONS_PATH}">
-              <strong>Integrations</strong>
-              <span>Review GHL, Stripe, Places, perf, and auth-related configuration signals.</span>
-            </a>
-            <a class="admin-link-tile" href="${ADMIN_RUNTIME_PATH}">
-              <strong>Runtime</strong>
-              <span>Check live request latency, event loop delay, thresholds, and server internals.</span>
+              <strong>Заявки</strong>
+              <span>Все заявки с сайта.</span>
             </a>
           </div>`,
-          { eyebrow: "Workspace" }
+          { eyebrow: "Меню" }
         )}
         ${renderAdminCard(
-          "Current Coverage",
-          "The secured admin area remains intentionally controlled while still giving operators useful visibility.",
-          `<ul class="admin-feature-list">
-            <li>Safe credential + TOTP access control for every route under <code>/admin</code>.</li>
-            <li>Dedicated sections for clients, orders, staff operations, quote ops, integrations, and runtime diagnostics.</li>
-            <li>Shared shadcn-style shell with sidebar navigation, cards, badges, and concise operator views.</li>
-          </ul>`,
-          { eyebrow: "Roadmap", muted: true }
+          "Быстрый доступ",
+          "Полезные ссылки для ежедневной работы.",
+          `<div class="admin-link-grid">
+            <a class="admin-link-tile" href="/" target="_blank" rel="noreferrer">
+              <strong>Сайт</strong>
+              <span>Открыть главную страницу.</span>
+            </a>
+            <a class="admin-link-tile" href="${QUOTE_PUBLIC_PATH}" target="_blank" rel="noreferrer">
+              <strong>Форма заявки</strong>
+              <span>Открыть форму для клиента.</span>
+            </a>
+          </div>`,
+          { eyebrow: "Ссылки", muted: true }
         )}
       </div>`,
     {
-      kicker: "Operations Console",
-      subtitle: "This is the secured admin area. It now groups clients, orders, staffing, quote operations, integration visibility, and runtime checks into focused pages.",
-      heroMeta: runtimeBadges,
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_ROOT_PATH, runtimeBadges),
+      kicker: "SHYNLI",
+      subtitle: "Рабочая панель для клиентов, заказов, сотрудников и заявок.",
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_ROOT_PATH),
     }
   );
 }
 
 async function renderClientsPage(req, config, quoteOpsLedger) {
-  const signals = getAdminIntegrationState();
-  const runtimeBadges = getAdminStatusBadges(signals);
   const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
   const clientRecords = collectAdminClientRecords(allEntries);
   const clientsWithEmail = clientRecords.filter((client) => Boolean(client.email)).length;
   const clientsWithPhone = clientRecords.filter((client) => Boolean(client.phone)).length;
-  const totalRequests = clientRecords.reduce((sum, client) => sum + client.requestCount, 0);
+  const repeatClients = clientRecords.filter((client) => client.requestCount > 1).length;
 
   return renderAdminLayout(
-    "Clients",
+    "Клиенты",
     `${renderAdminSignedInTopbar(config, {
       linkHref: ADMIN_ORDERS_PATH,
-      linkLabel: "Open Orders",
+      linkLabel: "Открыть заказы",
     })}
       <div class="admin-stats-grid">
         ${renderAdminCard(
-          "Known Clients",
-          "Unique customer records inferred from quote and booking activity already stored by the backend.",
-          `<p class="admin-metric-value">${escapeHtml(String(clientRecords.length))}</p>
-          <p class="admin-card-copy">This view deduplicates customers by email, phone, CRM contact, or request identity when available.</p>`,
-          { eyebrow: "Directory" }
+          "Всего клиентов",
+          "Уникальные клиенты по текущим заявкам.",
+          `<p class="admin-metric-value">${escapeHtml(String(clientRecords.length))}</p>`,
+          { eyebrow: "Клиенты" }
         )}
         ${renderAdminCard(
-          "With Email",
-          "Clients that can be reached by email from the current server-side records.",
-          `<p class="admin-metric-value">${escapeHtml(String(clientsWithEmail))}</p>
-          <p class="admin-card-copy">Useful for follow-ups, reminders, and nurture flows once CRM actions expand.</p>`,
-          { eyebrow: "Contact", muted: true }
+          "Есть email",
+          "Клиенты, которым можно написать.",
+          `<p class="admin-metric-value">${escapeHtml(String(clientsWithEmail))}</p>`,
+          { eyebrow: "Контакты", muted: true }
         )}
         ${renderAdminCard(
-          "With Phone",
-          "Clients that currently include a phone number in the intake flow.",
-          `<p class="admin-metric-value">${escapeHtml(String(clientsWithPhone))}</p>
-          <p class="admin-card-copy">Phone coverage gives the team a reliable fallback when email is missing.</p>`,
-          { eyebrow: "Contact", muted: true }
+          "Есть телефон",
+          "Клиенты, которым можно позвонить.",
+          `<p class="admin-metric-value">${escapeHtml(String(clientsWithPhone))}</p>`,
+          { eyebrow: "Контакты", muted: true }
         )}
         ${renderAdminCard(
-          "Linked Requests",
-          "Total quote or booking submissions currently associated with the discovered client directory.",
-          `<p class="admin-metric-value">${escapeHtml(String(totalRequests))}</p>
-          <p class="admin-card-copy">Each new quote automatically enriches this client view without extra admin data entry.</p>`,
-          { eyebrow: "Activity", muted: true }
+          "Повторные обращения",
+          "Клиенты с двумя и более заявками.",
+          `<p class="admin-metric-value">${escapeHtml(String(repeatClients))}</p>`,
+          { eyebrow: "Повторы", muted: true }
         )}
       </div>
       <div class="admin-section-grid">
         ${renderAdminCard(
-          "Recent Client Directory",
-          "A lightweight client directory seeded from the live quote ledger so operators can start navigating customers immediately.",
+          "Список клиентов",
+          "Последние клиенты из заявок сайта.",
           clientRecords.length > 0
             ? `<div class="admin-link-grid">
                 ${clientRecords
                   .slice(0, 6)
                   .map(
                     (client) => `<div class="admin-link-tile">
-                      <strong>${escapeHtml(client.name || "Unnamed customer")}</strong>
-                      <span>${escapeHtml(client.latestService || "Cleaning Service")} • ${escapeHtml(formatAdminDateTime(client.latestCreatedAt))}</span>
-                      <span>${escapeHtml(client.email || client.phone || "No direct contact captured yet")}</span>
-                      <span>${escapeHtml(client.requestCount === 1 ? "1 linked request" : `${client.requestCount} linked requests`)}</span>
+                      <strong>${escapeHtml(client.name || "Клиент")}</strong>
+                      <span>${escapeHtml(formatAdminServiceLabel(client.latestService))} • ${escapeHtml(formatAdminDateTime(client.latestCreatedAt))}</span>
+                      <span>${escapeHtml(client.email || client.phone || "Контакты не указаны")}</span>
+                      <span>${escapeHtml(client.requestCount === 1 ? "1 заявка" : `${client.requestCount} заявок`)}</span>
                     </div>`
                   )
                   .join("")}
               </div>`
-            : `<div class="admin-empty-state">No clients have been captured yet. Once someone submits the public quote flow, this directory will start filling automatically.</div>`,
-          { eyebrow: "Directory" }
+            : `<div class="admin-empty-state">Пока клиентов нет. Как только появятся новые заявки, этот раздел заполнится автоматически.</div>`,
+          { eyebrow: "Список" }
         )}
         ${renderAdminCard(
-          "What This Section Covers",
-          "This page is ready to grow into a fuller customer workspace without inventing fake data before the backend is ready.",
+          "Что есть в разделе",
+          "Короткая сводка по текущей базе клиентов.",
           `${renderAdminPropertyList([
-            { label: "Current source", value: "Quote ops ledger and Supabase quote persistence" },
-            { label: "Latest revenue snapshot", value: formatCurrencyAmount(clientRecords.reduce((sum, client) => sum + client.totalRevenue, 0)) },
-            { label: "Future fit", value: "CRM contact history, reminders, notes, and segmentation" },
+            { label: "Всего клиентов", value: String(clientRecords.length) },
+            { label: "Сумма по клиентам", value: formatCurrencyAmount(clientRecords.reduce((sum, client) => sum + client.totalRevenue, 0)) },
+            { label: "Повторные клиенты", value: String(repeatClients) },
           ])}
           <ul class="admin-feature-list">
-            <li>The directory is intentionally read-only for now so it stays aligned with the server-tracked quote records.</li>
-            <li>Once deeper CRM sync lands, this page can evolve into full client profiles without changing the secured layout.</li>
-            <li>Use <code>Quote Ops</code> for retry and export actions; use this page for quick customer visibility.</li>
+            <li>Здесь удобно быстро находить клиента и его контакты.</li>
+            <li>Для просмотра всех заявок используйте раздел «Заявки».</li>
+            <li>Раздел остаётся простым и без лишней технической информации.</li>
           </ul>`,
-          { eyebrow: "Coverage", muted: true }
+          { eyebrow: "Сводка", muted: true }
         )}
       </div>`,
     {
-      kicker: "Client Workspace",
-      subtitle: "Browse the customer directory generated from live quote activity while keeping the admin shell focused and secure.",
-      heroMeta: runtimeBadges,
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_CLIENTS_PATH, runtimeBadges),
+      kicker: "Клиенты",
+      subtitle: "Список клиентов и их контакты.",
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_CLIENTS_PATH),
     }
   );
 }
 
 async function renderOrdersPage(req, config, quoteOpsLedger) {
-  const signals = getAdminIntegrationState();
-  const runtimeBadges = getAdminStatusBadges(signals);
   const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
   const scheduledEntries = allEntries.filter((entry) => Boolean(entry.selectedDate || entry.selectedTime));
   const attentionCount = allEntries.filter((entry) => entry.status !== "success").length;
   const revenuePipeline = allEntries.reduce((sum, entry) => sum + Number(entry.totalPrice || 0), 0);
 
   return renderAdminLayout(
-    "Orders",
+    "Заказы",
     `${renderAdminSignedInTopbar(config, {
       linkHref: ADMIN_QUOTE_OPS_PATH,
-      linkLabel: "Open Quote Ops",
+      linkLabel: "Открыть заявки",
     })}
       <div class="admin-stats-grid">
         ${renderAdminCard(
-          "Order Intake",
-          "The current booking pipeline inferred from quote submissions already reaching the backend.",
-          `<p class="admin-metric-value">${escapeHtml(String(allEntries.length))}</p>
-          <p class="admin-card-copy">This section treats each stored quote submission as an incoming order candidate until deeper booking states are wired.</p>`,
-          { eyebrow: "Pipeline" }
+          "Всего заказов",
+          "Все заказы и заявки в работе.",
+          `<p class="admin-metric-value">${escapeHtml(String(allEntries.length))}</p>`,
+          { eyebrow: "Заказы" }
         )}
         ${renderAdminCard(
-          "Scheduled",
-          "Requests that already include a preferred date or time window.",
-          `<p class="admin-metric-value">${escapeHtml(String(scheduledEntries.length))}</p>
-          <p class="admin-card-copy">Scheduling details are captured from the quote flow and can later drive job assignment logic.</p>`,
-          { eyebrow: "Scheduling", muted: true }
+          "Есть дата",
+          "Заказы, где уже выбраны день или время.",
+          `<p class="admin-metric-value">${escapeHtml(String(scheduledEntries.length))}</p>`,
+          { eyebrow: "График", muted: true }
         )}
         ${renderAdminCard(
-          "Needs Attention",
-          "Requests with warning or error states that may need operator review.",
-          `<p class="admin-metric-value">${escapeHtml(String(attentionCount))}</p>
-          <p class="admin-card-copy">These are the same records that surface retry actions and export coverage inside Quote Ops.</p>`,
-          { eyebrow: "Triage", muted: true }
+          "Нужно проверить",
+          "Заказы, которым требуется внимание.",
+          `<p class="admin-metric-value">${escapeHtml(String(attentionCount))}</p>`,
+          { eyebrow: "Проверка", muted: true }
         )}
         ${renderAdminCard(
-          "Revenue Pipeline",
-          "Total value represented by the currently stored booking requests.",
-          `<p class="admin-metric-value">${escapeHtml(formatCurrencyAmount(revenuePipeline))}</p>
-          <p class="admin-card-copy">This is a live snapshot of quote-backed order value, not a finalized accounting ledger.</p>`,
-          { eyebrow: "Revenue", muted: true }
+          "Сумма",
+          "Общая сумма по текущим заказам.",
+          `<p class="admin-metric-value">${escapeHtml(formatCurrencyAmount(revenuePipeline))}</p>`,
+          { eyebrow: "Сумма", muted: true }
         )}
       </div>
       <div class="admin-section-grid">
         ${renderAdminCard(
-          "Latest Booking Requests",
-          "A quick operator view of the most recent order candidates, including service, timing, and sync status.",
+          "Последние заказы",
+          "Последние заявки и даты уборки.",
           allEntries.length > 0
             ? `<div class="admin-link-grid">
                 ${allEntries
                   .slice(0, 6)
                   .map(
                     (entry) => `<div class="admin-link-tile">
-                      <strong>${escapeHtml(entry.customerName || "Unnamed customer")}</strong>
-                      <span>${escapeHtml(entry.serviceName || entry.serviceType || "Cleaning Service")} • ${escapeHtml(formatCurrencyAmount(entry.totalPrice))}</span>
-                      <span>${escapeHtml([entry.selectedDate, entry.selectedTime].filter(Boolean).join(" at ") || "Schedule not selected yet")}</span>
-                      <span>${renderQuoteOpsStatusBadge(entry.status)} ${entry.fullAddress ? escapeHtml(entry.fullAddress) : "Address not captured yet"}</span>
+                      <strong>${escapeHtml(entry.customerName || "Клиент")}</strong>
+                      <span>${escapeHtml(formatAdminServiceLabel(entry.serviceName || entry.serviceType))} • ${escapeHtml(formatCurrencyAmount(entry.totalPrice))}</span>
+                      <span>${escapeHtml([entry.selectedDate, entry.selectedTime].filter(Boolean).join(" в ") || "Дата не указана")}</span>
+                      <span>${renderQuoteOpsStatusBadge(entry.status)} ${entry.fullAddress ? escapeHtml(entry.fullAddress) : "Адрес не указан"}</span>
                     </div>`
                   )
                   .join("")}
               </div>`
-            : `<div class="admin-empty-state">No orders are available yet. Submit a test quote through the public flow and this page will immediately pick it up.</div>`,
-          { eyebrow: "Queue" }
+            : `<div class="admin-empty-state">Пока заказов нет. Как только появятся новые заявки, они отобразятся здесь.</div>`,
+          { eyebrow: "Список" }
         )}
         ${renderAdminCard(
-          "How Orders Map Today",
-          "This section is deliberately honest about the current backend: it reuses live quote intake until a dedicated order lifecycle exists.",
+          "Что есть в разделе",
+          "Короткая сводка по текущим заказам.",
           `${renderAdminPropertyList([
-            { label: "Primary source", value: "Quote submission ledger" },
-            { label: "Export + retry tools", value: "Handled in Quote Ops" },
-            { label: "Future milestones", value: "Confirmed booking state, staff assignment, payment completion, and job history" },
+            { label: "Всего заказов", value: String(allEntries.length) },
+            { label: "Есть дата", value: String(scheduledEntries.length) },
+            { label: "Нужно проверить", value: String(attentionCount) },
           ])}
           <ul class="admin-feature-list">
-            <li>Nothing here fabricates order data; it only reflects what the server has already stored and normalized.</li>
-            <li>When a fuller operations workflow lands, this page can become the main order board without changing its route.</li>
-            <li>The public <code>/quote</code> flow remains the fastest way to seed real test data for this section.</li>
+            <li>Здесь собраны заказы и выбранные даты.</li>
+            <li>Для подробной работы со всеми заявками используйте раздел «Заявки».</li>
+            <li>Интерфейс оставлен простым и понятным.</li>
           </ul>`,
-          { eyebrow: "Scope", muted: true }
+          { eyebrow: "Сводка", muted: true }
         )}
       </div>`,
     {
-      kicker: "Order Workspace",
-      subtitle: "Track incoming booking requests and scheduling signals while the deeper order lifecycle is still being assembled.",
-      heroMeta: runtimeBadges,
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_ORDERS_PATH, runtimeBadges),
+      kicker: "Заказы",
+      subtitle: "Текущие заказы, даты и суммы.",
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_ORDERS_PATH),
     }
   );
 }
 
 function renderStaffPage(req, config) {
-  const signals = getAdminIntegrationState();
-  const runtimeBadges = getAdminStatusBadges(signals);
-
   return renderAdminLayout(
-    "Staff",
+    "Сотрудники",
     `${renderAdminSignedInTopbar(config, {
-      linkHref: ADMIN_INTEGRATIONS_PATH,
-      linkLabel: "Review Integrations",
+      linkHref: ADMIN_ORDERS_PATH,
+      linkLabel: "Открыть заказы",
     })}
       <div class="admin-stats-grid">
         ${renderAdminCard(
-          "Staff Records",
-          "No separate employee directory has been wired into the backend yet.",
-          `<p class="admin-metric-value">0</p>
-          <p class="admin-card-copy">This route exists now so the staff workspace can grow in place without reshaping the rest of the admin shell later.</p>`,
-          { eyebrow: "Roster" }
+          "Сотрудники",
+          "Список сотрудников появится здесь.",
+          `<p class="admin-metric-value">0</p>`,
+          { eyebrow: "Команда" }
         )}
         ${renderAdminCard(
-          "Assignments",
-          "Job assignment and crew scheduling are not connected yet.",
-          `<p class="admin-metric-value">Pending</p>
-          <p class="admin-card-copy">The future order lifecycle can attach crew assignments here once staff records are available.</p>`,
-          { eyebrow: "Ops", muted: true }
+          "Роли",
+          "Раздел подготовлен для ролей и доступа.",
+          `<p class="admin-metric-value">Скоро</p>`,
+          { eyebrow: "Роли", muted: true }
         )}
         ${renderAdminCard(
-          "Permissions",
-          "Admin access is already protected even before finer staff roles are introduced.",
-          `<p class="admin-metric-value">Protected</p>
-          <p class="admin-card-copy">Every staff-facing route still inherits the existing password + TOTP admin boundary.</p>`,
-          { eyebrow: "Security", muted: true }
+          "График",
+          "Здесь можно будет вести расписание.",
+          `<p class="admin-metric-value">Скоро</p>`,
+          { eyebrow: "График", muted: true }
         )}
         ${renderAdminCard(
-          "Next Integration",
-          "The most natural next step is wiring this page to a real roster source.",
-          `<p class="admin-metric-value">CRM / Ops</p>
-          <p class="admin-card-copy">Calendar, CRM, or a dedicated staff table can become the source of truth when you are ready.</p>`,
-          { eyebrow: "Planning", muted: true }
+          "Статус",
+          "Раздел уже добавлен в админку.",
+          `<p class="admin-metric-value">Готово</p>`,
+          { eyebrow: "Статус", muted: true }
         )}
       </div>
       <div class="admin-section-grid">
         ${renderAdminCard(
-          "Staff Module Ready",
-          "The route, navigation, and secured layout now exist, so the team can start shaping an employee module without waiting on a future redesign.",
+          "Раздел сотрудников",
+          "Здесь будут карточки сотрудников и их роли.",
           `<ul class="admin-feature-list">
-            <li>Use this workspace for employee records, role definitions, availability windows, and team assignments.</li>
-            <li>The current page intentionally avoids fake staff data and instead gives the module a stable home in the admin nav.</li>
-            <li>Once a roster source exists, this route can switch from empty state to live records without changing the URL.</li>
+            <li>Список сотрудников.</li>
+            <li>Роли и статусы.</li>
+            <li>График и заметки.</li>
           </ul>`,
-          { eyebrow: "Module" }
+          { eyebrow: "Команда" }
         )}
         ${renderAdminCard(
-          "Recommended Fields",
-          "A clean first version of the staff module could start with these server-side fields and workflows.",
+          "Сейчас",
+          "Раздел уже на месте и готов к заполнению.",
           `${renderAdminPropertyList([
-            { label: "Core profile", value: "Full name, phone, email, role, status" },
-            { label: "Operations", value: "Service skills, service area, working hours" },
-            { label: "Assignment links", value: "Order history, availability, route coverage" },
-            { label: "Admin controls", value: "Permissions, notes, onboarding, active/inactive state" },
+            { label: "Статус", value: "Раздел создан" },
+            { label: "Данные", value: "Будут добавлены позже" },
+            { label: "Назначение", value: "Работа с командой" },
           ])}`,
-          { eyebrow: "Schema", muted: true }
+          { eyebrow: "Инфо", muted: true }
         )}
       </div>`,
     {
-      kicker: "Staff Workspace",
-      subtitle: "A dedicated section for employees now exists in the admin shell, ready for roster and assignment data when you decide to wire it in.",
-      heroMeta: runtimeBadges,
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_STAFF_PATH, runtimeBadges),
+      kicker: "Сотрудники",
+      subtitle: "Раздел для команды и ролей.",
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_STAFF_PATH),
     }
   );
 }
 
 function renderQuoteOpsStatusBadge(status) {
-  if (status === "success") return renderAdminBadge("Success", "success");
-  if (status === "warning") return renderAdminBadge("Warning", "default");
-  return renderAdminBadge("Error", "danger");
+  if (status === "success") return renderAdminBadge("Успешно", "success");
+  if (status === "warning") return renderAdminBadge("Проверить", "default");
+  return renderAdminBadge("Ошибка", "danger");
 }
 
 function renderQuoteOpsNotice(req) {
   const reqUrl = getRequestUrl(req);
   const notice = normalizeString(reqUrl.searchParams.get("notice"), 80).toLowerCase();
   if (notice === "retry-success") {
-    return `<div class="admin-alert admin-alert-info">CRM retry completed for the selected quote entry.</div>`;
+    return `<div class="admin-alert admin-alert-info">Повторная отправка выполнена.</div>`;
   }
   if (notice === "retry-failed") {
-    return `<div class="admin-alert admin-alert-error">CRM retry failed for the selected quote entry. Check the entry status below for the latest error.</div>`;
+    return `<div class="admin-alert admin-alert-error">Повторная отправка не удалась. Проверьте заявку ниже.</div>`;
   }
   if (notice === "retry-missing") {
-    return `<div class="admin-alert admin-alert-error">The selected quote entry could not be found in the current in-memory ledger.</div>`;
+    return `<div class="admin-alert admin-alert-error">Заявка не найдена.</div>`;
   }
   return "";
 }
 
 function renderQuoteOpsEntryCard(entry, returnTo) {
   const warningBlock = entry.warnings.length > 0
-    ? `<div class="admin-alert admin-alert-info">Warnings: ${escapeHtml(entry.warnings.join(", "))}</div>`
+    ? `<div class="admin-alert admin-alert-info">Нужно проверить: ${escapeHtml(entry.warnings.join(", "))}</div>`
     : "";
   const errorBlock = entry.errorMessage
     ? `<div class="admin-alert admin-alert-error">${escapeHtml(entry.errorMessage)}</div>`
@@ -2815,38 +2739,38 @@ function renderQuoteOpsEntryCard(entry, returnTo) {
   return `<article class="admin-entry-card">
     <div class="admin-entry-head">
       <div>
-        <h3 class="admin-entry-title">${escapeHtml(entry.customerName || "Unnamed customer")}</h3>
-        <p class="admin-entry-copy">${escapeHtml(entry.serviceName || "Cleaning service")} at ${escapeHtml(formatCurrencyAmount(entry.totalPrice))}</p>
+        <h3 class="admin-entry-title">${escapeHtml(entry.customerName || "Клиент")}</h3>
+        <p class="admin-entry-copy">${escapeHtml(formatAdminServiceLabel(entry.serviceName || entry.serviceType))} • ${escapeHtml(formatCurrencyAmount(entry.totalPrice))}</p>
       </div>
       <div class="admin-entry-meta">
         ${renderQuoteOpsStatusBadge(entry.status)}
-        ${entry.retryCount > 0 ? renderAdminBadge(`Retries ${entry.retryCount}`, "outline") : ""}
+        ${entry.retryCount > 0 ? renderAdminBadge(`Повтор ${entry.retryCount}`, "outline") : ""}
       </div>
     </div>
     <div class="admin-entry-grid">
       <div class="admin-mini-stat">
-        <span class="admin-mini-label">Created</span>
-        <p class="admin-mini-value">${escapeHtml(new Date(entry.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }))}</p>
+        <span class="admin-mini-label">Дата</span>
+        <p class="admin-mini-value">${escapeHtml(new Date(entry.createdAt).toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" }))}</p>
       </div>
       <div class="admin-mini-stat">
-        <span class="admin-mini-label">Request ID</span>
-        <p class="admin-mini-value">${escapeHtml(entry.requestId || "Unknown")}</p>
+        <span class="admin-mini-label">Номер</span>
+        <p class="admin-mini-value">${escapeHtml(entry.requestId || "Не указан")}</p>
       </div>
       <div class="admin-mini-stat">
-        <span class="admin-mini-label">Service Type</span>
-        <p class="admin-mini-value">${escapeHtml(entry.serviceType || "Unknown")}</p>
+        <span class="admin-mini-label">Услуга</span>
+        <p class="admin-mini-value">${escapeHtml(formatAdminServiceLabel(entry.serviceName || entry.serviceType))}</p>
       </div>
       <div class="admin-mini-stat">
-        <span class="admin-mini-label">Schedule</span>
-        <p class="admin-mini-value">${escapeHtml([entry.selectedDate, entry.selectedTime].filter(Boolean).join(" at ") || "Not scheduled")}</p>
+        <span class="admin-mini-label">Дата уборки</span>
+        <p class="admin-mini-value">${escapeHtml([entry.selectedDate, entry.selectedTime].filter(Boolean).join(" в ") || "Не указана")}</p>
       </div>
       <div class="admin-mini-stat">
-        <span class="admin-mini-label">Contact</span>
-        <p class="admin-mini-value">${escapeHtml(entry.customerPhone || "No phone")}${entry.customerEmail ? `<br>${escapeHtml(entry.customerEmail)}` : ""}</p>
+        <span class="admin-mini-label">Контакты</span>
+        <p class="admin-mini-value">${escapeHtml(entry.customerPhone || "Телефон не указан")}${entry.customerEmail ? `<br>${escapeHtml(entry.customerEmail)}` : ""}</p>
       </div>
       <div class="admin-mini-stat">
-        <span class="admin-mini-label">CRM</span>
-        <p class="admin-mini-value">HTTP ${escapeHtml(String(entry.httpStatus || 0))}${entry.contactId ? `<br>Contact ${escapeHtml(entry.contactId)}` : ""}</p>
+        <span class="admin-mini-label">Адрес</span>
+        <p class="admin-mini-value">${escapeHtml(entry.fullAddress || "Не указан")}</p>
       </div>
     </div>
     ${warningBlock}
@@ -2855,16 +2779,14 @@ function renderQuoteOpsEntryCard(entry, returnTo) {
       <form method="post" action="${ADMIN_QUOTE_OPS_RETRY_PATH}">
         <input type="hidden" name="entryId" value="${escapeHtmlAttribute(entry.id)}">
         <input type="hidden" name="returnTo" value="${escapeHtmlAttribute(returnTo)}">
-        <button class="admin-button" type="submit">Retry CRM</button>
+        <button class="admin-button" type="submit">Повторить отправку</button>
       </form>
-      <span class="admin-action-hint">${escapeHtml(entry.fullAddress || "Address not captured")}.</span>
+      <span class="admin-action-hint">Если нужно, отправьте заявку повторно.</span>
     </div>
   </article>`;
 }
 
 async function renderQuoteOpsPage(req, config, quoteOpsLedger) {
-  const signals = getAdminIntegrationState();
-  const runtimeBadges = getAdminStatusBadges(signals);
   const { reqUrl, filters } = getQuoteOpsFilters(req);
   const allEntries = quoteOpsLedger ? await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }) : [];
   const entries = filterQuoteOpsEntries(allEntries, filters);
@@ -2880,349 +2802,133 @@ async function renderQuoteOpsPage(req, config, quoteOpsLedger) {
   const currentReturnTo = `${reqUrl.pathname}${reqUrl.search}`;
 
   return renderAdminLayout(
-    "Quote Operations",
+    "Заявки",
     `${renderAdminSignedInTopbar(config, {
       linkHref: QUOTE_PUBLIC_PATH,
-      linkLabel: "Preview Quote Flow",
+      linkLabel: "Открыть форму заявки",
       linkExternal: true,
     })}
       ${renderQuoteOpsNotice(req)}
       <div class="admin-stats-grid">
         ${renderAdminCard(
-          "Latest Entries",
-          "Quote submissions currently stored in the in-memory ops ledger for this process.",
-          `<p class="admin-metric-value">${escapeHtml(String(totalEntries))}</p>
-          <p class="admin-card-copy">Entries persist only for the lifetime of the current Node process and reset on restart or redeploy.</p>`,
-          { eyebrow: "Ledger" }
+          "Всего заявок",
+          "Все заявки с сайта.",
+          `<p class="admin-metric-value">${escapeHtml(String(totalEntries))}</p>`,
+          { eyebrow: "Заявки" }
         )}
         ${renderAdminCard(
-          "Success",
-          "Submissions that completed without CRM warnings.",
-          `<p class="admin-metric-value">${escapeHtml(String(successCount))}</p>
-          <p class="admin-card-copy">Healthy quote submissions with canonical pricing and CRM sync.</p>`,
-          { eyebrow: "Status", muted: true }
+          "Успешно",
+          "Заявки без ошибок.",
+          `<p class="admin-metric-value">${escapeHtml(String(successCount))}</p>`,
+          { eyebrow: "Статус", muted: true }
         )}
         ${renderAdminCard(
-          "Warnings",
-          "Submissions that succeeded but reported partial sync issues.",
-          `<p class="admin-metric-value">${escapeHtml(String(warningCount))}</p>
-          <p class="admin-card-copy">Useful for cases like skipped notes or opportunity sync warnings.</p>`,
-          { eyebrow: "Status", muted: true }
+          "Проверить",
+          "Заявки, которые нужно перепроверить.",
+          `<p class="admin-metric-value">${escapeHtml(String(warningCount))}</p>`,
+          { eyebrow: "Статус", muted: true }
         )}
         ${renderAdminCard(
-          "Errors",
-          "Submissions that failed and may need an admin retry.",
-          `<p class="admin-metric-value">${escapeHtml(String(errorCount))}</p>
-          <p class="admin-card-copy">Use the retry action below to resubmit the stored canonical payload to CRM.</p>`,
-          { eyebrow: "Status", muted: true }
+          "Ошибки",
+          "Заявки, которые не дошли с первого раза.",
+          `<p class="admin-metric-value">${escapeHtml(String(errorCount))}</p>`,
+          { eyebrow: "Статус", muted: true }
         )}
       </div>
       <div class="admin-section-grid">
         ${renderAdminCard(
-          "Submission Queue",
-          "Filter recent quote submissions, export the current view, and retry CRM sync from the stored canonical payload.",
+          "Список заявок",
+          "Поиск, фильтр и повторная отправка.",
           `<form class="admin-form-grid admin-form-grid-two" method="get" action="${ADMIN_QUOTE_OPS_PATH}">
             <label class="admin-label">
-              Search
-              <input class="admin-input" type="search" name="q" value="${escapeHtmlText(filters.q)}" placeholder="Name, phone, email, request ID">
+              Поиск
+              <input class="admin-input" type="search" name="q" value="${escapeHtmlText(filters.q)}" placeholder="Имя, телефон, email, номер">
             </label>
             <label class="admin-label">
-              Status
+              Статус
               <select class="admin-input" name="status">
-                <option value="all"${filters.status === "all" ? " selected" : ""}>All statuses</option>
-                <option value="success"${filters.status === "success" ? " selected" : ""}>Success</option>
-                <option value="warning"${filters.status === "warning" ? " selected" : ""}>Warning</option>
-                <option value="error"${filters.status === "error" ? " selected" : ""}>Error</option>
+                <option value="all"${filters.status === "all" ? " selected" : ""}>Все</option>
+                <option value="success"${filters.status === "success" ? " selected" : ""}>Успешно</option>
+                <option value="warning"${filters.status === "warning" ? " selected" : ""}>Проверить</option>
+                <option value="error"${filters.status === "error" ? " selected" : ""}>Ошибка</option>
               </select>
             </label>
             <label class="admin-label">
-              Service Type
+              Услуга
               <select class="admin-input" name="serviceType">
-                <option value="all"${filters.serviceType === "all" ? " selected" : ""}>All services</option>
-                <option value="regular"${filters.serviceType === "regular" ? " selected" : ""}>Regular</option>
-                <option value="deep"${filters.serviceType === "deep" ? " selected" : ""}>Deep</option>
-                <option value="moving"${filters.serviceType === "moving" ? " selected" : ""}>Moving</option>
+                <option value="all"${filters.serviceType === "all" ? " selected" : ""}>Все</option>
+                <option value="regular"${filters.serviceType === "regular" ? " selected" : ""}>Регулярная</option>
+                <option value="deep"${filters.serviceType === "deep" ? " selected" : ""}>Генеральная</option>
+                <option value="moving"${filters.serviceType === "moving" ? " selected" : ""}>Перед переездом</option>
               </select>
             </label>
             <div class="admin-inline-actions" style="align-self:end;">
-              <button class="admin-button" type="submit">Apply Filters</button>
-              <a class="admin-link-button admin-button-secondary" href="${ADMIN_QUOTE_OPS_PATH}">Reset</a>
-              <a class="admin-link-button admin-button-secondary" href="${exportHref}">Export CSV</a>
+              <button class="admin-button" type="submit">Применить</button>
+              <a class="admin-link-button admin-button-secondary" href="${ADMIN_QUOTE_OPS_PATH}">Сбросить</a>
+              <a class="admin-link-button admin-button-secondary" href="${exportHref}">Скачать CSV</a>
             </div>
           </form>
           <div class="admin-divider"></div>
           <div class="admin-entry-list">
             ${entries.length > 0
               ? entries.map((entry) => renderQuoteOpsEntryCard(entry, currentReturnTo)).join("")
-              : `<div class="admin-empty-state">No quote submissions match the current filters yet. Submit a quote through <code>${QUOTE_SUBMIT_ENDPOINT}</code> or open the public <code>${QUOTE_PUBLIC_PATH}</code> flow to seed the ledger.</div>`}
+              : `<div class="admin-empty-state">По текущему фильтру заявок нет.</div>`}
           </div>`,
-          { eyebrow: "Queue" }
+          { eyebrow: "Заявки" }
         )}
         ${renderAdminCard(
-          "Pricing Guardrails",
-          "The server clamps quote inputs to the supported options from the live calculator and then computes the canonical total before storing or retrying a submission.",
-          `${renderAdminPropertyList([
-            { label: "Room counts", value: formatCountList(Array.from(ALLOWED_ROOM_COUNTS.values())) },
-            { label: "Bathroom counts", value: formatCountList(Array.from(ALLOWED_BATHROOM_COUNTS.values())) },
-            { label: "Square-foot buckets", value: formatCountList(ALLOWED_SQUARE_FEET_BUCKETS) },
-            { label: "Regular base prices", value: `Weekly ${formatCurrencyAmount(PRICING.regular.basePrices.weekly)}, Biweekly ${formatCurrencyAmount(PRICING.regular.basePrices.biweekly)}, Monthly ${formatCurrencyAmount(PRICING.regular.basePrices.monthly)}` },
-          ])}
-          <ul class="admin-feature-list">
-            <li>Deep cleaning includes <code>baseboardCleaning</code> and <code>doorsCleaning</code> by default.</li>
-            <li>Moving clean presets also include <code>ovenCleaning</code> and <code>refrigeratorCleaning</code>.</li>
-            <li>Retry actions reuse the stored canonical payload, not the raw browser-submitted totals.</li>
+          "Что можно сделать",
+          "Основные действия в этом разделе.",
+          `<ul class="admin-feature-list">
+            <li>Найти нужную заявку по имени, телефону или email.</li>
+            <li>Скачать список заявок в CSV.</li>
+            <li>Повторить отправку, если заявка требует проверки.</li>
           </ul>`,
-          { eyebrow: "Rules", muted: true }
-        )}
-        ${renderAdminCard(
-          "Checkout & Tokenization",
-          "Payments and CRM submission are gated by server-side readiness checks.",
-          `${renderAdminPropertyList([
-            { label: "Quote token secret", value: formatBooleanLabel(signals.quoteTokenConfigured, "Configured", "Missing") },
-            { label: "Quote token TTL", value: formatDurationLabel(signals.quoteTokenTtlSeconds) },
-            { label: "Stripe checkout", value: formatBooleanLabel(signals.stripeConfigured, "Configured", "Missing") },
-            { label: "LeadConnector CRM", value: signals.leadConnector.error ? `Invalid: ${signals.leadConnector.error}` : formatBooleanLabel(signals.leadConnector.configured, "Configured", "Missing") },
-            { label: "Checkout amount window", value: `${formatCurrencyAmount(STRIPE_MIN_AMOUNT_CENTS / 100)} to ${formatCurrencyAmount(STRIPE_MAX_AMOUNT_CENTS / 100)}` },
-          ])}
-          <div class="admin-link-grid">
-            <a class="admin-link-tile" href="${QUOTE_PUBLIC_PATH}" target="_blank" rel="noreferrer">
-              <strong>${QUOTE_PUBLIC_PATH}</strong>
-              <span>Public quote experience where customers configure service and scheduling.</span>
-            </a>
-            <div class="admin-link-tile">
-              <strong>${QUOTE_SUBMIT_ENDPOINT}</strong>
-              <span>Primary POST endpoint that normalizes payloads and writes to CRM.</span>
-            </div>
-            <div class="admin-link-tile">
-              <strong>${STRIPE_CHECKOUT_ENDPOINT}</strong>
-              <span>POST endpoint that creates Stripe checkout sessions from canonical totals.</span>
-            </div>
-          </div>`,
-          { eyebrow: "Payments", muted: true }
+          { eyebrow: "Действия", muted: true }
         )}
       </div>`,
     {
-      kicker: "Quote Workspace",
-      subtitle: "Use this page to inspect live quote submissions, filter by status, export the current queue, and retry CRM sync from stored canonical payloads.",
-      heroMeta: runtimeBadges,
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_QUOTE_OPS_PATH, runtimeBadges),
+      kicker: "Заявки",
+      subtitle: "Все заявки с сайта в одном месте.",
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_QUOTE_OPS_PATH),
     }
   );
 }
 
 function renderIntegrationsPage(req, config) {
-  const signals = getAdminIntegrationState();
-  const runtimeBadges = getAdminStatusBadges(signals);
-  const leadConfig = signals.leadConnector.config;
-  const authConfig = adminAuth.loadAdminConfig(process.env);
-
   return renderAdminLayout(
-    "Integrations",
+    "Раздел скрыт",
     `${renderAdminSignedInTopbar(config, {
-      linkHref: ADMIN_QUOTE_OPS_PATH,
-      linkLabel: "Open Quote Ops",
+      linkHref: ADMIN_ROOT_PATH,
+      linkLabel: "Вернуться в обзор",
     })}
-      <div class="admin-section-grid">
-        ${renderAdminCard(
-          "LeadConnector / HighLevel",
-          signals.leadConnector.error
-            ? "The CRM config is present but currently invalid."
-            : "Current CRM wiring for quote submissions, note sync, and opportunity creation.",
-          `${signals.leadConnector.error ? `<div class="admin-alert admin-alert-error">${escapeHtml(signals.leadConnector.error)}</div>` : ""}
-          ${leadConfig
-            ? renderAdminPropertyList([
-                { label: "Configured", value: formatBooleanLabel(leadConfig.configured, "Yes", "No") },
-                { label: "API base URL", value: leadConfig.apiBaseUrl },
-                { label: "API version", value: leadConfig.apiVersion },
-                { label: "Location ID", value: leadConfig.locationId || "Missing" },
-                { label: "Contact source", value: leadConfig.source },
-                { label: "Tags", value: leadConfig.tags.join(", ") || "None" },
-                { label: "Request timeout", value: `${leadConfig.requestTimeoutMs} ms` },
-                { label: "Notes", value: formatBooleanLabel(leadConfig.enableNotes, "Enabled", "Disabled") },
-                { label: "Opportunity creation", value: formatBooleanLabel(leadConfig.createOpportunity, "Enabled", "Disabled") },
-                { label: "Pipeline", value: leadConfig.pipelineId || leadConfig.pipelineName },
-                { label: "Stage", value: leadConfig.pipelineStageId || leadConfig.pipelineStageName },
-              ])
-            : `<p class="admin-card-copy">LeadConnector config is not currently available in this process.</p>`}`,
-          { eyebrow: "CRM" }
-        )}
-        ${renderAdminCard(
-          "Payments, Tokens, and Persistence",
-          "Server-side payment, quote-token, and Supabase persistence prerequisites.",
-          `${renderAdminPropertyList([
-            { label: "Stripe", value: formatBooleanLabel(signals.stripeConfigured, "Configured", "Missing") },
-            { label: "Quote token secret", value: maskSecretPreview(getQuoteTokenSecret(process.env)) },
-            { label: "Quote token TTL", value: formatDurationLabel(signals.quoteTokenTtlSeconds) },
-            { label: "Supabase", value: formatBooleanLabel(signals.supabaseConfigured, "Configured", "Missing") },
-            { label: "Supabase URL", value: signals.supabaseUrl || "Missing" },
-            { label: "Quote ops table", value: signals.supabaseTableName || "quote_ops_entries" },
-            { label: "Checkout endpoint", value: STRIPE_CHECKOUT_ENDPOINT },
-            { label: "Allowed amount range", value: `${formatCurrencyAmount(STRIPE_MIN_AMOUNT_CENTS / 100)} to ${formatCurrencyAmount(STRIPE_MAX_AMOUNT_CENTS / 100)}` },
-          ])}`,
-          { eyebrow: "Payments", muted: true }
-        )}
-        ${renderAdminCard(
-          "Places, Perf, and Auth",
-          "Peripheral services and protected internal diagnostics.",
-          `${renderAdminPropertyList([
-            { label: "Google Places browser key", value: formatBooleanLabel(signals.placesConfigured, "Configured", "Missing") },
-            { label: "Protected perf endpoint", value: formatBooleanLabel(signals.perfProtected, "Ready", "Off") },
-            { label: "Perf endpoint enabled", value: formatBooleanLabel(signals.perfEndpointEnabled, "Yes", "No") },
-            { label: "Perf token present", value: formatBooleanLabel(signals.perfTokenPresent, "Yes", "No") },
-            { label: "Admin master secret", value: authConfig.masterSecret ? "Present" : "Missing" },
-            { label: "Admin TOTP secret mode", value: authConfig.configuredTotpSecret ? "Explicit ADMIN_TOTP_SECRET" : "Derived from admin secret chain" },
-          ])}`,
-          { eyebrow: "Support", muted: true }
-        )}
-        ${renderAdminCard(
-          "Discovery Behavior",
-          "Auto-discovery lets the backend resolve missing CRM IDs and field mappings when env config is intentionally light.",
-          `${leadConfig
-            ? renderAdminPropertyList([
-                { label: "Custom field map configured", value: formatBooleanLabel(Boolean(leadConfig.customFieldMap), "Yes", "No") },
-                { label: "Custom field auto-discovery", value: formatBooleanLabel(leadConfig.enableCustomFieldAutoDiscovery, "Enabled", "Disabled") },
-                { label: "Opportunity auto-discovery", value: formatBooleanLabel(leadConfig.enableOpportunityAutoDiscovery, "Enabled", "Disabled") },
-                { label: "Note max length", value: `${leadConfig.noteMaxLength} chars` },
-              ])
-            : `<p class="admin-card-copy">LeadConnector settings are unavailable, so discovery behavior cannot be summarized yet.</p>`}
-          <ul class="admin-feature-list">
-            <li>API secrets are never rendered directly in this page; only status and masked previews are shown.</li>
-            <li>Invalid CRM base URLs surface here before they break live quote submissions.</li>
-            <li>Use this page when checking whether deployments have the right env setup.</li>
-          </ul>`,
-          { eyebrow: "Behavior" }
-        )}
-      </div>`,
+      ${renderAdminCard(
+        "Раздел скрыт",
+        "Этот технический раздел скрыт из интерфейса.",
+        `<div class="admin-alert admin-alert-info">Вернитесь в основные рабочие разделы админки.</div>`,
+        { eyebrow: "Инфо", muted: true }
+      )}`,
     {
-      kicker: "Integration Surface",
-      subtitle: "Review how CRM, payments, tokenization, search, and protected diagnostics are configured in the current process.",
-      heroMeta: runtimeBadges,
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_INTEGRATIONS_PATH, runtimeBadges),
+      kicker: "SHYNLI",
+      subtitle: "Технические разделы скрыты.",
+      sidebar: renderAdminAppSidebar(config, req, ADMIN_ROOT_PATH),
     }
   );
 }
 
 function renderRuntimePage(req, config, adminRuntime = {}) {
-  const signals = getAdminIntegrationState();
-  const runtimeBadges = getAdminStatusBadges(signals);
-  const requestSnapshot = adminRuntime.requestPerfWindow
-    ? adminRuntime.requestPerfWindow.snapshot()
-    : { window_ms: PERF_WINDOW_MS, total_requests: 0, p50_ms: 0, p95_ms: 0, p99_ms: 0, status_5xx: 0, status_5xx_rate: 0 };
-  const eventLoopSnapshot = adminRuntime.eventLoopStats
-    ? adminRuntime.eventLoopStats.readSnapshot(false)
-    : { min_ms: 0, mean_ms: 0, p95_ms: 0, p99_ms: 0, max_ms: 0 };
-  const memory = getMemoryUsageSnapshot();
-
-  return renderAdminLayout(
-    "Runtime",
-    `${renderAdminSignedInTopbar(config, {
-      linkHref: ADMIN_INTEGRATIONS_PATH,
-      linkLabel: "Review Integrations",
-    })}
-      <div class="admin-stats-grid">
-        ${renderAdminCard(
-          "Requests in Window",
-          "Rolling request snapshot captured by the in-process perf window.",
-          `<p class="admin-metric-value">${escapeHtml(String(requestSnapshot.total_requests))}</p>
-          ${renderAdminPropertyList([
-            { label: "Window", value: formatDurationLabel(requestSnapshot.window_ms / 1000) },
-            { label: "p50", value: `${requestSnapshot.p50_ms} ms` },
-            { label: "p95", value: `${requestSnapshot.p95_ms} ms` },
-            { label: "p99", value: `${requestSnapshot.p99_ms} ms` },
-          ])}`,
-          { eyebrow: "Traffic" }
-        )}
-        ${renderAdminCard(
-          "5xx Rate",
-          "Recent server error rate inside the perf window.",
-          `<p class="admin-metric-value">${escapeHtml(`${(requestSnapshot.status_5xx_rate * 100).toFixed(2)}%`)}</p>
-          ${renderAdminPropertyList([
-            { label: "5xx responses", value: String(requestSnapshot.status_5xx) },
-            { label: "Alert threshold", value: `${(ALERT_5XX_RATE * 100).toFixed(2)}%` },
-          ])}`,
-          { eyebrow: "Health", muted: true }
-        )}
-        ${renderAdminCard(
-          "Event Loop p95",
-          "Current event loop delay without resetting the histogram.",
-          `<p class="admin-metric-value">${escapeHtml(`${eventLoopSnapshot.p95_ms} ms`)}</p>
-          ${renderAdminPropertyList([
-            { label: "Mean", value: `${eventLoopSnapshot.mean_ms} ms` },
-            { label: "p99", value: `${eventLoopSnapshot.p99_ms} ms` },
-            { label: "Max", value: `${eventLoopSnapshot.max_ms} ms` },
-            { label: "Alert threshold", value: `${ALERT_EVENT_LOOP_P95_MS} ms` },
-          ])}`,
-          { eyebrow: "Latency" }
-        )}
-        ${renderAdminCard(
-          "Heap Used",
-          "Current memory footprint for this process.",
-          `<p class="admin-metric-value">${escapeHtml(`${memory.heap_used_mb} MB`)}</p>
-          ${renderAdminPropertyList([
-            { label: "RSS", value: `${memory.rss_mb} MB` },
-            { label: "External", value: `${memory.external_mb} MB` },
-            { label: "Array buffers", value: `${memory.array_buffers_mb} MB` },
-          ])}`,
-          { eyebrow: "Memory", muted: true }
-        )}
-      </div>
-      <div class="admin-section-grid">
-        ${renderAdminCard(
-          "Perf Thresholds",
-          "These are the thresholds that drive periodic perf alerts in the current process.",
-          `${renderAdminPropertyList([
-            { label: "Request p95 threshold", value: `${ALERT_P95_MS} ms` },
-            { label: "Request p99 threshold", value: `${ALERT_P99_MS} ms` },
-            { label: "5xx rate threshold", value: `${(ALERT_5XX_RATE * 100).toFixed(2)}%` },
-            { label: "Event loop p95 threshold", value: `${ALERT_EVENT_LOOP_P95_MS} ms` },
-            { label: "Perf summary interval", value: formatDurationLabel(PERF_SUMMARY_INTERVAL_MS / 1000) },
-          ])}`,
-          { eyebrow: "Thresholds" }
-        )}
-        ${renderAdminCard(
-          "Runtime Controls",
-          "Operational settings that affect request logging, trust behavior, and warmup strategy.",
-          `${renderAdminPropertyList([
-            { label: "HTML warm mode", value: HTML_CACHE_WARM_MODE },
-            { label: "Request log buffer", value: `${REQUEST_LOG_BUFFER_LIMIT} lines` },
-            { label: "Request log flush interval", value: `${REQUEST_LOG_FLUSH_INTERVAL_MS} ms` },
-            { label: "Trust proxy headers", value: formatBooleanLabel(TRUST_PROXY_HEADERS, "Enabled", "Disabled") },
-            { label: "Trusted proxy count", value: String(TRUSTED_PROXY_IPS.size) },
-            { label: "Max perf samples", value: String(PERF_MAX_SAMPLES) },
-          ])}`,
-          { eyebrow: "Controls", muted: true }
-        )}
-        ${renderAdminCard(
-          "Protected Diagnostics Endpoint",
-          "The JSON perf endpoint stays private unless both the feature flag and the token are present.",
-          `${renderAdminPropertyList([
-            { label: "Endpoint path", value: "/__perf" },
-            { label: "Enabled", value: formatBooleanLabel(signals.perfEndpointEnabled, "Yes", "No") },
-            { label: "Token present", value: formatBooleanLabel(signals.perfTokenPresent, "Yes", "No") },
-            { label: "Access model", value: "Requires x-perf-token header" },
-          ])}
-          <p class="admin-card-copy">This page uses the same in-process metrics directly, so operators can inspect runtime health without exposing the JSON endpoint publicly.</p>`,
-          { eyebrow: "Diagnostics" }
-        )}
-      </div>`,
-    {
-      kicker: "Runtime Console",
-      subtitle: "Inspect in-process request latency, event loop delay, memory, and alert thresholds without leaving the secured admin area.",
-      heroMeta: runtimeBadges,
-      sidebar: renderAdminAppSidebar(config, req, ADMIN_RUNTIME_PATH, runtimeBadges),
-    }
-  );
+  return renderIntegrationsPage(req, config, adminRuntime);
 }
 
 async function renderAdminAppPage(route, req, config, adminRuntime = {}, quoteOpsLedger = null) {
-  if (route === ADMIN_ROOT_PATH) return renderDashboardPage(req, config);
+  if (route === ADMIN_ROOT_PATH) return renderDashboardPage(req, config, quoteOpsLedger);
   if (route === ADMIN_CLIENTS_PATH) return renderClientsPage(req, config, quoteOpsLedger);
   if (route === ADMIN_ORDERS_PATH) return renderOrdersPage(req, config, quoteOpsLedger);
   if (route === ADMIN_STAFF_PATH) return renderStaffPage(req, config);
   if (route === ADMIN_QUOTE_OPS_PATH) return renderQuoteOpsPage(req, config, quoteOpsLedger);
-  if (route === ADMIN_INTEGRATIONS_PATH) return renderIntegrationsPage(req, config);
-  if (route === ADMIN_RUNTIME_PATH) return renderRuntimePage(req, config, adminRuntime);
-  return renderDashboardPage(req, config);
+  if (route === ADMIN_INTEGRATIONS_PATH) return renderDashboardPage(req, config, quoteOpsLedger);
+  if (route === ADMIN_RUNTIME_PATH) return renderDashboardPage(req, config, quoteOpsLedger);
+  return renderDashboardPage(req, config, quoteOpsLedger);
 }
 
 function buildAdminAuthHeaders(req, cookies = []) {
@@ -3241,9 +2947,9 @@ function enforceSlidingRateLimit(rateLimiter, req, res, requestStartNs, requestC
     res,
     429,
     renderAdminLayout(
-      "Too Many Attempts",
-      `<div class="admin-alert admin-alert-error">${escapeHtml(errorMessage || "Too many attempts. Please wait a minute and try again.")}</div>`,
-      { subtitle: "Rate limiting is active to protect admin access." }
+      "Слишком много попыток",
+      `<div class="admin-alert admin-alert-error">${escapeHtml(errorMessage || "Слишком много попыток. Подождите немного и попробуйте снова.")}</div>`,
+      { subtitle: "Защита входа временно ограничила повторные попытки." }
     ),
     requestStartNs,
     requestContext.cacheHit,
@@ -3274,7 +2980,7 @@ async function handleAdminRequest(
 
   if (requestContext.route === ADMIN_QUOTE_OPS_EXPORT_PATH) {
     if (req.method !== "GET") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Метод не поддерживается", `<div class="admin-alert admin-alert-error">Здесь доступен только GET.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
     if (!session) {
@@ -3307,7 +3013,7 @@ async function handleAdminRequest(
 
   if (requestContext.route === ADMIN_QUOTE_OPS_RETRY_PATH) {
     if (req.method !== "POST") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts POST.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Метод не поддерживается", `<div class="admin-alert admin-alert-error">Здесь доступен только POST.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
     if (!session) {
@@ -3353,7 +3059,7 @@ async function handleAdminRequest(
 
   if (ADMIN_APP_ROUTES.has(requestContext.route)) {
     if (req.method !== "GET") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Метод не поддерживается", `<div class="admin-alert admin-alert-error">Здесь доступен только GET.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
     if (session) {
@@ -3385,7 +3091,7 @@ async function handleAdminRequest(
     }
 
     if (req.method !== "POST") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Метод не поддерживается", `<div class="admin-alert admin-alert-error">Здесь доступны только GET и POST.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
 
@@ -3397,7 +3103,7 @@ async function handleAdminRequest(
         requestStartNs,
         requestContext,
         `${getClientAddress(req)}:login`,
-        "Too many login attempts. Please wait a few minutes before trying again."
+        "Слишком много попыток входа. Подождите несколько минут и попробуйте снова."
       )
     ) {
       return;
@@ -3413,7 +3119,7 @@ async function handleAdminRequest(
         res,
         401,
         renderLoginPage(config, {
-          error: "Wrong email or password. Please try again.",
+          error: "Неверная почта или пароль. Попробуйте ещё раз.",
           email,
         }),
         requestStartNs,
@@ -3471,7 +3177,7 @@ async function handleAdminRequest(
     }
 
     if (req.method !== "POST") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">This route only accepts GET and POST.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Метод не поддерживается", `<div class="admin-alert admin-alert-error">Здесь доступны только GET и POST.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
 
@@ -3483,7 +3189,7 @@ async function handleAdminRequest(
         requestStartNs,
         requestContext,
         `${getClientAddress(req)}:2fa`,
-        "Too many verification attempts. Please wait a few minutes before trying again."
+        "Слишком много попыток подтверждения. Подождите несколько минут и попробуйте снова."
       )
     ) {
       return;
@@ -3502,7 +3208,7 @@ async function handleAdminRequest(
           secret,
           otpauthUri,
           qrMarkup,
-          error: "That code was not valid. Check the app and try again.",
+          error: "Неверный код. Проверьте приложение и попробуйте снова.",
         }),
         requestStartNs,
         requestContext.cacheHit
@@ -3533,7 +3239,7 @@ async function handleAdminRequest(
 
   if (requestContext.route === ADMIN_LOGOUT_PATH) {
     if (req.method !== "POST") {
-      writeHtmlWithTiming(res, 405, renderAdminLayout("Method Not Allowed", `<div class="admin-alert admin-alert-error">Log out must be submitted with POST.</div>`), requestStartNs, requestContext.cacheHit);
+      writeHtmlWithTiming(res, 405, renderAdminLayout("Метод не поддерживается", `<div class="admin-alert admin-alert-error">Выход выполняется только через POST.</div>`), requestStartNs, requestContext.cacheHit);
       return;
     }
     redirectWithTiming(
