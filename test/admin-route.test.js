@@ -870,10 +870,14 @@ test("renders the clients table with filters and request history", async () => {
     });
     const selectedClientBody = await selectedClientResponse.text();
     assert.equal(selectedClientResponse.status, 200);
+    assert.match(selectedClientBody, /class="admin-dialog admin-dialog-wide"/);
+    assert.match(selectedClientBody, /id="admin-client-detail-dialog"/);
+    assert.match(selectedClientBody, /data-admin-dialog-return-url="\/admin\/clients\?email=jane%40example\.com"/);
     assert.match(selectedClientBody, /Карточка клиента/i);
     assert.match(selectedClientBody, /Сумма заказов/i);
     assert.match(selectedClientBody, /client-request-2/);
     assert.match(selectedClientBody, /client-request-3/);
+    assert.doesNotMatch(selectedClientBody, /id="client-card"/);
 
     const nameFilterResponse = await fetch(`${started.baseUrl}/admin/clients?name=John`, {
       headers: {
