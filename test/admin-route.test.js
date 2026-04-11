@@ -697,8 +697,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /Rescheduled/);
     assert.match(updatedOrdersBody, /Maria/);
     assert.match(updatedOrdersBody, /Monthly/);
-    assert.match(updatedOrdersBody, /value="2026-03-24"/);
-    assert.match(updatedOrdersBody, /value="11:30"/);
+    assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
+    assert.match(updatedOrdersBody, /value="11:30 AM"/);
 
     const quoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       headers: {
