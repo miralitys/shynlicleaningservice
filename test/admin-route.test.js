@@ -26,6 +26,10 @@ function getInlineScripts(html) {
   return Array.from(html.matchAll(/<script(?:[^>]*)>([\s\S]*?)<\/script>/g), (match) => match[1]).filter(Boolean);
 }
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 async function createAdminSession(baseUrl, config) {
   const loginResponse = await fetch(`${baseUrl}/admin/login`, {
     method: "POST",
@@ -412,15 +416,19 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /<dialog class="admin-dialog admin-confirm-dialog" id="admin-confirm-dialog"/);
     assert.match(staffBody, /Точно удалить\?/);
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
+    assert.match(staffBody, /class="admin-table admin-staff-schedule-table"/);
     assert.match(staffBody, /class="admin-table-row-clickable"/);
     assert.match(staffBody, /data-admin-dialog-row="true"/);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
+    assert.match(staffBody, /data-admin-dialog-open="admin-staff-assignment-dialog-/);
     assert.match(staffBody, /aria-label="Открыть карточку сотрудника /);
+    assert.match(staffBody, /aria-label="Открыть назначение Jane Doe"/);
     assert.match(staffBody, /class="admin-table-link">Olga Stone<\/span>/);
     assert.match(staffBody, /Olga Stone <span class="admin-staff-dialog-title-role">\(Team Lead\)<\/span>/);
     assert.match(staffBody, /\+1\(312\)555-0199 • olga@example.com/);
     assert.doesNotMatch(staffBody, /<th>Действие<\/th>/);
     assert.doesNotMatch(staffBody, /<p class="admin-kicker">Сотрудники<\/p>/);
+    assert.doesNotMatch(staffBody, /Ближайшая загрузка/);
     assert.doesNotMatch(staffBody, /Контакты и локация/);
     assert.doesNotMatch(staffBody, /Редактирование карточки/);
     assert.match(staffBody, /data-admin-toggle-target="admin-staff-edit-dialog-.*-edit-panel"/);
@@ -1010,8 +1018,16 @@ test("renders the clients table with filters and request history", async () => {
     });
     const staffPageBody = await staffPageResponse.text();
     const staffIdMatch = staffPageBody.match(/name="staffId" value="([^"]+)"/);
-    const janeEntryIdMatch = staffPageBody.match(/client-request-2[\s\S]*?name="entryId" value="([^"]+)"/);
+    const janeRowDialogIdMatch = staffPageBody.match(
+      /<tr\b(?:(?!<\/tr>).)*?data-admin-dialog-open="([^"]+)"(?:(?!<\/tr>).)*?client-request-2(?:(?!<\/tr>).)*?<\/tr>/s
+    );
+    const janeAssignmentDialogPattern = janeRowDialogIdMatch
+      ? new RegExp(`<dialog\\b(?:(?!<\\/dialog>).)*?id="${escapeRegex(janeRowDialogIdMatch[1])}"(?:(?!<\\/dialog>).)*?<\\/dialog>`, "s")
+      : null;
+    const janeAssignmentDialog = janeAssignmentDialogPattern ? staffPageBody.match(janeAssignmentDialogPattern)?.[0] : null;
+    const janeEntryIdMatch = janeAssignmentDialog ? janeAssignmentDialog.match(/name="entryId" value="([^"]+)"/) : null;
     assert.ok(staffIdMatch);
+    assert.ok(janeRowDialogIdMatch);
     assert.ok(janeEntryIdMatch);
 
     const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
