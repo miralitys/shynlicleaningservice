@@ -164,7 +164,8 @@ test("completes the admin login and TOTP verification flow", async () => {
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
     assert.match(dashboardBody, /Обзор/i);
-    assert.match(dashboardBody, /Вы вошли как/i);
+    assert.match(dashboardBody, /Выйти/i);
+    assert.doesNotMatch(dashboardBody, /Вы вошли как/i);
 
     const adminPages = [
       { path: "/admin/clients", pattern: /Клиенты/i },
@@ -183,6 +184,7 @@ test("completes the admin login and TOTP verification flow", async () => {
       const body = await response.text();
       assert.equal(response.status, 200);
       assert.match(body, page.pattern);
+      assert.doesNotMatch(body, /Вы вошли как/i);
     }
 
     for (const path of ["/admin/integrations", "/admin/runtime"]) {
@@ -638,6 +640,42 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.equal(retryResponse.status, 303);
     assert.match(retryResponse.headers.get("location") || "", /notice=retry-success/);
 
+    const deleteOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "delete-order",
+        entryId,
+        returnTo: "/admin/orders",
+      }),
+    });
+    assert.equal(deleteOrderResponse.status, 303);
+    assert.match(deleteOrderResponse.headers.get("location") || "", /notice=order-deleted/);
+
+    const deletedOrdersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const deletedOrdersBody = await deletedOrdersResponse.text();
+    assert.equal(deletedOrdersResponse.status, 200);
+    assert.doesNotMatch(deletedOrdersBody, /Jane Doe/);
+    assert.doesNotMatch(deletedOrdersBody, /ops-request-1/);
+
+    const deletedQuoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const deletedQuoteOpsBody = await deletedQuoteOpsResponse.text();
+    assert.equal(deletedQuoteOpsResponse.status, 200);
+    assert.doesNotMatch(deletedQuoteOpsBody, /Jane Doe/);
+    assert.doesNotMatch(deletedQuoteOpsBody, /ops-request-1/);
+
     const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
     const calls = captureRaw
       .trim()
@@ -766,6 +804,69 @@ test("renders the clients table with filters and request history", async () => {
     assert.equal(phoneFilterResponse.status, 200);
     assert.match(phoneFilterBody, /John Smith/);
     assert.doesNotMatch(phoneFilterBody, /Jane Doe/);
+
+    const deleteSourceResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const deleteSourceBody = await deleteSourceResponse.text();
+    assert.equal(deleteSourceResponse.status, 200);
+    const clientKeyMatch = deleteSourceBody.match(/name="clientKey" value="([^"]+)"/);
+    assert.ok(clientKeyMatch);
+    const clientKey = clientKeyMatch[1];
+
+    const deleteClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "delete-client",
+        clientKey,
+        returnTo: "/admin/clients?email=jane@example.com",
+      }),
+    });
+    assert.equal(deleteClientResponse.status, 303);
+    assert.match(deleteClientResponse.headers.get("location") || "", /notice=client-deleted/);
+
+    const deletedClientsResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const deletedClientsBody = await deletedClientsResponse.text();
+    assert.equal(deletedClientsResponse.status, 200);
+    assert.match(deletedClientsBody, /John Smith/);
+    assert.doesNotMatch(deletedClientsBody, /Jane Doe/);
+    assert.doesNotMatch(deletedClientsBody, /client-request-2/);
+    assert.doesNotMatch(deletedClientsBody, /client-request-3/);
+
+    const deletedOrdersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const deletedOrdersBody = await deletedOrdersResponse.text();
+    assert.equal(deletedOrdersResponse.status, 200);
+    assert.match(deletedOrdersBody, /John Smith/);
+    assert.doesNotMatch(deletedOrdersBody, /Jane Doe/);
+    assert.doesNotMatch(deletedOrdersBody, /client-request-2/);
+    assert.doesNotMatch(deletedOrdersBody, /client-request-3/);
+
+    const deletedQuoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const deletedQuoteOpsBody = await deletedQuoteOpsResponse.text();
+    assert.equal(deletedQuoteOpsResponse.status, 200);
+    assert.match(deletedQuoteOpsBody, /John Smith/);
+    assert.doesNotMatch(deletedQuoteOpsBody, /Jane Doe/);
+    assert.doesNotMatch(deletedQuoteOpsBody, /client-request-2/);
+    assert.doesNotMatch(deletedQuoteOpsBody, /client-request-3/);
 
     const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
     const calls = captureRaw
