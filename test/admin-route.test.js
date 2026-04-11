@@ -838,6 +838,7 @@ test("keeps storage diagnostics hidden on admin orders when Supabase falls back 
 });
 
 test("renders the clients table with filters and request history", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-clients-route-"));
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -852,6 +853,7 @@ test("renders the clients table with filters and request history", async () => {
   ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: path.join(tempDir, "admin-staff-store.json"),
     GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
     GHL_ENABLE_NOTES: "0",
@@ -905,6 +907,53 @@ test("renders the clients table with filters and request history", async () => {
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
 
+    const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-staff",
+        name: "Olga Stone",
+        role: "Team Lead",
+        phone: "312-555-0199",
+        email: "olga@example.com",
+        address: "742 Cedar Avenue, Aurora, IL 60506",
+        status: "active",
+      }),
+    });
+    assert.equal(createStaffResponse.status, 303);
+
+    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffPageResponse.text();
+    const staffIdMatch = staffPageBody.match(/name="staffId" value="([^"]+)"/);
+    const janeEntryIdMatch = staffPageBody.match(/client-request-2[\s\S]*?name="entryId" value="([^"]+)"/);
+    assert.ok(staffIdMatch);
+    assert.ok(janeEntryIdMatch);
+
+    const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", janeEntryIdMatch[1]],
+        ["staffIds", staffIdMatch[1]],
+        ["status", "completed"],
+      ]),
+    });
+    assert.equal(assignResponse.status, 303);
+    assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
+
     const clientsResponse = await fetch(`${started.baseUrl}/admin/clients`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -947,6 +996,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /Контакты/i);
     assert.match(selectedClientDialog, /Сумма заказов/i);
     assert.match(selectedClientDialog, /client-request-2/);
+    assert.match(selectedClientDialog, /Команда: Olga Stone/);
     assert.doesNotMatch(selectedClientDialog, /client-request-3/);
     assert.match(selectedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.doesNotMatch(selectedClientDialog, /789 Cedar Ln, Plainfield, IL 60544/);
@@ -1076,6 +1126,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.equal(calls.length, 3);
   } finally {
     await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
     fetchStub.cleanup();
   }
 });
