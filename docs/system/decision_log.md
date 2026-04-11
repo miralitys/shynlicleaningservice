@@ -2,10 +2,10 @@
 
 ## 2026-03-21 — Use `selfhosted_site` as the managed repo
 - Reason:
-  - it is the actual nested git repository with a real origin
-  - the parent folder only wraps exported assets and archives
+  - it is the actual deployable repo for the application runtime
+  - parent wrapper folders may contain exports or archives, but not the active deployment contract
 - Impact:
-  - Orhitertor registration should target `.../shynlicleaningservice/selfhosted_site`
+  - automation, testing, and future refactors should target the repo that contains `server.js`, `routes.json`, and `render.yaml`
 
 ## 2026-03-21 — Add onboarding hygiene without changing business logic
 - Added:
@@ -13,9 +13,9 @@
   - `.env.example`
   - `PROJECT_KNOWLEDGE.md`
   - `docs/system/*`
-  - `node:test` smoke coverage
+  - `node:test` coverage
 - Reason:
-  - make the project agent-ready for future reviewer/tester/security/developer work
+  - make the project maintainable for future coding, review, and ops work
 
 ## 2026-03-21 — Move quote CRM submission to backend and close public runtime leaks
 - Confirmed:
@@ -33,7 +33,7 @@
 
 ## 2026-03-21 — Make checkout server-authoritative with signed quote tokens
 - Confirmed:
-  - raw client `amount` in `/api/stripe/checkout-session` was still a payment-tampering path
+  - raw client `amount` in `/api/stripe/checkout-session` was a payment-tampering path
   - quote hardening also needed minimal abuse throttling on public POST endpoints
 - Decision:
   - add `lib/quote-pricing.js` to mirror browser pricing rules on the server
@@ -43,14 +43,14 @@
   - rate-limit public POST endpoints, trusting proxy headers only when `TRUST_PROXY_HEADERS=1`
 - Impact:
   - checkout no longer accepts raw browser totals
-  - quote-to-payment handoff is now tied to a server-signed payload
+  - quote-to-payment handoff is tied to a server-signed payload
   - abuse guardrails exist even without external middleware, though they remain process-local
 
 ## 2026-03-21 — Keep CRM writes on the same canonical quote snapshot
 - Confirmed:
   - checkout was already canonical, but CRM note/opportunity/custom-field writes could still persist raw browser quote values
 - Decision:
-  - compute canonical pricing before `submitQuoteSubmission()`
+  - compute canonical pricing before CRM submission
   - pass canonicalized room/bathroom/size/service/price fields into the LeadConnector helper
   - add regression coverage proving CRM side effects no longer store tampered values
 - Impact:
@@ -67,13 +67,32 @@
   - the repo no longer contains a live Google Places key
   - forwarded-header rate limiting is now tied to an explicit trusted proxy allowlist
 
-## 2026-03-21 — Reduce mobile sticky CTA runtime cost
-- Confirmed:
-  - the injected mobile CTA cleanup script was scanning large Tilda DOMs on scroll/resize/mutation
+## 2026-04-11 — Add an internal admin workspace with server-rendered pages
 - Decision:
-  - narrow legacy CTA candidate selection
-  - include Tilda `t943` wrappers in the legacy CTA hide path
-  - move cleanup off the hot scroll path and schedule it separately
+  - implement password + TOTP admin auth
+  - add SSR admin sections for dashboard, clients, orders, staff, settings, and quote ops
+  - keep the UI server-rendered and framework-free to match the existing runtime style
 - Impact:
-  - duplicate sticky CTA risk is closed for the known Tilda wrapper
-  - mobile scroll path is materially lighter
+  - internal operators can manage quote history, assignments, and checklist templates without introducing a frontend app build step
+
+## 2026-04-11 — Use lightweight persistence by data type
+- Decision:
+  - keep checklist templates and staff planning in local file-backed JSON stores
+  - support optional Supabase persistence for quote-ops history through a dedicated adapter and schema file
+- Impact:
+  - internal state is durable enough for current operations without requiring a full database migration
+  - quote-ops can be made durable in production when Supabase is configured
+  - persistence remains heterogeneous and should be revisited if multi-instance coordination becomes necessary
+
+## 2026-04-11 — Refactor `server.js` into modular runtime layers
+- Confirmed:
+  - `server.js` had become a large mixed-responsibility file covering public-site delivery, admin UI, API flows, perf, and rendering concerns
+- Decision:
+  - keep `server.js` as a thin composition/bootstrap entrypoint
+  - move public-site logic into `lib/site/*`
+  - move request parsing into `lib/http/request.js`
+  - move admin domain logic into `lib/admin/domain.js`
+  - keep API, perf, and quote-ops logic in focused modules
+- Impact:
+  - runtime behavior is easier to reason about and update safely
+  - documentation can now refer to stable module boundaries instead of a single monolith

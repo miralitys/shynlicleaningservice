@@ -1,58 +1,109 @@
 # Module Catalog
 
-## Runtime Modules
-- [server.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/server.js)
-  - custom Node HTTP server
-  - route normalization, allowlisted file serving, HTML cache, perf telemetry, quote + Stripe endpoints, POST throttling
-  - runtime config injection for browser integrations, canonical CRM repricing, and optimized mobile sticky CTA handling
+## Entry And Composition
+- `server.js`
+  - bootstraps env/config
+  - creates stores, rate limiters, runtime helpers, and request handlers
+  - starts the Node `http` server
 
-- [lib/leadconnector.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/lib/leadconnector.js)
-  - backend CRM submission helper
-  - quote normalization, contact upsert, note/opportunity flow, upstream error mapping
+## Public-Site Runtime
+- `lib/site/request-handler.js`
+  - top-level request router for redirects, `/__perf`, admin, API, public assets, and route-mapped HTML
+- `lib/site/assets.js`
+  - route/file runtime index
+  - HTML cache warm-up
+  - static file delivery
+  - negotiated image handling
+- `lib/site/sanitize.js`
+  - HTML sanitization and runtime script/style injection for exported pages
+- `lib/site/seo.js`
+  - title/meta/canonical/JSON-LD helpers
 
-- [lib/quote-pricing.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/lib/quote-pricing.js)
-  - canonical quote pricing rules mirrored from the browser calculator
-  - clamps tampered values back to supported room/bathroom/size choices
+## Shared Infra
+- `lib/http/request.js`
+  - cookies
+  - body parsing
+  - form parsing
+  - client IP and request URL helpers
+- `lib/http/timing.js`
+  - response helpers with request timing and security headers
+- `lib/runtime/perf.js`
+  - rolling perf window
+  - event-loop tracking
+  - structured buffered logging helpers
 
-- [lib/quote-token.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/lib/quote-token.js)
-  - signs and verifies stateless quote tokens for checkout authorization
+## Admin Workspace
+- `lib/admin-auth.js`
+  - password verification
+  - TOTP generation/verification
+  - admin session/challenge token signing
+- `lib/admin/domain.js`
+  - admin auth state
+  - orders/clients/staff view-model shaping
+  - filters, labels, redirect helpers, QR rendering
+- `lib/admin/handlers.js`
+  - admin login, 2FA, logout
+  - settings/staff/order mutations
+  - quote-ops export and retry actions
+- `lib/admin/render-pages.js`
+  - SSR HTML for dashboard, clients, orders, staff, settings, and quote ops
+- `lib/admin/render-shared.js`
+  - shared admin layout, cards, sidebar, auth pages, and common UI helpers
+- `lib/admin-settings-store.js`
+  - file-backed checklist templates and completion state
+- `lib/admin-staff-store.js`
+  - file-backed staff records and assignment planning state
 
-- [lib/rate-limit.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/lib/rate-limit.js)
-  - sliding-window in-memory throttling for public POST endpoints
+## Quote, CRM, Payments, And Persistence
+- `lib/api/handlers.js`
+  - public quote submit and Stripe checkout endpoint handlers
+- `lib/quote-ops/store.js`
+  - quote-ops ledger abstraction
+  - entry listing/filtering/export/retry support
+  - persistence coordination
+- `lib/leadconnector.js`
+  - CRM submission helper
+  - contact/note/opportunity/custom-field flow
+- `lib/quote-pricing.js`
+  - canonical quote repricing rules mirrored from the calculator
+- `lib/quote-token.js`
+  - signed quote-token creation and verification
+- `lib/rate-limit.js`
+  - sliding-window in-memory throttling
+- `lib/supabase-quote-ops.js`
+  - Supabase REST adapter for quote-ops rows
+  - support for both legacy JWT `service_role` keys and new opaque `sb_secret_*` keys
+- `supabase/quote_ops_schema.sql`
+  - schema for `quote_ops_entries`
 
-- [routes.json](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/routes.json)
-  - public route to HTML file map
-
-## Static Content
+## Static Content And Assets
+- `routes.json`
+  - pretty route to exported HTML file map
 - root `page*.html`
-  - Tilda-exported pages used by pretty routes
-- policy pages
-  - `privacy-policy.html`
-  - `terms-of-service.html`
-  - `cancellation-policy.html`
-- asset directories
-  - `css/`
-  - `js/`
-  - `images/`
+  - exported public pages
+- `css/`, `js/`, `images/`
+  - public frontend assets
 
 ## Operations
-- [render.yaml](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/render.yaml)
+- `render.yaml`
   - Render deployment contract
-- [CLOUDFLARE_EDGE_CACHE.md](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/CLOUDFLARE_EDGE_CACHE.md)
-  - edge cache guidance and purge workflow
+- `CLOUDFLARE_EDGE_CACHE.md`
+  - Cloudflare caching and purge notes
 - `scripts/optimize-images.sh`
-  - generates AVIF/WebP variants
+  - image optimization/variant generation
 - `scripts/purge-cloudflare-html-cache.mjs`
-  - invalidates cached HTML URLs in Cloudflare
+  - HTML cache purge helper
 
 ## Tests And Knowledge
-- [PROJECT_KNOWLEDGE.md](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/PROJECT_KNOWLEDGE.md)
-- [test/server-smoke.test.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/test/server-smoke.test.js)
-- [test/server-hardening.test.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/test/server-hardening.test.js)
-- [test/quote-route.test.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/test/quote-route.test.js)
-  - quote submit behavior, quote-token handoff, canonical CRM repricing assertions, and trusted-proxy boundary coverage
-- [test/quote-pricing.test.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/test/quote-pricing.test.js)
-- [test/quote-token.test.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/test/quote-token.test.js)
-- [test/leadconnector.test.js](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/test/leadconnector.test.js)
-- [.env.example](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/.env.example)
-- [.gitignore](/Users/ramisyaparov/Desktop/Project/shynlicleaningservice/selfhosted_site/.gitignore)
+- `PROJECT_KNOWLEDGE.md`
+- `docs/system/*`
+- `test/admin-auth.test.js`
+- `test/admin-route.test.js`
+- `test/admin-settings-store.test.js`
+- `test/leadconnector.test.js`
+- `test/quote-pricing.test.js`
+- `test/quote-route.test.js`
+- `test/quote-token.test.js`
+- `test/server-hardening.test.js`
+- `test/server-smoke.test.js`
+- `test/supabase-quote-ops.test.js`

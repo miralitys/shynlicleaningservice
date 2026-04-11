@@ -1,34 +1,66 @@
 # System Overview
 
 ## Purpose
-`selfhosted_site` is the active deployable repo for Shynli Cleaning's public website. It serves exported HTML pages through a custom Node HTTP server and adds routing, SEO/meta adjustments, cache policy, gated runtime diagnostics, backend CRM quote submission, and server-authoritative Stripe checkout creation.
+`selfhosted_site` is the active deployable repo for Shynli Cleaning's public website and internal admin workspace. It serves exported HTML pages through a custom Node HTTP runtime and adds routing, sanitization, SEO/meta adjustments, cache policy, gated diagnostics, backend quote submission, signed Stripe checkout handoff, and authenticated admin tooling.
 
 ## Architecture Shape
-- Presentation: exported HTML pages, CSS, JS, images
-- Application/runtime orchestration: `server.js`
-- Infrastructure:
-  - Node `http` server
-  - filesystem-backed route/file resolution
-  - local helper modules under `lib/`
-  - optional Stripe SDK
-  - backend LeadConnector / GHL integration
-  - Render deployment
-  - Cloudflare edge caching
+- Presentation:
+  - exported HTML pages
+  - `css/`, `js/`, `images/`
+- Runtime composition:
+  - `server.js`
+- Public-site layer:
+  - `lib/site/request-handler.js`
+  - `lib/site/assets.js`
+  - `lib/site/sanitize.js`
+  - `lib/site/seo.js`
+- Shared infra layer:
+  - `lib/http/request.js`
+  - `lib/http/timing.js`
+  - `lib/runtime/perf.js`
+- Admin layer:
+  - `lib/admin-auth.js`
+  - `lib/admin/domain.js`
+  - `lib/admin/handlers.js`
+  - `lib/admin/render-pages.js`
+  - `lib/admin/render-shared.js`
+  - `lib/admin-settings-store.js`
+  - `lib/admin-staff-store.js`
+- Quote / payments / persistence layer:
+  - `lib/api/handlers.js`
+  - `lib/quote-ops/store.js`
+  - `lib/quote-pricing.js`
+  - `lib/quote-token.js`
+  - `lib/rate-limit.js`
+  - `lib/leadconnector.js`
+  - `lib/supabase-quote-ops.js`
 
 ## Confirmed Runtime Capabilities
 - pretty-route delivery from `routes.json`
 - direct asset serving only through an explicit allowlist
+- HTML cache warm-up on startup
 - rolling perf metrics with token-gated `/__perf`
-- global baseline security headers on every response path
 - backend quote submission via `/api/quote/submit` and `/api/quote/request`
 - signed quote-token issuance
 - server-side Stripe checkout session creation from a signed quote token
-- canonical CRM side effects built from the same repriced quote snapshot used for checkout
-- HTML cache warm-up on startup
+- admin password + TOTP login flow
+- admin SSR pages for clients, orders, staff, settings, and quote ops
+- quote-ops CSV export and retry workflow
+- optional Supabase persistence for quote-ops history
+- file-backed checklist and staff planning stores
 
 ## Confirmed Risk Areas
-- no backend abstraction layer yet; `server.js` still owns most runtime behavior
 - rate limiting is process-local in memory, so it is guardrail-level rather than distributed abuse control
+- staff/settings persistence is file-backed JSON, not centralized multi-instance storage
+- quote-ops persistence is split:
+  - durable when Supabase is configured
+  - process-local when it is not
 - proxy headers are ignored unless the request comes from an allowlisted trusted proxy IP
-- external operational step still remains for rotating the previously exposed GHL token in real deployments
-- CRM attribution is intentionally pinned to public `/quote`, not the backend submit endpoint
+- Google Places still uses a browser key by design and depends on strict Google-side restrictions
+
+## Documentation Maintenance Rule
+When adding a new runtime module, endpoint, admin section, or persistence path:
+- update `PROJECT_KNOWLEDGE.md`
+- update `docs/system/module_catalog.md`
+- update `docs/system/project_structure.md`
+- update this file if the architecture shape changes
