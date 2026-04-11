@@ -543,8 +543,23 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
           rooms: 4,
           bathrooms: 2,
           squareMeters: 1600,
+          hasPets: "yes",
+          basementCleaning: "yes",
+          services: ["ovenCleaning", "insideCabinets"],
+          quantityServices: {
+            interiorWindowsCleaning: 3,
+            blindsCleaning: 2,
+            bedLinenChange: 1,
+          },
+          additionalDetails: "Please call on arrival\nGate code 2040",
           selectedDate: "2026-03-22",
           selectedTime: "09:00",
+          formattedDateTime: "March 22, 2026 at 09:00",
+          address: "123 Main St",
+          addressLine2: "Apt 4B",
+          city: "Romeoville",
+          state: "IL",
+          zipCode: "60446",
           fullAddress: "123 Main St, Romeoville, IL 60446",
           consent: true,
         },
@@ -590,6 +605,14 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
     assert.match(ordersBody, /Jane Doe/);
     assert.match(ordersBody, /Weekly/);
     assert.match(ordersBody, /Scheduled/);
+    assert.match(ordersBody, /Поля из формы клиента/);
+    assert.match(ordersBody, /Inside Cabinets Cleaning/);
+    assert.match(ordersBody, /Interior Windows Cleaning/);
+    assert.match(ordersBody, /Apt 4B/);
+    assert.match(ordersBody, /Romeoville/);
+    assert.match(ordersBody, /March 22, 2026 at 09:00/);
+    assert.match(ordersBody, /Please call on arrival/);
+    assert.match(ordersBody, /Gate code 2040/);
 
     const entryIdMatch = ordersBody.match(/name="entryId" value="([^"]+)"/);
     assert.ok(entryIdMatch);
