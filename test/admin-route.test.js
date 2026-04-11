@@ -345,6 +345,7 @@ test("creates staff members and assigns them to orders through the staff workspa
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     ADMIN_STAFF_STORE_PATH: storePath,
+    GOOGLE_PLACES_API_KEY: "places_test_key",
     GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
     GHL_ENABLE_NOTES: "0",
@@ -406,6 +407,10 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /class="admin-table admin-staff-table"/);
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
     assert.match(staffBody, /name="address"/);
+    assert.match(staffBody, /data-admin-address-autocomplete="true"/);
+    assert.match(staffBody, /data-admin-address-suggestions/);
+    assert.match(staffBody, /places_test_key/);
+    assert.match(staffBody, /__adminGooglePlacesReady/);
     assert.match(staffBody, /aria-label="Удалить сотрудника"/);
     assert.doesNotMatch(staffBody, /Удаление очистит его назначения в графике/);
     assert.match(staffBody, /Olga Stone/);
