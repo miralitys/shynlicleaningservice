@@ -30,6 +30,16 @@ function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function getStaffAssignmentEntryIdByCustomerName(html, customerName) {
+  const match = String(html || "").match(
+    new RegExp(
+      `<dialog class="admin-dialog admin-dialog-wide" id="admin-staff-assignment-dialog-[^"]+"[\\s\\S]*?<h2 class="admin-dialog-title"[^>]*>${escapeRegex(customerName)}<\\/h2>[\\s\\S]*?<input type="hidden" name="entryId" value="([^"]+)"`,
+      "i"
+    )
+  );
+  return match ? match[1] : "";
+}
+
 async function createAdminSession(baseUrl, config) {
   const loginResponse = await fetch(`${baseUrl}/admin/login`, {
     method: "POST",
@@ -1625,5 +1635,303 @@ test("keeps quote ops diagnostics hidden on the clients page when Supabase reads
     assert.doesNotMatch(body, /quote_ops_entries/i);
   } finally {
     await stopServer(started.child);
+  }
+});
+
+test("creates employee users in settings and serves a personal cabinet with assigned jobs only", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-account-route-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-account-123",
+        },
+      },
+    },
+  ]);
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const assignedQuoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "account-request-1",
+      fullName: "Maria Assigned",
+      phone: "312-555-0101",
+      email: "maria.customer@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-03-27",
+      selectedTime: "10:00",
+      fullAddress: "123 Main St, Romeoville, IL 60446",
+    });
+    assert.equal(assignedQuoteResponse.status, 201);
+
+    const unassignedQuoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "account-request-2",
+      fullName: "Nina Hidden",
+      phone: "312-555-0102",
+      email: "nina.customer@example.com",
+      serviceType: "move",
+      selectedDate: "2026-03-28",
+      selectedTime: "01:00 PM",
+      fullAddress: "456 Oak Ave, Plainfield, IL 60544",
+    });
+    assert.equal(unassignedQuoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-staff",
+        name: "Alina Carter",
+        role: "Cleaner",
+        phone: "3125550101",
+        email: "alina@example.com",
+        address: "742 Cedar Avenue, Aurora, IL 60506",
+        status: "active",
+        notes: "Assigned from settings test",
+      }),
+    });
+    assert.equal(createStaffResponse.status, 303);
+    assert.match(createStaffResponse.headers.get("location") || "", /notice=staff-created/);
+
+    const staffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(staffStorePayload.staff.length, 1);
+    const staffId = staffStorePayload.staff[0].id;
+    assert.ok(staffId);
+
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const settingsBody = await settingsResponse.text();
+    assert.equal(settingsResponse.status, 200);
+    assert.match(settingsBody, /Пользователи/i);
+    assert.match(settingsBody, /Создать пользователя/i);
+    assert.match(settingsBody, /\/account\/login/);
+
+    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffPageResponse.text();
+    assert.equal(staffPageResponse.status, 200);
+
+    const assignedEntryId = getStaffAssignmentEntryIdByCustomerName(staffPageBody, "Maria Assigned");
+    assert.ok(assignedEntryId);
+
+    const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", assignedEntryId],
+        ["staffIds", staffId],
+        ["status", "confirmed"],
+        ["notes", "Bring supplies"],
+      ]),
+    });
+    assert.equal(assignResponse.status, 303);
+    assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        staffId,
+        status: "active",
+        email: "alina.staff@example.com",
+        phone: "3125550101",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+    const createdUserLocation = createUserResponse.headers.get("location") || "";
+    assert.match(createdUserLocation, /notice=user-created/);
+
+    const updatedSettingsResponse = await fetch(`${started.baseUrl}${createdUserLocation.replace(/#.*$/, "")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const updatedSettingsBody = await updatedSettingsResponse.text();
+    assert.equal(updatedSettingsResponse.status, 200);
+    assert.match(updatedSettingsBody, /Пользователь создан/i);
+    assert.match(updatedSettingsBody, /alina\.staff@example\.com/i);
+    assert.match(updatedSettingsBody, /Alina Carter/);
+
+    const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(usersStorePayload.users.length, 1);
+    assert.equal(usersStorePayload.users[0].staffId, staffId);
+    assert.equal(usersStorePayload.users[0].email, "alina.staff@example.com");
+    assert.match(usersStorePayload.users[0].passwordHash, /^scrypt\$/);
+
+    const anonymousAccountResponse = await fetch(`${started.baseUrl}/account`, {
+      redirect: "manual",
+    });
+    assert.equal(anonymousAccountResponse.status, 303);
+    assert.equal(anonymousAccountResponse.headers.get("location"), "/account/login");
+
+    const accountLoginPageResponse = await fetch(`${started.baseUrl}/account/login`);
+    const accountLoginPageBody = await accountLoginPageResponse.text();
+    assert.equal(accountLoginPageResponse.status, 200);
+    assert.match(accountLoginPageBody, /Вход сотрудника/i);
+    assert.match(accountLoginPageBody, /Назначенные на вас заявки/i);
+
+    const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "alina.staff@example.com",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(accountLoginResponse.status, 303);
+    assert.equal(accountLoginResponse.headers.get("location"), "/account");
+
+    const userSessionCookieValue = getCookieValue(getSetCookies(accountLoginResponse), "shynli_user_session");
+    assert.ok(userSessionCookieValue);
+
+    const accountDashboardResponse = await fetch(`${started.baseUrl}/account`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const accountDashboardBody = await accountDashboardResponse.text();
+    assert.equal(accountDashboardResponse.status, 200);
+    assert.match(accountDashboardBody, /Мой кабинет/i);
+    assert.match(accountDashboardBody, /Maria Assigned/);
+    assert.match(accountDashboardBody, /Bring supplies/);
+    assert.doesNotMatch(accountDashboardBody, /Nina Hidden/);
+    assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
+
+    const saveProfileResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-profile",
+        email: "alina.updated@example.com",
+        phone: "3315550110",
+      }),
+    });
+    assert.equal(saveProfileResponse.status, 303);
+    assert.match(saveProfileResponse.headers.get("location") || "", /notice=profile-saved/);
+
+    const profilePageResponse = await fetch(`${started.baseUrl}${(saveProfileResponse.headers.get("location") || "").replace(/#.*$/, "")}`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const profilePageBody = await profilePageResponse.text();
+    assert.equal(profilePageResponse.status, 200);
+    assert.match(profilePageBody, /Профиль обновлён/i);
+    assert.match(profilePageBody, /alina\.updated@example\.com/i);
+    assert.match(profilePageBody, /\+1\(331\)555-0110/i);
+
+    const usersAfterProfileSave = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(usersAfterProfileSave.users[0].email, "alina.updated@example.com");
+    assert.equal(usersAfterProfileSave.users[0].phone, "3315550110");
+
+    const staffAfterProfileSave = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(staffAfterProfileSave.staff[0].email, "alina.updated@example.com");
+    assert.equal(staffAfterProfileSave.staff[0].phone, "3315550110");
+
+    const changePasswordResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "change-password",
+        currentPassword: "StrongPass123!",
+        newPassword: "EvenStronger456!",
+        confirmPassword: "EvenStronger456!",
+      }),
+    });
+    assert.equal(changePasswordResponse.status, 303);
+    assert.match(changePasswordResponse.headers.get("location") || "", /notice=password-saved/);
+
+    const logoutResponse = await fetch(`${started.baseUrl}/account/logout`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    assert.equal(logoutResponse.status, 303);
+    assert.equal(logoutResponse.headers.get("location"), "/account/login");
+
+    const oldPasswordResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "alina.updated@example.com",
+        password: "StrongPass123!",
+      }),
+    });
+    const oldPasswordBody = await oldPasswordResponse.text();
+    assert.equal(oldPasswordResponse.status, 401);
+    assert.match(oldPasswordBody, /Неверная почта или пароль/i);
+
+    const newPasswordResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "alina.updated@example.com",
+        password: "EvenStronger456!",
+      }),
+    });
+    assert.equal(newPasswordResponse.status, 303);
+    assert.equal(newPasswordResponse.headers.get("location"), "/account");
+    assert.ok(getCookieValue(getSetCookies(newPasswordResponse), "shynli_user_session"));
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+    fetchStub.cleanup();
   }
 });

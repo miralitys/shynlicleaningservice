@@ -6,3 +6,4 @@ coverage/
 *.log
 data/admin-settings-store.json
 data/admin-staff-store.json
+data/admin-users-store.json

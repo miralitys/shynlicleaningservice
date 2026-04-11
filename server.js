@@ -7,6 +7,9 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const { URL } = require("url");
+const accountAuth = require("./lib/account-auth");
+const { createAccountRequestHandler } = require("./lib/account/handlers");
+const { createAccountRenderers } = require("./lib/account/render");
 const { createApiHandlers } = require("./lib/api/handlers");
 const { createAdminDomainHelpers } = require("./lib/admin/domain");
 const { createAdminRequestHandler } = require("./lib/admin/handlers");
@@ -103,6 +106,7 @@ const {
   createAdminStaffStore,
 } = require("./lib/admin-staff-store");
 const { createAdminSettingsStore } = require("./lib/admin-settings-store");
+const { USER_STATUS_VALUES, createAdminUsersStore } = require("./lib/admin-users-store");
 let QRCode;
 try {
   QRCode = require("qrcode");
@@ -131,6 +135,10 @@ const ADMIN_INTEGRATIONS_PATH = "/admin/integrations";
 const ADMIN_RUNTIME_PATH = "/admin/runtime";
 const ADMIN_SESSION_COOKIE = "shynli_admin_session";
 const ADMIN_CHALLENGE_COOKIE = "shynli_admin_challenge";
+const ACCOUNT_ROOT_PATH = "/account";
+const ACCOUNT_LOGIN_PATH = "/account/login";
+const ACCOUNT_LOGOUT_PATH = "/account/logout";
+const USER_SESSION_COOKIE = "shynli_user_session";
 const ADMIN_APP_ROUTES = new Set([
   ADMIN_ROOT_PATH,
   ADMIN_CLIENTS_PATH,
@@ -147,6 +155,11 @@ const ADMIN_ALL_ROUTES = new Set([
   ADMIN_LOGIN_PATH,
   ADMIN_2FA_PATH,
   ADMIN_LOGOUT_PATH,
+]);
+const ACCOUNT_ALL_ROUTES = new Set([
+  ACCOUNT_ROOT_PATH,
+  ACCOUNT_LOGIN_PATH,
+  ACCOUNT_LOGOUT_PATH,
 ]);
 const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
@@ -516,6 +529,7 @@ const adminPageRenderers = createAdminPageRenderers({
   QUOTE_OPS_LEDGER_LIMIT,
   QUOTE_PUBLIC_PATH,
   STAFF_STATUS_VALUES,
+  USER_STATUS_VALUES,
   buildAdminRedirectPath,
   buildOrdersReturnPath,
   buildQuoteOpsReturnPath,
@@ -596,6 +610,45 @@ const handleAdminRequest = createAdminRequestHandler({
   writeHtmlWithTiming,
 });
 
+const accountRenderers = createAccountRenderers({
+  ACCOUNT_LOGIN_PATH,
+  ACCOUNT_LOGOUT_PATH,
+  ACCOUNT_ROOT_PATH,
+  escapeHtml,
+  escapeHtmlAttribute,
+  escapeHtmlText,
+  formatAdminDateTime,
+  formatAdminServiceLabel,
+  formatCurrencyAmount,
+  formatOrderCountLabel,
+  renderAssignmentStatusBadge,
+  renderStaffStatusBadge,
+  shared: adminSharedRenderers,
+});
+
+const handleAccountRequest = createAccountRequestHandler({
+  ACCOUNT_LOGIN_PATH,
+  ACCOUNT_LOGOUT_PATH,
+  ACCOUNT_ROOT_PATH,
+  USER_SESSION_COOKIE,
+  USER_SESSION_TTL_SECONDS: accountAuth.USER_SESSION_TTL_SECONDS,
+  adminAuth,
+  accountAuth,
+  accountRenderers,
+  buildStaffPlanningContext,
+  clearCookie,
+  getFormValue,
+  getRequestUrl,
+  normalizeString,
+  parseCookies,
+  parseFormBody,
+  readTextBody,
+  redirectWithTiming,
+  serializeCookie,
+  shouldUseSecureCookies,
+  writeHtmlWithTiming,
+});
+
 const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiHandlers({
   MAX_JSON_BODY_BYTES,
   QUOTE_PUBLIC_PATH,
@@ -664,6 +717,7 @@ const siteStaticHelpers = createSiteStaticHelpers({
 });
 
 const handleSiteRequest = createSiteRequestHandler({
+  ACCOUNT_ALL_ROUTES,
   ADMIN_ALL_ROUTES,
   ALERT_5XX_RATE,
   ALERT_EVENT_LOOP_P95_MS,
@@ -678,6 +732,7 @@ const handleSiteRequest = createSiteRequestHandler({
   REDIRECT_ROUTES,
   SITE_DIR,
   STRIPE_CHECKOUT_ENDPOINT,
+  handleAccountRequest,
   handleAdminRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
@@ -729,6 +784,7 @@ async function main() {
     normalizeString,
   });
   const settingsStore = createAdminSettingsStore();
+  const usersStore = createAdminUsersStore();
   const staffStore = createAdminStaffStore({
     createSupabaseAdminStaffClient,
     env: process.env,
@@ -807,6 +863,7 @@ async function main() {
       quoteOpsLedger,
       requestPerfWindow,
       runtimeIndex,
+      usersStore,
       settingsStore,
       staffStore,
     });
