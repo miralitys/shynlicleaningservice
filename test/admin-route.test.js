@@ -165,6 +165,7 @@ test("completes the admin login and TOTP verification flow", async () => {
     assert.equal(dashboardResponse.status, 200);
     assert.match(dashboardBody, /Обзор/i);
     assert.match(dashboardBody, /Выйти/i);
+    assert.doesNotMatch(dashboardBody, /admin-topbar/i);
     assert.doesNotMatch(dashboardBody, /Вы вошли как/i);
 
     const adminPages = [
