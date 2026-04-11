@@ -66,6 +66,12 @@ try {
 } catch (error) {
   adminAuth = null;
 }
+let QRCode;
+try {
+  QRCode = require("qrcode");
+} catch (error) {
+  QRCode = null;
+}
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
@@ -1246,6 +1252,23 @@ function buildAdminRedirectPath(basePath, params = {}) {
   return `${url.pathname}${url.search}`;
 }
 
+async function buildAdminQrMarkup(text) {
+  if (!QRCode || !text) return "";
+  try {
+    const dataUrl = await QRCode.toDataURL(text, {
+      margin: 1,
+      width: 220,
+      color: {
+        dark: "#18181b",
+        light: "#ffffff",
+      },
+    });
+    return `<img class="admin-qr-image" src="${escapeHtmlText(dataUrl)}" alt="Authenticator QR code">`;
+  } catch {
+    return "";
+  }
+}
+
 function renderAdminBadge(label, tone = "default") {
   const toneClass =
     tone === "success"
@@ -2002,6 +2025,23 @@ function renderAdminLayout(title, content, options = {}) {
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .admin-qr-card {
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+      text-align: center;
+    }
+    .admin-qr-image {
+      width: 220px;
+      height: 220px;
+      max-width: 100%;
+      display: block;
+      padding: 10px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
     details.admin-details {
       border: 1px dashed rgba(158, 67, 90, 0.24);
       border-radius: var(--radius-md);
@@ -2155,8 +2195,9 @@ function renderTwoFactorPage(config, options = {}) {
   const errorBlock = options.error
     ? `<div class="admin-alert admin-alert-error">${escapeHtml(options.error)}</div>`
     : "";
-  const secret = adminAuth.getTotpSecretMaterial(config);
-  const otpauthUri = adminAuth.buildOtpauthUri(config);
+  const secret = options.secret || adminAuth.getTotpSecretMaterial(config);
+  const otpauthUri = options.otpauthUri || adminAuth.buildOtpauthUri(config);
+  const qrMarkup = options.qrMarkup || "";
   const secretMode = secret.derived
     ? "This key is derived from your server secret and current admin credentials."
     : "This key comes from ADMIN_TOTP_SECRET.";
@@ -2185,8 +2226,19 @@ function renderTwoFactorPage(config, options = {}) {
           "Need to Set Up Your Authenticator App?",
           `Add a new TOTP account in Google Authenticator, Microsoft Authenticator, 1Password, or a similar app using the values below. ${secretMode}`,
           `<details class="admin-details" open>
-            <summary>Manual Setup Details</summary>
+            <summary>Setup Details</summary>
             <div class="admin-form-grid admin-form-grid-two" style="margin-top:14px;">
+              ${renderAdminCard(
+                "Scan QR Code",
+                "Open your authenticator app and scan this QR code for the fastest setup.",
+                qrMarkup
+                  ? `<div class="admin-qr-card">
+                      ${qrMarkup}
+                      <p class="admin-field-note">Works with Google Authenticator, Microsoft Authenticator, 1Password, and similar apps.</p>
+                    </div>`
+                  : `<p class="admin-field-note">QR generation is unavailable on this server. Use the manual setup values instead.</p>`,
+                { eyebrow: "QR", muted: true }
+              )}
               ${renderAdminCard(
                 "Manual Setup",
                 "These values match the current admin issuer and account.",
@@ -3054,7 +3106,16 @@ async function handleAdminRequest(
     }
 
     if (req.method === "GET") {
-      writeHtmlWithTiming(res, 200, renderTwoFactorPage(config), requestStartNs, requestContext.cacheHit);
+      const secret = adminAuth.getTotpSecretMaterial(config);
+      const otpauthUri = adminAuth.buildOtpauthUri(config);
+      const qrMarkup = await buildAdminQrMarkup(otpauthUri);
+      writeHtmlWithTiming(
+        res,
+        200,
+        renderTwoFactorPage(config, { secret, otpauthUri, qrMarkup }),
+        requestStartNs,
+        requestContext.cacheHit
+      );
       return;
     }
 
@@ -3080,10 +3141,16 @@ async function handleAdminRequest(
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
     const code = normalizeString(formBody.code, 16);
     if (!adminAuth.verifyTotpCode(code, config)) {
+      const secret = adminAuth.getTotpSecretMaterial(config);
+      const otpauthUri = adminAuth.buildOtpauthUri(config);
+      const qrMarkup = await buildAdminQrMarkup(otpauthUri);
       writeHtmlWithTiming(
         res,
         401,
         renderTwoFactorPage(config, {
+          secret,
+          otpauthUri,
+          qrMarkup,
           error: "That code was not valid. Check the app and try again.",
         }),
         requestStartNs,
