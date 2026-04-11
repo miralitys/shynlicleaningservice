@@ -642,6 +642,19 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.ok(entryIdMatch);
     const entryId = entryIdMatch[1];
 
+    const focusedOrderResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=ops-request-1&order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const focusedOrderBody = await focusedOrderResponse.text();
+    assert.equal(focusedOrderResponse.status, 200);
+    assert.match(focusedOrderBody, /data-admin-dialog-autopen="true"/);
+    assert.match(focusedOrderBody, /data-admin-dialog-return-url="\/admin\/orders\?q=ops-request-1"/);
+
     const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
       redirect: "manual",
@@ -1022,12 +1035,16 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientBody, /class="admin-dialog admin-dialog-wide"/);
     assert.match(selectedClientBody, /id="admin-client-detail-dialog"/);
     assert.match(selectedClientBody, /data-admin-dialog-return-url="\/admin\/clients"/);
-    assert.match(selectedClientDialog, /Сводка по заявке/i);
-    assert.match(selectedClientDialog, /Контакты/i);
+    assert.match(selectedClientDialog, /Сводка по активной заявке/i);
+    assert.match(selectedClientDialog, /Сумма текущей заявки/i);
     assert.match(selectedClientDialog, /Сумма заказов/i);
     assert.match(selectedClientDialog, /client-request-2/);
     assert.match(selectedClientDialog, /Команда: Olga Stone/);
+    assert.match(selectedClientDialog, /Редактировать/i);
+    assert.match(selectedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
+    assert.doesNotMatch(selectedClientDialog, /<h3 class="admin-subsection-title">Контакты<\/h3>/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100/);
+    assert.match(selectedClientDialog, /\+1\(312\)555-0100[\s\S]*jane@example\.com[\s\S]*123 Main St, Romeoville, IL 60446/i);
     assert.doesNotMatch(selectedClientDialog, /client-request-3/);
     assert.match(selectedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.doesNotMatch(selectedClientDialog, /789 Cedar Ln, Plainfield, IL 60544/);
