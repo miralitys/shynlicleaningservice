@@ -71,6 +71,7 @@ const {
   STAFF_STATUS_VALUES,
   createAdminStaffStore,
 } = require("./lib/admin-staff-store");
+const { createAdminSettingsStore } = require("./lib/admin-settings-store");
 let QRCode;
 try {
   QRCode = require("qrcode");
@@ -90,6 +91,7 @@ const ADMIN_LOGOUT_PATH = "/admin/logout";
 const ADMIN_CLIENTS_PATH = "/admin/clients";
 const ADMIN_ORDERS_PATH = "/admin/orders";
 const ADMIN_STAFF_PATH = "/admin/staff";
+const ADMIN_SETTINGS_PATH = "/admin/settings";
 const ADMIN_QUOTE_OPS_PATH = "/admin/quote-ops";
 const ADMIN_QUOTE_OPS_EXPORT_PATH = "/admin/quote-ops/export.csv";
 const ADMIN_QUOTE_OPS_RETRY_PATH = "/admin/quote-ops/retry";
@@ -102,6 +104,7 @@ const ADMIN_APP_ROUTES = new Set([
   ADMIN_CLIENTS_PATH,
   ADMIN_ORDERS_PATH,
   ADMIN_STAFF_PATH,
+  ADMIN_SETTINGS_PATH,
   ADMIN_QUOTE_OPS_PATH,
 ]);
 const ADMIN_ALL_ROUTES = new Set([
@@ -128,6 +131,10 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
     path: ADMIN_STAFF_PATH,
     label: "Сотрудники",
+  },
+  {
+    path: ADMIN_SETTINGS_PATH,
+    label: "Settings",
   },
   {
     path: ADMIN_QUOTE_OPS_PATH,
@@ -767,6 +774,18 @@ function createQuoteOpsStore(options = {}) {
       } catch {
         return localLedger.listEntries(filters);
       }
+    },
+    async getEntry(entryId) {
+      const normalizedEntryId = normalizeString(entryId, 120);
+      if (!normalizedEntryId) return null;
+      if (!remoteEnabled) {
+        return localLedger.getEntry(normalizedEntryId);
+      }
+      try {
+        const remoteEntry = await supabaseClient.fetchEntryById(normalizedEntryId);
+        if (remoteEntry) return remoteEntry;
+      } catch {}
+      return localLedger.getEntry(normalizedEntryId);
     },
     async retrySubmission(entryId, optionsForRetry = {}) {
       if (!remoteEnabled) {
@@ -1589,23 +1608,11 @@ function getOrderStatus(entry = {}) {
   return "new";
 }
 
-function formatAdminCalendarDate(value) {
-  const raw = normalizeString(value, 32);
-  if (!raw) return "";
-  const date = new Date(`${raw}T12:00:00Z`);
-  if (Number.isNaN(date.getTime())) return raw;
-  return date.toLocaleDateString("ru-RU", {
-    dateStyle: "medium",
-  });
-}
-
 function formatOrderScheduleLabel(selectedDate, selectedTime) {
-  const parts = [];
-  const dateLabel = formatAdminCalendarDate(selectedDate);
-  const timeLabel = normalizeString(selectedTime, 32);
-  if (dateLabel) parts.push(dateLabel);
-  if (timeLabel) parts.push(timeLabel);
-  return parts.join(" в ") || "Не указаны";
+  const normalizedDate = normalizeString(selectedDate, 32);
+  const normalizedTime = normalizeString(selectedTime, 32);
+  if (!normalizedDate && !normalizedTime) return "Не указаны";
+  return formatAdminScheduleLabel(normalizedDate, normalizedTime);
 }
 
 function getOrderSearchHaystack(order) {
@@ -2516,6 +2523,46 @@ function renderAdminLayout(title, content, options = {}) {
       font-size: 13px;
       line-height: 1.6;
     }
+    .admin-checklist-list {
+      display: grid;
+      gap: 10px;
+    }
+    .admin-checklist-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(228, 228, 231, 0.92);
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.78);
+    }
+    .admin-checklist-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--accent);
+      flex: none;
+    }
+    .admin-checklist-copy {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+    .admin-checklist-copy strong,
+    .admin-checklist-copy span {
+      word-break: break-word;
+    }
+    .admin-checklist-copy span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .admin-checklist-summary {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
     .admin-entry-card {
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
@@ -3271,6 +3318,10 @@ async function renderDashboardPage(req, config, quoteOpsLedger) {
               <strong>Сотрудники</strong>
               <span>Команда и роли.</span>
             </a>
+            <a class="admin-link-tile" href="${ADMIN_SETTINGS_PATH}">
+              <strong>Settings</strong>
+              <span>Чек-листы и внутренние шаблоны.</span>
+            </a>
             <a class="admin-link-tile" href="${ADMIN_QUOTE_OPS_PATH}">
               <strong>Заявки</strong>
               <span>Все заявки с сайта.</span>
@@ -3758,6 +3809,152 @@ function renderStaffPage(req, config) {
   );
 }
 
+function renderSettingsNotice(req) {
+  const reqUrl = getRequestUrl(req);
+  const notice = normalizeString(reqUrl.searchParams.get("notice"), 80).toLowerCase();
+  if (notice === "saved") {
+    return `<div class="admin-alert admin-alert-info">Отметки чек-листа сохранены.</div>`;
+  }
+  if (notice === "added") {
+    return `<div class="admin-alert admin-alert-info">Новый пункт добавлен в шаблон.</div>`;
+  }
+  if (notice === "reset") {
+    return `<div class="admin-alert admin-alert-info">Все отметки по этому шаблону сброшены.</div>`;
+  }
+  if (notice === "error") {
+    return `<div class="admin-alert admin-alert-error">Не удалось сохранить изменения. Попробуйте ещё раз.</div>`;
+  }
+  return "";
+}
+
+function buildSettingsRedirectPath(serviceType, notice = "") {
+  const normalizedServiceType = normalizeString(serviceType, 32).toLowerCase();
+  const pathWithQuery = buildAdminRedirectPath(ADMIN_SETTINGS_PATH, {
+    notice,
+    serviceType: normalizedServiceType,
+  });
+  return normalizedServiceType ? `${pathWithQuery}#settings-${normalizedServiceType}` : pathWithQuery;
+}
+
+function renderSettingsTemplateCard(template) {
+  const completedCount = template.items.filter((item) => item.completed).length;
+
+  return renderAdminCard(
+    template.title,
+    template.description,
+    `<p class="admin-checklist-summary">Выполнено ${escapeHtml(String(completedCount))} из ${escapeHtml(String(template.items.length))}</p>
+    <form class="admin-form" method="post" action="${ADMIN_SETTINGS_PATH}">
+      <input type="hidden" name="action" value="save_checklist_state">
+      <input type="hidden" name="serviceType" value="${escapeHtmlAttribute(template.serviceType)}">
+      <div class="admin-checklist-list">
+        ${template.items.length > 0
+          ? template.items
+              .map(
+                (item) => `<label class="admin-checklist-row">
+                  <input type="checkbox" name="completedItemIds" value="${escapeHtmlAttribute(item.id)}"${item.completed ? " checked" : ""}>
+                  <span class="admin-checklist-copy">
+                    <strong>${escapeHtml(item.label)}</strong>
+                    <span>${item.completed ? "Отмечено как выполненное" : "Пока не отмечено"}</span>
+                  </span>
+                </label>`
+              )
+              .join("")
+          : `<div class="admin-empty-state">В этом шаблоне пока нет пунктов.</div>`}
+      </div>
+      <div class="admin-inline-actions" style="margin-top:14px;">
+        <button class="admin-button" type="submit">Сохранить отметки</button>
+      </div>
+    </form>
+    <div class="admin-divider"></div>
+    <form class="admin-form-grid admin-form-grid-two" method="post" action="${ADMIN_SETTINGS_PATH}">
+      <input type="hidden" name="action" value="add_checklist_item">
+      <input type="hidden" name="serviceType" value="${escapeHtmlAttribute(template.serviceType)}">
+      <label class="admin-label">
+        Новый пункт
+        <input class="admin-input" type="text" name="itemLabel" maxlength="240" placeholder="Например: проверить зеркала" required>
+      </label>
+      <div class="admin-inline-actions" style="align-self:end;">
+        <button class="admin-button admin-button-secondary" type="submit">Добавить пункт</button>
+      </div>
+    </form>
+    <div class="admin-inline-actions" style="margin-top:12px;">
+      <form method="post" action="${ADMIN_SETTINGS_PATH}">
+        <input type="hidden" name="action" value="reset_checklist_state">
+        <input type="hidden" name="serviceType" value="${escapeHtmlAttribute(template.serviceType)}">
+        <button class="admin-button admin-button-secondary" type="submit">Сбросить отметки</button>
+      </form>
+    </div>`,
+    {
+      eyebrow: "Чек-лист",
+      muted: true,
+    }
+  );
+}
+
+async function renderSettingsPage(req, config, settingsStore) {
+  const snapshot = settingsStore ? await settingsStore.getSnapshot() : { templates: [] };
+  const templates = Array.isArray(snapshot.templates) ? snapshot.templates : [];
+  const totalItems = templates.reduce((sum, template) => sum + template.items.length, 0);
+  const completedItems = templates.reduce(
+    (sum, template) => sum + template.items.filter((item) => item.completed).length,
+    0
+  );
+
+  return renderAdminLayout(
+    "Settings",
+    `${renderAdminSignedInTopbar(config, {
+      linkHref: ADMIN_ROOT_PATH,
+      linkLabel: "Открыть обзор",
+    })}
+      ${renderSettingsNotice(req)}
+      <div class="admin-stats-grid">
+        ${renderAdminCard(
+          "Шаблоны",
+          "Все типы уборки в одном месте.",
+          `<p class="admin-metric-value">${escapeHtml(String(templates.length))}</p>`,
+          { eyebrow: "Settings" }
+        )}
+        ${renderAdminCard(
+          "Пункты",
+          "Общее количество задач в шаблонах.",
+          `<p class="admin-metric-value">${escapeHtml(String(totalItems))}</p>`,
+          { eyebrow: "Settings", muted: true }
+        )}
+        ${renderAdminCard(
+          "Отмечено",
+          "Уже выполненные пункты.",
+          `<p class="admin-metric-value">${escapeHtml(String(completedItems))}</p>`,
+          { eyebrow: "Settings", muted: true }
+        )}
+      </div>
+      <div class="admin-section-grid">
+        ${renderAdminCard(
+          "Шаблоны чек-листов",
+          "Отмечайте выполненное и дополняйте шаблоны новыми пунктами.",
+          templates.length > 0
+            ? templates.map((template) => renderSettingsTemplateCard(template)).join("")
+            : `<div class="admin-empty-state">Шаблоны пока не подготовлены.</div>`,
+          { eyebrow: "Settings" }
+        )}
+        ${renderAdminCard(
+          "Для чего этот раздел",
+          "Здесь можно хранить рабочие шаблоны и небольшие внутренние базы.",
+          `<ul class="admin-feature-list">
+            <li>Шаблоны под каждый тип уборки.</li>
+            <li>Отметки выполненных пунктов.</li>
+            <li>Новые небольшие внутренние списки можно добавлять сюда позже.</li>
+          </ul>`,
+          { eyebrow: "Settings", muted: true }
+        )}
+      </div>`,
+    {
+      kicker: "Settings",
+      subtitle: "Шаблоны чек-листов и внутренние рабочие списки.",
+      sidebar: renderAdminAppSidebar(ADMIN_SETTINGS_PATH),
+    }
+  );
+}
+
 function renderQuoteOpsStatusBadge(status) {
   if (status === "success") return renderAdminBadge("Успешно", "success");
   if (status === "warning") return renderAdminBadge("Проверить", "default");
@@ -4119,8 +4316,8 @@ async function handleAdminRequest(
     }
 
     const formBody = parseFormBody(await readTextBody(req, 8 * 1024));
-    const entryId = normalizeString(formBody.entryId, 120);
-    const returnTo = buildOrdersReturnPath(formBody.returnTo);
+    const entryId = getFormValue(formBody, "entryId", 120);
+    const returnTo = buildOrdersReturnPath(getFormValue(formBody, "returnTo", 1000));
 
     if (!quoteOpsLedger || !entryId) {
       redirectWithTiming(
@@ -4135,11 +4332,11 @@ async function handleAdminRequest(
 
     try {
       const updatedEntry = await quoteOpsLedger.updateOrderEntry(entryId, {
-        orderStatus: formBody.orderStatus,
-        assignedStaff: formBody.assignedStaff,
-        selectedDate: formBody.selectedDate,
-        selectedTime: formBody.selectedTime,
-        frequency: formBody.frequency,
+        orderStatus: getFormValue(formBody, "orderStatus", 40),
+        assignedStaff: getFormValue(formBody, "assignedStaff", 120),
+        selectedDate: getFormValue(formBody, "selectedDate", 32),
+        selectedTime: getFormValue(formBody, "selectedTime", 32),
+        frequency: getFormValue(formBody, "frequency", 40),
       });
 
       redirectWithTiming(
