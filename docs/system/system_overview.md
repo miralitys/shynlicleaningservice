@@ -33,6 +33,7 @@
   - `lib/quote-token.js`
   - `lib/rate-limit.js`
   - `lib/leadconnector.js`
+  - `lib/supabase-admin-staff.js`
   - `lib/supabase-quote-ops.js`
 
 ## Confirmed Runtime Capabilities
@@ -47,11 +48,15 @@
 - admin SSR pages for clients, orders, staff, settings, and quote ops
 - quote-ops CSV export and retry workflow
 - optional Supabase persistence for quote-ops history
-- file-backed checklist and staff planning stores
+- file-backed checklist store
+- optional Supabase persistence for staff planning
 
 ## Confirmed Risk Areas
 - rate limiting is process-local in memory, so it is guardrail-level rather than distributed abuse control
-- staff/settings persistence is file-backed JSON, not centralized multi-instance storage
+- checklist persistence is still file-backed JSON unless a future backend is added
+- staff persistence is split:
+  - durable when Supabase is configured
+  - file-backed locally when it is not
 - quote-ops persistence is split:
   - durable when Supabase is configured
   - process-local when it is not

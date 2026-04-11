@@ -5,7 +5,8 @@
   "description": "Self-hosted routing engine for exported Shynli Cleaning site",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "seed:demo-admin": "node scripts/seed-demo-admin-data.js"
   },
   "engines": {
     "node": "20.x"

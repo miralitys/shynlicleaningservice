@@ -13,7 +13,7 @@
 - Responsibility boundary:
   - owns public HTML delivery, route mapping, runtime sanitization, SEO/meta injection, quote repricing, CRM submission, signed quote tokens, Stripe checkout session creation, admin auth, admin SSR pages, quote-ops history, and lightweight internal stores;
   - does not use Express, a frontend framework, or a general-purpose database layer for all admin data;
-  - only quote-ops history can optionally persist to Supabase; staff/settings stores are file-backed JSON.
+  - quote-ops history and staff planning can optionally persist to Supabase; checklist/settings state remains file-backed JSON.
 
 ## 2. What The Project Does
 - Serves `58` pretty public routes from `routes.json`.
@@ -35,7 +35,8 @@
   - `/admin/quote-ops`
 - Supports admin CSV export and retry actions for quote ops.
 - Optionally persists quote-ops history to Supabase via `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
-- Persists checklist templates and staff/assignment planning to local JSON files under runtime `data/`.
+- Optionally persists staff and assignment planning to Supabase via the same base Supabase credentials.
+- Persists checklist templates to local JSON files under runtime `data/`.
 
 ## 3. How The Project Is Structured
 - Thin entrypoint: `server.js`
@@ -64,10 +65,12 @@
   - `lib/quote-token.js`
   - `lib/rate-limit.js`
   - `lib/leadconnector.js`
+  - `lib/supabase-admin-staff.js`
   - `lib/supabase-quote-ops.js`
 - Ops and schema:
   - `render.yaml`
   - `CLOUDFLARE_EDGE_CACHE.md`
+  - `supabase/admin_staff_schema.sql`
   - `supabase/quote_ops_schema.sql`
   - `scripts/optimize-images.sh`
   - `scripts/purge-cloudflare-html-cache.mjs`
@@ -76,6 +79,7 @@
   - `docs/system/*`
 - Tests:
   - `test/admin-auth.test.js`
+  - `test/admin-staff-store.test.js`
   - `test/admin-route.test.js`
   - `test/admin-settings-store.test.js`
   - `test/leadconnector.test.js`
@@ -84,6 +88,7 @@
   - `test/quote-token.test.js`
   - `test/server-hardening.test.js`
   - `test/server-smoke.test.js`
+  - `test/supabase-admin-staff.test.js`
   - `test/supabase-quote-ops.test.js`
   - `test/server-test-helpers.js`
 
@@ -110,7 +115,7 @@
 1. `lib/admin/render-pages.js` renders SSR HTML for clients, orders, staff, settings, and quote ops.
 2. `lib/admin/domain.js` builds filters, summaries, labels, redirect URLs, and view models from quote-op entries and local staff/settings state.
 3. `lib/admin-settings-store.js` persists checklist templates and completion state to a JSON file.
-4. `lib/admin-staff-store.js` persists staff records and order assignments to a JSON file.
+4. `lib/admin-staff-store.js` persists staff records and order assignments through either a local file store or Supabase, depending on env configuration.
 
 ### Quote / CRM flow
 1. `/quote` handles the customer UI in the browser.
@@ -124,6 +129,11 @@
 2. If Supabase env is configured, entries are read/written through `lib/supabase-quote-ops.js`.
 3. If Supabase is not configured, quote ops fall back to in-memory storage for the running process.
 4. Admin quote-ops pages, CSV export, and retry actions all consume this same store abstraction.
+
+### Staff persistence flow
+1. `lib/admin-staff-store.js` keeps the staff/assignment store interface used by the admin workspace.
+2. If Supabase env is configured, staff and assignments are read/written through `lib/supabase-admin-staff.js`.
+3. If Supabase is not configured, staff planning falls back to the local JSON store for the running app.
 
 ### Stripe flow
 1. Client POSTs `quoteToken` to `/api/stripe/checkout-session`.
@@ -145,6 +155,8 @@
   - request metadata, contact info, service info, pricing, CRM status, retry metadata, and payload-for-retry.
 - Supabase quote-ops row
   - the `quote_ops_entries` row shape mirrored by `lib/supabase-quote-ops.js`.
+- Supabase admin staff rows
+  - the `admin_staff` and `admin_staff_assignments` row shapes mirrored by `lib/supabase-admin-staff.js`.
 - staff record
   - internal cleaner/operator data: name, role, phone, email, status, notes.
 - assignment record
@@ -175,7 +187,7 @@
 - External services:
   - Stripe via `STRIPE_SECRET_KEY`
   - LeadConnector / GHL via `GHL_*`
-  - Supabase via `SUPABASE_*` for optional quote-ops persistence
+  - Supabase via `SUPABASE_*` for optional quote-ops and staff persistence
   - Google Places browser autocomplete via runtime-injected `GOOGLE_PLACES_API_KEY`
   - Cloudflare purge API via `scripts/purge-cloudflare-html-cache.mjs`
 - Deployment:
@@ -190,7 +202,7 @@
   - `npm start`
 - Local tests:
   - `npm test`
-  - current status: `66/66` green
+  - current status: `71/71` green
 - Important env:
   - `HOST`, `PORT`, `PUBLIC_SITE_ORIGIN`
   - `STRIPE_SECRET_KEY`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`
@@ -198,6 +210,7 @@
   - `QUOTE_SIGNING_SECRET`, `QUOTE_TOKEN_TTL_SECONDS`
   - `GHL_*`
   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_QUOTE_OPS_TABLE`
+  - `SUPABASE_ADMIN_STAFF_TABLE`, `SUPABASE_ADMIN_STAFF_ASSIGNMENTS_TABLE`
   - `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_MASTER_SECRET`, `ADMIN_TOTP_SECRET`
   - `ADMIN_SETTINGS_STORE_PATH`, `ADMIN_STAFF_STORE_PATH`
   - `POST_RATE_LIMIT_WINDOW_MS`, `POST_RATE_LIMIT_MAX_REQUESTS`
@@ -228,7 +241,12 @@
 - Server-rendered admin UI layout and page HTML.
 
 ### `lib/admin-settings-store.js` and `lib/admin-staff-store.js`
-- File-backed JSON stores created under runtime `data/` by default.
+- `lib/admin-settings-store.js` remains file-backed by default.
+- `lib/admin-staff-store.js` now switches between file-backed local persistence and Supabase-backed remote persistence through one shared store interface.
+
+### `lib/supabase-admin-staff.js`
+- Supabase REST adapter for staff cards and assignment rows.
+- Mirrors the `admin_staff` and `admin_staff_assignments` schemas and supports both opaque `sb_secret_*` keys and legacy JWT service-role keys.
 
 ### `lib/api/handlers.js`
 - Public API controller for quote submission and Stripe checkout session creation.
@@ -243,7 +261,10 @@
 - Quote-ops persistence is conditional:
   - with Supabase env: persistent operational history;
   - without Supabase env: process-local in-memory history.
-- Staff and checklist state are file-backed by default and create `data/admin-staff-store.json` and `data/admin-settings-store.json` at runtime unless env overrides are set.
+- Staff persistence is conditional:
+  - with Supabase env: centralized staff and assignment planning;
+  - without Supabase env: local `data/admin-staff-store.json` persistence unless env overrides are set.
+- Checklist state remains file-backed and creates `data/admin-settings-store.json` at runtime unless env overrides are set.
 - POST throttling remains in-memory and process-local.
 - `X-Forwarded-For` is ignored unless proxy trust is enabled and the socket remote address is allowlisted.
 - Admin session signing falls back through `ADMIN_MASTER_SECRET`, then other server-side secrets if needed.
@@ -256,7 +277,7 @@
 - The admin workspace is live and protected by password + TOTP.
 - Quote checkout is server-authoritative through signed quote tokens.
 - Quote-ops can persist to Supabase through the existing adapter and schema file.
-- Current full test status is `66/66` passing.
+- Staff planning can now persist to Supabase through the new adapter and schema file.
 
 ### Interpreted
 - The project is best understood as a hybrid of:

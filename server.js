@@ -37,6 +37,12 @@ try {
   createSupabaseQuoteOpsClient = null;
   loadSupabaseQuoteOpsConfig = null;
 }
+let createSupabaseAdminStaffClient;
+try {
+  ({ createSupabaseAdminStaffClient } = require("./lib/supabase-admin-staff"));
+} catch (error) {
+  createSupabaseAdminStaffClient = null;
+}
 let createLeadConnectorClient;
 let loadLeadConnectorConfig;
 try {
@@ -701,7 +707,11 @@ async function main() {
     normalizeString,
   });
   const settingsStore = createAdminSettingsStore();
-  const staffStore = createAdminStaffStore();
+  const staffStore = createAdminStaffStore({
+    createSupabaseAdminStaffClient,
+    env: process.env,
+    fetch: global.fetch,
+  });
 
   const perfSummaryTimer = setInterval(() => {
     const requestSnapshot = requestPerfWindow.snapshot();

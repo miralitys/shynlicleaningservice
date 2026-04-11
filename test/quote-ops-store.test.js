@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { createQuoteOpsStore } = require("../lib/quote-ops/store");
+const { createQuoteOpsStore, filterQuoteOpsEntries } = require("../lib/quote-ops/store");
 
 function normalizeString(value, maxLength = 500) {
   return String(value || "").trim().slice(0, maxLength);
@@ -97,4 +97,39 @@ test("tracks diagnostics when Supabase write fails", async () => {
   assert.equal(diagnostics.mode, "supabase");
   assert.match(diagnostics.lastWriteError, /supabase write failed/i);
   assert.ok(diagnostics.lastWriteAt);
+});
+
+test("hides admin staff shadow rows from quote ops listings", () => {
+  const entries = filterQuoteOpsEntries(
+    [
+      {
+        id: "entry-1",
+        kind: "quote_submission",
+        status: "success",
+        customerName: "Visible order",
+        serviceType: "standard",
+      },
+      {
+        id: "entry-2",
+        kind: "admin_staff_member",
+        status: "success",
+        customerName: "Hidden staff row",
+        serviceType: "",
+      },
+      {
+        id: "entry-3",
+        kind: "admin_staff_assignment",
+        status: "success",
+        customerName: "",
+        serviceType: "",
+      },
+    ],
+    { limit: 10 },
+    normalizeString
+  );
+
+  assert.deepEqual(
+    entries.map((entry) => entry.id),
+    ["entry-1"]
+  );
 });

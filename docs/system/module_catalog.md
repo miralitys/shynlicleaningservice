@@ -52,7 +52,8 @@
 - `lib/admin-settings-store.js`
   - file-backed checklist templates and completion state
 - `lib/admin-staff-store.js`
-  - file-backed staff records and assignment planning state
+  - staff records and assignment planning store abstraction
+  - uses file-backed JSON by default and Supabase when configured
 
 ## Quote, CRM, Payments, And Persistence
 - `lib/api/handlers.js`
@@ -73,8 +74,13 @@
 - `lib/supabase-quote-ops.js`
   - Supabase REST adapter for quote-ops rows
   - support for both legacy JWT `service_role` keys and new opaque `sb_secret_*` keys
+- `lib/supabase-admin-staff.js`
+  - Supabase REST adapter for staff rows and assignment rows
+  - support for both legacy JWT `service_role` keys and new opaque `sb_secret_*` keys
 - `supabase/quote_ops_schema.sql`
   - schema for `quote_ops_entries`
+- `supabase/admin_staff_schema.sql`
+  - schema for `admin_staff` and `admin_staff_assignments`
 
 ## Static Content And Assets
 - `routes.json`
@@ -98,6 +104,7 @@
 - `PROJECT_KNOWLEDGE.md`
 - `docs/system/*`
 - `test/admin-auth.test.js`
+- `test/admin-staff-store.test.js`
 - `test/admin-route.test.js`
 - `test/admin-settings-store.test.js`
 - `test/leadconnector.test.js`
@@ -106,4 +113,5 @@
 - `test/quote-token.test.js`
 - `test/server-hardening.test.js`
 - `test/server-smoke.test.js`
+- `test/supabase-admin-staff.test.js`
 - `test/supabase-quote-ops.test.js`

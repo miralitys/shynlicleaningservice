@@ -396,6 +396,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     });
     const staffBody = await staffResponse.text();
     assert.equal(staffResponse.status, 200);
+    assert.match(staffBody, /data-admin-dialog-open="admin-staff-create-dialog"/);
+    assert.match(staffBody, /<dialog class="admin-dialog" id="admin-staff-create-dialog"/);
     assert.match(staffBody, /Olga Stone/);
     assert.match(staffBody, /Team Lead/);
     assert.match(staffBody, /Jane Doe/);
@@ -690,7 +692,7 @@ test("shows recent quote submissions in admin quote ops, exports CSV, and retrie
   }
 });
 
-test("keeps storage diagnostics hidden on admin orders when Supabase falls back to memory", async () => {
+test("shows a persistent storage warning on admin orders when Supabase falls back to memory", async () => {
   const fetchStub = createFetchStub([
     {
       method: "GET",
@@ -768,9 +770,8 @@ test("keeps storage diagnostics hidden on admin orders when Supabase falls back 
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Storage Warning/);
-    assert.doesNotMatch(ordersBody, /Persistent storage active/i);
-    assert.doesNotMatch(ordersBody, /локальный fallback/i);
-    assert.doesNotMatch(ordersBody, /quote_ops_entries/i);
+    assert.match(ordersBody, /локальный fallback/i);
+    assert.match(ordersBody, /quote_ops_entries does not exist/i);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -854,12 +855,25 @@ test("renders the clients table with filters and request history", async () => {
 
     assert.equal(clientsResponse.status, 200);
     assert.match(clientsBody, /База клиентов/i);
-    assert.match(clientsBody, /Последняя заявка/i);
-    assert.match(clientsBody, /Сумма заказов/i);
     assert.match(clientsBody, /Jane Doe/);
     assert.match(clientsBody, /John Smith/);
-    assert.match(clientsBody, /client-request-2/);
     assert.match(clientsBody, /client-request-3/);
+    assert.match(clientsBody, /Фильтры/i);
+    assert.match(clientsBody, /Поиск по имени, email или телефону/i);
+    assert.match(clientsBody, /Нажмите на имя клиента, чтобы открыть карточку/i);
+    assert.doesNotMatch(clientsBody, /Карточка клиента/i);
+
+    const selectedClientResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com&client=jane%40example.com`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const selectedClientBody = await selectedClientResponse.text();
+    assert.equal(selectedClientResponse.status, 200);
+    assert.match(selectedClientBody, /Карточка клиента/i);
+    assert.match(selectedClientBody, /Сумма заказов/i);
+    assert.match(selectedClientBody, /client-request-2/);
+    assert.match(selectedClientBody, /client-request-3/);
 
     const nameFilterResponse = await fetch(`${started.baseUrl}/admin/clients?name=John`, {
       headers: {
@@ -871,6 +885,17 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(nameFilterBody, /John Smith/);
     assert.doesNotMatch(nameFilterBody, /Jane Doe/);
 
+    const qSearchResponse = await fetch(`${started.baseUrl}/admin/clients?q=3125550109`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const qSearchBody = await qSearchResponse.text();
+    assert.equal(qSearchResponse.status, 200);
+    assert.match(qSearchBody, /John Smith/);
+    assert.doesNotMatch(qSearchBody, /Jane Doe/);
+    assert.doesNotMatch(qSearchBody, /Карточка клиента/i);
+
     const emailFilterResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -881,6 +906,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(emailFilterBody, /Jane Doe/);
     assert.match(emailFilterBody, /client-request-2/);
     assert.match(emailFilterBody, /client-request-3/);
+    assert.doesNotMatch(emailFilterBody, /Карточка клиента/i);
     assert.doesNotMatch(emailFilterBody, /John Smith/);
 
     const phoneFilterResponse = await fetch(`${started.baseUrl}/admin/clients?phone=3125550109`, {
@@ -893,7 +919,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(phoneFilterBody, /John Smith/);
     assert.doesNotMatch(phoneFilterBody, /Jane Doe/);
 
-    const deleteSourceResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com`, {
+    const deleteSourceResponse = await fetch(`${started.baseUrl}/admin/clients?email=jane@example.com&client=jane%40example.com`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -969,7 +995,7 @@ test("renders the clients table with filters and request history", async () => {
   }
 });
 
-test("keeps quote ops diagnostics hidden when Supabase reads fail on the clients page", async () => {
+test("shows quote ops diagnostics when Supabase reads fail on the clients page", async () => {
   const fetchStub = createFetchStub([
     {
       method: "GET",
@@ -1000,10 +1026,10 @@ test("keeps quote ops diagnostics hidden when Supabase reads fail on the clients
     const body = await response.text();
 
     assert.equal(response.status, 200);
-    assert.doesNotMatch(body, /Supabase/i);
-    assert.doesNotMatch(body, /Чтение: fallback в память/i);
-    assert.doesNotMatch(body, /Ошибка чтения Supabase/i);
-    assert.doesNotMatch(body, /quote_ops_entries/i);
+    assert.match(body, /Supabase/i);
+    assert.match(body, /Чтение: fallback в память/i);
+    assert.match(body, /Ошибка чтения Supabase: supabase read failed/i);
+    assert.match(body, /quote_ops_entries/i);
   } finally {
     await stopServer(started.child);
   }

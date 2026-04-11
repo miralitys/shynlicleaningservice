@@ -33,7 +33,9 @@
 1. User opens `/admin/staff`.
 2. Server combines quote-op entries with the staff snapshot from `lib/admin-staff-store.js`.
 3. Domain helpers derive planning cards, assignment state, schedule labels, and upcoming workload.
-4. Staff edits and assignment changes are persisted to `data/admin-staff-store.json` unless an override path is configured.
+4. Staff edits and assignment changes are persisted through `lib/admin-staff-store.js`.
+5. If Supabase staff env is configured, the store reads/writes through `lib/supabase-admin-staff.js`.
+6. If Supabase staff env is not configured, the store falls back to `data/admin-staff-store.json` unless an override path is configured.
 
 ## Quote Submission
 1. User completes `/quote` and submits the final form after consent.
