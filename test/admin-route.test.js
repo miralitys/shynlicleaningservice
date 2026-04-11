@@ -623,6 +623,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /admin-compact-summary-strip/);
     assert.match(ordersBody, /Ближайшие выезды/);
     assert.match(ordersBody, /admin-orders-filter-inline-panel/);
+    assert.match(ordersBody, /data-admin-dialog-row="true"/);
+    assert.match(ordersBody, /class="admin-table-row-clickable"/);
     assert.doesNotMatch(ordersBody, /admin-kicker">Заказы</);
     assert.doesNotMatch(ordersBody, /admin-card-eyebrow">Заказы</);
     assert.match(ordersBody, /Поля из формы клиента/);
