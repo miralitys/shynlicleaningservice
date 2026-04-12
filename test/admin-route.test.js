@@ -1635,6 +1635,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /name="addressHomeProfiles"/i);
     assert.match(selectedClientDialog, /name="addressPets"/i);
     assert.match(selectedClientDialog, /name="addressNotes"/i);
+    assert.match(selectedClientDialog, /data-admin-client-address-remove="true"/i);
     assert.match(selectedClientDialog, /Добавить адрес/i);
     assert.match(selectedClientDialog, /Параметры адреса/i);
     assert.match(selectedClientDialog, /Редактирование клиента/i);
@@ -1830,6 +1831,81 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(napervilleClientDialog, /Key at front desk\. Alarm code 4455\./i);
     assert.match(napervilleClientDialog, /По этому адресу пока нет заявок/i);
     assert.doesNotMatch(napervilleClientDialog, /Сводка по активной заявке/i);
+
+    const removeAddressForm = new URLSearchParams({
+      action: "update-client",
+      clientKey: currentJaneClientKey,
+      returnTo: `/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}&addressKey=${encodeURIComponent(romeovilleAddressKey)}`,
+      name: "Jane Cooper",
+      phone: "+1(312)555-0111",
+      email: "jane.cooper@example.com",
+    });
+    [
+      {
+        address: "123 Main St, Romeoville, IL 60446",
+        propertyType: "house",
+        homeProfile: "2400 sq ft / 4 комнаты",
+        pets: "dog",
+        notes: "Gate code 1942. Use hypoallergenic products.",
+      },
+      {
+        address: "500 River Rd, Naperville, IL 60540",
+        propertyType: "office",
+        homeProfile: "1200 sq ft / 5 rooms",
+        pets: "none",
+        notes: "Key at front desk. Alarm code 4455.",
+      },
+      {
+        address: bolingbrookAddress,
+        propertyType: "airbnb",
+        homeProfile: "1800 sq ft / 3 bedrooms",
+        pets: "none",
+        notes: "Lockbox on left rail.",
+      },
+    ].forEach((addressRecord) => {
+      removeAddressForm.append("addresses", addressRecord.address);
+      removeAddressForm.append("addressPropertyTypes", addressRecord.propertyType);
+      removeAddressForm.append("addressHomeProfiles", addressRecord.homeProfile);
+      removeAddressForm.append("addressPets", addressRecord.pets);
+      removeAddressForm.append("addressNotes", addressRecord.notes);
+    });
+
+    const removeAddressResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: removeAddressForm,
+    });
+    assert.equal(removeAddressResponse.status, 303);
+    assert.match(removeAddressResponse.headers.get("location") || "", /notice=client-saved/);
+
+    const removedAddressPageResponse = await fetch(`${started.baseUrl}${removeAddressResponse.headers.get("location") || ""}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const removedAddressPageBody = await removedAddressPageResponse.text();
+    const removedAddressDialog = removedAddressPageBody.match(
+      /<dialog[\s\S]*?id="admin-client-detail-dialog"[\s\S]*?<\/dialog>/
+    )?.[0];
+    assert.equal(removedAddressPageResponse.status, 200);
+    assert.ok(removedAddressDialog);
+    assert.doesNotMatch(removedAddressDialog, /789 Cedar Ln, Plainfield, IL 60544/i);
+    assert.match(removedAddressDialog, /123 Main St, Romeoville, IL 60446/i);
+    assert.match(removedAddressDialog, /500 River Rd, Naperville, IL 60540/i);
+
+    const removedAddressTableResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const removedAddressTableBody = await removedAddressTableResponse.text();
+    assert.equal(removedAddressTableResponse.status, 200);
+    assert.doesNotMatch(removedAddressTableBody, /789 Cedar Ln, Plainfield, IL 60544/i);
+    assert.match(removedAddressTableBody, /500 River Rd, Naperville, IL 60540/i);
 
     const deleteClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
       method: "POST",
