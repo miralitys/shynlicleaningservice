@@ -319,6 +319,8 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.match(settingsBody, /admin-settings-section-stack/);
     assert.match(settingsBody, /data-admin-dialog-row="true"/);
     assert.match(settingsBody, /Редактировать/i);
+    assert.match(settingsBody, /aria-label="Редактировать чек-лист"/i);
+    assert.match(settingsBody, /class="admin-icon-button admin-edit-button"/);
     assert.match(settingsBody, /Регулярная уборка/i);
     assert.match(settingsBody, /Генеральная уборка/i);
     assert.match(settingsBody, /Уборка перед переездом/i);
