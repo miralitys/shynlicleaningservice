@@ -1011,6 +1011,7 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
 });
 
 test("shows recent quote submissions in admin quote ops and retries CRM sync", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-order-media-admin-"));
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -1035,6 +1036,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
   ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_ORDER_MEDIA_STORAGE_DIR: path.join(tempDir, "order-media"),
     GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
     GHL_CUSTOM_FIELDS_JSON: JSON.stringify({
@@ -1148,6 +1150,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /Please call on arrival/);
     assert.match(ordersBody, /Gate code 2040/);
     assert.match(ordersBody, /Команда не назначена/);
+    assert.match(ordersBody, /Отчёт клинера/);
+    assert.match(ordersBody, /Фото до/);
+    assert.match(ordersBody, /Фото после/);
+    assert.match(ordersBody, /Комментарий клинера/);
     assert.doesNotMatch(ordersBody, /Команда назначена/);
     assert.doesNotMatch(ordersBody, /CRM без ошибок/);
     assert.doesNotMatch(ordersBody, /Успешно/);
@@ -1173,6 +1179,26 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /data-admin-picker-trigger="time"/);
     assert.match(focusedOrderBody, /type="date"/);
     assert.match(focusedOrderBody, /type="time"/);
+
+    const completionFormData = new FormData();
+    completionFormData.set("action", "save-order-completion");
+    completionFormData.set("entryId", entryId);
+    completionFormData.set("returnTo", "/admin/orders");
+    completionFormData.set("cleanerComment", "Cleaner finished successfully.\nKitchen cabinets needed extra attention.");
+    completionFormData.append("beforePhotos", new File([Buffer.from("before-image-1")], "before-one.jpg", { type: "image/jpeg" }));
+    completionFormData.append("beforePhotos", new File([Buffer.from("before-image-2")], "before-two.jpg", { type: "image/jpeg" }));
+    completionFormData.append("afterPhotos", new File([Buffer.from("after-image-1")], "after-one.jpg", { type: "image/jpeg" }));
+
+    const saveCompletionResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: completionFormData,
+    });
+    assert.equal(saveCompletionResponse.status, 303);
+    assert.match(saveCompletionResponse.headers.get("location") || "", /notice=completion-saved/);
 
     const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -1206,6 +1232,24 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /Monthly/);
     assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
+    assert.match(updatedOrdersBody, /Cleaner finished successfully/);
+    assert.match(updatedOrdersBody, /Kitchen cabinets needed extra attention/);
+    const mediaMatches = Array.from(
+      updatedOrdersBody.matchAll(new RegExp(`/admin/orders\\?media=1&amp;entryId=${escapeRegex(entryId)}&amp;asset=([^"&]+)`, "g"))
+    );
+    assert.equal(mediaMatches.length, 6);
+
+    const mediaResponse = await fetch(
+      `${started.baseUrl}/admin/orders?media=1&entryId=${encodeURIComponent(entryId)}&asset=${encodeURIComponent(mediaMatches[0][1])}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    assert.equal(mediaResponse.status, 200);
+    assert.equal(mediaResponse.headers.get("content-type"), "image/jpeg");
+    assert.equal(await mediaResponse.text(), "before-image-1");
 
     const quoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       headers: {
@@ -1321,6 +1365,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
@@ -2353,8 +2398,8 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const adminStaffAfterW9Body = await adminStaffAfterW9Response.text();
     assert.equal(adminStaffAfterW9Response.status, 200);
     assert.match(adminStaffAfterW9Body, /Налоговая форма сотрудника/i);
-    assert.match(adminStaffAfterW9Body, /admin-w9-preview-frame/i);
     assert.match(adminStaffAfterW9Body, /Открыть PDF/i);
+    assert.doesNotMatch(adminStaffAfterW9Body, /<iframe[^>]*admin-w9-preview-frame/i);
     assert.doesNotMatch(adminStaffAfterW9Body, /Отправить повторно/i);
 
     const adminW9DownloadResponse = await fetch(
@@ -2747,6 +2792,144 @@ test("keeps W-9 reminder on the employee flow even for manager-linked users", as
   } finally {
     await stopServer(started.child);
     await smtpServer.close();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("keeps admin users out of the staff workspace and skips W-9 flow", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-admin-no-w9-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const requestedW9Path = "/account?focus=w9#account-w9";
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Mila Admin",
+        role: "admin",
+        status: "active",
+        staffStatus: "active",
+        email: "mila.admin@example.com",
+        phone: "3125550190",
+        address: "12 Lake St, Aurora, IL 60504",
+        notes: "Admin should stay out of staff and W-9",
+        password: "AdminPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+
+    const staffPayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const usersPayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(staffPayload.staff.length, 1);
+    assert.equal(staffPayload.staff[0].role, "Админ");
+    const staffId = staffPayload.staff[0].id;
+    const userId = usersPayload.users[0].id;
+
+    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffPageResponse.text();
+    assert.equal(staffPageResponse.status, 200);
+    assert.match(staffPageBody, /Пока сотрудников нет/i);
+    assert.doesNotMatch(staffPageBody, /Mila Admin/i);
+    assert.doesNotMatch(staffPageBody, /mila\.admin@example\.com/i);
+
+    const resendResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "resend-staff-w9-reminder",
+        staffId,
+        userId,
+        staffName: "Mila Admin",
+      }),
+    });
+    assert.equal(resendResponse.status, 303);
+    assert.match(resendResponse.headers.get("location") || "", /notice=w9-reminder-admin/);
+
+    const resendNoticeResponse = await fetch(
+      `${started.baseUrl}${(resendResponse.headers.get("location") || "").replace(/#.*$/, "")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const resendNoticeBody = await resendNoticeResponse.text();
+    assert.equal(resendNoticeResponse.status, 200);
+    assert.match(resendNoticeBody, /Для админов W-9 не отправляется/i);
+
+    const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "mila.admin@example.com",
+        password: "AdminPass123!",
+        next: requestedW9Path,
+      }),
+    });
+    assert.equal(accountLoginResponse.status, 303);
+    assert.equal(accountLoginResponse.headers.get("location"), requestedW9Path);
+    const userSessionCookieValue = getCookieValue(
+      getSetCookies(accountLoginResponse),
+      "shynli_user_session"
+    );
+    assert.ok(userSessionCookieValue);
+
+    const accountDashboardResponse = await fetch(
+      `${started.baseUrl}${requestedW9Path.replace(/#.*$/, "")}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const accountDashboardBody = await accountDashboardResponse.text();
+    assert.equal(accountDashboardResponse.status, 200);
+    assert.doesNotMatch(accountDashboardBody, /id="account-w9"/i);
+    assert.doesNotMatch(accountDashboardBody, /Для завершения профиля заполните W-9/i);
+
+    const saveW9Response = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-w9",
+        w9LegalName: "Mila Admin",
+      }),
+    });
+    assert.equal(saveW9Response.status, 303);
+    assert.equal(saveW9Response.headers.get("location"), "/admin");
+  } finally {
+    await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });

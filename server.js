@@ -46,6 +46,7 @@ const {
   getMemoryUsageSnapshot,
   getPerfAlertReasons,
 } = require("./lib/runtime/perf");
+const { createAdminOrderMediaStorage } = require("./lib/admin-order-media-storage");
 let createSupabaseQuoteOpsClient;
 let loadSupabaseQuoteOpsConfig;
 try {
@@ -462,8 +463,10 @@ const {
   getFormValue,
   getFormValues,
   getRequestUrl,
+  parseMultipartFormBody,
   parseCookies,
   parseFormBody,
+  readBufferBody,
   readJsonBody,
   readTextBody,
   serializeCookie,
@@ -515,6 +518,7 @@ const {
   getAdminAuthState,
   getAdminCookieOptions,
   getAdminClientsFilters,
+  getEntryOrderCompletionData,
   getOrdersFilters,
   getQuoteOpsFilters,
   normalizeOrderStatus,
@@ -673,10 +677,14 @@ const handleAdminRequest = createAdminRequestHandler({
   getFormValue,
   getFormValues,
   getLeadConnectorClient,
+  getRequestUrl,
+  getEntryOrderCompletionData,
   getQuoteOpsFilters,
   normalizeString,
+  parseMultipartFormBody,
   parseCookies,
   parseFormBody,
+  readBufferBody,
   readTextBody,
   redirectWithTiming,
   serializeCookie,
@@ -880,6 +888,10 @@ async function main() {
     env: process.env,
     fetch: global.fetch,
   });
+  const orderMediaStorage = createAdminOrderMediaStorage({
+    env: process.env,
+    fetch: global.fetch,
+  });
   const googleCalendarClient = createAdminGoogleCalendarClient({
     env: process.env,
     fetch: global.fetch,
@@ -1038,6 +1050,7 @@ async function main() {
       usersStore,
       settingsStore,
       staffStore,
+      orderMediaStorage,
       accountInviteEmail,
     });
   });
