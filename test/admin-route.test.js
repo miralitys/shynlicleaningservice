@@ -2315,6 +2315,53 @@ test("updates linked user access role from the staff edit dialog", async () => {
   }
 });
 
+test("normalizes malformed stored staff phone values in the edit dialog", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-phone-render-route-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    await fs.writeFile(
+      staffStorePath,
+      `${JSON.stringify({
+        staff: [
+          {
+            id: "staff-phone-1",
+            name: "Sophia Reed",
+            role: "Cleaner",
+            status: "active",
+            phone: "+1(+1()630-)5550199",
+            email: "sophia.reed@example.com",
+            address: "1289 Pine St, Aurora, IL 60505",
+          },
+        ],
+        assignments: [],
+      }, null, 2)}\n`,
+      "utf8"
+    );
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const staffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffBody = await staffResponse.text();
+
+    assert.equal(staffResponse.status, 200);
+    assert.match(staffBody, /name="phone" value="\+1\(630\)555-0199"/);
+    assert.match(staffBody, /\+1\(630\)555-0199 • sophia\.reed@example\.com/);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("sends an invite email and requires confirmation before first employee login when email delivery is configured", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-account-invite-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
