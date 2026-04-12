@@ -1154,6 +1154,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /Фото до/);
     assert.match(ordersBody, /Фото после/);
     assert.match(ordersBody, /Комментарий клинера/);
+    assert.match(ordersBody, /name="paymentStatus"/);
+    assert.match(ordersBody, /name="paymentMethod"/);
     assert.doesNotMatch(ordersBody, /Команда назначена/);
     assert.doesNotMatch(ordersBody, /CRM без ошибок/);
     assert.doesNotMatch(ordersBody, /Успешно/);
@@ -1179,6 +1181,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /data-admin-picker-trigger="time"/);
     assert.match(focusedOrderBody, /type="date"/);
     assert.match(focusedOrderBody, /type="time"/);
+    assert.match(focusedOrderBody, /name="paymentStatus"/);
+    assert.match(focusedOrderBody, /<option value="unpaid" selected>Unpaid/);
+    assert.match(focusedOrderBody, /name="paymentMethod"/);
+    assert.match(focusedOrderBody, /<option value="" selected>Not set/);
 
     const completionFormData = new FormData();
     completionFormData.set("action", "save-order-completion");
@@ -1212,6 +1218,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
         returnTo: "/admin/orders",
         orderStatus: "rescheduled",
         assignedStaff: "Maria",
+        paymentStatus: "partial",
+        paymentMethod: "card",
         selectedDate: "2026-03-24",
         selectedTime: "11:30",
         frequency: "monthly",
@@ -1230,6 +1238,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /Rescheduled/);
     assert.match(updatedOrdersBody, /Maria/);
     assert.match(updatedOrdersBody, /Monthly/);
+    assert.match(updatedOrdersBody, /<option value="partial" selected>Partial/);
+    assert.match(updatedOrdersBody, /<option value="card" selected>Card/);
     assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
     assert.match(updatedOrdersBody, /Cleaner finished successfully/);
@@ -2377,7 +2387,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const accountW9PageBody = await accountW9PageResponse.text();
     assert.equal(accountW9PageResponse.status, 200);
     assert.match(accountW9PageBody, /W-9 сохранён/i);
-    assert.match(accountW9PageBody, /Скачать текущий PDF/i);
+    assert.match(accountW9PageBody, /Скачать PDF/i);
     assert.match(accountW9PageBody, /Tax classification/i);
     assert.match(accountW9PageBody, /\*\*\*-\*\*-6789/);
 
@@ -2388,6 +2398,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     assert.equal(accountW9DownloadResponse.status, 200);
     assert.equal(accountW9DownloadResponse.headers.get("content-type"), "application/pdf");
+    assert.match(accountW9DownloadResponse.headers.get("content-disposition") || "", /attachment;\s*filename=/i);
     assert.ok(Number(accountW9DownloadResponse.headers.get("content-length") || 0) > 0);
 
     const adminStaffAfterW9Response = await fetch(`${started.baseUrl}/admin/staff`, {
@@ -2398,7 +2409,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const adminStaffAfterW9Body = await adminStaffAfterW9Response.text();
     assert.equal(adminStaffAfterW9Response.status, 200);
     assert.match(adminStaffAfterW9Body, /Налоговая форма сотрудника/i);
-    assert.match(adminStaffAfterW9Body, /Открыть PDF/i);
+    assert.match(adminStaffAfterW9Body, /Скачать PDF/i);
     assert.doesNotMatch(adminStaffAfterW9Body, /<iframe[^>]*admin-w9-preview-frame/i);
     assert.doesNotMatch(adminStaffAfterW9Body, /Отправить повторно/i);
 
@@ -2412,6 +2423,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     );
     assert.equal(adminW9DownloadResponse.status, 200);
     assert.equal(adminW9DownloadResponse.headers.get("content-type"), "application/pdf");
+    assert.match(adminW9DownloadResponse.headers.get("content-disposition") || "", /attachment;\s*filename=/i);
     assert.equal(adminW9DownloadResponse.headers.get("x-frame-options"), "SAMEORIGIN");
     assert.match(
       adminW9DownloadResponse.headers.get("content-security-policy") || "",
