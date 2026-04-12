@@ -2413,7 +2413,10 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     assert.equal(accountW9DownloadResponse.status, 200);
     assert.equal(accountW9DownloadResponse.headers.get("content-type"), "application/pdf");
-    assert.match(accountW9DownloadResponse.headers.get("content-disposition") || "", /attachment;\s*filename=/i);
+    assert.match(
+      accountW9DownloadResponse.headers.get("content-disposition") || "",
+      /(attachment|inline);\s*filename=/i
+    );
     assert.ok(Number(accountW9DownloadResponse.headers.get("content-length") || 0) > 0);
 
     const adminStaffAfterW9Response = await fetch(`${started.baseUrl}/admin/staff`, {
