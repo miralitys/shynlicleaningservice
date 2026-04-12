@@ -5,6 +5,8 @@ create table if not exists public.admin_staff (
   phone text,
   email text,
   address text,
+  compensation_amount text,
+  compensation_type text check (compensation_type in ('fixed', 'percent')),
   status text not null check (status in ('active', 'inactive', 'on_leave')),
   notes text,
   calendar_connection jsonb,
@@ -24,6 +26,12 @@ create index if not exists admin_staff_email_idx
 
 alter table if exists public.admin_staff
   add column if not exists address text;
+
+alter table if exists public.admin_staff
+  add column if not exists compensation_amount text;
+
+alter table if exists public.admin_staff
+  add column if not exists compensation_type text;
 
 alter table if exists public.admin_staff
   add column if not exists calendar_connection jsonb;

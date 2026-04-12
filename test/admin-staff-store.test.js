@@ -67,6 +67,8 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
       role: "Team Lead",
       email: "anna@example.com",
       address: "215 North Elm Street, Naperville, IL",
+      compensationValue: "35",
+      compensationType: "percent",
       status: "active",
       calendar: {
         provider: "google",
@@ -113,6 +115,8 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
     assert.equal(snapshot.staff.length, 2);
     assert.equal(snapshot.assignments.length, 1);
     assert.equal(snapshot.staff[0].address, "215 North Elm Street, Naperville, IL");
+    assert.equal(snapshot.staff[0].compensationValue, "35");
+    assert.equal(snapshot.staff[0].compensationType, "percent");
     assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
     assert.deepEqual(snapshot.assignments[0].staffIds.sort(), [anna.id, olga.id].sort());
     assert.equal(
@@ -179,6 +183,8 @@ test("uses the Supabase-backed store implementation when the client is configure
     role: "Team Lead",
     email: "anna@example.com",
     address: "215 North Elm Street, Naperville, IL",
+    compensationValue: "150",
+    compensationType: "fixed",
     status: "active",
     calendar: {
       provider: "google",
@@ -225,6 +231,8 @@ test("uses the Supabase-backed store implementation when the client is configure
   assert.equal(snapshot.staff.length, 2);
   assert.equal(snapshot.assignments.length, 1);
   assert.equal(snapshot.assignments[0].status, "confirmed");
+  assert.equal(snapshot.staff[0].compensationValue, "150");
+  assert.equal(snapshot.staff[0].compensationType, "fixed");
   assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
   assert.equal(snapshot.assignments[0].calendarSync.google.byStaffId[anna.id].eventId, "evt-remote-1");
 
@@ -236,6 +244,8 @@ test("uses the Supabase-backed store implementation when the client is configure
 
   await store.updateStaff(diana.id, {
     address: "742 Cedar Avenue, Aurora, IL 60506",
+    compensationValue: "28.5",
+    compensationType: "percent",
     status: "on_leave",
     notes: "Needs a remote sync check",
     w9: {
@@ -258,6 +268,8 @@ test("uses the Supabase-backed store implementation when the client is configure
     },
   });
   snapshot = await store.getSnapshot();
+  assert.equal(snapshot.staff[0].compensationValue, "28.5");
+  assert.equal(snapshot.staff[0].compensationType, "percent");
   assert.equal(snapshot.staff[0].address, "742 Cedar Avenue, Aurora, IL 60506");
   assert.equal(snapshot.staff[0].status, "on_leave");
   assert.match(snapshot.staff[0].notes, /remote sync/i);

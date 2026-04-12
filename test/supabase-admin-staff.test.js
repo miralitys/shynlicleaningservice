@@ -135,6 +135,8 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
                     phone: "+1 (630) 555-0101",
                     email: "anna@example.com",
                     address: "215 North Elm Street, Naperville, IL",
+                    compensationValue: "32",
+                    compensationType: "percent",
                     status: "active",
                     notes: "Quote-ops fallback row",
                     w9: {
@@ -231,6 +233,8 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
   assert.equal(snapshot.staff.length, 1);
   assert.equal(snapshot.staff[0].name, "Anna Petrova");
   assert.equal(snapshot.staff[0].address, "215 North Elm Street, Naperville, IL");
+  assert.equal(snapshot.staff[0].compensationValue, "32");
+  assert.equal(snapshot.staff[0].compensationType, "percent");
   assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
   assert.equal(snapshot.staff[0].w9.maskedTin, "***-**-0101");
   assert.equal(snapshot.staff[0].w9.document.relativePath, `${staffId}/w9.pdf`);
@@ -282,6 +286,8 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
     email: "olga@example.com",
     phone: "+1 (630) 555-0102",
     address: "742 Cedar Avenue, Aurora, IL 60506",
+    compensationValue: "165",
+    compensationType: "fixed",
     status: "active",
     notes: "Remote fallback upsert",
     w9: {
@@ -327,6 +333,8 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
   assert.equal(payload.customer_name, "Olga Martinez");
   assert.equal(payload.full_address, "742 Cedar Avenue, Aurora, IL 60506");
   assert.equal(payload.code, "active");
+  assert.equal(payload.payload_for_retry.staff.compensationValue, "165");
+  assert.equal(payload.payload_for_retry.staff.compensationType, "fixed");
   assert.equal(payload.payload_for_retry.staff.address, "742 Cedar Avenue, Aurora, IL 60506");
   assert.equal(payload.payload_for_retry.staff.w9.document.fileName, "Olga-Martinez.pdf");
   assert.equal(payload.payload_for_retry.staff.calendar.accountEmail, "olga.cleaner@gmail.com");

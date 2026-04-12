@@ -448,6 +448,8 @@ test("creates staff members and assigns them to orders through the staff workspa
         phone: "13125550199123456789",
         email: "olga@example.com",
         address: "742 Cedar Avenue, Aurora, IL 60506",
+        compensationValue: "180",
+        compensationType: "fixed",
         status: "active",
         notes: "Prefers morning jobs",
       }),
@@ -468,6 +470,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /href="\/admin\/staff\?section=calendar&calendarStart=/);
     assert.match(staffBody, /href="\/admin\/staff\?section=assignments"/);
     assert.doesNotMatch(staffBody, /href="\/admin\/settings\?section=users"/);
+    assert.match(staffBody, /Оплата/i);
+    assert.match(staffBody, /\$180\.00/);
     assert.doesNotMatch(staffBody, />Добавить сотрудника</);
     assert.doesNotMatch(staffBody, /data-admin-dialog-open="admin-staff-create-dialog"/);
     assert.doesNotMatch(staffBody, /<dialog class="admin-dialog" id="admin-staff-create-dialog"/);
@@ -2129,6 +2133,10 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(settingsBody, /admin-settings-section-stack/);
     assert.match(settingsBody, /name="phone"[^>]*required/i);
     assert.match(settingsBody, /name="address"[^>]*required/i);
+    assert.match(settingsBody, /name="compensationValue"/i);
+    assert.match(settingsBody, /name="compensationType"/i);
+    assert.match(settingsBody, /Почта приглашений/i);
+    assert.ok(settingsBody.indexOf("admin-settings-users-table") < settingsBody.indexOf("Почта приглашений"));
     assert.doesNotMatch(settingsBody, /<th>Открыть<\/th>/i);
     assert.doesNotMatch(settingsBody, /Шаблоны чек-листов/i);
 
@@ -2171,6 +2179,8 @@ test("creates employee users in settings and serves a personal cabinet with assi
         email: "alina.staff@example.com",
         phone: "3125550101",
         address: "742 Cedar Avenue, Aurora, IL 60506",
+        compensationValue: "28",
+        compensationType: "percent",
         notes: "Assigned from settings test",
         password: "StrongPass123!",
       }),
@@ -2198,6 +2208,8 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(staffStorePayload.staff[0].name, "Alina Carter");
     assert.equal(staffStorePayload.staff[0].role, "Клинер");
     assert.equal(staffStorePayload.staff[0].address, "742 Cedar Avenue, Aurora, IL 60506");
+    assert.equal(staffStorePayload.staff[0].compensationValue, "28");
+    assert.equal(staffStorePayload.staff[0].compensationType, "percent");
 
     const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     assert.equal(usersStorePayload.users.length, 1);
@@ -3032,6 +3044,7 @@ test("allows managers into admin workspace but blocks delete actions", async () 
     assert.equal(settingsResponse.status, 200);
     assert.match(settingsBody, /Пользователи/i);
     assert.doesNotMatch(settingsBody, /aria-label="Удалить пользователя"/i);
+    assert.doesNotMatch(settingsBody, /Почта приглашений/i);
 
     const updateUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
       method: "POST",
@@ -3326,6 +3339,8 @@ test("updates linked user access role from the staff edit dialog", async () => {
         phone: "3125550144",
         email: "emily.cleaner@example.com",
         address: "215 North Elm Street, Naperville, IL 60540",
+        compensationValue: "32.5",
+        compensationType: "percent",
         status: "active",
         notes: "Promoted from staff dialog",
       }),
@@ -3339,6 +3354,8 @@ test("updates linked user access role from the staff edit dialog", async () => {
     assert.equal(updatedUsersStorePayload.users[0].phone, "+1(312)555-0144");
     assert.equal(updatedStaffStorePayload.staff[0].role, "Менеджер");
     assert.equal(updatedStaffStorePayload.staff[0].phone, "+1(312)555-0144");
+    assert.equal(updatedStaffStorePayload.staff[0].compensationValue, "32.5");
+    assert.equal(updatedStaffStorePayload.staff[0].compensationType, "percent");
 
     const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
       method: "POST",
