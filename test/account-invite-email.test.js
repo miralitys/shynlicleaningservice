@@ -87,7 +87,8 @@ test("builds W-9 reminder copy with optional account setup step", () => {
   assert.match(copy.text, /verify-email\?token=abc/);
   assert.match(copy.text, /account\/login/);
   assert.match(copy.html, /Complete your W-9/);
-  assert.match(copy.html, /Open employee account/);
+  assert.match(copy.html, /Open W-9 form/);
+  assert.doesNotMatch(copy.html, /Open employee account/);
 });
 
 test("sends invite email through SMTP relay", async () => {
