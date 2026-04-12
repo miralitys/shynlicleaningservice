@@ -528,8 +528,10 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /places_test_key/);
     assert.match(staffBody, /__adminGooglePlacesReady/);
     assert.match(staffBody, /data-admin-phone-input="true"/);
-    assert.match(staffBody, /maxlength="15"/);
-    assert.match(staffBody, /placeholder="\+1\(000\)000-0000"/);
+    assert.match(staffBody, /class="admin-phone-field"/);
+    assert.match(staffBody, /class="admin-phone-prefix" aria-hidden="true">\+1<\/span>/);
+    assert.match(staffBody, /maxlength="14"/);
+    assert.match(staffBody, /placeholder="\(000\) 000-0000"/);
     assert.match(staffBody, /aria-label="Удалить сотрудника"/);
     assert.doesNotMatch(staffBody, /Удаление очистит его назначения в графике/);
     assert.match(staffBody, /Olga Stone/);
@@ -2125,7 +2127,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(profilePageBody, /Профиль обновлён/i);
     assert.match(profilePageBody, /alina\.updated@example\.com/i);
     assert.match(profilePageBody, /\+1\(331\)555-0110/i);
-    assert.match(profilePageBody, /name="phone" value="\+1\(331\)555-0110"/i);
+    assert.match(profilePageBody, /name="phone" value="\(331\) 555-0110"/i);
 
     const usersAfterProfileSave = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     assert.equal(usersAfterProfileSave.users[0].email, "alina.updated@example.com");
@@ -2579,7 +2581,7 @@ test("normalizes malformed stored staff phone values in the edit dialog", async 
     const staffBody = await staffResponse.text();
 
     assert.equal(staffResponse.status, 200);
-    assert.match(staffBody, /name="phone" value="\+1\(630\)555-0199"/);
+    assert.match(staffBody, /name="phone" value="\(630\) 555-0199"/);
     assert.match(staffBody, /\+1\(630\)555-0199 • sophia\.reed@example\.com/);
   } finally {
     await stopServer(started.child);
@@ -2647,7 +2649,7 @@ test("normalizes malformed stored user phone values in settings edit forms", asy
     const settingsBody = await settingsResponse.text();
 
     assert.equal(settingsResponse.status, 200);
-    assert.match(settingsBody, /name="phone" value="\+1\(630\)555-0199"/);
+    assert.match(settingsBody, /name="phone" value="\(630\) 555-0199"/);
     assert.match(settingsBody, /\+1\(630\)555-0199/);
   } finally {
     await stopServer(started.child);
