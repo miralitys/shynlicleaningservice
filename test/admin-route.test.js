@@ -1957,6 +1957,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(profilePageBody, /Профиль обновлён/i);
     assert.match(profilePageBody, /alina\.updated@example\.com/i);
     assert.match(profilePageBody, /\+1\(331\)555-0110/i);
+    assert.match(profilePageBody, /name="phone" value="\+1\(331\)555-0110"/i);
 
     const usersAfterProfileSave = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     assert.equal(usersAfterProfileSave.users[0].email, "alina.updated@example.com");
@@ -2372,6 +2373,74 @@ test("normalizes malformed stored staff phone values in the edit dialog", async 
     assert.equal(staffResponse.status, 200);
     assert.match(staffBody, /name="phone" value="\+1\(630\)555-0199"/);
     assert.match(staffBody, /\+1\(630\)555-0199 • sophia\.reed@example\.com/);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("normalizes malformed stored user phone values in settings edit forms", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-settings-user-phone-render-route-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    await fs.writeFile(
+      staffStorePath,
+      `${JSON.stringify({
+        staff: [
+          {
+            id: "staff-user-phone-1",
+            name: "Sophia Reed",
+            role: "Cleaner",
+            status: "active",
+            phone: "+1(+1()630-)5550199",
+            email: "sophia.reed@example.com",
+            address: "1289 Pine St, Aurora, IL 60505",
+          },
+        ],
+        assignments: [],
+      }, null, 2)}\n`,
+      "utf8"
+    );
+    await fs.writeFile(
+      usersStorePath,
+      `${JSON.stringify({
+        users: [
+          {
+            id: "user-phone-1",
+            staffId: "staff-user-phone-1",
+            email: "sophia.reed@example.com",
+            phone: "+1(+1()630-)5550199",
+            passwordHash: hashPassword("StrongPass123!"),
+            status: "active",
+            role: "cleaner",
+            emailVerificationRequired: false,
+            emailVerifiedAt: new Date().toISOString(),
+          },
+        ],
+      }, null, 2)}\n`,
+      "utf8"
+    );
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=users`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const settingsBody = await settingsResponse.text();
+
+    assert.equal(settingsResponse.status, 200);
+    assert.match(settingsBody, /name="phone" value="\+1\(630\)555-0199"/);
+    assert.match(settingsBody, /\+1\(630\)555-0199/);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
