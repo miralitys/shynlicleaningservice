@@ -9,6 +9,38 @@ const assert = require("node:assert/strict");
 const { hashPassword } = require("../lib/admin-auth");
 const { createAdminUsersStore } = require("../lib/admin-users-store");
 
+function cloneSnapshot(snapshot) {
+  return JSON.parse(JSON.stringify(snapshot));
+}
+
+function createSupabaseAdminUsersClientStub() {
+  const state = {
+    users: [],
+  };
+
+  return {
+    isConfigured() {
+      return true;
+    },
+    async fetchSnapshot() {
+      return cloneSnapshot(state);
+    },
+    async upsertUser(record) {
+      const index = state.users.findIndex((candidate) => candidate.id === record.id);
+      if (index === -1) {
+        state.users.push(cloneSnapshot(record));
+      } else {
+        state.users[index] = cloneSnapshot(record);
+      }
+      return cloneSnapshot(record);
+    },
+    async deleteUser(userId) {
+      state.users = state.users.filter((record) => record.id !== userId);
+      return true;
+    },
+  };
+}
+
 test("stores user accounts for employee portals", async () => {
   const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "shynli-users-store-"));
   const storePath = path.join(tempDir, "admin-users-store.json");
@@ -95,4 +127,58 @@ test("stores user accounts for employee portals", async () => {
   } finally {
     await fsp.rm(tempDir, { recursive: true, force: true });
   }
+});
+
+test("uses the Supabase-backed users store when the client is configured", async () => {
+  const supabaseClient = createSupabaseAdminUsersClientStub();
+  const store = createAdminUsersStore({
+    createSupabaseAdminUsersClient() {
+      return supabaseClient;
+    },
+  });
+
+  assert.equal(store.mode, "supabase");
+
+  const user = await store.createUser({
+    staffId: "staff-anna",
+    email: "anna@example.com",
+    phone: "+1(312)555-0199",
+    passwordHash: hashPassword("StrongPassword123!"),
+    status: "active",
+    role: "manager",
+    emailVerificationRequired: true,
+    inviteEmailSentAt: "2026-04-11T12:00:00.000Z",
+  });
+
+  assert.equal(user.email, "anna@example.com");
+  assert.equal(user.role, "manager");
+  assert.equal("passwordHash" in user, false);
+
+  const found = await store.findUserByEmail("anna@example.com", { includeSecret: true });
+  assert.ok(found);
+  assert.match(found.passwordHash, /^scrypt\$/);
+  assert.equal(found.emailVerificationRequired, true);
+
+  const updated = await store.updateUser(user.id, {
+    email: "anna.peterson@example.com",
+    role: "admin",
+    inviteEmailLastError: "SMTP rejected the relay credentials.",
+  });
+
+  assert.equal(updated.email, "anna.peterson@example.com");
+  assert.equal(updated.role, "admin");
+  assert.equal(updated.inviteEmailLastError, "SMTP rejected the relay credentials.");
+
+  const afterLogin = await store.recordLogin(user.id);
+  assert.ok(afterLogin.lastLoginAt);
+
+  const snapshot = await store.getSnapshot();
+  assert.equal(snapshot.users.length, 1);
+  assert.equal(snapshot.users[0].email, "anna.peterson@example.com");
+
+  const deleted = await store.deleteUser(user.id);
+  assert.equal(deleted.id, user.id);
+
+  const finalSnapshot = await store.getSnapshot();
+  assert.deepEqual(finalSnapshot, { users: [] });
 });

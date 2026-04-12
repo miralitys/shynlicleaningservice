@@ -48,8 +48,10 @@ selfhosted_site/
     quote-pricing.js
     quote-token.js
     rate-limit.js
+    supabase-admin-users.js
     supabase-quote-ops.js
   supabase/
+    admin_users_schema.sql
     admin_staff_schema.sql
     quote_ops_schema.sql
   scripts/

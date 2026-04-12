@@ -99,7 +99,7 @@ test("tracks diagnostics when Supabase write fails", async () => {
   assert.ok(diagnostics.lastWriteAt);
 });
 
-test("hides admin staff shadow rows from quote ops listings", () => {
+test("hides admin shadow rows from quote ops listings", () => {
   const entries = filterQuoteOpsEntries(
     [
       {
@@ -121,6 +121,13 @@ test("hides admin staff shadow rows from quote ops listings", () => {
         kind: "admin_staff_assignment",
         status: "success",
         customerName: "",
+        serviceType: "",
+      },
+      {
+        id: "entry-4",
+        kind: "admin_user_account",
+        status: "success",
+        customerName: "Hidden user row",
         serviceType: "",
       },
     ],

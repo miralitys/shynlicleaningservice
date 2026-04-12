@@ -66,11 +66,13 @@
   - `lib/quote-token.js`
   - `lib/rate-limit.js`
   - `lib/leadconnector.js`
+  - `lib/supabase-admin-users.js`
   - `lib/supabase-admin-staff.js`
   - `lib/supabase-quote-ops.js`
 - Ops and schema:
   - `render.yaml`
   - `CLOUDFLARE_EDGE_CACHE.md`
+  - `supabase/admin_users_schema.sql`
   - `supabase/admin_staff_schema.sql`
   - `supabase/quote_ops_schema.sql`
   - `scripts/optimize-images.sh`
@@ -217,7 +219,7 @@
   - `npm start`
 - Local tests:
   - `npm test`
-  - current status: `82/82` green
+- current status: `99/99` green
 - Important env:
   - `HOST`, `PORT`, `PUBLIC_SITE_ORIGIN`
   - `STRIPE_SECRET_KEY`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`
@@ -228,6 +230,7 @@
   - `QUOTE_SIGNING_SECRET`, `QUOTE_TOKEN_TTL_SECONDS`
   - `GHL_*`
   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_QUOTE_OPS_TABLE`
+  - `SUPABASE_ADMIN_USERS_TABLE`
   - `SUPABASE_ADMIN_STAFF_TABLE`, `SUPABASE_ADMIN_STAFF_ASSIGNMENTS_TABLE`
   - `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_MASTER_SECRET`, `ADMIN_TOTP_SECRET`
   - `ADMIN_SETTINGS_STORE_PATH`, `ADMIN_STAFF_STORE_PATH`

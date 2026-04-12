@@ -51,6 +51,12 @@ try {
 } catch (error) {
   createSupabaseAdminStaffClient = null;
 }
+let createSupabaseAdminUsersClient;
+try {
+  ({ createSupabaseAdminUsersClient } = require("./lib/supabase-admin-users"));
+} catch (error) {
+  createSupabaseAdminUsersClient = null;
+}
 let createLeadConnectorClient;
 let loadLeadConnectorConfig;
 try {
@@ -811,7 +817,11 @@ async function main() {
     normalizeString,
   });
   const settingsStore = createAdminSettingsStore();
-  const usersStore = createAdminUsersStore();
+  const usersStore = createAdminUsersStore({
+    createSupabaseAdminUsersClient,
+    env: process.env,
+    fetch: global.fetch,
+  });
   const staffStore = createAdminStaffStore({
     createSupabaseAdminStaffClient,
     env: process.env,

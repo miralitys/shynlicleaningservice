@@ -77,8 +77,13 @@
 - `lib/supabase-admin-staff.js`
   - Supabase REST adapter for staff rows and assignment rows
   - support for both legacy JWT `service_role` keys and new opaque `sb_secret_*` keys
+- `lib/supabase-admin-users.js`
+  - Supabase REST adapter for admin users rows
+  - falls back into hidden `quote_ops_entries` rows if `admin_users` is not created yet
 - `supabase/quote_ops_schema.sql`
   - schema for `quote_ops_entries`
+- `supabase/admin_users_schema.sql`
+  - schema for `admin_users`
 - `supabase/admin_staff_schema.sql`
   - schema for `admin_staff` and `admin_staff_assignments`
 
