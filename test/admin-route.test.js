@@ -1576,7 +1576,7 @@ test("renders the clients table with filters and request history", async () => {
       },
     });
     const clientsBody = await clientsResponse.text();
-    let currentJaneClientKey = "jane doe|jane@example.com|3125550100";
+    let currentJaneClientKey = "3125550100";
     const romeovilleAddressKey = "123 main st, romeoville, il 60446";
     const plainfieldAddressKey = "789 cedar ln, plainfield, il 60544";
     const napervilleAddressKey = "500 river rd, naperville, il 60540";
@@ -1624,7 +1624,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /Команда: Olga Stone/);
     assert.match(selectedClientDialog, /Редактировать/i);
     assert.match(selectedClientDialog, /name="action" value="update-client"/i);
-    assert.match(selectedClientDialog, /name="clientKey" value="jane doe\|jane@example\.com\|3125550100"/i);
+    assert.match(selectedClientDialog, /name="clientKey" value="3125550100"/i);
     assert.match(selectedClientDialog, /name="addresses"/i);
     assert.match(selectedClientDialog, /Редактирование клиента/i);
     assert.match(selectedClientDialog, /789 Cedar Ln, Plainfield, IL 60544/i);
@@ -1726,7 +1726,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updateClientLocation, /notice=client-saved/);
     const updatedClientUrl = new URL(updateClientLocation, started.baseUrl);
     currentJaneClientKey = updatedClientUrl.searchParams.get("client") || "";
-    assert.equal(currentJaneClientKey, "jane cooper|jane.cooper@example.com|3125550111");
+    assert.equal(currentJaneClientKey, "3125550111");
 
     const updatedClientResponse = await fetch(`${started.baseUrl}${updateClientLocation}`, {
       headers: {
