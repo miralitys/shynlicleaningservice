@@ -1622,13 +1622,14 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /Адреса клиента/i);
     assert.match(selectedClientDialog, /client-request-2/);
     assert.match(selectedClientDialog, /Команда: Olga Stone/);
-    assert.match(selectedClientDialog, /Редактировать/i);
+    assert.match(selectedClientDialog, /aria-label="Редактировать клиента"/i);
     assert.match(selectedClientDialog, /name="action" value="update-client"/i);
     assert.match(selectedClientDialog, /name="clientKey" value="3125550100"/i);
     assert.match(selectedClientDialog, /name="addresses"/i);
     assert.match(selectedClientDialog, /Добавить адрес/i);
     assert.match(selectedClientDialog, /Редактирование клиента/i);
     assert.match(selectedClientDialog, /789 Cedar Ln, Plainfield, IL 60544/i);
+    assert.doesNotMatch(selectedClientDialog, /Открыть заявки клиента/i);
     assert.doesNotMatch(selectedClientDialog, /delete-client/i);
     assert.doesNotMatch(selectedClientDialog, /admin-client-delete-form/i);
     assert.doesNotMatch(selectedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
