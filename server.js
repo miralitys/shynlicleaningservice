@@ -481,6 +481,7 @@ const adminSharedRenderers = createAdminSharedRenderers({
 });
 
 const {
+  applyClientEntryUpdates,
   applyOrderEntryUpdates,
   buildAdminQrMarkup,
   buildAdminRedirectPath,
@@ -842,6 +843,7 @@ async function main() {
   const eventLoopStats = createEventLoopStats({ roundNumber });
   const quoteOpsLedger = createQuoteOpsStoreModule({
     QUOTE_OPS_LEDGER_LIMIT,
+    applyClientEntryUpdates,
     applyOrderEntryUpdates,
     createSupabaseQuoteOpsClient,
     normalizeString,

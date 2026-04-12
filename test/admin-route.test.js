@@ -1576,7 +1576,7 @@ test("renders the clients table with filters and request history", async () => {
       },
     });
     const clientsBody = await clientsResponse.text();
-    const janeRomeovilleClientKey = "jane doe|123 main st, romeoville, il 60446";
+    let currentJaneClientKey = "jane doe|123 main st, romeoville, il 60446";
 
     assert.equal(clientsResponse.status, 200);
     assert.match(clientsBody, /<h1 class="admin-title">Клиенты<\/h1>/);
@@ -1596,7 +1596,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.equal((clientsBody.match(/>Jane Doe<\/a>/g) || []).length, 2);
 
     const selectedClientResponse = await fetch(
-      `${started.baseUrl}/admin/clients?client=${encodeURIComponent(janeRomeovilleClientKey)}`,
+      `${started.baseUrl}/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}`,
       {
         headers: {
           cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -1618,10 +1618,12 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /client-request-2/);
     assert.match(selectedClientDialog, /Команда: Olga Stone/);
     assert.match(selectedClientDialog, /Редактировать/i);
-    assert.match(selectedClientDialog, /<a class="admin-button" href="\/admin\/orders\?q=client-request-2&amp;order=/i);
-    assert.match(selectedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
+    assert.match(selectedClientDialog, /name="action" value="update-client"/i);
+    assert.match(selectedClientDialog, /name="clientKey" value="jane doe\|123 main st, romeoville, il 60446"/i);
+    assert.match(selectedClientDialog, /Редактирование клиента/i);
     assert.doesNotMatch(selectedClientDialog, /delete-client/i);
     assert.doesNotMatch(selectedClientDialog, /admin-client-delete-form/i);
+    assert.doesNotMatch(selectedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
     assert.doesNotMatch(selectedClientDialog, /<h3 class="admin-subsection-title">Контакты<\/h3>/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100[\s\S]*jane@example\.com[\s\S]*123 Main St, Romeoville, IL 60446/i);
@@ -1674,6 +1676,48 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(phoneFilterBody, /John Smith/);
     assert.doesNotMatch(phoneFilterBody, /Jane Doe/);
 
+    const updateClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update-client",
+        clientKey: currentJaneClientKey,
+        returnTo: `/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}`,
+        name: "Jane Cooper",
+        phone: "+1(312)555-0111",
+        email: "jane.cooper@example.com",
+        address: "500 River Rd, Naperville, IL 60540",
+      }),
+    });
+    assert.equal(updateClientResponse.status, 303);
+    const updateClientLocation = updateClientResponse.headers.get("location") || "";
+    assert.match(updateClientLocation, /notice=client-saved/);
+    const updatedClientUrl = new URL(updateClientLocation, started.baseUrl);
+    currentJaneClientKey = updatedClientUrl.searchParams.get("client") || "";
+    assert.equal(currentJaneClientKey, "jane cooper|500 river rd, naperville, il 60540");
+
+    const updatedClientResponse = await fetch(`${started.baseUrl}${updateClientLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const updatedClientBody = await updatedClientResponse.text();
+    const updatedClientDialog = updatedClientBody.match(
+      /<dialog[\s\S]*?id="admin-client-detail-dialog"[\s\S]*?<\/dialog>/
+    )?.[0];
+    assert.equal(updatedClientResponse.status, 200);
+    assert.ok(updatedClientDialog);
+    assert.match(updatedClientBody, /Карточка клиента обновлена/i);
+    assert.match(updatedClientDialog, /Jane Cooper/);
+    assert.match(updatedClientDialog, /\+1\(312\)555-0111/);
+    assert.match(updatedClientDialog, /jane\.cooper@example\.com/i);
+    assert.match(updatedClientDialog, /500 River Rd, Naperville, IL 60540/);
+    assert.doesNotMatch(updatedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
+
     const deleteClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
       method: "POST",
       redirect: "manual",
@@ -1683,8 +1727,8 @@ test("renders the clients table with filters and request history", async () => {
       },
       body: new URLSearchParams({
         action: "delete-client",
-        clientKey: janeRomeovilleClientKey,
-        returnTo: `/admin/clients?client=${encodeURIComponent(janeRomeovilleClientKey)}`,
+        clientKey: currentJaneClientKey,
+        returnTo: `/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}`,
       }),
     });
     assert.equal(deleteClientResponse.status, 303);
