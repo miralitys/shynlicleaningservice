@@ -2211,6 +2211,110 @@ test("shows a readable SMTP invite error in the users settings page", async () =
   }
 });
 
+test("updates linked user access role from the staff edit dialog", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-role-edit-route-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Emily Stone",
+        staffRole: "Cleaner",
+        role: "cleaner",
+        status: "active",
+        staffStatus: "active",
+        email: "emily.cleaner@example.com",
+        phone: "3125550144",
+        address: "215 North Elm Street, Naperville, IL 60540",
+        notes: "Can be promoted from staff dialog",
+        password: "CleanerPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+
+    const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const staffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const user = usersStorePayload.users[0];
+    const staff = staffStorePayload.staff[0];
+    assert.equal(user.role, "cleaner");
+    assert.equal(staff.role, "Cleaner");
+
+    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffPageResponse.text();
+    assert.equal(staffPageResponse.status, 200);
+    assert.match(staffPageBody, /name="userRole"/i);
+    assert.match(staffPageBody, /<option value="cleaner" selected>Клинер<\/option>/i);
+    assert.match(staffPageBody, /name="staffRole"/i);
+
+    const updateStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update-staff",
+        staffId: staff.id,
+        userId: user.id,
+        name: "Emily Stone",
+        staffRole: "Operations Lead",
+        userRole: "manager",
+        phone: "3125550144",
+        email: "emily.cleaner@example.com",
+        address: "215 North Elm Street, Naperville, IL 60540",
+        status: "active",
+        notes: "Promoted from staff dialog",
+      }),
+    });
+    assert.equal(updateStaffResponse.status, 303);
+    assert.match(updateStaffResponse.headers.get("location") || "", /notice=staff-updated/);
+
+    const updatedUsersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const updatedStaffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(updatedUsersStorePayload.users[0].role, "manager");
+    assert.equal(updatedStaffStorePayload.staff[0].role, "Operations Lead");
+
+    const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "emily.cleaner@example.com",
+        password: "CleanerPass123!",
+      }),
+    });
+    assert.equal(accountLoginResponse.status, 303);
+    assert.equal(accountLoginResponse.headers.get("location"), "/admin");
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("sends an invite email and requires confirmation before first employee login when email delivery is configured", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-account-invite-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
