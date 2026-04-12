@@ -196,6 +196,7 @@ test("completes the admin login and TOTP verification flow", async () => {
     assert.equal(dashboardResponse.status, 200);
     assert.match(dashboardBody, /Обзор/i);
     assert.match(dashboardBody, /Выйти/i);
+    assert.match(dashboardBody, /admin-sidebar-logout-button/);
     assert.doesNotMatch(dashboardBody, /admin-topbar/i);
     assert.doesNotMatch(dashboardBody, /Вы вошли как/i);
 
