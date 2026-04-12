@@ -1626,6 +1626,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /name="action" value="update-client"/i);
     assert.match(selectedClientDialog, /name="clientKey" value="3125550100"/i);
     assert.match(selectedClientDialog, /name="addresses"/i);
+    assert.match(selectedClientDialog, /Добавить адрес/i);
     assert.match(selectedClientDialog, /Редактирование клиента/i);
     assert.match(selectedClientDialog, /789 Cedar Ln, Plainfield, IL 60544/i);
     assert.doesNotMatch(selectedClientDialog, /delete-client/i);
