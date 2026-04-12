@@ -1201,6 +1201,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /Быстро найти нужную заявку/);
     assert.match(quoteOpsBody, /Все заявки/);
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
+    assert.match(quoteOpsBody, /\.admin-quote-success-table\s*\{[\s\S]*min-width: 1380px;/);
     assert.match(quoteOpsBody, /data-admin-auto-submit="true"/);
     assert.match(quoteOpsBody, /data-admin-auto-submit-delay="320"/);
     const adminScriptMatch = quoteOpsBody.match(/<script>\s*\(\(\) => \{([\s\S]*?)\}\)\(\);\s*<\/script>/);
@@ -1224,6 +1225,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(quoteOpsBody, /CRM и отправка/);
     assert.doesNotMatch(quoteOpsBody, /<th>Действие<\/th>/);
     assert.doesNotMatch(quoteOpsBody, /<th>CRM<\/th>/);
+    assert.doesNotMatch(quoteOpsBody, /<colgroup>/);
     assert.doesNotMatch(quoteOpsBody, /Скачать CSV/);
     assert.doesNotMatch(quoteOpsBody, />Применить<\/button>/);
     assert.doesNotMatch(quoteOpsBody, /в текущей выборке/);
