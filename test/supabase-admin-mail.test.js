@@ -6,6 +6,7 @@ const assert = require("node:assert/strict");
 const {
   QUOTE_OPS_MAIL_KIND,
   createSupabaseAdminMailClient,
+  isIncompatibleSupabaseMailTableError,
   isOpaqueSupabaseApiKey,
 } = require("../lib/supabase-admin-mail");
 
@@ -34,6 +35,15 @@ test("detects new opaque Supabase API keys for admin mail persistence", () => {
   assert.equal(isOpaqueSupabaseApiKey("sb_secret_example123"), true);
   assert.equal(isOpaqueSupabaseApiKey("sb_publishable_example123"), true);
   assert.equal(isOpaqueSupabaseApiKey("legacy.jwt.token"), false);
+});
+
+test("treats uuid mismatch errors as a dedicated mail table incompatibility", () => {
+  assert.equal(
+    isIncompatibleSupabaseMailTableError(
+      new Error('invalid input syntax for type uuid: "invite-email"')
+    ),
+    true
+  );
 });
 
 test("falls back to quote_ops_entries rows when the dedicated mail table is missing", async () => {
@@ -139,4 +149,43 @@ test("writes admin mail rows into quote_ops_entries when the dedicated table is 
   assert.equal(payload.kind, QUOTE_OPS_MAIL_KIND);
   assert.equal(payload.customer_email, "relay@shynli.com");
   assert.equal(payload.payload_for_retry.connection.provider, "google-mail");
+});
+
+test("falls back to quote_ops_entries when the dedicated mail table uses an incompatible id type", async () => {
+  const calls = [];
+  const client = createSupabaseAdminMailClient({
+    env: {
+      SUPABASE_URL: "https://example.supabase.co",
+      SUPABASE_SERVICE_ROLE_KEY: "sb_secret_example123",
+      SUPABASE_QUOTE_OPS_TABLE: "quote_ops_entries",
+    },
+    fetch: async (url, options = {}) => {
+      calls.push({ url, options });
+      if (url.includes("/rest/v1/admin_mail_integrations")) {
+        return {
+          ok: false,
+          status: 400,
+          async text() {
+            return JSON.stringify({
+              message: 'invalid input syntax for type uuid: "invite-email"',
+            });
+          },
+        };
+      }
+      if (url.includes("/rest/v1/quote_ops_entries")) {
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return JSON.stringify([]);
+          },
+        };
+      }
+      throw new Error(`Unexpected request URL: ${url}`);
+    },
+  });
+
+  const snapshot = await client.fetchSnapshot();
+  assert.deepEqual(snapshot, { connection: null });
+  assert.ok(calls.some((call) => call.url.includes("/rest/v1/quote_ops_entries")));
 });
