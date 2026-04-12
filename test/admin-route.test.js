@@ -401,6 +401,18 @@ test("creates staff members and assigns them to orders through the staff workspa
     });
     assert.equal(quoteResponse.status, 201);
 
+    const secondQuoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "staff-request-2",
+      fullName: "Mary Pending",
+      phone: "312-555-0108",
+      email: "mary@example.com",
+      serviceType: "standard",
+      selectedDate: "2026-03-26",
+      selectedTime: "09:00",
+      fullAddress: "456 Oak Ave, Plainfield, IL 60544",
+    });
+    assert.equal(secondQuoteResponse.status, 201);
+
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
 
     const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
@@ -481,9 +493,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.ok(staffIdMatch);
     const staffId = staffIdMatch[1];
 
-    const entryIdMatch = staffBody.match(/name="entryId" value="([^"]+)"/);
-    assert.ok(entryIdMatch);
-    const entryId = entryIdMatch[1];
+    const entryId = getStaffAssignmentEntryIdByCustomerName(staffBody, "Jane Doe");
+    assert.ok(entryId);
 
     const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -539,6 +550,14 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(assignmentsSectionResponse.status, 200);
     assert.match(assignmentsSectionBody, /class="admin-table admin-staff-schedule-table"/);
     assert.doesNotMatch(assignmentsSectionBody, /class="admin-table admin-staff-table"/);
+    const assignmentsTable = assignmentsSectionBody.match(
+      /<table class="admin-table admin-staff-schedule-table">[\s\S]*?<\/table>/
+    )?.[0];
+    assert.ok(assignmentsTable);
+    assert.match(assignmentsTable, /Mary Pending/);
+    assert.match(assignmentsTable, /Jane Doe/);
+    assert.ok(assignmentsTable.indexOf("Mary Pending") < assignmentsTable.indexOf("Jane Doe"));
+    assert.match(assignmentsTable, /Mary Pending[\s\S]*Команда не назначена/i);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.staff.length, 1);
