@@ -130,6 +130,13 @@ test("hides admin shadow rows from quote ops listings", () => {
         customerName: "Hidden user row",
         serviceType: "",
       },
+      {
+        id: "entry-5",
+        kind: "admin_mail_integration",
+        status: "success",
+        customerName: "Hidden mail row",
+        serviceType: "",
+      },
     ],
     { limit: 10 },
     normalizeString

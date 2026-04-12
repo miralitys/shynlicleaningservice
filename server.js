@@ -9,6 +9,11 @@ const path = require("path");
 const { URL } = require("url");
 const accountAuth = require("./lib/account-auth");
 const { loadAccountInviteEmailConfig, sendAccountInviteEmail } = require("./lib/account-invite-email");
+const { createAdminMailStore } = require("./lib/admin-mail-store");
+const {
+  createAdminGoogleMailClient,
+  createAdminGoogleMailIntegration,
+} = require("./lib/admin-google-mail");
 const { createAccountRequestHandler } = require("./lib/account/handlers");
 const { createAccountRenderers } = require("./lib/account/render");
 const { createApiHandlers } = require("./lib/api/handlers");
@@ -56,6 +61,12 @@ try {
   ({ createSupabaseAdminUsersClient } = require("./lib/supabase-admin-users"));
 } catch (error) {
   createSupabaseAdminUsersClient = null;
+}
+let createSupabaseAdminMailClient;
+try {
+  ({ createSupabaseAdminMailClient } = require("./lib/supabase-admin-mail"));
+} catch (error) {
+  createSupabaseAdminMailClient = null;
 }
 let createLeadConnectorClient;
 let loadLeadConnectorConfig;
@@ -134,10 +145,12 @@ const ADMIN_CLIENTS_PATH = "/admin/clients";
 const ADMIN_ORDERS_PATH = "/admin/orders";
 const ADMIN_STAFF_PATH = "/admin/staff";
 const ADMIN_STAFF_GOOGLE_CONNECT_PATH = "/admin/staff/google/connect";
+const ADMIN_GOOGLE_MAIL_CONNECT_PATH = "/admin/google-mail/connect";
 const ADMIN_SETTINGS_PATH = "/admin/settings";
 const ADMIN_QUOTE_OPS_PATH = "/admin/quote-ops";
 const ADMIN_QUOTE_OPS_RETRY_PATH = "/admin/quote-ops/retry";
 const ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH = "/admin/google-calendar/callback";
+const ADMIN_GOOGLE_MAIL_CALLBACK_PATH = "/admin/google-mail/callback";
 const ADMIN_INTEGRATIONS_PATH = "/admin/integrations";
 const ADMIN_RUNTIME_PATH = "/admin/runtime";
 const ADMIN_SESSION_COOKIE = "shynli_admin_session";
@@ -158,7 +171,9 @@ const ADMIN_APP_ROUTES = new Set([
 const ADMIN_ALL_ROUTES = new Set([
   ...ADMIN_APP_ROUTES,
   ADMIN_STAFF_GOOGLE_CONNECT_PATH,
+  ADMIN_GOOGLE_MAIL_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
+  ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
   ADMIN_LOGIN_PATH,
   ADMIN_2FA_PATH,
@@ -216,6 +231,7 @@ const NOINDEX_ROUTES = new Set([
   "/oauth/callback",
   "/quote",
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
+  ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
 ]);
 const BREADCRUMB_LABELS = new Map([
   ["/about-us", "About Us"],
@@ -525,6 +541,7 @@ const adminPageRenderers = createAdminPageRenderers({
   ADMIN_CLIENTS_PATH,
   ADMIN_INTEGRATIONS_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
+  ADMIN_GOOGLE_MAIL_CONNECT_PATH,
   ADMIN_ORDERS_PATH,
   ADMIN_ROOT_PATH,
   ADMIN_RUNTIME_PATH,
@@ -575,6 +592,26 @@ const adminPageRenderers = createAdminPageRenderers({
   shared: adminSharedRenderers,
 });
 
+const accountInviteEmail = {
+  async getStatus() {
+    return {
+      configured: false,
+      activeProvider: "",
+      legacyConfigured: false,
+      legacyProvider: "",
+      legacyFromEmail: "",
+      legacyReplyToEmail: "",
+      googleConfigured: false,
+      googleConnected: false,
+      googleAccountEmail: "",
+      googleLastError: "",
+    };
+  },
+  async sendInvite() {
+    throw new Error("ACCOUNT_INVITE_EMAIL_NOT_CONFIGURED");
+  },
+};
+
 const handleAdminRequest = createAdminRequestHandler({
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_VERIFY_EMAIL_PATH,
@@ -583,6 +620,8 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_CHALLENGE_COOKIE,
   ADMIN_CLIENTS_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
+  ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
+  ADMIN_GOOGLE_MAIL_CONNECT_PATH,
   ADMIN_LOGIN_PATH,
   ADMIN_LOGOUT_PATH,
   ACCOUNT_LOGOUT_PATH,
@@ -601,18 +640,7 @@ const handleAdminRequest = createAdminRequestHandler({
   adminAuth,
   accountAuth,
   adminLoginRateLimiter,
-  accountInviteEmail: {
-    isConfigured() {
-      return loadAccountInviteEmailConfig(process.env).configured;
-    },
-    sendInvite(payload) {
-      return sendAccountInviteEmail({
-        ...payload,
-        env: process.env,
-        fetch: global.fetch,
-      });
-    },
-  },
+  accountInviteEmail,
   adminPageRenderers,
   adminSharedRenderers,
   adminTwoFactorRateLimiter,
@@ -822,6 +850,11 @@ async function main() {
     env: process.env,
     fetch: global.fetch,
   });
+  const mailStore = createAdminMailStore({
+    createSupabaseAdminMailClient,
+    env: process.env,
+    fetch: global.fetch,
+  });
   const staffStore = createAdminStaffStore({
     createSupabaseAdminStaffClient,
     env: process.env,
@@ -837,6 +870,66 @@ async function main() {
     quoteOpsLedger,
     staffStore,
   });
+  const googleMailClient = createAdminGoogleMailClient({
+    env: process.env,
+    fetch: global.fetch,
+    siteOrigin: SITE_ORIGIN,
+  });
+  const googleMailIntegration = createAdminGoogleMailIntegration({
+    client: googleMailClient,
+    mailStore,
+  });
+
+  accountInviteEmail.getStatus = async function getStatus(config = {}) {
+    const legacyConfig = loadAccountInviteEmailConfig(process.env);
+    const googleStatus =
+      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
+        ? await googleMailIntegration.getStatus(config)
+        : {
+            configured: false,
+            connected: false,
+            provider: "",
+            accountEmail: "",
+            lastError: "",
+            connection: null,
+          };
+
+    return {
+      configured: Boolean(
+        legacyConfig.configured || (googleStatus && googleStatus.connected)
+      ),
+      activeProvider: googleStatus && googleStatus.connected ? "google-mail" : legacyConfig.provider,
+      legacyConfigured: legacyConfig.configured,
+      legacyProvider: legacyConfig.provider,
+      legacyFromEmail: legacyConfig.fromEmail || "",
+      legacyReplyToEmail: legacyConfig.replyToEmail || "",
+      googleConfigured: Boolean(googleStatus && googleStatus.configured),
+      googleConnected: Boolean(googleStatus && googleStatus.connected),
+      googleAccountEmail: googleStatus && googleStatus.accountEmail ? googleStatus.accountEmail : "",
+      googleLastError: googleStatus && googleStatus.lastError ? googleStatus.lastError : "",
+    };
+  };
+
+  accountInviteEmail.sendInvite = async function sendInvite(payload, config = {}) {
+    const legacyConfig = loadAccountInviteEmailConfig(process.env);
+    const googleStatus =
+      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
+        ? await googleMailIntegration.getStatus(config)
+        : null;
+
+    if (googleStatus && googleStatus.connected) {
+      return googleMailIntegration.sendInviteEmail(payload, config, {
+        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+        replyToEmail: legacyConfig.replyToEmail || "",
+      });
+    }
+
+    return sendAccountInviteEmail({
+      ...payload,
+      env: process.env,
+      fetch: global.fetch,
+    });
+  };
 
   const perfSummaryTimer = setInterval(() => {
     const requestSnapshot = requestPerfWindow.snapshot();
@@ -895,6 +988,7 @@ async function main() {
 
     await handleSiteRequest(req, res, requestStartNs, requestContext, requestLogger, {
       eventLoopStats,
+      googleMailIntegration,
       htmlCache,
       googleCalendarIntegration,
       quoteOpsLedger,
@@ -903,11 +997,7 @@ async function main() {
       usersStore,
       settingsStore,
       staffStore,
-      accountInviteEmail: {
-        isConfigured() {
-          return loadAccountInviteEmailConfig(process.env).configured;
-        },
-      },
+      accountInviteEmail,
     });
   });
 
