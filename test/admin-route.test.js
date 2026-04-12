@@ -1632,7 +1632,8 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /name="clientKey" value="3125550100"/i);
     assert.match(selectedClientDialog, /name="addresses"/i);
     assert.match(selectedClientDialog, /name="addressPropertyTypes"/i);
-    assert.match(selectedClientDialog, /name="addressHomeProfiles"/i);
+    assert.match(selectedClientDialog, /name="addressSquareFootages"/i);
+    assert.match(selectedClientDialog, /name="addressRoomCounts"/i);
     assert.match(selectedClientDialog, /name="addressPets"/i);
     assert.match(selectedClientDialog, /name="addressNotes"/i);
     assert.match(selectedClientDialog, /data-admin-client-address-remove="true"/i);
@@ -1725,35 +1726,40 @@ test("renders the clients table with filters and request history", async () => {
       {
         address: "123 Main St, Romeoville, IL 60446",
         propertyType: "house",
-        homeProfile: "2400 sq ft / 4 комнаты",
+        squareFootage: "2400 sq ft",
+        roomCount: "4 комнаты",
         pets: "dog",
         notes: "Gate code 1942. Use hypoallergenic products.",
       },
       {
         address: "789 Cedar Ln, Plainfield, IL 60544",
         propertyType: "apartment",
-        homeProfile: "2 bedrooms / 1 bath",
+        squareFootage: "2 bedrooms",
+        roomCount: "1 bath",
         pets: "cat",
         notes: "Do not touch nursery shelves.",
       },
       {
         address: "500 River Rd, Naperville, IL 60540",
         propertyType: "office",
-        homeProfile: "1200 sq ft / 5 rooms",
+        squareFootage: "1200 sq ft",
+        roomCount: "5 rooms",
         pets: "none",
         notes: "Key at front desk. Alarm code 4455.",
       },
       {
         address: bolingbrookAddress,
         propertyType: "airbnb",
-        homeProfile: "1800 sq ft / 3 bedrooms",
+        squareFootage: "1800 sq ft",
+        roomCount: "3 bedrooms",
         pets: "none",
         notes: "Lockbox on left rail.",
       },
     ].forEach((addressRecord) => {
       updateClientForm.append("addresses", addressRecord.address);
       updateClientForm.append("addressPropertyTypes", addressRecord.propertyType);
-      updateClientForm.append("addressHomeProfiles", addressRecord.homeProfile);
+      updateClientForm.append("addressSquareFootages", addressRecord.squareFootage);
+      updateClientForm.append("addressRoomCounts", addressRecord.roomCount);
       updateClientForm.append("addressPets", addressRecord.pets);
       updateClientForm.append("addressNotes", addressRecord.notes);
     });
@@ -1792,9 +1798,10 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updatedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.match(updatedClientDialog, /500 River Rd, Naperville, IL 60540/);
     assert.match(updatedClientDialog, /901 Harbor Way, Bolingbrook, IL 60440/);
-    assert.match(updatedClientDialog, /<span class="admin-client-info-label">Тип объекта<\/span>[\s\S]*?<p class="admin-client-info-value">Дом<\/p>/i);
-    assert.match(updatedClientDialog, /2400 sq ft \/ 4 комнаты/i);
-    assert.match(updatedClientDialog, /<span class="admin-client-info-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-info-value">Собака<\/p>/i);
+    assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Тип объекта<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Дом<\/p>/i);
+    assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Метраж<\/span>[\s\S]*?<p class="admin-client-address-fact-value">2400 sq ft<\/p>/i);
+    assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Комнаты<\/span>[\s\S]*?<p class="admin-client-address-fact-value">4 комнаты<\/p>/i);
+    assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Собака<\/p>/i);
     assert.match(updatedClientDialog, /Gate code 1942\. Use hypoallergenic products\./i);
     assert.doesNotMatch(updatedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
 
@@ -1825,9 +1832,10 @@ test("renders the clients table with filters and request history", async () => {
     assert.equal(napervilleClientResponse.status, 200);
     assert.ok(napervilleClientDialog);
     assert.match(napervilleClientDialog, /500 River Rd, Naperville, IL 60540/);
-    assert.match(napervilleClientDialog, /<span class="admin-client-info-label">Тип объекта<\/span>[\s\S]*?<p class="admin-client-info-value">Офис<\/p>/i);
-    assert.match(napervilleClientDialog, /1200 sq ft \/ 5 rooms/i);
-    assert.match(napervilleClientDialog, /<span class="admin-client-info-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-info-value">Нет<\/p>/i);
+    assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Тип объекта<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Офис<\/p>/i);
+    assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Метраж<\/span>[\s\S]*?<p class="admin-client-address-fact-value">1200 sq ft<\/p>/i);
+    assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Комнаты<\/span>[\s\S]*?<p class="admin-client-address-fact-value">5 rooms<\/p>/i);
+    assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Нет<\/p>/i);
     assert.match(napervilleClientDialog, /Key at front desk\. Alarm code 4455\./i);
     assert.match(napervilleClientDialog, /По этому адресу пока нет заявок/i);
     assert.doesNotMatch(napervilleClientDialog, /Сводка по активной заявке/i);
@@ -1844,28 +1852,32 @@ test("renders the clients table with filters and request history", async () => {
       {
         address: "123 Main St, Romeoville, IL 60446",
         propertyType: "house",
-        homeProfile: "2400 sq ft / 4 комнаты",
+        squareFootage: "2400 sq ft",
+        roomCount: "4 комнаты",
         pets: "dog",
         notes: "Gate code 1942. Use hypoallergenic products.",
       },
       {
         address: "500 River Rd, Naperville, IL 60540",
         propertyType: "office",
-        homeProfile: "1200 sq ft / 5 rooms",
+        squareFootage: "1200 sq ft",
+        roomCount: "5 rooms",
         pets: "none",
         notes: "Key at front desk. Alarm code 4455.",
       },
       {
         address: bolingbrookAddress,
         propertyType: "airbnb",
-        homeProfile: "1800 sq ft / 3 bedrooms",
+        squareFootage: "1800 sq ft",
+        roomCount: "3 bedrooms",
         pets: "none",
         notes: "Lockbox on left rail.",
       },
     ].forEach((addressRecord) => {
       removeAddressForm.append("addresses", addressRecord.address);
       removeAddressForm.append("addressPropertyTypes", addressRecord.propertyType);
-      removeAddressForm.append("addressHomeProfiles", addressRecord.homeProfile);
+      removeAddressForm.append("addressSquareFootages", addressRecord.squareFootage);
+      removeAddressForm.append("addressRoomCounts", addressRecord.roomCount);
       removeAddressForm.append("addressPets", addressRecord.pets);
       removeAddressForm.append("addressNotes", addressRecord.notes);
     });
