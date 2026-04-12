@@ -144,6 +144,7 @@ const ADMIN_LOGOUT_PATH = "/admin/logout";
 const ADMIN_CLIENTS_PATH = "/admin/clients";
 const ADMIN_ORDERS_PATH = "/admin/orders";
 const ADMIN_STAFF_PATH = "/admin/staff";
+const ADMIN_STAFF_W9_DOWNLOAD_PATH = "/admin/staff/w9";
 const ADMIN_STAFF_GOOGLE_CONNECT_PATH = "/admin/staff/google/connect";
 const ADMIN_GOOGLE_MAIL_CONNECT_PATH = "/admin/google-mail/connect";
 const ADMIN_SETTINGS_PATH = "/admin/settings";
@@ -156,6 +157,7 @@ const ADMIN_RUNTIME_PATH = "/admin/runtime";
 const ADMIN_SESSION_COOKIE = "shynli_admin_session";
 const ADMIN_CHALLENGE_COOKIE = "shynli_admin_challenge";
 const ACCOUNT_ROOT_PATH = "/account";
+const ACCOUNT_W9_DOWNLOAD_PATH = "/account/w9";
 const ACCOUNT_LOGIN_PATH = "/account/login";
 const ACCOUNT_LOGOUT_PATH = "/account/logout";
 const ACCOUNT_VERIFY_EMAIL_PATH = "/account/verify-email";
@@ -171,6 +173,7 @@ const ADMIN_APP_ROUTES = new Set([
 ]);
 const ADMIN_ALL_ROUTES = new Set([
   ...ADMIN_APP_ROUTES,
+  ADMIN_STAFF_W9_DOWNLOAD_PATH,
   ADMIN_STAFF_GOOGLE_CONNECT_PATH,
   ADMIN_GOOGLE_MAIL_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
@@ -182,6 +185,7 @@ const ADMIN_ALL_ROUTES = new Set([
 ]);
 const ACCOUNT_ALL_ROUTES = new Set([
   ACCOUNT_ROOT_PATH,
+  ACCOUNT_W9_DOWNLOAD_PATH,
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_VERIFY_EMAIL_PATH,
@@ -549,6 +553,7 @@ const adminPageRenderers = createAdminPageRenderers({
   ADMIN_RUNTIME_PATH,
   ADMIN_SETTINGS_PATH,
   ADMIN_STAFF_PATH,
+  ADMIN_STAFF_W9_DOWNLOAD_PATH,
   ADMIN_STAFF_GOOGLE_CONNECT_PATH,
   ADMIN_QUOTE_OPS_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
@@ -633,6 +638,7 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_SESSION_COOKIE,
   ADMIN_SETTINGS_PATH,
   ADMIN_STAFF_PATH,
+  ADMIN_STAFF_W9_DOWNLOAD_PATH,
   ADMIN_STAFF_GOOGLE_CONNECT_PATH,
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_ROOT_PATH,
@@ -673,6 +679,7 @@ const handleAdminRequest = createAdminRequestHandler({
 });
 
 const accountRenderers = createAccountRenderers({
+  ACCOUNT_W9_DOWNLOAD_PATH,
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_ROOT_PATH,
@@ -689,6 +696,7 @@ const accountRenderers = createAccountRenderers({
 });
 
 const handleAccountRequest = createAccountRequestHandler({
+  ACCOUNT_W9_DOWNLOAD_PATH,
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_ROOT_PATH,
@@ -710,6 +718,7 @@ const handleAccountRequest = createAccountRequestHandler({
   redirectWithTiming,
   serializeCookie,
   shouldUseSecureCookies,
+  writeHeadWithTiming,
   writeHtmlWithTiming,
 });
 

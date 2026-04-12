@@ -120,6 +120,31 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
       "evt-anna-1"
     );
 
+    await store.updateStaff(olga.id, {
+      w9: {
+        legalName: "Olga Martinez",
+        federalTaxClassification: "individual",
+        addressLine1: "742 Cedar Avenue",
+        cityStateZip: "Aurora, IL 60506",
+        tinType: "ssn",
+        maskedTin: "***-**-0192",
+        generatedAt: "2026-04-12T20:00:00.000Z",
+        document: {
+          relativePath: `${olga.id}/w9.pdf`,
+          fileName: "Olga-Martinez.pdf",
+          contentType: "application/pdf",
+          sizeBytes: 2048,
+          generatedAt: "2026-04-12T20:00:00.000Z",
+          templateName: "w9-template.pdf",
+        },
+      },
+    });
+
+    snapshot = await store.getSnapshot();
+    assert.equal(snapshot.staff[1].w9.legalName, "Olga Martinez");
+    assert.equal(snapshot.staff[1].w9.maskedTin, "***-**-0192");
+    assert.equal(snapshot.staff[1].w9.document.relativePath, `${olga.id}/w9.pdf`);
+
     await store.deleteStaff(anna.id);
 
     snapshot = await store.getSnapshot();
@@ -213,11 +238,31 @@ test("uses the Supabase-backed store implementation when the client is configure
     address: "742 Cedar Avenue, Aurora, IL 60506",
     status: "on_leave",
     notes: "Needs a remote sync check",
+    w9: {
+      legalName: "Diana Brooks",
+      federalTaxClassification: "llc",
+      llcTaxClassification: "C",
+      addressLine1: "742 Cedar Avenue",
+      cityStateZip: "Aurora, IL 60506",
+      tinType: "ein",
+      maskedTin: "**-***2104",
+      generatedAt: "2026-04-12T21:10:00.000Z",
+      document: {
+        relativePath: `${diana.id}/w9.pdf`,
+        fileName: "Diana-Brooks.pdf",
+        contentType: "application/pdf",
+        sizeBytes: 4096,
+        generatedAt: "2026-04-12T21:10:00.000Z",
+        templateName: "w9-template.pdf",
+      },
+    },
   });
   snapshot = await store.getSnapshot();
   assert.equal(snapshot.staff[0].address, "742 Cedar Avenue, Aurora, IL 60506");
   assert.equal(snapshot.staff[0].status, "on_leave");
   assert.match(snapshot.staff[0].notes, /remote sync/i);
+  assert.equal(snapshot.staff[0].w9.llcTaxClassification, "C");
+  assert.equal(snapshot.staff[0].w9.document.fileName, "Diana-Brooks.pdf");
 
   await store.clearAssignment("entry-remote-1");
   snapshot = await store.getSnapshot();

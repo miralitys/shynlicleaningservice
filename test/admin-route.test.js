@@ -1913,10 +1913,12 @@ test("creates employee users in settings and serves a personal cabinet with assi
   ]);
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const staffW9DocumentsDir = path.join(tempDir, "staff-documents");
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     ADMIN_STAFF_STORE_PATH: staffStorePath,
     ADMIN_USERS_STORE_PATH: usersStorePath,
+    STAFF_W9_DOCUMENTS_DIR: staffW9DocumentsDir,
     GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
     GHL_ENABLE_NOTES: "0",
@@ -2100,6 +2102,86 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /Bring supplies/);
     assert.doesNotMatch(accountDashboardBody, /Nina Hidden/);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
+    assert.match(accountDashboardBody, /Заполните W-9/i);
+
+    const saveW9Response = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-w9",
+        w9LegalName: "Alina Carter",
+        w9BusinessName: "",
+        w9FederalTaxClassification: "individual",
+        w9LlcTaxClassification: "",
+        w9OtherClassification: "",
+        w9ExemptPayeeCode: "",
+        w9FatcaCode: "",
+        w9AddressLine1: "742 Cedar Avenue",
+        w9CityStateZip: "Aurora, IL 60506",
+        w9AccountNumbers: "Employee-7",
+        w9TinType: "ssn",
+        w9TinValue: "123-45-6789",
+        w9SignatureName: "Alina Carter",
+        w9CertificationConfirmed: "1",
+      }),
+    });
+    assert.equal(saveW9Response.status, 303);
+    assert.match(saveW9Response.headers.get("location") || "", /notice=w9-saved/);
+
+    const staffAfterW9Save = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(staffAfterW9Save.staff[0].w9.legalName, "Alina Carter");
+    assert.equal(staffAfterW9Save.staff[0].w9.maskedTin, "***-**-6789");
+    assert.equal(staffAfterW9Save.staff[0].w9.document.relativePath, path.join(staffId, "w9.pdf"));
+
+    const accountW9PageResponse = await fetch(
+      `${started.baseUrl}${(saveW9Response.headers.get("location") || "").replace(/#.*$/, "")}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const accountW9PageBody = await accountW9PageResponse.text();
+    assert.equal(accountW9PageResponse.status, 200);
+    assert.match(accountW9PageBody, /W-9 сохранён/i);
+    assert.match(accountW9PageBody, /Скачать текущий PDF/i);
+    assert.match(accountW9PageBody, /Tax classification/i);
+    assert.match(accountW9PageBody, /\*\*\*-\*\*-6789/);
+
+    const accountW9DownloadResponse = await fetch(`${started.baseUrl}/account/w9`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    assert.equal(accountW9DownloadResponse.status, 200);
+    assert.equal(accountW9DownloadResponse.headers.get("content-type"), "application/pdf");
+    assert.ok(Number(accountW9DownloadResponse.headers.get("content-length") || 0) > 0);
+
+    const adminStaffAfterW9Response = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const adminStaffAfterW9Body = await adminStaffAfterW9Response.text();
+    assert.equal(adminStaffAfterW9Response.status, 200);
+    assert.match(adminStaffAfterW9Body, /Налоговая форма сотрудника/i);
+    assert.match(adminStaffAfterW9Body, /Открыть PDF/i);
+
+    const adminW9DownloadResponse = await fetch(
+      `${started.baseUrl}/admin/staff/w9?staffId=${encodeURIComponent(staffId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    assert.equal(adminW9DownloadResponse.status, 200);
+    assert.equal(adminW9DownloadResponse.headers.get("content-type"), "application/pdf");
+    assert.ok(Number(adminW9DownloadResponse.headers.get("content-length") || 0) > 0);
 
     const saveProfileResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",

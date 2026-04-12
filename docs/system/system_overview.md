@@ -1,7 +1,7 @@
 # System Overview
 
 ## Purpose
-`selfhosted_site` is the active deployable repo for Shynli Cleaning's public website and internal admin workspace. It serves exported HTML pages through a custom Node HTTP runtime and adds routing, sanitization, SEO/meta adjustments, cache policy, gated diagnostics, backend quote submission, signed Stripe checkout handoff, and authenticated admin tooling.
+`selfhosted_site` is the active deployable repo for Shynli Cleaning's public website, employee cabinet, and internal admin workspace. It serves exported HTML pages through a custom Node HTTP runtime and adds routing, sanitization, SEO/meta adjustments, cache policy, gated diagnostics, backend quote submission, signed Stripe checkout handoff, authenticated admin tooling, and protected employee W-9 document generation.
 
 ## Architecture Shape
 - Presentation:
@@ -19,6 +19,8 @@
   - `lib/http/timing.js`
   - `lib/runtime/perf.js`
 - Admin layer:
+  - `lib/account/handlers.js`
+  - `lib/account/render.js`
   - `lib/admin-auth.js`
   - `lib/admin/domain.js`
   - `lib/admin/handlers.js`
@@ -26,6 +28,7 @@
   - `lib/admin/render-shared.js`
   - `lib/admin-settings-store.js`
   - `lib/admin-staff-store.js`
+  - `lib/staff-w9.js`
 - Quote / payments / persistence layer:
   - `lib/api/handlers.js`
   - `lib/quote-ops/store.js`
@@ -45,11 +48,14 @@
 - signed quote-token issuance
 - server-side Stripe checkout session creation from a signed quote token
 - admin password + TOTP login flow
+- employee password/email-verification login flow
 - admin SSR pages for clients, orders, staff, settings, and quote ops
+- employee SSR dashboard with W-9 form completion
 - quote-ops CSV export and retry workflow
 - optional Supabase persistence for quote-ops history
 - file-backed checklist store
 - optional Supabase persistence for staff planning
+- protected W-9 PDF generation, storage, and download routes for employees/admins
 
 ## Confirmed Risk Areas
 - rate limiting is process-local in memory, so it is guardrail-level rather than distributed abuse control
@@ -57,6 +63,7 @@
 - staff persistence is split:
   - durable when Supabase is configured
   - file-backed locally when it is not
+- generated W-9 PDFs are stored on the application filesystem by default, so production should use durable disk or an external document store if container filesystems are ephemeral
 - quote-ops persistence is split:
   - durable when Supabase is configured
   - process-local when it is not

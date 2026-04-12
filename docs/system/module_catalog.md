@@ -33,6 +33,10 @@
   - structured buffered logging helpers
 
 ## Admin Workspace
+- `lib/account/handlers.js`
+  - employee login, email verification, profile updates, password changes, and W-9 submission/download flow
+- `lib/account/render.js`
+  - SSR HTML for the employee dashboard, assigned jobs, profile editor, password editor, and W-9 module
 - `lib/admin-auth.js`
   - password verification
   - TOTP generation/verification
@@ -54,6 +58,11 @@
 - `lib/admin-staff-store.js`
   - staff records and assignment planning store abstraction
   - uses file-backed JSON by default and Supabase when configured
+  - persists optional W-9 metadata alongside staff cards
+- `lib/staff-w9.js`
+  - W-9 field sanitization and masking helpers
+  - IRS PDF template filling and signature/date stamping
+  - local document storage path resolution for protected W-9 downloads
 
 ## Quote, CRM, Payments, And Persistence
 - `lib/api/handlers.js`
@@ -90,6 +99,8 @@
 ## Static Content And Assets
 - `routes.json`
   - pretty route to exported HTML file map
+- `assets/forms/w9-template.pdf`
+  - fillable IRS Form W-9 template used for employee tax-form generation
 - root `page*.html`
   - exported public pages
 - `css/`, `js/`, `images/`
@@ -118,5 +129,6 @@
 - `test/quote-token.test.js`
 - `test/server-hardening.test.js`
 - `test/server-smoke.test.js`
+- `test/staff-w9.test.js`
 - `test/supabase-admin-staff.test.js`
 - `test/supabase-quote-ops.test.js`

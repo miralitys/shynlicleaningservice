@@ -20,11 +20,18 @@ selfhosted_site/
   css/
   js/
   images/
+  assets/
+    forms/
+      w9-template.pdf
   lib/
     admin-auth.js
     admin-settings-store.js
     admin-staff-store.js
+    staff-w9.js
     supabase-admin-staff.js
+    account/
+      handlers.js
+      render.js
     admin/
       domain.js
       handlers.js
@@ -76,15 +83,18 @@ selfhosted_site/
     server-hardening.test.js
     server-smoke.test.js
     server-test-helpers.js
+    staff-w9.test.js
     supabase-admin-staff.test.js
     supabase-quote-ops.test.js
   data/                         # runtime-created, gitignored
     admin-settings-store.json   # created on first settings write
     admin-staff-store.json      # created on first staff/assignment write when local mode is used
+    staff-documents/            # protected generated employee W-9 PDFs
 ```
 
 ## Notes
 - `server.js` is now a thin bootstrap/orchestration entrypoint, not the primary implementation bucket.
 - Most runtime logic now lives in focused modules under `lib/`.
 - `data/` is not committed; it is created at runtime if local staff/settings stores are used.
+- Generated W-9 PDFs live under `data/staff-documents/` by default and are served only through protected `/account/w9` and `/admin/staff/w9` routes.
 - Staff planning can now persist either locally or through Supabase, depending on env configuration.

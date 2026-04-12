@@ -5,13 +5,14 @@
 - Type: self-hosted Shynli Cleaning website with a custom Node runtime, server-backed quote flow, and an authenticated admin workspace.
 - Primary goal:
   - serve a Tilda-exported public site behind custom routing, safe static-file rules, SEO/meta adjustments, cache-friendly behavior, and backend quote/payment logic;
-  - provide admins with a protected workspace for clients, orders, staff planning, checklist templates, and quote-ops review.
+  - provide admins with a protected workspace for clients, orders, staff planning, checklist templates, quote-ops review, and employee tax-form follow-up;
+  - provide employees with a protected `/account` cabinet for assigned jobs, profile maintenance, password changes, and W-9 submission.
 - Primary users:
   - prospective cleaning customers browsing the public site and requesting quotes;
   - internal operators using `/admin`;
   - maintainers deploying and extending the runtime.
 - Responsibility boundary:
-  - owns public HTML delivery, route mapping, runtime sanitization, SEO/meta injection, quote repricing, CRM submission, signed quote tokens, Stripe checkout session creation, admin auth, admin SSR pages, quote-ops history, and lightweight internal stores;
+  - owns public HTML delivery, route mapping, runtime sanitization, SEO/meta injection, quote repricing, CRM submission, signed quote tokens, Stripe checkout session creation, admin auth, employee account auth, admin SSR pages, employee SSR pages, quote-ops history, W-9 PDF generation, and lightweight internal stores;
   - does not use Express, a frontend framework, or a general-purpose database layer for all admin data;
   - quote-ops history and staff planning can optionally persist to Supabase; checklist/settings state remains file-backed JSON.
 
@@ -31,12 +32,18 @@
   - `/admin/clients`
   - `/admin/orders`
   - `/admin/staff`
+  - `/admin/staff/w9`
   - `/admin/settings`
   - `/admin/quote-ops`
+- Hosts an employee workspace with:
+  - `/account`
+  - `/account/login`
+  - `/account/w9`
 - Supports admin CSV export and retry actions for quote ops.
 - Optionally persists quote-ops history to Supabase via `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
 - Optionally persists staff and assignment planning to Supabase via the same base Supabase credentials.
 - Persists checklist templates to local JSON files under runtime `data/`.
+- Stores generated W-9 PDFs under runtime `data/staff-documents/` unless `STAFF_W9_DOCUMENTS_DIR` overrides the path.
 
 ## 3. How The Project Is Structured
 - Thin entrypoint: `server.js`
@@ -52,6 +59,8 @@
   - `lib/runtime/perf.js`
 - Admin modules:
   - `lib/admin-auth.js`
+  - `lib/account/handlers.js`
+  - `lib/account/render.js`
   - `lib/admin/domain.js`
   - `lib/admin/handlers.js`
   - `lib/admin-google-calendar.js`
@@ -59,6 +68,7 @@
   - `lib/admin/render-shared.js`
   - `lib/admin-settings-store.js`
   - `lib/admin-staff-store.js`
+  - `lib/staff-w9.js`
 - Quote / payments / persistence modules:
   - `lib/api/handlers.js`
   - `lib/quote-ops/store.js`
@@ -81,6 +91,8 @@
   - `PROJECT_KNOWLEDGE.md`
   - `docs/system/*`
 - Tests:
+  - `test/account-auth.test.js`
+  - `test/account-invite-email.test.js`
   - `test/admin-auth.test.js`
   - `test/admin-google-calendar.test.js`
   - `test/admin-staff-store.test.js`
@@ -92,6 +104,7 @@
   - `test/quote-token.test.js`
   - `test/server-hardening.test.js`
   - `test/server-smoke.test.js`
+  - `test/staff-w9.test.js`
   - `test/supabase-admin-staff.test.js`
   - `test/supabase-quote-ops.test.js`
   - `test/server-test-helpers.js`
@@ -119,7 +132,14 @@
 1. `lib/admin/render-pages.js` renders SSR HTML for clients, orders, staff, settings, and quote ops.
 2. `lib/admin/domain.js` builds filters, summaries, labels, redirect URLs, and view models from quote-op entries and local staff/settings state.
 3. `lib/admin-settings-store.js` persists checklist templates and completion state to a JSON file.
-4. `lib/admin-staff-store.js` persists staff records and order assignments through either a local file store or Supabase, depending on env configuration.
+4. `lib/admin-staff-store.js` persists staff records, W-9 metadata, and order assignments through either a local file store or Supabase, depending on env configuration.
+
+### Employee account and W-9 flow
+1. Employee signs in through `/account/login`.
+2. `lib/account/handlers.js` verifies the signed user session cookie and resolves the linked staff record.
+3. `lib/account/render.js` renders the SSR employee dashboard, assigned jobs, profile controls, and the W-9 form card.
+4. When the employee submits W-9 data, `lib/staff-w9.js` fills the IRS template PDF, stamps the signature/date text, stores the generated file under `data/staff-documents/`, and returns masked metadata.
+5. `lib/admin-staff-store.js` saves that W-9 metadata on the staff record so `/admin/staff` can expose the attachment and `/account/w9` can serve the employee copy.
 
 ### Quote / CRM flow
 1. `/quote` handles the customer UI in the browser.
@@ -172,7 +192,7 @@
 - Supabase admin staff rows
   - the `admin_staff` and `admin_staff_assignments` row shapes mirrored by `lib/supabase-admin-staff.js`.
 - staff record
-  - internal cleaner/operator data: name, role, phone, email, status, notes, and optional Google Calendar connection metadata.
+  - internal cleaner/operator data: name, role, phone, email, status, notes, optional Google Calendar connection metadata, and optional W-9 metadata with masked TIN + generated PDF attachment info.
 - assignment record
   - links a quote-op entry to staff IDs, scheduled date/time, assignment status, notes, and optional Google event-link metadata per staff member.
 - checklist template
@@ -194,12 +214,20 @@
   - `GET /admin/clients`
   - `GET/POST /admin/orders`
   - `GET/POST /admin/staff`
+  - `GET /admin/staff/w9`
   - `GET /admin/staff/google/connect`
   - `GET /admin/google-calendar/callback`
   - `GET/POST /admin/settings`
   - `GET /admin/quote-ops`
   - `GET /admin/quote-ops/export.csv`
   - `POST /admin/quote-ops/retry`
+- Employee HTTP:
+  - `GET/POST /account/login`
+  - `POST /account/logout`
+  - `GET /account`
+  - `POST /account`
+  - `GET /account/w9`
+  - `GET /account/verify-email`
 - External services:
   - Stripe via `STRIPE_SECRET_KEY`
   - LeadConnector / GHL via `GHL_*`

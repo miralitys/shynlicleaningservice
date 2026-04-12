@@ -137,6 +137,23 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
                     address: "215 North Elm Street, Naperville, IL",
                     status: "active",
                     notes: "Quote-ops fallback row",
+                    w9: {
+                      legalName: "Anna Petrova",
+                      federalTaxClassification: "individual",
+                      addressLine1: "215 North Elm Street",
+                      cityStateZip: "Naperville, IL 60540",
+                      tinType: "ssn",
+                      maskedTin: "***-**-0101",
+                      generatedAt: "2026-04-12T20:00:00.000Z",
+                      document: {
+                        relativePath: `${staffId}/w9.pdf`,
+                        fileName: "Anna-Petrova.pdf",
+                        contentType: "application/pdf",
+                        sizeBytes: 2048,
+                        generatedAt: "2026-04-12T20:00:00.000Z",
+                        templateName: "w9-template.pdf",
+                      },
+                    },
                     calendar: {
                       provider: "google",
                       status: "connected",
@@ -215,6 +232,8 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
   assert.equal(snapshot.staff[0].name, "Anna Petrova");
   assert.equal(snapshot.staff[0].address, "215 North Elm Street, Naperville, IL");
   assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
+  assert.equal(snapshot.staff[0].w9.maskedTin, "***-**-0101");
+  assert.equal(snapshot.staff[0].w9.document.relativePath, `${staffId}/w9.pdf`);
   assert.equal(snapshot.assignments.length, 1);
   assert.deepEqual(snapshot.assignments[0].staffIds, [staffId]);
   assert.equal(snapshot.assignments[0].calendarSync.google.byStaffId[staffId].eventId, "evt-fallback-1");
@@ -265,6 +284,24 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
     address: "742 Cedar Avenue, Aurora, IL 60506",
     status: "active",
     notes: "Remote fallback upsert",
+    w9: {
+      legalName: "Olga Martinez",
+      federalTaxClassification: "llc",
+      llcTaxClassification: "C",
+      addressLine1: "742 Cedar Avenue",
+      cityStateZip: "Aurora, IL 60506",
+      tinType: "ein",
+      maskedTin: "**-***0102",
+      generatedAt: "2026-04-12T21:15:00.000Z",
+      document: {
+        relativePath: "19f0af14-3f5a-4626-894b-6b61a80d9b20/w9.pdf",
+        fileName: "Olga-Martinez.pdf",
+        contentType: "application/pdf",
+        sizeBytes: 4096,
+        generatedAt: "2026-04-12T21:15:00.000Z",
+        templateName: "w9-template.pdf",
+      },
+    },
     calendar: {
       provider: "google",
       status: "connected",
@@ -291,5 +328,6 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
   assert.equal(payload.full_address, "742 Cedar Avenue, Aurora, IL 60506");
   assert.equal(payload.code, "active");
   assert.equal(payload.payload_for_retry.staff.address, "742 Cedar Avenue, Aurora, IL 60506");
+  assert.equal(payload.payload_for_retry.staff.w9.document.fileName, "Olga-Martinez.pdf");
   assert.equal(payload.payload_for_retry.staff.calendar.accountEmail, "olga.cleaner@gmail.com");
 });

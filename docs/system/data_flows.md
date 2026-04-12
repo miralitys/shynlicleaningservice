@@ -37,6 +37,15 @@
 5. If Supabase staff env is configured, the store reads/writes through `lib/supabase-admin-staff.js`.
 6. If Supabase staff env is not configured, the store falls back to `data/admin-staff-store.json` unless an override path is configured.
 
+## Employee W-9 Flow
+1. Employee signs in to `/account`.
+2. `lib/account/render.js` shows the W-9 card when the linked staff record has no attached form or when the employee wants to regenerate it.
+3. Employee submits the W-9 fields to `POST /account`.
+4. `lib/account/handlers.js` validates the request and delegates PDF generation to `lib/staff-w9.js`.
+5. `lib/staff-w9.js` fills the IRS template, draws the signature/date text, stores the PDF under `data/staff-documents/`, and returns masked metadata.
+6. `lib/admin-staff-store.js` saves that metadata on the staff record.
+7. The employee can open the protected file through `GET /account/w9`, and admins can open the same attachment through `GET /admin/staff/w9?staffId=...`.
+
 ## Quote Submission
 1. User completes `/quote` and submits the final form after consent.
 2. Client POSTs the normalized payload to `/api/quote/submit` or compatibility alias `/api/quote/request`.
