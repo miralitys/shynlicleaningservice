@@ -8,6 +8,9 @@ const assert = require("node:assert/strict");
 const { hashPassword, loadAdminConfig, generateTotpCode } = require("../lib/admin-auth");
 const { createFetchStub, createSmtpTestServer, startServer, stopServer } = require("./server-test-helpers");
 
+const SIGNATURE_DATA_URL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aV1sAAAAASUVORK5CYII=";
+
 function getSetCookies(response) {
   const header = response.headers.get("set-cookie") || "";
   return header
@@ -2229,6 +2232,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.doesNotMatch(accountDashboardBody, /Nina Hidden/);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /Заполните W-9/i);
+    assert.match(accountDashboardBody, /Подпишите форму мышкой, пальцем или стилусом/i);
 
     const adminStaffBeforeW9Response = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
@@ -2261,7 +2265,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
         w9AccountNumbers: "Employee-7",
         w9TinType: "ssn",
         w9TinValue: "123-45-6789",
-        w9SignatureName: "Alina Carter",
+        w9SignatureDataUrl: SIGNATURE_DATA_URL,
         w9CertificationConfirmed: "1",
       }),
     });
@@ -2939,6 +2943,73 @@ test("shows Gmail connect controls in the users settings page when Google Mail O
     assert.match(connectResponse.headers.get("location") || "", /^https:\/\/accounts\.google\.com\//i);
   } finally {
     await stopServer(started.child);
+  }
+});
+
+test("deleting a user from settings also deletes the linked staff record", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-delete-user-cascade-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Delete Me",
+        role: "cleaner",
+        status: "active",
+        staffStatus: "active",
+        email: "delete.me@example.com",
+        phone: "3125550188",
+        address: "101 Main St, Naperville, IL 60540",
+        notes: "Cascade delete test",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+
+    const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const staffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(usersStorePayload.users.length, 1);
+    assert.equal(staffStorePayload.staff.length, 1);
+
+    const deleteUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "delete_user",
+        userId: usersStorePayload.users[0].id,
+      }),
+    });
+    assert.equal(deleteUserResponse.status, 303);
+    assert.match(deleteUserResponse.headers.get("location") || "", /notice=user-deleted/);
+
+    const usersAfterDelete = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const staffAfterDelete = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(usersAfterDelete.users.length, 0);
+    assert.equal(staffAfterDelete.staff.length, 0);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
