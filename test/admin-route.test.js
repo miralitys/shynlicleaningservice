@@ -2233,6 +2233,10 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /Заполните W-9/i);
     assert.match(accountDashboardBody, /Подпишите форму мышкой, пальцем или стилусом/i);
+    assert.match(accountDashboardBody, /data-account-w9-form/i);
+    assert.match(accountDashboardBody, /data-account-w9-submit[^>]*disabled/i);
+    assert.match(accountDashboardBody, /data-account-w9-field="legalName"/i);
+    assert.match(accountDashboardBody, /data-account-w9-field="signature"/i);
 
     const adminStaffBeforeW9Response = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
@@ -2243,6 +2247,44 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(adminStaffBeforeW9Response.status, 200);
     assert.match(adminStaffBeforeW9Body, /Сотрудник ещё не заполнил W-9 в личном кабинете\./i);
     assert.match(adminStaffBeforeW9Body, /Отправить повторно/i);
+
+    const invalidSaveW9Response = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-w9",
+        w9LegalName: "Alina Draft",
+        w9BusinessName: "Alina Draft LLC",
+        w9FederalTaxClassification: "individual",
+        w9LlcTaxClassification: "",
+        w9OtherClassification: "",
+        w9ExemptPayeeCode: "1",
+        w9FatcaCode: "A",
+        w9AddressLine1: "987 Draft Street",
+        w9CityStateZip: "Naperville, IL 60540",
+        w9AccountNumbers: "Draft-Account",
+        w9TinType: "ssn",
+        w9TinValue: "987-65-4321",
+        w9Line3bApplies: "1",
+        w9SignatureDataUrl: SIGNATURE_DATA_URL,
+      }),
+    });
+    const invalidSaveW9Body = await invalidSaveW9Response.text();
+    assert.equal(invalidSaveW9Response.status, 422);
+    assert.match(invalidSaveW9Body, /Не удалось создать W-9/i);
+    assert.match(invalidSaveW9Body, /name="w9LegalName"[^>]*value="Alina Draft"/i);
+    assert.match(invalidSaveW9Body, /name="w9BusinessName"[^>]*value="Alina Draft LLC"/i);
+    assert.match(invalidSaveW9Body, /name="w9AddressLine1"[^>]*value="987 Draft Street"/i);
+    assert.match(invalidSaveW9Body, /name="w9CityStateZip"[^>]*value="Naperville, IL 60540"/i);
+    assert.match(invalidSaveW9Body, /name="w9AccountNumbers"[^>]*value="Draft-Account"/i);
+    assert.match(invalidSaveW9Body, /name="w9TinValue"[^>]*value="987-65-4321"/i);
+    assert.match(invalidSaveW9Body, /name="w9Line3bApplies"[^>]*checked/i);
+    assert.match(invalidSaveW9Body, /name="w9SignatureDataUrl"[^>]*value="data:image\/png;base64,[^"]+"/i);
+    assert.match(invalidSaveW9Body, /Подпись сохранена в форме\. Можно исправить остальные поля и отправить снова\./i);
+    assert.match(invalidSaveW9Body, /data-account-w9-submit[^>]*disabled/i);
 
     const saveW9Response = await fetch(`${started.baseUrl}/account`, {
       method: "POST",

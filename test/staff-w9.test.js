@@ -12,6 +12,9 @@ const {
   maskTinValue,
 } = require("../lib/staff-w9");
 
+const SIGNATURE_DATA_URL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aV1sAAAAASUVORK5CYII=";
+
 test("masks TIN values without exposing the full identifier", () => {
   assert.equal(maskTinValue("123-45-6789", "ssn"), "***-**-6789");
   assert.equal(maskTinValue("12-3456789", "ein"), "**-***6789");
@@ -37,7 +40,7 @@ test("fills the W-9 template fields before flattening", async () => {
       tinType: "ein",
       tinValue: "12-3456789",
       certificationConfirmed: true,
-      signatureName: "Olga Martinez",
+      signatureDataUrl: SIGNATURE_DATA_URL,
       generatedAt: "2026-04-12T21:15:00.000Z",
     },
     {
@@ -79,6 +82,7 @@ test("fills the W-9 template fields before flattening", async () => {
     form.getTextField("topmostSubform[0].Page1[0].f1_15[0]").getText(),
     "3456789"
   );
+  assert.equal(Buffer.from(pdfBytes).toString("latin1").includes("/Subtype /Image"), true);
 
   await fsp.rm(tempDocumentsDir, { recursive: true, force: true });
 });
@@ -106,7 +110,7 @@ test("generates a stored W-9 document and returns masked metadata", async () => 
       certificationConfirmed: true,
       submittedByUserId: "user-1",
       submittedByEmail: "nadia@example.com",
-      signatureName: "Nadia Stone",
+      signatureDataUrl: SIGNATURE_DATA_URL,
       generatedAt: "2026-04-12T21:30:00.000Z",
     },
     {
