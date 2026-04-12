@@ -246,6 +246,50 @@ test("completes the admin login and TOTP verification flow", async () => {
   }
 });
 
+test("sets admin auth cookies with SameSite=Lax for OAuth return flows", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const loginResponse = await fetch(`${started.baseUrl}/admin/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: config.email,
+        password: "1HKLOR1!",
+      }),
+    });
+
+    const loginCookies = getSetCookies(loginResponse);
+    const challengeCookie = loginCookies.find((cookie) => cookie.startsWith("shynli_admin_challenge=")) || "";
+    assert.match(challengeCookie, /SameSite=Lax/i);
+
+    const challengeCookieValue = getCookieValue(loginCookies, "shynli_admin_challenge");
+    const code = generateTotpCode(config);
+    const twoFactorResponse = await fetch(`${started.baseUrl}/admin/2fa`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_challenge=${challengeCookieValue}`,
+      },
+      body: new URLSearchParams({ code }),
+    });
+
+    const twoFactorCookies = getSetCookies(twoFactorResponse);
+    const sessionCookie = twoFactorCookies.find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
+    assert.match(sessionCookie, /SameSite=Lax/i);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
 test("renders checklist templates in settings and persists checklist updates", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-settings-route-"));
   const env = {
