@@ -2390,6 +2390,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountW9PageBody, /Скачать PDF/i);
     assert.match(accountW9PageBody, /Tax classification/i);
     assert.match(accountW9PageBody, /\*\*\*-\*\*-6789/);
+    assert.match(accountW9PageBody, /<details class="admin-details" data-account-w9-details>/i);
+    assert.match(accountW9PageBody, /<summary>Обновить W-9<\/summary>/i);
+    assert.doesNotMatch(accountW9PageBody, /<details class="admin-details" data-account-w9-details" open>/i);
 
     const accountW9DownloadResponse = await fetch(`${started.baseUrl}/account/w9`, {
       headers: {
