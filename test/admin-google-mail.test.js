@@ -163,3 +163,30 @@ test("connects Google Mail OAuth and sends invite email through Gmail API", asyn
   assert.match(rawMessage, /Reply-To: info@shynli\.com/);
   assert.match(rawMessage, /Subject: Confirm your SHYNLI employee email/);
 });
+
+test("keeps Gmail connect available when the mail store status lookup fails", async () => {
+  const client = createAdminGoogleMailClient({
+    env: {
+      GOOGLE_MAIL_CLIENT_ID: "gmail-client-id",
+      GOOGLE_MAIL_CLIENT_SECRET: "gmail-client-secret",
+    },
+    siteOrigin: "https://shynlicleaningservice.com",
+    fetch: async () => {
+      throw new Error("Unexpected fetch call");
+    },
+  });
+  const integration = createAdminGoogleMailIntegration({
+    client,
+    mailStore: {
+      async getConnection() {
+        throw new Error("PGRST205 missing admin_mail_integrations");
+      },
+    },
+  });
+
+  const status = await integration.getStatus();
+  assert.equal(status.configured, true);
+  assert.equal(status.connected, false);
+  assert.equal(status.accountEmail, "");
+  assert.match(status.lastError, /PGRST205/i);
+});
