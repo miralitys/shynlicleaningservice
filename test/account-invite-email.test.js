@@ -25,11 +25,25 @@ test("loads SMTP invite-email config from env", () => {
   assert.equal(config.replyToEmail, "info@shynlicleaningservice.com");
   assert.equal(config.smtpHost, "smtp-relay.gmail.com");
   assert.equal(config.smtpPort, 587);
+  assert.equal(config.smtpName, "shynlicleaningservice.com");
   assert.equal(config.smtpRequireTls, true);
   assert.deepEqual(
     { user: config.smtpUser, pass: config.smtpPassword },
     { user: "relay@shynlicleaningservice.com", pass: "secret" }
   );
+});
+
+test("derives SMTP EHLO name from the public site origin when it is not explicitly configured", () => {
+  const config = loadAccountInviteEmailConfig({
+    ACCOUNT_INVITE_SMTP_HOST: "smtp-relay.gmail.com",
+    ACCOUNT_INVITE_SMTP_PORT: "587",
+    ACCOUNT_INVITE_SMTP_USER: "relay@shynli.com",
+    ACCOUNT_INVITE_SMTP_PASSWORD: "secret",
+    ACCOUNT_INVITE_EMAIL_FROM: "SHYNLI Cleaning <relay@shynli.com>",
+    PUBLIC_SITE_ORIGIN: "https://shynlicleaningservice.com",
+  });
+
+  assert.equal(config.smtpName, "shynlicleaningservice.com");
 });
 
 test("falls back to legacy resend invite-email config when SMTP is not set", () => {
@@ -86,6 +100,7 @@ test("sends invite email through SMTP relay", async () => {
   assert.equal(calls[0].transportConfig.host, "smtp-relay.gmail.com");
   assert.equal(calls[0].transportConfig.port, 587);
   assert.equal(calls[0].transportConfig.requireTLS, true);
+  assert.equal(calls[0].transportConfig.name, "shynlicleaningservice.com");
   assert.deepEqual(calls[0].transportConfig.auth, {
     user: "relay@shynlicleaningservice.com",
     pass: "secret",
