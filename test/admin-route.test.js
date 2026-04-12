@@ -312,6 +312,8 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.match(settingsBody, /Чек-листы/i);
     assert.match(settingsBody, /Пользователи/i);
     assert.match(settingsBody, /Шаблоны чек-листов/i);
+    assert.match(settingsBody, /admin-settings-checklists-table/);
+    assert.match(settingsBody, /admin-settings-section-stack/);
     assert.match(settingsBody, /Регулярная уборка/i);
     assert.match(settingsBody, /Генеральная уборка/i);
     assert.match(settingsBody, /Уборка перед переездом/i);
@@ -1847,6 +1849,8 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(settingsBody, />Добавить сотрудника</);
     assert.match(settingsBody, /data-admin-dialog-open="admin-user-create-dialog"/);
     assert.match(settingsBody, /<dialog class="admin-dialog" id="admin-user-create-dialog"/);
+    assert.match(settingsBody, /admin-settings-users-table/);
+    assert.match(settingsBody, /admin-settings-section-stack/);
     assert.doesNotMatch(settingsBody, /Шаблоны чек-листов/i);
 
     const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
