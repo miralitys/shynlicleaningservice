@@ -162,6 +162,33 @@ test("connects Google Mail OAuth and sends invite email through Gmail API", asyn
   assert.match(rawMessage, /To: ramis@example\.com/);
   assert.match(rawMessage, /Reply-To: info@shynli\.com/);
   assert.match(rawMessage, /Subject: Confirm your SHYNLI employee email/);
+
+  const reminderResult = await integration.sendW9ReminderEmail(
+    {
+      toEmail: "ramis@example.com",
+      staffName: "Ramis Iaparov",
+      verifyUrl: "https://shynlicleaningservice.com/account/verify-email?token=abc",
+      loginUrl: "https://shynlicleaningservice.com/account/login",
+      requiresAccountSetup: true,
+    },
+    config,
+    {
+      fromEmail: "SHYNLI Cleaning <relay@shynli.com>",
+      replyToEmail: "info@shynli.com",
+    }
+  );
+
+  assert.equal(reminderResult.id, "gmail-message-1");
+  const sendCalls = fetchCalls.filter(
+    (call) => call.url === "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+  );
+  assert.equal(sendCalls.length, 2);
+  const reminderRawMessage = Buffer.from(
+    JSON.parse(sendCalls[1].options.body).raw.replace(/-/g, "+").replace(/_/g, "/"),
+    "base64"
+  ).toString("utf8");
+  assert.match(reminderRawMessage, /Subject: Complete your SHYNLI W-9/);
+  assert.match(reminderRawMessage, /account\/login/);
 });
 
 test("keeps Gmail connect available when the mail store status lookup fails", async () => {

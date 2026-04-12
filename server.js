@@ -8,7 +8,11 @@ const fsp = require("fs/promises");
 const path = require("path");
 const { URL } = require("url");
 const accountAuth = require("./lib/account-auth");
-const { loadAccountInviteEmailConfig, sendAccountInviteEmail } = require("./lib/account-invite-email");
+const {
+  loadAccountInviteEmailConfig,
+  sendAccountInviteEmail,
+  sendStaffW9ReminderEmail,
+} = require("./lib/account-invite-email");
 const { createAdminMailStore } = require("./lib/admin-mail-store");
 const {
   createAdminGoogleMailClient,
@@ -617,6 +621,9 @@ const accountInviteEmail = {
   async sendInvite() {
     throw new Error("ACCOUNT_INVITE_EMAIL_NOT_CONFIGURED");
   },
+  async sendW9Reminder() {
+    throw new Error("ACCOUNT_INVITE_EMAIL_NOT_CONFIGURED");
+  },
 };
 
 const handleAdminRequest = createAdminRequestHandler({
@@ -938,6 +945,27 @@ async function main() {
     }
 
     return sendAccountInviteEmail({
+      ...payload,
+      env: process.env,
+      fetch: global.fetch,
+    });
+  };
+
+  accountInviteEmail.sendW9Reminder = async function sendW9Reminder(payload, config = {}) {
+    const legacyConfig = loadAccountInviteEmailConfig(process.env);
+    const googleStatus =
+      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
+        ? await googleMailIntegration.getStatus(config)
+        : null;
+
+    if (googleStatus && googleStatus.connected) {
+      return googleMailIntegration.sendW9ReminderEmail(payload, config, {
+        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+        replyToEmail: legacyConfig.replyToEmail || "",
+      });
+    }
+
+    return sendStaffW9ReminderEmail({
       ...payload,
       env: process.env,
       fetch: global.fetch,

@@ -2237,6 +2237,16 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /Заполните W-9/i);
 
+    const adminStaffBeforeW9Response = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const adminStaffBeforeW9Body = await adminStaffBeforeW9Response.text();
+    assert.equal(adminStaffBeforeW9Response.status, 200);
+    assert.match(adminStaffBeforeW9Body, /Сотрудник ещё не заполнил W-9 в личном кабинете\./i);
+    assert.match(adminStaffBeforeW9Body, /Отправить повторно/i);
+
     const saveW9Response = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
       redirect: "manual",
@@ -2302,7 +2312,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const adminStaffAfterW9Body = await adminStaffAfterW9Response.text();
     assert.equal(adminStaffAfterW9Response.status, 200);
     assert.match(adminStaffAfterW9Body, /Налоговая форма сотрудника/i);
+    assert.match(adminStaffAfterW9Body, /admin-w9-preview-frame/i);
     assert.match(adminStaffAfterW9Body, /Открыть PDF/i);
+    assert.doesNotMatch(adminStaffAfterW9Body, /Отправить повторно/i);
 
     const adminW9DownloadResponse = await fetch(
       `${started.baseUrl}/admin/staff/w9?staffId=${encodeURIComponent(staffId)}`,
@@ -2314,6 +2326,11 @@ test("creates employee users in settings and serves a personal cabinet with assi
     );
     assert.equal(adminW9DownloadResponse.status, 200);
     assert.equal(adminW9DownloadResponse.headers.get("content-type"), "application/pdf");
+    assert.equal(adminW9DownloadResponse.headers.get("x-frame-options"), "SAMEORIGIN");
+    assert.match(
+      adminW9DownloadResponse.headers.get("content-security-policy") || "",
+      /frame-ancestors 'self'/
+    );
     assert.ok(Number(adminW9DownloadResponse.headers.get("content-length") || 0) > 0);
 
     const saveProfileResponse = await fetch(`${started.baseUrl}/account`, {
@@ -2411,6 +2428,110 @@ test("creates employee users in settings and serves a personal cabinet with assi
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
     fetchStub.cleanup();
+  }
+});
+test("resends a W-9 reminder from the staff card when the form is still missing", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-w9-reminder-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const smtpServer = await createSmtpTestServer();
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+    ACCOUNT_INVITE_EMAIL_FROM: "hello@shynli.com",
+    ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynli.com",
+    ACCOUNT_INVITE_SMTP_HOST: smtpServer.host,
+    ACCOUNT_INVITE_SMTP_PORT: String(smtpServer.port),
+    ACCOUNT_INVITE_SMTP_REQUIRE_TLS: "0",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Rina Powell",
+        role: "cleaner",
+        status: "active",
+        staffStatus: "active",
+        email: "rina.powell@example.com",
+        phone: "3125550142",
+        address: "900 Main St, Joliet, IL 60435",
+        notes: "Needs W-9 reminder",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+    const initialMessageCount = smtpServer.messages.length;
+
+    const staffPayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const usersPayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const staffId = staffPayload.staff[0].id;
+    const userId = usersPayload.users[0].id;
+    assert.ok(staffId);
+    assert.ok(userId);
+
+    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffPageResponse.text();
+    assert.equal(staffPageResponse.status, 200);
+    assert.match(staffPageBody, /Сотрудник ещё не заполнил W-9 в личном кабинете\./i);
+    assert.match(staffPageBody, /Отправить повторно/i);
+
+    const resendResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "resend-staff-w9-reminder",
+        staffId,
+        userId,
+        staffName: "Rina Powell",
+      }),
+    });
+    assert.equal(resendResponse.status, 303);
+    assert.match(resendResponse.headers.get("location") || "", /notice=w9-reminder-sent/);
+
+    const noticePageResponse = await fetch(
+      `${started.baseUrl}${(resendResponse.headers.get("location") || "").replace(/#.*$/, "")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const noticePageBody = await noticePageResponse.text();
+    assert.equal(noticePageResponse.status, 200);
+    assert.match(noticePageBody, /Напоминание о заполнении W-9 отправлено сотруднику повторно\./i);
+
+    assert.equal(smtpServer.messages.length, initialMessageCount + 1);
+    const rawEmail = decodeQuotedPrintable(
+      smtpServer.messages[smtpServer.messages.length - 1].raw
+    );
+    assert.match(rawEmail, /Subject: Complete your SHYNLI W-9/);
+    assert.match(rawEmail, /rina\.powell@example\.com/);
+    assert.match(rawEmail, /account\/login/);
+    assert.doesNotMatch(rawEmail, /Confirm your SHYNLI employee email/);
+  } finally {
+    await stopServer(started.child);
+    await smtpServer.close();
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
