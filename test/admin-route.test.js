@@ -2300,6 +2300,12 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /Bring supplies/);
     assert.doesNotMatch(accountDashboardBody, /Nina Hidden/);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
+    assert.match(accountDashboardBody, /<details class="admin-details" data-account-profile-details>/i);
+    assert.match(accountDashboardBody, /<summary>Изменить контакты<\/summary>/i);
+    assert.doesNotMatch(accountDashboardBody, /<details class="admin-details" data-account-profile-details" open>/i);
+    assert.match(accountDashboardBody, /<details class="admin-details" data-account-password-details>/i);
+    assert.match(accountDashboardBody, /<summary>Обновить пароль<\/summary>/i);
+    assert.doesNotMatch(accountDashboardBody, /<details class="admin-details" data-account-password-details" open>/i);
     assert.match(accountDashboardBody, /Заполните W-9/i);
     assert.match(accountDashboardBody, /Подпишите форму мышкой, пальцем или стилусом/i);
     assert.match(accountDashboardBody, /data-account-w9-form/i);
@@ -2475,6 +2481,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(profilePageBody, /Профиль обновлён/i);
     assert.match(profilePageBody, /alina\.updated@example\.com/i);
     assert.match(profilePageBody, /\+1\(331\)555-0110/i);
+    assert.match(profilePageBody, /<details class="admin-details" data-account-profile-details>/i);
+    assert.match(profilePageBody, /<summary>Изменить контакты<\/summary>/i);
+    assert.doesNotMatch(profilePageBody, /<details class="admin-details" data-account-profile-details" open>/i);
     assert.match(profilePageBody, /name="phone" value="3315550110"/i);
 
     const usersAfterProfileSave = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
@@ -2501,6 +2510,21 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     assert.equal(changePasswordResponse.status, 303);
     assert.match(changePasswordResponse.headers.get("location") || "", /notice=password-saved/);
+
+    const passwordPageResponse = await fetch(
+      `${started.baseUrl}${(changePasswordResponse.headers.get("location") || "").replace(/#.*$/, "")}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const passwordPageBody = await passwordPageResponse.text();
+    assert.equal(passwordPageResponse.status, 200);
+    assert.match(passwordPageBody, /Пароль обновлён/i);
+    assert.match(passwordPageBody, /<details class="admin-details" data-account-password-details>/i);
+    assert.match(passwordPageBody, /<summary>Обновить пароль<\/summary>/i);
+    assert.doesNotMatch(passwordPageBody, /<details class="admin-details" data-account-password-details" open>/i);
 
     const logoutResponse = await fetch(`${started.baseUrl}/account/logout`, {
       method: "POST",
