@@ -111,3 +111,39 @@ test("sends invite email through SMTP relay", async () => {
   assert.equal(calls[0].message.subject, "Confirm your SHYNLI employee email");
   assert.match(calls[0].message.text, /verify-email\?token=abc/);
 });
+
+test("falls back to smtp.gmail.com when Google relay drops the EHLO handshake", async () => {
+  const calls = [];
+  const response = await sendAccountInviteEmail({
+    env: {
+      ACCOUNT_INVITE_SMTP_HOST: "smtp-relay.gmail.com",
+      ACCOUNT_INVITE_SMTP_PORT: "587",
+      ACCOUNT_INVITE_SMTP_USER: "relay@shynlicleaningservice.com",
+      ACCOUNT_INVITE_SMTP_PASSWORD: "secret",
+      ACCOUNT_INVITE_EMAIL_FROM: "hello@shynlicleaningservice.com",
+      ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynlicleaningservice.com",
+      PUBLIC_SITE_ORIGIN: "https://shynlicleaningservice.com",
+    },
+    createTransport: (transportConfig) => ({
+      async sendMail(message) {
+        calls.push({ transportConfig, message });
+        if (transportConfig.host === "smtp-relay.gmail.com") {
+          throw new Error(
+            "Server terminates connection. response=421-4.7.0 Try again later, closing connection. (EHLO)"
+          );
+        }
+        return { messageId: "<smtp-message-fallback@example.com>" };
+      },
+      close() {},
+    }),
+    toEmail: "cleaner@example.com",
+    staffName: "Anna Petrova",
+    verifyUrl: "https://example.com/account/verify-email?token=abc",
+    loginUrl: "https://example.com/account/login",
+  });
+
+  assert.equal(response.id, "<smtp-message-fallback@example.com>");
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].transportConfig.host, "smtp-relay.gmail.com");
+  assert.equal(calls[1].transportConfig.host, "smtp.gmail.com");
+});
