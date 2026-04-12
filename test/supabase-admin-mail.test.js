@@ -76,7 +76,7 @@ test("falls back to quote_ops_entries rows when the dedicated mail table is miss
           async text() {
             return JSON.stringify([
               {
-                id: "invite-email",
+                id: "9f5d5c2e-d9d4-4c65-b0ea-381cf96b6c55",
                 kind: QUOTE_OPS_MAIL_KIND,
                 status: "success",
                 request_id: "invite-email",
@@ -143,10 +143,16 @@ test("writes admin mail rows into quote_ops_entries when the dedicated table is 
 
   await client.upsertConnection(createConnection());
 
-  const fallbackWrite = calls.find((call) => call.url.includes("/rest/v1/quote_ops_entries"));
+  const fallbackWrite = calls.find(
+    (call) =>
+      call.url.includes("/rest/v1/quote_ops_entries") &&
+      String(call.options && call.options.method || "").toUpperCase() === "POST"
+  );
   assert.ok(fallbackWrite);
   const payload = JSON.parse(fallbackWrite.options.body);
   assert.equal(payload.kind, QUOTE_OPS_MAIL_KIND);
+  assert.match(payload.id, /^[0-9a-f-]{36}$/i);
+  assert.equal(payload.request_id, "invite-email");
   assert.equal(payload.customer_email, "relay@shynli.com");
   assert.equal(payload.payload_for_retry.connection.provider, "google-mail");
 });
