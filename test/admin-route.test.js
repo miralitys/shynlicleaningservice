@@ -1114,6 +1114,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /admin-orders-filter-inline-panel/);
     assert.match(ordersBody, /data-admin-dialog-row="true"/);
     assert.match(ordersBody, /class="admin-table-row-clickable"/);
+    assert.match(ordersBody, /\.admin-table-wrap\s*\{[\s\S]*overflow-x: auto;[\s\S]*overflow-y: hidden;/);
+    assert.match(ordersBody, /\.admin-table\s*\{[\s\S]*width: max-content;[\s\S]*table-layout: auto;/);
+    assert.match(ordersBody, /\.admin-table:not\(\.admin-team-calendar-table\) th,\s*\.admin-table:not\(\.admin-team-calendar-table\) td\s*\{[\s\S]*white-space: nowrap;/);
     assert.doesNotMatch(ordersBody, /admin-kicker">Заказы</);
     assert.doesNotMatch(ordersBody, /admin-card-eyebrow">Заказы</);
     assert.match(ordersBody, /Поля из формы клиента/);
