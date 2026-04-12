@@ -413,7 +413,7 @@ test("creates staff members and assigns them to orders through the staff workspa
       body: new URLSearchParams({
         action: "create-staff",
         name: "Olga Stone",
-        role: "Team Lead",
+        role: "manager",
         phone: "13125550199123456789",
         email: "olga@example.com",
         address: "742 Cedar Avenue, Aurora, IL 60506",
@@ -450,7 +450,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
     assert.match(staffBody, /aria-label="Открыть карточку сотрудника /);
     assert.match(staffBody, /class="admin-table-link">Olga Stone<\/span>/);
-    assert.match(staffBody, /Olga Stone <span class="admin-staff-dialog-title-role">\(Team Lead\)<\/span>/);
+    assert.match(staffBody, /Olga Stone <span class="admin-staff-dialog-title-role">\(Менеджер\)<\/span>/);
     assert.match(staffBody, /\+1\(312\)555-0199 • olga@example.com/);
     assert.doesNotMatch(staffBody, /<th>Действие<\/th>/);
     assert.doesNotMatch(staffBody, /<p class="admin-kicker">Сотрудники<\/p>/);
@@ -473,7 +473,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /aria-label="Удалить сотрудника"/);
     assert.doesNotMatch(staffBody, /Удаление очистит его назначения в графике/);
     assert.match(staffBody, /Olga Stone/);
-    assert.match(staffBody, /Team Lead/);
+    assert.match(staffBody, /Менеджер/);
     assert.match(staffBody, /742 Cedar Avenue, Aurora, IL 60506/);
     assert.match(staffBody, /Jane Doe/);
 
@@ -1787,7 +1787,6 @@ test("creates employee users in settings and serves a personal cabinet with assi
       body: new URLSearchParams({
         action: "create_user",
         name: "Alina Carter",
-        staffRole: "Cleaner",
         role: "cleaner",
         status: "active",
         staffStatus: "active",
@@ -1818,7 +1817,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const staffId = staffStorePayload.staff[0].id;
     assert.ok(staffId);
     assert.equal(staffStorePayload.staff[0].name, "Alina Carter");
-    assert.equal(staffStorePayload.staff[0].role, "Cleaner");
+    assert.equal(staffStorePayload.staff[0].role, "Клинер");
     assert.equal(staffStorePayload.staff[0].address, "742 Cedar Avenue, Aurora, IL 60506");
 
     const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
@@ -2033,7 +2032,6 @@ test("allows managers into admin workspace but blocks delete actions", async () 
       body: new URLSearchParams({
         action: "create_user",
         name: "Marta Greene",
-        staffRole: "Operations Manager",
         role: "manager",
         status: "active",
         staffStatus: "active",
@@ -2105,7 +2103,6 @@ test("allows managers into admin workspace but blocks delete actions", async () 
         userId: managerUser.id,
         staffId: managerStaff.id,
         name: "Marta Greene",
-        staffRole: "Operations Lead",
         role: "manager",
         status: "active",
         staffStatus: "active",
@@ -2236,7 +2233,6 @@ test("updates linked user access role from the staff edit dialog", async () => {
       body: new URLSearchParams({
         action: "create_user",
         name: "Emily Stone",
-        staffRole: "Cleaner",
         role: "cleaner",
         status: "active",
         staffStatus: "active",
@@ -2254,7 +2250,7 @@ test("updates linked user access role from the staff edit dialog", async () => {
     const user = usersStorePayload.users[0];
     const staff = staffStorePayload.staff[0];
     assert.equal(user.role, "cleaner");
-    assert.equal(staff.role, "Cleaner");
+    assert.equal(staff.role, "Клинер");
 
     const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
@@ -2263,9 +2259,9 @@ test("updates linked user access role from the staff edit dialog", async () => {
     });
     const staffPageBody = await staffPageResponse.text();
     assert.equal(staffPageResponse.status, 200);
-    assert.match(staffPageBody, /name="userRole"/i);
+    assert.match(staffPageBody, /name="role"/i);
     assert.match(staffPageBody, /<option value="cleaner" selected>Клинер<\/option>/i);
-    assert.match(staffPageBody, /name="staffRole"/i);
+    assert.doesNotMatch(staffPageBody, /Должность/i);
 
     const updateStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -2279,8 +2275,7 @@ test("updates linked user access role from the staff edit dialog", async () => {
         staffId: staff.id,
         userId: user.id,
         name: "Emily Stone",
-        staffRole: "Operations Lead",
-        userRole: "manager",
+        role: "manager",
         phone: "3125550144",
         email: "emily.cleaner@example.com",
         address: "215 North Elm Street, Naperville, IL 60540",
@@ -2294,7 +2289,7 @@ test("updates linked user access role from the staff edit dialog", async () => {
     const updatedUsersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     const updatedStaffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
     assert.equal(updatedUsersStorePayload.users[0].role, "manager");
-    assert.equal(updatedStaffStorePayload.staff[0].role, "Operations Lead");
+    assert.equal(updatedStaffStorePayload.staff[0].role, "Менеджер");
 
     const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
       method: "POST",
@@ -2393,7 +2388,6 @@ test("sends an invite email and requires confirmation before first employee logi
       body: new URLSearchParams({
         action: "create_user",
         name: "Invite Cleaner",
-        staffRole: "Cleaner",
         role: "cleaner",
         status: "active",
         staffStatus: "active",
