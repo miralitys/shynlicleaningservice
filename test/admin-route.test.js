@@ -2311,7 +2311,9 @@ test("updates linked user access role from the staff edit dialog", async () => {
     const updatedUsersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     const updatedStaffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
     assert.equal(updatedUsersStorePayload.users[0].role, "manager");
+    assert.equal(updatedUsersStorePayload.users[0].phone, "+1(312)555-0144");
     assert.equal(updatedStaffStorePayload.staff[0].role, "Менеджер");
+    assert.equal(updatedStaffStorePayload.staff[0].phone, "+1(312)555-0144");
 
     const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
       method: "POST",
