@@ -1631,7 +1631,12 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /name="action" value="update-client"/i);
     assert.match(selectedClientDialog, /name="clientKey" value="3125550100"/i);
     assert.match(selectedClientDialog, /name="addresses"/i);
+    assert.match(selectedClientDialog, /name="addressPropertyTypes"/i);
+    assert.match(selectedClientDialog, /name="addressHomeProfiles"/i);
+    assert.match(selectedClientDialog, /name="addressPets"/i);
+    assert.match(selectedClientDialog, /name="addressNotes"/i);
     assert.match(selectedClientDialog, /Добавить адрес/i);
+    assert.match(selectedClientDialog, /Параметры адреса/i);
     assert.match(selectedClientDialog, /Редактирование клиента/i);
     assert.match(selectedClientDialog, /789 Cedar Ln, Plainfield, IL 60544/i);
     assert.doesNotMatch(selectedClientDialog, /Открыть заявки клиента/i);
@@ -1707,6 +1712,51 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(phoneFilterBody, /John Smith/);
     assert.doesNotMatch(phoneFilterBody, /Jane Doe/);
 
+    const updateClientForm = new URLSearchParams({
+      action: "update-client",
+      clientKey: currentJaneClientKey,
+      returnTo: `/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}&addressKey=${encodeURIComponent(romeovilleAddressKey)}`,
+      name: "Jane Cooper",
+      phone: "+1(312)555-0111",
+      email: "jane.cooper@example.com",
+    });
+    [
+      {
+        address: "123 Main St, Romeoville, IL 60446",
+        propertyType: "house",
+        homeProfile: "2400 sq ft / 4 комнаты",
+        pets: "dog",
+        notes: "Gate code 1942. Use hypoallergenic products.",
+      },
+      {
+        address: "789 Cedar Ln, Plainfield, IL 60544",
+        propertyType: "apartment",
+        homeProfile: "2 bedrooms / 1 bath",
+        pets: "cat",
+        notes: "Do not touch nursery shelves.",
+      },
+      {
+        address: "500 River Rd, Naperville, IL 60540",
+        propertyType: "office",
+        homeProfile: "1200 sq ft / 5 rooms",
+        pets: "none",
+        notes: "Key at front desk. Alarm code 4455.",
+      },
+      {
+        address: bolingbrookAddress,
+        propertyType: "airbnb",
+        homeProfile: "1800 sq ft / 3 bedrooms",
+        pets: "none",
+        notes: "Lockbox on left rail.",
+      },
+    ].forEach((addressRecord) => {
+      updateClientForm.append("addresses", addressRecord.address);
+      updateClientForm.append("addressPropertyTypes", addressRecord.propertyType);
+      updateClientForm.append("addressHomeProfiles", addressRecord.homeProfile);
+      updateClientForm.append("addressPets", addressRecord.pets);
+      updateClientForm.append("addressNotes", addressRecord.notes);
+    });
+
     const updateClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
       method: "POST",
       redirect: "manual",
@@ -1714,20 +1764,7 @@ test("renders the clients table with filters and request history", async () => {
         "content-type": "application/x-www-form-urlencoded",
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
-      body: new URLSearchParams({
-        action: "update-client",
-        clientKey: currentJaneClientKey,
-        returnTo: `/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}&addressKey=${encodeURIComponent(romeovilleAddressKey)}`,
-        name: "Jane Cooper",
-        phone: "+1(312)555-0111",
-        email: "jane.cooper@example.com",
-        addresses: [
-          "123 Main St, Romeoville, IL 60446",
-          "789 Cedar Ln, Plainfield, IL 60544",
-          "500 River Rd, Naperville, IL 60540",
-          bolingbrookAddress,
-        ].join("\n"),
-      }),
+      body: updateClientForm,
     });
     assert.equal(updateClientResponse.status, 303);
     const updateClientLocation = updateClientResponse.headers.get("location") || "";
@@ -1754,6 +1791,10 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updatedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.match(updatedClientDialog, /500 River Rd, Naperville, IL 60540/);
     assert.match(updatedClientDialog, /901 Harbor Way, Bolingbrook, IL 60440/);
+    assert.match(updatedClientDialog, /<span class="admin-client-info-label">Тип объекта<\/span>[\s\S]*?<p class="admin-client-info-value">Дом<\/p>/i);
+    assert.match(updatedClientDialog, /2400 sq ft \/ 4 комнаты/i);
+    assert.match(updatedClientDialog, /<span class="admin-client-info-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-info-value">Собака<\/p>/i);
+    assert.match(updatedClientDialog, /Gate code 1942\. Use hypoallergenic products\./i);
     assert.doesNotMatch(updatedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
 
     const updatedClientsTableResponse = await fetch(`${started.baseUrl}/admin/clients`, {
@@ -1783,6 +1824,10 @@ test("renders the clients table with filters and request history", async () => {
     assert.equal(napervilleClientResponse.status, 200);
     assert.ok(napervilleClientDialog);
     assert.match(napervilleClientDialog, /500 River Rd, Naperville, IL 60540/);
+    assert.match(napervilleClientDialog, /<span class="admin-client-info-label">Тип объекта<\/span>[\s\S]*?<p class="admin-client-info-value">Офис<\/p>/i);
+    assert.match(napervilleClientDialog, /1200 sq ft \/ 5 rooms/i);
+    assert.match(napervilleClientDialog, /<span class="admin-client-info-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-info-value">Нет<\/p>/i);
+    assert.match(napervilleClientDialog, /Key at front desk\. Alarm code 4455\./i);
     assert.match(napervilleClientDialog, /По этому адресу пока нет заявок/i);
     assert.doesNotMatch(napervilleClientDialog, /Сводка по активной заявке/i);
 
