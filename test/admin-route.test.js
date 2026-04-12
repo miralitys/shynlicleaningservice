@@ -1580,6 +1580,7 @@ test("renders the clients table with filters and request history", async () => {
     const romeovilleAddressKey = "123 main st, romeoville, il 60446";
     const plainfieldAddressKey = "789 cedar ln, plainfield, il 60544";
     const napervilleAddressKey = "500 river rd, naperville, il 60540";
+    const bolingbrookAddress = "901 Harbor Way, Bolingbrook, IL 60440";
 
     assert.equal(clientsResponse.status, 200);
     assert.match(clientsBody, /<h1 class="admin-title">Клиенты<\/h1>/);
@@ -1597,7 +1598,9 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(clientsBody, /data-admin-row-href="\/admin\/clients\?client=/);
     assert.doesNotMatch(clientsBody, /Карточка клиента/i);
     assert.equal((clientsBody.match(/>Jane Doe<\/a>/g) || []).length, 1);
-    assert.match(clientsBody, /Ещё 1 адрес/i);
+    assert.match(clientsBody, /123 Main St, Romeoville, IL 60446/i);
+    assert.match(clientsBody, /789 Cedar Ln, Plainfield, IL 60544/i);
+    assert.doesNotMatch(clientsBody, /<span class="admin-client-address-preview-more"/i);
 
     const selectedClientResponse = await fetch(
       `${started.baseUrl}/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}&addressKey=${encodeURIComponent(romeovilleAddressKey)}`,
@@ -1720,6 +1723,7 @@ test("renders the clients table with filters and request history", async () => {
           "123 Main St, Romeoville, IL 60446",
           "789 Cedar Ln, Plainfield, IL 60544",
           "500 River Rd, Naperville, IL 60540",
+          bolingbrookAddress,
         ].join("\n"),
       }),
     });
@@ -1747,7 +1751,20 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updatedClientDialog, /jane\.cooper@example\.com/i);
     assert.match(updatedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.match(updatedClientDialog, /500 River Rd, Naperville, IL 60540/);
+    assert.match(updatedClientDialog, /901 Harbor Way, Bolingbrook, IL 60440/);
     assert.doesNotMatch(updatedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
+
+    const updatedClientsTableResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const updatedClientsTableBody = await updatedClientsTableResponse.text();
+    assert.equal(updatedClientsTableResponse.status, 200);
+    assert.match(updatedClientsTableBody, /123 Main St, Romeoville, IL 60446/i);
+    assert.match(updatedClientsTableBody, /789 Cedar Ln, Plainfield, IL 60544/i);
+    assert.match(updatedClientsTableBody, /500 River Rd, Naperville, IL 60540/i);
+    assert.match(updatedClientsTableBody, /class="admin-client-address-preview-more"[^>]*>\+1<\/span>/i);
 
     const napervilleClientResponse = await fetch(
       `${started.baseUrl}/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}&addressKey=${encodeURIComponent(napervilleAddressKey)}`,
