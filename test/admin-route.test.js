@@ -1961,11 +1961,11 @@ test("creates employee users in settings and serves a personal cabinet with assi
 
     const usersAfterProfileSave = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     assert.equal(usersAfterProfileSave.users[0].email, "alina.updated@example.com");
-    assert.equal(usersAfterProfileSave.users[0].phone, "3315550110");
+    assert.equal(usersAfterProfileSave.users[0].phone, "+1(331)555-0110");
 
     const staffAfterProfileSave = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
     assert.equal(staffAfterProfileSave.staff[0].email, "alina.updated@example.com");
-    assert.equal(staffAfterProfileSave.staff[0].phone, "3315550110");
+    assert.equal(staffAfterProfileSave.staff[0].phone, "+1(331)555-0110");
 
     const changePasswordResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
