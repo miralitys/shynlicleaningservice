@@ -159,6 +159,7 @@ const ACCOUNT_ROOT_PATH = "/account";
 const ACCOUNT_LOGIN_PATH = "/account/login";
 const ACCOUNT_LOGOUT_PATH = "/account/logout";
 const ACCOUNT_VERIFY_EMAIL_PATH = "/account/verify-email";
+const USER_PASSWORD_SETUP_COOKIE = "shynli_user_password_setup";
 const USER_SESSION_COOKIE = "shynli_user_session";
 const ADMIN_APP_ROUTES = new Set([
   ADMIN_ROOT_PATH,
@@ -691,6 +692,7 @@ const handleAccountRequest = createAccountRequestHandler({
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_ROOT_PATH,
   ACCOUNT_VERIFY_EMAIL_PATH,
+  USER_PASSWORD_SETUP_COOKIE,
   USER_SESSION_COOKIE,
   USER_SESSION_TTL_SECONDS: accountAuth.USER_SESSION_TTL_SECONDS,
   adminAuth,

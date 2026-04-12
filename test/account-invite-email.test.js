@@ -67,6 +67,8 @@ test("builds invite email copy with verify and login links", () => {
 
   assert.match(copy.text, /Anna Petrova/);
   assert.match(copy.text, /verify-email\?token=abc/);
+  assert.match(copy.text, /set your password/i);
+  assert.doesNotMatch(copy.text, /temporary password/i);
   assert.match(copy.html, /Confirm email/);
   assert.match(copy.html, /https:\/\/example\.com\/account\/login/);
 });

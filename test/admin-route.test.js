@@ -2538,7 +2538,7 @@ test("normalizes malformed stored user phone values in settings edit forms", asy
   }
 });
 
-test("sends an invite email and requires confirmation before first employee login when email delivery is configured", async () => {
+test("sends an invite email and lets the employee set a first password after email confirmation", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-account-invite-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const usersStorePath = path.join(tempDir, "admin-users-store.json");
@@ -2576,7 +2576,7 @@ test("sends an invite email and requires confirmation before first employee logi
         phone: "3125550101",
         address: "1289 Rhodes Ln, Naperville, IL 60540",
         notes: "Invite email test",
-        password: "StrongPass123!",
+        password: "",
       }),
     });
     assert.equal(createUserResponse.status, 303);
@@ -2584,6 +2584,7 @@ test("sends an invite email and requires confirmation before first employee logi
 
     const usersAfterCreate = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     assert.equal(usersAfterCreate.users.length, 1);
+    assert.equal(usersAfterCreate.users[0].passwordHash, "");
     assert.equal(usersAfterCreate.users[0].emailVerificationRequired, true);
     assert.equal(usersAfterCreate.users[0].emailVerifiedAt, "");
     assert.ok(usersAfterCreate.users[0].inviteEmailSentAt);
@@ -2607,7 +2608,7 @@ test("sends an invite email and requires confirmation before first employee logi
       },
       body: new URLSearchParams({
         email: "invite.cleaner@example.com",
-        password: "StrongPass123!",
+        password: "",
       }),
     });
     const blockedLoginBody = await blockedLoginResponse.text();
@@ -2621,29 +2622,61 @@ test("sends an invite email and requires confirmation before first employee logi
       }
     );
     assert.equal(verifyResponse.status, 303);
-    assert.equal(verifyResponse.headers.get("location"), "/account/login?notice=email-verified");
+    assert.equal(
+      verifyResponse.headers.get("location"),
+      "/account/login?notice=email-verified-password-setup&email=invite.cleaner%40example.com"
+    );
+    const passwordSetupCookieValue = getCookieValue(
+      getSetCookies(verifyResponse),
+      "shynli_user_password_setup"
+    );
+    assert.ok(passwordSetupCookieValue);
 
-    const verifiedLoginPageResponse = await fetch(`${started.baseUrl}/account/login?notice=email-verified`);
+    const verifiedLoginPageResponse = await fetch(
+      `${started.baseUrl}/account/login?notice=email-verified-password-setup&email=invite.cleaner%40example.com`
+    );
     const verifiedLoginPageBody = await verifiedLoginPageResponse.text();
     assert.equal(verifiedLoginPageResponse.status, 200);
     assert.match(verifiedLoginPageBody, /Email подтверждён/i);
+    assert.match(verifiedLoginPageBody, /оставьте пароль пустым и нажмите «Войти»/i);
 
-    const successfulLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+    const firstLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_password_setup=${passwordSetupCookieValue}`,
+      },
+      body: new URLSearchParams({
+        email: "invite.cleaner@example.com",
+        password: "",
+      }),
+    });
+    const firstLoginBody = await firstLoginResponse.text();
+    assert.equal(firstLoginResponse.status, 200);
+    assert.match(firstLoginBody, /Задайте пароль/i);
+    assert.match(firstLoginBody, /Сохранить и войти/i);
+
+    const setupPasswordResponse = await fetch(`${started.baseUrl}/account/login`, {
       method: "POST",
       redirect: "manual",
       headers: {
         "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_password_setup=${passwordSetupCookieValue}`,
       },
       body: new URLSearchParams({
+        action: "setup-first-password",
         email: "invite.cleaner@example.com",
-        password: "StrongPass123!",
+        newPassword: "StrongPass123!",
+        confirmPassword: "StrongPass123!",
       }),
     });
-    assert.equal(successfulLoginResponse.status, 303);
-    assert.equal(successfulLoginResponse.headers.get("location"), "/account");
+    assert.equal(setupPasswordResponse.status, 303);
+    assert.equal(setupPasswordResponse.headers.get("location"), "/account");
+    assert.ok(getCookieValue(getSetCookies(setupPasswordResponse), "shynli_user_session"));
 
     const usersAfterVerify = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     assert.ok(usersAfterVerify.users[0].emailVerifiedAt);
+    assert.match(usersAfterVerify.users[0].passwordHash, /^scrypt\$/);
   } finally {
     await stopServer(started.child);
     await smtpServer.close();

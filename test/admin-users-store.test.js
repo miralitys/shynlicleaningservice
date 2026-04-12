@@ -182,3 +182,35 @@ test("uses the Supabase-backed users store when the client is configured", async
   const finalSnapshot = await store.getSnapshot();
   assert.deepEqual(finalSnapshot, { users: [] });
 });
+
+test("keeps invited users without a password hash until they finish first login", async () => {
+  const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "shynli-users-store-passwordless-"));
+  const storePath = path.join(tempDir, "admin-users-store.json");
+  const store = createAdminUsersStore({ filePath: storePath });
+
+  try {
+    const user = await store.createUser({
+      staffId: "staff-invite",
+      email: "invite@example.com",
+      phone: "+1(312)555-0102",
+      passwordHash: "",
+      status: "active",
+      role: "cleaner",
+      emailVerificationRequired: true,
+      emailVerifiedAt: "",
+    });
+
+    assert.equal(user.email, "invite@example.com");
+    assert.equal("passwordHash" in user, false);
+
+    const storedUser = await store.findUserByEmail("invite@example.com", { includeSecret: true });
+    assert.ok(storedUser);
+    assert.equal(storedUser.passwordHash, "");
+
+    const snapshot = await store.getSnapshot();
+    assert.equal(snapshot.users.length, 1);
+    assert.equal(snapshot.users[0].email, "invite@example.com");
+  } finally {
+    await fsp.rm(tempDir, { recursive: true, force: true });
+  }
+});
