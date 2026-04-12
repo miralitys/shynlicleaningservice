@@ -2237,6 +2237,44 @@ test("shows a readable SMTP invite error in the users settings page", async () =
   }
 });
 
+test("shows Gmail connect controls in the users settings page when Google Mail OAuth is configured", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GOOGLE_MAIL_CLIENT_ID: "gmail-client-id",
+    GOOGLE_MAIL_CLIENT_SECRET: "gmail-client-secret",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=users`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const settingsBody = await settingsResponse.text();
+
+    assert.equal(settingsResponse.status, 200);
+    assert.match(settingsBody, /Почта приглашений/i);
+    assert.match(settingsBody, />Подключить Gmail</);
+    assert.doesNotMatch(settingsBody, /Добавьте GOOGLE_MAIL_CLIENT_ID/i);
+
+    const connectResponse = await fetch(`${started.baseUrl}/admin/google-mail/connect`, {
+      redirect: "manual",
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+
+    assert.equal(connectResponse.status, 303);
+    assert.match(connectResponse.headers.get("location") || "", /^https:\/\/accounts\.google\.com\//i);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
 test("updates linked user access role from the staff edit dialog", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-role-edit-route-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
