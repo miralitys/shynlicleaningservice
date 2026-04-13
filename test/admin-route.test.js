@@ -1999,6 +1999,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     });
     const listBody = await listResponse.text();
     assert.equal(listResponse.status, 200);
+    assert.match(listBody, /admin-quote-entry-stage-form/);
+    assert.match(listBody, /admin-quote-entry-task-summary/);
     const entryIdMatch = listBody.match(/name="entryId" value="([^"]+)"/);
     assert.ok(entryIdMatch);
     const entryId = entryIdMatch[1];
@@ -2034,6 +2036,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     const tasksBody = await tasksResponse.text();
     assert.equal(tasksResponse.status, 200);
     assert.match(tasksBody, /Таски по заявкам/);
+    assert.match(tasksBody, /admin-quote-task-table/);
     assert.match(tasksBody, /Связаться с клиентом в назначенное время/);
     assert.match(tasksBody, /Mila Rivers/);
     assert.match(tasksBody, /Результат звонка/);
@@ -2148,6 +2151,7 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     });
     const tasksBody = await tasksResponse.text();
     assert.equal(tasksResponse.status, 200);
+    assert.match(tasksBody, /admin-quote-task-table/);
     assert.match(tasksBody, /Связаться с клиентом/);
     let taskId = getLeadTaskIdByEntryId(tasksBody, entryId);
     assert.ok(taskId);
