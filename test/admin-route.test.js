@@ -1425,6 +1425,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /data-admin-order-amount-cancel="admin-order-detail-dialog-[^"]+-amount-edit-panel"[\s\S]*hidden/);
     assert.match(focusedOrderBody, /data-admin-order-amount-action-for="admin-order-detail-dialog-[^"]+-amount-edit-panel"[\s\S]*hidden/);
     assert.match(focusedOrderBody, /\[data-admin-order-amount-editor\]\[hidden\],[\s\S]*\[data-admin-order-amount-action-for\]\[hidden\]/);
+    assert.match(focusedOrderBody, /data-admin-order-payment-open="admin-order-detail-dialog-[^"]+-payment-edit-panel"/);
+    assert.match(focusedOrderBody, /data-admin-order-payment-cancel="admin-order-detail-dialog-[^"]+-payment-edit-panel"/);
+    assert.match(focusedOrderBody, /data-admin-order-payment-cancel="admin-order-detail-dialog-[^"]+-payment-edit-panel"[\s\S]*hidden/);
+    assert.match(focusedOrderBody, /data-admin-order-payment-action-for="admin-order-detail-dialog-[^"]+-payment-edit-panel"[\s\S]*hidden/);
     assert.match(focusedOrderBody, /data-admin-order-team-open="admin-order-detail-dialog-[^"]+-team-edit-panel"/);
     assert.match(focusedOrderBody, /data-admin-order-team-cancel="admin-order-detail-dialog-[^"]+-team-edit-panel"/);
     assert.match(focusedOrderBody, /data-admin-order-team-cancel="admin-order-detail-dialog-[^"]+-team-edit-panel"[\s\S]*hidden/);
@@ -1551,6 +1555,56 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(
       amountEditorBody,
       /<button[^>]*aria-label="Отменить редактирование суммы"[^>]*hidden/
+    );
+
+    const savePaymentForm = new URLSearchParams();
+    savePaymentForm.set("entryId", entryId);
+    savePaymentForm.set("returnTo", `/admin/orders?q=ops-request-1&order=${entryId}`);
+    savePaymentForm.set("paymentStatus", "paid");
+    savePaymentForm.set("paymentMethod", "zelle");
+
+    const savePaymentResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: savePaymentForm,
+    });
+    assert.equal(savePaymentResponse.status, 303);
+    assert.match(
+      savePaymentResponse.headers.get("location") || "",
+      new RegExp(`(?=.*notice=order-saved)(?=.*order=${escapeRegex(entryId)})`)
+    );
+
+    const paymentEditorLocation = savePaymentResponse.headers.get("location");
+    assert.ok(paymentEditorLocation);
+    const paymentEditorResponse = await fetch(`${started.baseUrl}${paymentEditorLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const paymentEditorBody = await paymentEditorResponse.text();
+    assert.equal(paymentEditorResponse.status, 200);
+    assert.match(paymentEditorBody, /data-admin-dialog-autopen="true"/);
+    assert.match(paymentEditorBody, /<option value="paid" selected>Paid/);
+    assert.match(paymentEditorBody, /<option value="zelle" selected>Zelle/);
+    assert.match(
+      paymentEditorBody,
+      /<button[^>]*data-admin-order-payment-edit-trigger="admin-order-detail-dialog-[^"]+-payment-edit-panel"[^>]*>/
+    );
+    assert.match(
+      paymentEditorBody,
+      /<form[^>]*data-admin-order-payment-editor="admin-order-detail-dialog-[^"]+-payment-edit-panel"[^>]*hidden/
+    );
+    assert.match(
+      paymentEditorBody,
+      /<button[^>]*aria-label="Сохранить оплату"[^>]*hidden/
+    );
+    assert.match(
+      paymentEditorBody,
+      /<button[^>]*aria-label="Отменить редактирование оплаты"[^>]*hidden/
     );
 
     const completionFormData = new FormData();
