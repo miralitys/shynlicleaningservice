@@ -1519,6 +1519,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /admin-order-funnel-column-scheduled/);
     assert.match(ordersBody, /data-order-funnel-card="true"/);
     assert.match(ordersBody, /data-order-funnel-status="/);
+    assert.match(ordersBody, /data-order-dropzone="scheduled"/);
+    assert.match(ordersBody, /data-order-funnel-stage-form="true"/);
+    assert.match(ordersBody, /X-SHYNLI-ADMIN-AJAX/);
     assert.match(ordersBody, /Ближайшие выезды/);
     assert.match(ordersBody, /admin-orders-filter-inline-panel/);
     assert.match(ordersBody, /data-admin-auto-submit="true"/);
@@ -1531,8 +1534,11 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /\.admin-table-wrap\s*\{[\s\S]*overflow-x: auto;[\s\S]*overflow-y: hidden;/);
     assert.match(ordersBody, /\.admin-table\s*\{[\s\S]*width: max-content;[\s\S]*table-layout: auto;/);
     assert.match(ordersBody, /\.admin-table:not\(\.admin-team-calendar-table\) th,\s*\.admin-table:not\(\.admin-team-calendar-table\) td\s*\{[\s\S]*white-space: nowrap;/);
+    assert.match(ordersBody, /\.admin-orders-table-wrap-capped\s*\{[\s\S]*max-height:\s*34rem;[\s\S]*overflow-y:\s*auto;/);
     assert.doesNotMatch(ordersBody, /admin-kicker">Заказы</);
     assert.doesNotMatch(ordersBody, /admin-card-eyebrow">Заказы</);
+    assert.doesNotMatch(ordersBody, /Найдено \d+ из \d+ заказов/);
+    assert.doesNotMatch(ordersBody, /Показан общий рабочий список/);
     assert.match(ordersBody, /Поля из формы клиента/);
     assert.match(ordersBody, /admin-delete-button/);
     assert.match(ordersBody, /Inside Cabinets Cleaning/);
@@ -1912,6 +1918,26 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(saveOrderResponse.status, 303);
     assert.match(saveOrderResponse.headers.get("location") || "", /notice=order-saved/);
 
+    const ajaxOrderSaveResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: "/admin/orders",
+        orderStatus: "completed",
+      }),
+    });
+    assert.equal(ajaxOrderSaveResponse.status, 200);
+    const ajaxOrderSavePayload = await ajaxOrderSaveResponse.json();
+    assert.equal(ajaxOrderSavePayload.ok, true);
+    assert.equal(ajaxOrderSavePayload.notice, "order-saved");
+    assert.equal(ajaxOrderSavePayload.order.orderStatus, "completed");
+
     const updatedOrdersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -1919,7 +1945,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     });
     const updatedOrdersBody = await updatedOrdersResponse.text();
     assert.equal(updatedOrdersResponse.status, 200);
-    assert.match(updatedOrdersBody, /Перенесено/);
+    assert.match(updatedOrdersBody, /Завершено/);
     assert.match(updatedOrdersBody, /2 сотрудника/);
     assert.match(updatedOrdersBody, /Monthly/);
     assert.match(updatedOrdersBody, /<option value="partial" selected>Partial/);
@@ -1932,6 +1958,16 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
     assert.match(updatedOrdersBody, /Comment saved through ajax query fallback\./);
+
+    const filteredOrdersResponse = await fetch(`${started.baseUrl}/admin/orders?q=ops-request-1`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const filteredOrdersBody = await filteredOrdersResponse.text();
+    assert.equal(filteredOrdersResponse.status, 200);
+    assert.match(filteredOrdersBody, /Найдено 1 из 1 заказов\./);
+    assert.match(filteredOrdersBody, /С учётом поиска и фильтров\./);
     const mediaMatches = Array.from(
       updatedOrdersBody.matchAll(new RegExp(`/admin/orders\\?media=1&amp;entryId=${escapeRegex(entryId)}&amp;asset=([^"&]+)`, "g"))
     );
