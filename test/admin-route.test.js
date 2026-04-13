@@ -141,6 +141,39 @@ async function submitQuote(baseUrl, options) {
   });
 }
 
+async function createOrderFromQuoteRequest(baseUrl, sessionCookieValue, query) {
+  const quoteOpsResponse = await fetch(`${baseUrl}/admin/quote-ops?q=${encodeURIComponent(query)}`, {
+    headers: {
+      cookie: `shynli_admin_session=${sessionCookieValue}`,
+    },
+  });
+  const quoteOpsBody = await quoteOpsResponse.text();
+  assert.equal(quoteOpsResponse.status, 200);
+
+  const entryIdMatch = quoteOpsBody.match(/name="entryId" value="([^"]+)"/);
+  assert.ok(entryIdMatch, `Expected quote ops entry for ${query}`);
+  const entryId = entryIdMatch[1];
+
+  const createOrderResponse = await fetch(`${baseUrl}/admin/quote-ops`, {
+    method: "POST",
+    redirect: "manual",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      cookie: `shynli_admin_session=${sessionCookieValue}`,
+    },
+    body: new URLSearchParams({
+      action: "create-order-from-request",
+      entryId,
+      returnTo: "/admin/quote-ops",
+    }),
+  });
+
+  assert.equal(createOrderResponse.status, 303);
+  assert.match(createOrderResponse.headers.get("location") || "", /notice=order-created/);
+
+  return entryId;
+}
+
 test("serves the admin login page when admin secrets are configured", async () => {
   const started = await startServer({
     env: {
@@ -325,7 +358,22 @@ test("renders overview tables for unassigned clients and today's orders", async 
     });
     assert.equal(futureQuoteResponse.status, 201);
 
+    const freshLeadResponse = await submitQuote(started.baseUrl, {
+      requestId: "overview-new-1",
+      fullName: "Fresh Lead",
+      phone: "312-555-0203",
+      email: "fresh.lead@example.com",
+      serviceType: "regular",
+      selectedDate: futureDate,
+      selectedTime: "14:00",
+      fullAddress: "789 Fresh Blvd, Bolingbrook, IL 60440",
+    });
+    assert.equal(freshLeadResponse.status, 201);
+
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "overview-today-1");
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "overview-future-1");
 
     const todayOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Today Assigned")}`,
@@ -390,9 +438,10 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.ok(newRequestsSection);
     assert.ok(unassignedSection);
     assert.ok(todaySection);
-    assert.match(newRequestsSection, /Today Assigned/);
-    assert.match(newRequestsSection, /Future No Team/);
-    assert.match(newRequestsSection, /overview-future-1/);
+    assert.match(newRequestsSection, /Fresh Lead/);
+    assert.match(newRequestsSection, /overview-new-1/);
+    assert.doesNotMatch(newRequestsSection, /Today Assigned/);
+    assert.doesNotMatch(newRequestsSection, /Future No Team/);
     assert.match(unassignedSection, /Future No Team/);
     assert.doesNotMatch(unassignedSection, /Today Assigned/);
     assert.match(todaySection, /Today Assigned/);
@@ -589,6 +638,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(secondQuoteResponse.status, 201);
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "staff-request-1");
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "staff-request-2");
 
     const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -892,6 +943,7 @@ test("connects a cleaner to Google Calendar and syncs confirmed assignments into
     assert.equal(quoteResponse.status, 201);
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "google-calendar-request-1");
 
     const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -1097,6 +1149,7 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
     assert.equal(quoteResponse.status, 201);
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "google-calendar-request-2");
 
     await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -1296,6 +1349,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
 
     const sessionCookieValue = getCookieValue(getSetCookies(twoFactorResponse), "shynli_admin_session");
     assert.ok(sessionCookieValue);
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "ops-request-1");
 
     for (const [index, name] of ["Olga Martinez", "Anna Petrova", "Diana Brooks"].entries()) {
       const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
@@ -1823,8 +1877,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     });
     const deletedQuoteOpsBody = await deletedQuoteOpsResponse.text();
     assert.equal(deletedQuoteOpsResponse.status, 200);
-    assert.doesNotMatch(deletedQuoteOpsBody, /Jane Doe/);
-    assert.doesNotMatch(deletedQuoteOpsBody, /ops-request-1/);
+    assert.match(deletedQuoteOpsBody, /Jane Doe/);
+    assert.match(deletedQuoteOpsBody, /ops-request-1/);
 
     const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
     const calls = captureRaw
@@ -1909,6 +1963,7 @@ test("keeps storage diagnostics hidden on admin orders when Supabase falls back 
     assert.equal(quoteResponse.status, 201);
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "storage-warning-request-1");
 
     const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       headers: {
@@ -1996,6 +2051,9 @@ test("renders the clients table with filters and request history", async () => {
     }
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "client-request-1");
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "client-request-2");
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "client-request-3");
 
     const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -2579,6 +2637,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(unassignedQuoteResponse.status, 201);
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "account-request-1");
 
     const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=users`, {
       headers: {
