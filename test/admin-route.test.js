@@ -1992,6 +1992,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(funnelBody, /data-lead-dropzone="new"/);
     assert.match(funnelBody, /data-quote-funnel-stage-form="true"/);
     assert.match(funnelBody, /admin-quote-funnel-discussion-dialog/);
+    assert.match(funnelBody, /data-admin-dialog-row="true"/);
+    assert.match(funnelBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
 
     const listResponse = await fetch(`${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("funnel-request-1")}`, {
       headers: {
