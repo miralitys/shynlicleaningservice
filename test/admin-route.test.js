@@ -43,6 +43,23 @@ function decodeQuotedPrintable(value) {
   );
 }
 
+function getChicagoDateValue(offsetDays = 0) {
+  const baseDate = new Date(Date.now() + Number(offsetDays || 0) * 24 * 60 * 60 * 1000);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(baseDate);
+  const values = {};
+  for (const part of parts) {
+    if (part.type === "literal") continue;
+    values[part.type] = part.value;
+  }
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function getStaffAssignmentEntryIdByCustomerName(html, customerName) {
   const match = String(html || "").match(
     new RegExp(
@@ -246,6 +263,128 @@ test("completes the admin login and TOTP verification flow", async () => {
     assert.equal(logoutResponse.headers.get("location"), "/admin/login");
   } finally {
     await stopServer(started.child);
+  }
+});
+
+test("renders overview tables for unassigned clients and today's orders", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-overview-dashboard-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-overview-123",
+        },
+      },
+    },
+  ]);
+  const todayDate = getChicagoDateValue();
+  const futureDate = getChicagoDateValue(3);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    ADMIN_STAFF_STORE_PATH: path.join(tempDir, "admin-staff-store.json"),
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const todayQuoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "overview-today-1",
+      fullName: "Today Assigned",
+      phone: "312-555-0201",
+      email: "today.assigned@example.com",
+      serviceType: "deep",
+      selectedDate: todayDate,
+      selectedTime: "09:00",
+      fullAddress: "123 Today St, Naperville, IL 60540",
+    });
+    assert.equal(todayQuoteResponse.status, 201);
+
+    const futureQuoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "overview-future-1",
+      fullName: "Future No Team",
+      phone: "312-555-0202",
+      email: "future.noteam@example.com",
+      serviceType: "regular",
+      selectedDate: futureDate,
+      selectedTime: "11:30",
+      fullAddress: "456 Future Ave, Aurora, IL 60506",
+    });
+    assert.equal(futureQuoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const todayOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Today Assigned")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const todayOrdersBody = await todayOrdersResponse.text();
+    assert.equal(todayOrdersResponse.status, 200);
+
+    const entryIdMatch = todayOrdersBody.match(/name="entryId" value="([^"]+)"/);
+    assert.ok(entryIdMatch);
+
+    const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: entryIdMatch[1],
+        returnTo: `/admin/orders?q=${encodeURIComponent("Today Assigned")}`,
+        orderStatus: "scheduled",
+        assignedStaff: "Anna Petrova",
+        paymentStatus: "unpaid",
+        paymentMethod: "cash",
+        selectedDate: todayDate,
+        selectedTime: "09:00",
+        frequency: "",
+      }),
+    });
+    assert.equal(saveOrderResponse.status, 303);
+    assert.match(saveOrderResponse.headers.get("location") || "", /notice=order-saved/);
+
+    const dashboardResponse = await fetch(`${started.baseUrl}/admin`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const dashboardBody = await dashboardResponse.text();
+    assert.equal(dashboardResponse.status, 200);
+    assert.match(dashboardBody, /Клиенты без команды/i);
+    assert.match(dashboardBody, /Заказы на сегодня/i);
+
+    const unassignedSection = dashboardBody.match(
+      /data-admin-dashboard-unassigned-clients="true"[\s\S]*?<\/table>/
+    )?.[0];
+    const todaySection = dashboardBody.match(
+      /data-admin-dashboard-today-orders="true"[\s\S]*?<\/table>/
+    )?.[0];
+
+    assert.ok(unassignedSection);
+    assert.ok(todaySection);
+    assert.match(unassignedSection, /Future No Team/);
+    assert.doesNotMatch(unassignedSection, /Today Assigned/);
+    assert.match(todaySection, /Today Assigned/);
+    assert.match(todaySection, /Anna Petrova/);
+    assert.doesNotMatch(todaySection, /Future No Team/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
