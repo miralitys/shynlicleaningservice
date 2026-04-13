@@ -5,6 +5,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { createAdminDomainHelpers } = require("../lib/admin/domain");
 const { hashPassword, loadAdminConfig, generateTotpCode } = require("../lib/admin-auth");
 const { createFetchStub, createSmtpTestServer, startServer, stopServer } = require("./server-test-helpers");
 
@@ -69,6 +70,11 @@ function getStaffAssignmentEntryIdByCustomerName(html, customerName) {
   );
   return match ? match[1] : "";
 }
+
+test("formats admin timestamps in America/Chicago", () => {
+  const domain = createAdminDomainHelpers();
+  assert.equal(domain.formatAdminDateTime("2026-04-13T02:30:00.000Z"), "04/12/2026, 09:30 PM");
+});
 
 async function createAdminSession(baseUrl, config) {
   const loginResponse = await fetch(`${baseUrl}/admin/login`, {
@@ -364,9 +370,15 @@ test("renders overview tables for unassigned clients and today's orders", async 
     });
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
+    assert.match(dashboardBody, /Новые заявки/i);
     assert.match(dashboardBody, /Клиенты без команды/i);
     assert.match(dashboardBody, /Заказы на сегодня/i);
+    assert.ok(dashboardBody.indexOf("Новые заявки") < dashboardBody.indexOf("Клиенты без команды"));
+    assert.ok(dashboardBody.indexOf("Клиенты без команды") < dashboardBody.indexOf("Заказы на сегодня"));
 
+    const newRequestsSection = dashboardBody.match(
+      /data-admin-dashboard-new-requests="true"[\s\S]*?<\/table>/
+    )?.[0];
     const unassignedSection = dashboardBody.match(
       /data-admin-dashboard-unassigned-clients="true"[\s\S]*?<\/table>/
     )?.[0];
@@ -374,8 +386,12 @@ test("renders overview tables for unassigned clients and today's orders", async 
       /data-admin-dashboard-today-orders="true"[\s\S]*?<\/table>/
     )?.[0];
 
+    assert.ok(newRequestsSection);
     assert.ok(unassignedSection);
     assert.ok(todaySection);
+    assert.match(newRequestsSection, /Today Assigned/);
+    assert.match(newRequestsSection, /Future No Team/);
+    assert.match(newRequestsSection, /overview-future-1/);
     assert.match(unassignedSection, /Future No Team/);
     assert.doesNotMatch(unassignedSection, /Today Assigned/);
     assert.match(todaySection, /Today Assigned/);
