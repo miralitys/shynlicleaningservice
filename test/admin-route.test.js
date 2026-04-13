@@ -1204,6 +1204,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /name="paymentMethod"/);
     assert.match(focusedOrderBody, /<option value="" selected>Not set/);
     assert.doesNotMatch(focusedOrderBody, /Заказ выглядит готовым к работе/);
+    assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Дата</);
+    assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Время</);
 
     const completionFormData = new FormData();
     completionFormData.set("action", "save-order-completion");
