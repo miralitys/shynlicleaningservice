@@ -4167,6 +4167,7 @@ test("shows a readable SMTP invite error in the users settings page", async () =
     assert.equal(settingsResponse.status, 200);
     assert.match(settingsBody, /Письмо не ушло/i);
     assert.match(settingsBody, /SMTP не принял логин или app password/i);
+    assert.doesNotMatch(settingsBody, /Отправить письмо ещё раз/i);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
