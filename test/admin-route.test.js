@@ -1514,6 +1514,11 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /Weekly/);
     assert.match(ordersBody, /Scheduled/);
     assert.match(ordersBody, /admin-compact-summary-strip/);
+    assert.match(ordersBody, /Воронка заказов/);
+    assert.match(ordersBody, /class="admin-order-funnel-board"/);
+    assert.match(ordersBody, /admin-order-funnel-column-scheduled/);
+    assert.match(ordersBody, /data-order-funnel-card="true"/);
+    assert.match(ordersBody, /data-order-funnel-status="/);
     assert.match(ordersBody, /Ближайшие выезды/);
     assert.match(ordersBody, /admin-orders-filter-inline-panel/);
     assert.match(ordersBody, /data-admin-auto-submit="true"/);
