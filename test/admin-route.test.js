@@ -1997,6 +1997,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(funnelBody, /data-quote-funnel-discussion-form="true"/);
     assert.match(funnelBody, /X-SHYNLI-ADMIN-AJAX/);
     assert.doesNotMatch(funnelBody, /stageForm\.submit\(\)/);
+    assert.match(funnelBody, /\.admin-quote-funnel-board\s*\{[^}]*align-items:\s*stretch;/);
+    assert.match(funnelBody, /\.admin-quote-funnel-list\s*\{[^}]*flex:\s*1 1 auto;/);
     assert.match(funnelBody, /data-admin-dialog-row="true"/);
     assert.match(funnelBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
 
