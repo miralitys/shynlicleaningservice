@@ -1366,11 +1366,66 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /\[data-admin-order-amount-editor\]\[hidden\],[\s\S]*\[data-admin-order-amount-action-for\]\[hidden\]/);
     assert.match(focusedOrderBody, /name="totalPrice"/);
     assert.match(focusedOrderBody, /name="totalPrice"[\s\S]*value="[0-9]+\.[0-9]{2}"/);
+    assert.match(
+      focusedOrderBody,
+      new RegExp(
+        `name="returnTo" value="/admin/orders\\?q=ops-request-1&amp;order=${escapeRegex(entryId)}&amp;amountEditor=1"`
+      )
+    );
     assert.match(focusedOrderBody, /data-admin-order-multiselect="true"/);
     assert.match(focusedOrderBody, /\.admin-order-multiselect-panel\s*\{[\s\S]*position: absolute;[\s\S]*z-index: 49;[\s\S]*overflow-y: auto;/);
     assert.doesNotMatch(focusedOrderBody, /Заказ выглядит готовым к работе/);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Дата</);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Время</);
+
+    const saveAmountForm = new URLSearchParams();
+    saveAmountForm.set("entryId", entryId);
+    saveAmountForm.set("returnTo", `/admin/orders?q=ops-request-1&order=${entryId}&amountEditor=1`);
+    saveAmountForm.set("totalPrice", "200.00");
+
+    const saveAmountResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: saveAmountForm,
+    });
+    assert.equal(saveAmountResponse.status, 303);
+    assert.match(
+      saveAmountResponse.headers.get("location") || "",
+      new RegExp(`(?=.*notice=order-saved)(?=.*order=${escapeRegex(entryId)})(?=.*amountEditor=1)`)
+    );
+
+    const amountEditorLocation = saveAmountResponse.headers.get("location");
+    assert.ok(amountEditorLocation);
+    const amountEditorResponse = await fetch(`${started.baseUrl}${amountEditorLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const amountEditorBody = await amountEditorResponse.text();
+    assert.equal(amountEditorResponse.status, 200);
+    assert.match(amountEditorBody, /data-admin-dialog-autopen="true"/);
+    assert.match(amountEditorBody, /\$200\.00/);
+    assert.match(amountEditorBody, /value="200\.00"/);
+    assert.match(
+      amountEditorBody,
+      /<button[^>]*data-admin-order-amount-edit-trigger="admin-order-detail-dialog-[^"]+-amount-edit-panel"[^>]*hidden/
+    );
+    assert.doesNotMatch(
+      amountEditorBody,
+      /<form[^>]*data-admin-order-amount-editor="admin-order-detail-dialog-[^"]+-amount-edit-panel"[^>]*hidden/
+    );
+    assert.doesNotMatch(
+      amountEditorBody,
+      /<button[^>]*aria-label="Сохранить сумму"[^>]*hidden/
+    );
+    assert.doesNotMatch(
+      amountEditorBody,
+      /<button[^>]*aria-label="Отменить редактирование суммы"[^>]*hidden/
+    );
 
     const completionFormData = new FormData();
     completionFormData.set("action", "save-order-completion");
