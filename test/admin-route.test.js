@@ -373,6 +373,7 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.match(dashboardBody, /Новые заявки/i);
     assert.match(dashboardBody, /Клиенты без команды/i);
     assert.match(dashboardBody, /Заказы на сегодня/i);
+    assert.ok(dashboardBody.indexOf("Назначена дата") < dashboardBody.indexOf("Новые заявки"));
     assert.ok(dashboardBody.indexOf("Новые заявки") < dashboardBody.indexOf("Клиенты без команды"));
     assert.ok(dashboardBody.indexOf("Клиенты без команды") < dashboardBody.indexOf("Заказы на сегодня"));
 
