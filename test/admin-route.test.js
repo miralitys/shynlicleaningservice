@@ -1562,6 +1562,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(focusedOrderResponse.status, 200);
     assert.match(focusedOrderBody, /data-admin-dialog-autopen="true"/);
     assert.match(focusedOrderBody, /data-admin-dialog-return-url="\/admin\/orders\?q=ops-request-1"/);
+    assert.match(focusedOrderBody, /class="admin-client-dialog-title-row"/);
+    assert.match(focusedOrderBody, /class="admin-client-summary-panel admin-order-summary-panel"/);
     assert.match(focusedOrderBody, /data-admin-picker-trigger="date"/);
     assert.match(focusedOrderBody, /data-admin-picker-trigger="time"/);
     assert.match(focusedOrderBody, /data-admin-time-panel/);
@@ -1599,6 +1601,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(focusedOrderBody, /Заказ выглядит готовым к работе/);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Дата</);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Время</);
+    assert.doesNotMatch(focusedOrderBody, /Сумма из quote/);
+    assert.doesNotMatch(focusedOrderBody, /Текущая сумма заказа/);
     assert.match(focusedOrderBody, /Olga Martinez/);
     assert.match(focusedOrderBody, /type="checkbox" name="assignedStaff" value="Olga Martinez" checked/);
 
