@@ -540,6 +540,8 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.match(unassignedSection, /data-admin-dialog-row="true"/);
     assert.match(unassignedSection, /<span class="admin-table-link">Future No Team<\/span>/);
     assert.match(dashboardBody, /id="admin-dashboard-client-dialog-/);
+    assert.match(dashboardBody, /\.admin-quote-entry-detail-grid\s*\{/);
+    assert.match(dashboardBody, /\.admin-quote-task-dialog-head\s*\{/);
     assert.match(unassignedSection, /Future No Team/);
     assert.doesNotMatch(unassignedSection, /Today Assigned/);
     assert.match(todaySection, /data-admin-dialog-row="true"/);
