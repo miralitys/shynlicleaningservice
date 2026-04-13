@@ -61,6 +61,10 @@ function getChicagoDateValue(offsetDays = 0) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+function getChicagoDateTimeLocalValue(offsetDays = 0, hour = 9, minute = 15) {
+  return `${getChicagoDateValue(offsetDays)}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
 function getStaffAssignmentEntryIdByCustomerName(html, customerName) {
   const match = String(html || "").match(
     new RegExp(
@@ -152,17 +156,7 @@ async function submitQuote(baseUrl, options) {
 }
 
 async function createOrderFromQuoteRequest(baseUrl, sessionCookieValue, query) {
-  const quoteOpsResponse = await fetch(`${baseUrl}/admin/quote-ops?q=${encodeURIComponent(query)}`, {
-    headers: {
-      cookie: `shynli_admin_session=${sessionCookieValue}`,
-    },
-  });
-  const quoteOpsBody = await quoteOpsResponse.text();
-  assert.equal(quoteOpsResponse.status, 200);
-
-  const entryIdMatch = quoteOpsBody.match(/name="entryId" value="([^"]+)"/);
-  assert.ok(entryIdMatch, `Expected quote ops entry for ${query}`);
-  const entryId = entryIdMatch[1];
+  const entryId = await getQuoteOpsEntryId(baseUrl, sessionCookieValue, query);
 
   const createOrderResponse = await fetch(`${baseUrl}/admin/quote-ops`, {
     method: "POST",
@@ -182,6 +176,20 @@ async function createOrderFromQuoteRequest(baseUrl, sessionCookieValue, query) {
   assert.match(createOrderResponse.headers.get("location") || "", /notice=order-created/);
 
   return entryId;
+}
+
+async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
+  const quoteOpsResponse = await fetch(`${baseUrl}/admin/quote-ops?q=${encodeURIComponent(query)}`, {
+    headers: {
+      cookie: `shynli_admin_session=${sessionCookieValue}`,
+    },
+  });
+  const quoteOpsBody = await quoteOpsResponse.text();
+  assert.equal(quoteOpsResponse.status, 200);
+
+  const entryIdMatch = quoteOpsBody.match(/name="entryId" value="([^"]+)"/);
+  assert.ok(entryIdMatch, `Expected quote ops entry for ${query}`);
+  return entryIdMatch[1];
 }
 
 test("serves the admin login page when admin secrets are configured", async () => {
@@ -331,6 +339,8 @@ test("renders overview tables for unassigned clients and today's orders", async 
   ]);
   const todayDate = getChicagoDateValue();
   const futureDate = getChicagoDateValue(3);
+  const overdueTaskAt = getChicagoDateTimeLocalValue(-1, 9, 15);
+  const futureTaskAt = getChicagoDateTimeLocalValue(1, 10, 30);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     GHL_API_KEY: "ghl_test_key",
@@ -380,7 +390,69 @@ test("renders overview tables for unassigned clients and today's orders", async 
     });
     assert.equal(freshLeadResponse.status, 201);
 
+    const overdueLeadResponse = await submitQuote(started.baseUrl, {
+      requestId: "overview-overdue-1",
+      fullName: "Overdue Task Lead",
+      phone: "312-555-0204",
+      email: "overdue.task@example.com",
+      serviceType: "deep",
+      selectedDate: futureDate,
+      selectedTime: "15:00",
+      fullAddress: "160 Overdue Ct, Naperville, IL 60563",
+    });
+    assert.equal(overdueLeadResponse.status, 201);
+
+    const futureLeadResponse = await submitQuote(started.baseUrl, {
+      requestId: "overview-future-task-1",
+      fullName: "Future Task Lead",
+      phone: "312-555-0205",
+      email: "future.task@example.com",
+      serviceType: "regular",
+      selectedDate: futureDate,
+      selectedTime: "16:30",
+      fullAddress: "220 Future Task Ln, Plainfield, IL 60544",
+    });
+    assert.equal(futureLeadResponse.status, 201);
+
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const overdueLeadEntryId = await getQuoteOpsEntryId(started.baseUrl, sessionCookieValue, "overview-overdue-1");
+    const futureLeadEntryId = await getQuoteOpsEntryId(started.baseUrl, sessionCookieValue, "overview-future-task-1");
+
+    const overdueTaskStatusResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+      },
+      body: new URLSearchParams({
+        action: "update-lead-status",
+        entryId: overdueLeadEntryId,
+        leadStatus: "discussion",
+        discussionNextContactAt: overdueTaskAt,
+        returnTo: "/admin/quote-ops?section=tasks",
+      }),
+    });
+    assert.equal(overdueTaskStatusResponse.status, 200);
+
+    const futureTaskStatusResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+      },
+      body: new URLSearchParams({
+        action: "update-lead-status",
+        entryId: futureLeadEntryId,
+        leadStatus: "discussion",
+        discussionNextContactAt: futureTaskAt,
+        returnTo: "/admin/quote-ops?section=tasks",
+      }),
+    });
+    assert.equal(futureTaskStatusResponse.status, 200);
 
     await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "overview-today-1");
     await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "overview-future-1");
@@ -429,14 +501,22 @@ test("renders overview tables for unassigned clients and today's orders", async 
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
     assert.match(dashboardBody, /Новые заявки/i);
+    assert.match(dashboardBody, /Таски на контроле/i);
     assert.match(dashboardBody, /Клиенты без команды/i);
     assert.match(dashboardBody, /Заказы на сегодня/i);
     assert.ok(dashboardBody.indexOf("Назначена дата") < dashboardBody.indexOf("Новые заявки"));
-    assert.ok(dashboardBody.indexOf("Новые заявки") < dashboardBody.indexOf("Клиенты без команды"));
+    assert.ok(dashboardBody.indexOf("Новые заявки") < dashboardBody.indexOf("Таски на контроле"));
+    assert.ok(dashboardBody.indexOf("Таски на контроле") < dashboardBody.indexOf("Клиенты без команды"));
     assert.ok(dashboardBody.indexOf("Клиенты без команды") < dashboardBody.indexOf("Заказы на сегодня"));
 
     const newRequestsSection = dashboardBody.match(
       /data-admin-dashboard-new-requests="true"[\s\S]*?<\/table>/
+    )?.[0];
+    const overdueTasksSection = dashboardBody.match(
+      /data-admin-dashboard-overdue-tasks="true"[\s\S]*?<\/section>/
+    )?.[0];
+    const todayTasksSection = dashboardBody.match(
+      /data-admin-dashboard-today-tasks="true"[\s\S]*?<\/section>/
     )?.[0];
     const unassignedSection = dashboardBody.match(
       /data-admin-dashboard-unassigned-clients="true"[\s\S]*?<\/table>/
@@ -446,12 +526,18 @@ test("renders overview tables for unassigned clients and today's orders", async 
     )?.[0];
 
     assert.ok(newRequestsSection);
+    assert.match(dashboardBody, /data-admin-dashboard-tasks="true"/);
+    assert.ok(overdueTasksSection);
+    assert.ok(todayTasksSection);
     assert.ok(unassignedSection);
     assert.ok(todaySection);
     assert.match(newRequestsSection, /Fresh Lead/);
     assert.match(newRequestsSection, /overview-new-1/);
     assert.doesNotMatch(newRequestsSection, /Today Assigned/);
     assert.doesNotMatch(newRequestsSection, /Future No Team/);
+    assert.match(overdueTasksSection, /Overdue Task Lead/);
+    assert.match(todayTasksSection, /Fresh Lead/);
+    assert.doesNotMatch(dashboardBody, /data-admin-dashboard-tasks="true"[\s\S]*Future Task Lead/);
     assert.match(unassignedSection, /Future No Team/);
     assert.doesNotMatch(unassignedSection, /Today Assigned/);
     assert.match(todaySection, /Today Assigned/);
