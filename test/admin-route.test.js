@@ -2032,10 +2032,11 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
 
     const updateNotesResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       method: "POST",
-      redirect: "manual",
       headers: {
         "content-type": "application/x-www-form-urlencoded",
         cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
       },
       body: new URLSearchParams({
         action: "update-lead-notes",
@@ -2044,8 +2045,11 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
         returnTo: `/admin/quote-ops?q=${encodeURIComponent("funnel-request-1")}&entry=${encodeURIComponent(entryId)}`,
       }),
     });
-    assert.equal(updateNotesResponse.status, 303);
-    assert.match(updateNotesResponse.headers.get("location") || "", /notice=lead-notes-saved/);
+    assert.equal(updateNotesResponse.status, 200);
+    const updateNotesPayload = await updateNotesResponse.json();
+    assert.equal(updateNotesPayload.ok, true);
+    assert.equal(updateNotesPayload.notice, "lead-notes-saved");
+    assert.equal(updateNotesPayload.entry.notes, "Позвонить после 5 PM и уточнить код домофона.");
 
     const notedListResponse = await fetch(`${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("funnel-request-1")}&entry=${encodeURIComponent(entryId)}`, {
       headers: {
@@ -2054,6 +2058,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     });
     const notedListBody = await notedListResponse.text();
     assert.equal(notedListResponse.status, 200);
+    assert.match(notedListBody, /data-quote-entry-notes-form="true"/);
     assert.match(notedListBody, /Заметки/);
     assert.match(notedListBody, /Позвонить после 5 PM и уточнить код домофона\./);
 
