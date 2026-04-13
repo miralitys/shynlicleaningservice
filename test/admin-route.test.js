@@ -1342,7 +1342,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /<option value="unpaid" selected>Unpaid/);
     assert.match(focusedOrderBody, /name="paymentMethod"/);
     assert.match(focusedOrderBody, /<option value="" selected>Not set/);
-    assert.match(focusedOrderBody, /data-admin-toggle-target="admin-order-detail-dialog-[^"]+-amount-edit-panel"/);
+    assert.match(focusedOrderBody, /data-admin-order-amount-open="admin-order-detail-dialog-[^"]+-amount-edit-panel"/);
+    assert.match(focusedOrderBody, /data-admin-order-amount-cancel="admin-order-detail-dialog-[^"]+-amount-edit-panel"/);
     assert.match(focusedOrderBody, /name="totalPrice"/);
     assert.match(focusedOrderBody, /name="totalPrice"[\s\S]*value="[0-9]+\.[0-9]{2}"/);
     assert.match(focusedOrderBody, /data-admin-order-multiselect="true"/);
