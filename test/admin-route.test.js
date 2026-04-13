@@ -1282,7 +1282,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /\.admin-quote-lane\s*\{[\s\S]*min-width: 0;[\s\S]*max-width: 100%;/);
     assert.match(quoteOpsBody, /\.admin-quote-table-wrap\s*\{[\s\S]*width: 100%;[\s\S]*max-width: 100%;/);
     assert.match(quoteOpsBody, /data-admin-auto-submit="true"/);
-    assert.match(quoteOpsBody, /data-admin-auto-submit-delay="320"/);
+    assert.match(quoteOpsBody, /data-admin-auto-submit-delay="600"/);
+    assert.match(quoteOpsBody, /data-admin-auto-submit-min-length="2"/);
+    assert.match(quoteOpsBody, /data-admin-auto-submit-restore-focus="true"/);
     const adminScriptMatch = quoteOpsBody.match(/<script>\s*\(\(\) => \{([\s\S]*?)\}\)\(\);\s*<\/script>/);
     assert.ok(adminScriptMatch);
     assert.doesNotThrow(() => new Function(`(() => {${adminScriptMatch[1]}})();`));
