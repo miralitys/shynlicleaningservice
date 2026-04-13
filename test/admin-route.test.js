@@ -705,6 +705,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /data-admin-dialog-open="admin-staff-edit-dialog-/);
     assert.match(staffBody, /aria-label="Открыть карточку сотрудника /);
     assert.match(staffBody, /class="admin-table-link">Olga Stone<\/span>/);
+    assert.match(staffBody, /class="admin-dialog-head admin-dialog-hero"/);
     assert.match(staffBody, /Olga Stone <span class="admin-staff-dialog-title-role">\(Менеджер\)<\/span>/);
     assert.match(staffBody, /\+1\(312\)555-0199 • olga@example.com/);
     assert.doesNotMatch(staffBody, /<th>Действие<\/th>/);
@@ -3091,7 +3092,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.ok(settingsNav.indexOf("Пользователи") < settingsNav.indexOf("Чек-листы"));
     assert.match(settingsBody, />Добавить сотрудника</);
     assert.match(settingsBody, /data-admin-dialog-open="admin-user-create-dialog"/);
-    assert.match(settingsBody, /<dialog class="admin-dialog" id="admin-user-create-dialog"/);
+    assert.match(settingsBody, /id="admin-user-create-dialog"/);
     assert.match(settingsBody, /admin-settings-users-table/);
     assert.match(settingsBody, /admin-settings-section-stack/);
     assert.match(settingsBody, /name="phone"[^>]*required/i);
