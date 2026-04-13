@@ -2063,7 +2063,9 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /admin-quote-task-deadline-note-overdue/);
     assert.match(tasksBody, /Связаться с клиентом в назначенное время/);
     assert.match(tasksBody, /Mila Rivers/);
-    assert.match(tasksBody, /Быстрые действия/);
+    assert.match(tasksBody, /Следующее действие/);
+    assert.match(tasksBody, /Дозвонились/);
+    assert.match(tasksBody, /data-quote-task-contacted-toggle=/);
     const taskId = getLeadTaskIdByEntryId(tasksBody, entryId);
     assert.ok(taskId);
 
