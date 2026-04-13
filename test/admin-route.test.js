@@ -2948,25 +2948,31 @@ test("keeps admin users out of the staff workspace and skips W-9 flow", async ()
       }),
     });
     assert.equal(accountLoginResponse.status, 303);
-    assert.equal(accountLoginResponse.headers.get("location"), requestedW9Path);
+    assert.equal(accountLoginResponse.headers.get("location"), "/admin");
     const userSessionCookieValue = getCookieValue(
       getSetCookies(accountLoginResponse),
       "shynli_user_session"
     );
     assert.ok(userSessionCookieValue);
 
-    const accountDashboardResponse = await fetch(
-      `${started.baseUrl}${requestedW9Path.replace(/#.*$/, "")}`,
-      {
-        headers: {
-          cookie: `shynli_user_session=${userSessionCookieValue}`,
-        },
-      }
-    );
-    const accountDashboardBody = await accountDashboardResponse.text();
-    assert.equal(accountDashboardResponse.status, 200);
-    assert.doesNotMatch(accountDashboardBody, /id="account-w9"/i);
-    assert.doesNotMatch(accountDashboardBody, /Для завершения профиля заполните W-9/i);
+    const accountDashboardResponse = await fetch(`${started.baseUrl}/account?focus=w9`, {
+      redirect: "manual",
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    assert.equal(accountDashboardResponse.status, 303);
+    assert.equal(accountDashboardResponse.headers.get("location"), "/admin");
+
+    const adminWorkspaceResponse = await fetch(`${started.baseUrl}/admin`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const adminWorkspaceBody = await adminWorkspaceResponse.text();
+    assert.equal(adminWorkspaceResponse.status, 200);
+    assert.match(adminWorkspaceBody, /Обзор/i);
+    assert.doesNotMatch(adminWorkspaceBody, /id="account-w9"/i);
 
     const saveW9Response = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
