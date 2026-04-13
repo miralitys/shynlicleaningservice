@@ -274,7 +274,7 @@ test("completes the admin login and TOTP verification flow", async () => {
       { path: "/admin/clients", pattern: /Клиенты/i },
       { path: "/admin/orders", pattern: /Заказы/i },
       { path: "/admin/staff", pattern: /Сотрудники/i },
-      { path: "/admin/settings", pattern: /Шаблоны чек-листов/i },
+      { path: "/admin/settings", pattern: /Пользователи/i },
       { path: "/admin/quote-ops", pattern: /Заявки/i },
     ];
 
@@ -520,7 +520,7 @@ test("renders checklist templates in settings and persists checklist updates", a
   try {
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
 
-    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=checklists`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
