@@ -1312,6 +1312,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(quoteOpsBody, /в текущей выборке/);
     assert.doesNotMatch(quoteOpsBody, /Критичных заявок нет/);
     assert.doesNotMatch(quoteOpsBody, /Последняя:/);
+    assert.doesNotMatch(quoteOpsBody, /admin-dialog-actions-row[\s\S]*Повторить отправку[\s\S]*Закрыть/);
 
     const removedExportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
       headers: {
