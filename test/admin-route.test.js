@@ -742,6 +742,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(assignmentsSectionBody, /Из дома: считаем маршрут/i);
     assert.match(assignmentsSectionBody, /importLibrary\("routes"\)/);
     assert.match(assignmentsSectionBody, /RouteMatrix\.computeRouteMatrix/);
+    assert.match(assignmentsSectionBody, /TRAVEL_TIME_BUFFER_MINUTES = 5/);
     assert.doesNotMatch(assignmentsSectionBody, /DistanceMatrixService/);
     assert.match(assignmentsSectionBody, /Маршрут считается от дома сотрудника или от предыдущего заказа в этот день\./);
     const assignmentsTable = assignmentsSectionBody.match(
