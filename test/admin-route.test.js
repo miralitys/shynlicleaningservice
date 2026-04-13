@@ -1806,7 +1806,6 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(quoteOpsBody, /<th>CRM<\/th>/);
     assert.doesNotMatch(quoteOpsBody, /<colgroup>/);
     assert.doesNotMatch(quoteOpsBody, /Скачать CSV/);
-    assert.doesNotMatch(quoteOpsBody, />Применить<\/button>/);
     assert.doesNotMatch(quoteOpsBody, /в текущей выборке/);
     assert.doesNotMatch(quoteOpsBody, /Критичных заявок нет/);
     assert.doesNotMatch(quoteOpsBody, /Последняя:/);
@@ -1988,6 +1987,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(funnelBody, /Воронка заявок/);
     assert.match(funnelBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/quote-ops\?section=funnel"/);
     assert.match(funnelBody, /href="\/admin\/quote-ops\?section=tasks"/);
+    assert.match(funnelBody, /admin-orders-filter-toggle/);
+    assert.match(funnelBody, /admin-clients-search-form/);
     assert.match(funnelBody, /data-lead-dropzone="new"/);
     assert.match(funnelBody, /data-quote-funnel-stage-form="true"/);
     assert.match(funnelBody, /admin-quote-funnel-discussion-dialog/);
@@ -2036,6 +2037,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     const tasksBody = await tasksResponse.text();
     assert.equal(tasksResponse.status, 200);
     assert.match(tasksBody, /Таски по заявкам/);
+    assert.match(tasksBody, /admin-orders-filter-toggle/);
+    assert.match(tasksBody, /admin-clients-search-form/);
     assert.match(tasksBody, /admin-quote-task-table/);
     assert.match(tasksBody, /Связаться с клиентом в назначенное время/);
     assert.match(tasksBody, /Mila Rivers/);
