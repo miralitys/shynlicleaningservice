@@ -71,6 +71,16 @@ function getStaffAssignmentEntryIdByCustomerName(html, customerName) {
   return match ? match[1] : "";
 }
 
+function getLeadTaskIdByEntryId(html, entryId) {
+  const match = String(html || "").match(
+    new RegExp(
+      `name="entryId" value="${escapeRegex(entryId)}"[\\s\\S]*?name="taskId" value="([^"]+)"`,
+      "i"
+    )
+  );
+  return match ? match[1] : "";
+}
+
 test("formats admin timestamps in America/Chicago", () => {
   const domain = createAdminDomainHelpers();
   assert.equal(domain.formatAdminDateTime("2026-04-13T02:30:00.000Z"), "04/12/2026, 09:30 PM");
@@ -1887,6 +1897,341 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       .filter(Boolean)
       .map((line) => JSON.parse(line));
     assert.equal(calls.length, 4);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("renders quote ops funnel and tasks with manager ownership and creates an order after confirmation", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-funnel-route-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-funnel-123",
+        },
+      },
+    },
+  ]);
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "funnel-request-1",
+      fullName: "Funnel Lead",
+      phone: "312-555-0170",
+      email: "funnel.lead@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-04-16",
+      selectedTime: "11:30",
+      fullAddress: "310 Funnel Road, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Mila Rivers",
+        role: "manager",
+        status: "active",
+        staffStatus: "active",
+        email: "mila.manager@example.com",
+        phone: "3125550180",
+        address: "520 Manager Lane, Naperville, IL 60540",
+        compensationValue: "180",
+        compensationType: "fixed",
+        notes: "Quote manager",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+    assert.match(createUserResponse.headers.get("location") || "", /notice=user-created-email-skipped/);
+
+    const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(usersStorePayload.users.length, 1);
+    const managerUserId = usersStorePayload.users[0].id;
+    assert.ok(managerUserId);
+
+    const funnelResponse = await fetch(`${started.baseUrl}/admin/quote-ops?section=funnel`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const funnelBody = await funnelResponse.text();
+    assert.equal(funnelResponse.status, 200);
+    assert.match(funnelBody, /Воронка заявок/);
+    assert.match(funnelBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/quote-ops\?section=funnel"/);
+    assert.match(funnelBody, /href="\/admin\/quote-ops\?section=tasks"/);
+    assert.match(funnelBody, /data-lead-dropzone="new"/);
+    assert.match(funnelBody, /data-quote-funnel-stage-form="true"/);
+    assert.match(funnelBody, /admin-quote-funnel-discussion-dialog/);
+
+    const listResponse = await fetch(`${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("funnel-request-1")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const listBody = await listResponse.text();
+    assert.equal(listResponse.status, 200);
+    const entryIdMatch = listBody.match(/name="entryId" value="([^"]+)"/);
+    assert.ok(entryIdMatch);
+    const entryId = entryIdMatch[1];
+
+    const discussionAt = "2026-04-17T09:15";
+    const updateStatusResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update-lead-status",
+        entryId,
+        leadStatus: "discussion",
+        managerId: managerUserId,
+        discussionNextContactAt: discussionAt,
+        returnTo: "/admin/quote-ops?section=funnel",
+      }),
+    });
+    assert.equal(updateStatusResponse.status, 303);
+    assert.match(updateStatusResponse.headers.get("location") || "", /notice=lead-stage-saved/);
+
+    const tasksResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=tasks&managerId=${encodeURIComponent(managerUserId)}&q=${encodeURIComponent("funnel-request-1")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const tasksBody = await tasksResponse.text();
+    assert.equal(tasksResponse.status, 200);
+    assert.match(tasksBody, /Таски по заявкам/);
+    assert.match(tasksBody, /Связаться с клиентом в назначенное время/);
+    assert.match(tasksBody, /Mila Rivers/);
+    assert.match(tasksBody, /Результат звонка/);
+    const taskId = getLeadTaskIdByEntryId(tasksBody, entryId);
+    assert.ok(taskId);
+
+    const confirmResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "complete-lead-task",
+        entryId,
+        taskId,
+        taskAction: "contacted",
+        nextStatus: "confirmed",
+        returnTo: `/admin/quote-ops?section=tasks&managerId=${encodeURIComponent(managerUserId)}`,
+      }),
+    });
+    assert.equal(confirmResponse.status, 303);
+    assert.match(confirmResponse.headers.get("location") || "", /notice=lead-confirmed/);
+
+    const confirmedFunnelResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=funnel&leadStatus=confirmed&q=${encodeURIComponent("funnel-request-1")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const confirmedFunnelBody = await confirmedFunnelResponse.text();
+    assert.equal(confirmedFunnelResponse.status, 200);
+    assert.match(confirmedFunnelBody, /Подтверждено/);
+    assert.match(confirmedFunnelBody, /Заказ создан/);
+    assert.match(confirmedFunnelBody, /Mila Rivers/);
+
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders?q=${encodeURIComponent("Funnel Lead")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Funnel Lead/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("advances no-response lead tasks from same-day retry to next-morning and then refusal", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-task-flow-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-taskflow-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    ADMIN_STAFF_STORE_PATH: path.join(tempDir, "admin-staff-store.json"),
+    ADMIN_USERS_STORE_PATH: path.join(tempDir, "admin-users-store.json"),
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "taskflow-request-1",
+      fullName: "No Answer Lead",
+      phone: "312-555-0190",
+      email: "no.answer@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-04-18",
+      selectedTime: "10:00",
+      fullAddress: "901 Follow Up Dr, Aurora, IL 60506",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const listResponse = await fetch(`${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("taskflow-request-1")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const listBody = await listResponse.text();
+    assert.equal(listResponse.status, 200);
+    const entryIdMatch = listBody.match(/name="entryId" value="([^"]+)"/);
+    assert.ok(entryIdMatch);
+    const entryId = entryIdMatch[1];
+
+    const tasksResponse = await fetch(`${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("taskflow-request-1")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const tasksBody = await tasksResponse.text();
+    assert.equal(tasksResponse.status, 200);
+    assert.match(tasksBody, /Связаться с клиентом/);
+    let taskId = getLeadTaskIdByEntryId(tasksBody, entryId);
+    assert.ok(taskId);
+
+    for (const expected of [
+      /Перезвонить клиенту через 3 часа/,
+      /Перезвонить клиенту на следующий день утром/,
+    ]) {
+      const noAnswerResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+        method: "POST",
+        redirect: "manual",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+        body: new URLSearchParams({
+          action: "complete-lead-task",
+          entryId,
+          taskId,
+          taskAction: "no-answer",
+          returnTo: "/admin/quote-ops?section=tasks",
+        }),
+      });
+      assert.equal(noAnswerResponse.status, 303);
+      assert.match(noAnswerResponse.headers.get("location") || "", /notice=task-saved/);
+
+      const updatedTasksResponse = await fetch(
+        `${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("taskflow-request-1")}`,
+        {
+          headers: {
+            cookie: `shynli_admin_session=${sessionCookieValue}`,
+          },
+        }
+      );
+      const updatedTasksBody = await updatedTasksResponse.text();
+      assert.equal(updatedTasksResponse.status, 200);
+      assert.match(updatedTasksBody, expected);
+      assert.match(updatedTasksBody, /Без ответа/);
+      taskId = getLeadTaskIdByEntryId(updatedTasksBody, entryId);
+      assert.ok(taskId);
+    }
+
+    const declineResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "complete-lead-task",
+        entryId,
+        taskId,
+        taskAction: "no-answer",
+        returnTo: "/admin/quote-ops?section=tasks",
+      }),
+    });
+    assert.equal(declineResponse.status, 303);
+    assert.match(declineResponse.headers.get("location") || "", /notice=task-saved/);
+
+    const declinedFunnelResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=funnel&leadStatus=declined&q=${encodeURIComponent("taskflow-request-1")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const declinedFunnelBody = await declinedFunnelResponse.text();
+    assert.equal(declinedFunnelResponse.status, 200);
+    assert.match(declinedFunnelBody, /No Answer Lead/);
+    assert.match(declinedFunnelBody, /Отказ/);
+
+    const emptyTasksResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("taskflow-request-1")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const emptyTasksBody = await emptyTasksResponse.text();
+    assert.equal(emptyTasksResponse.status, 200);
+    assert.match(emptyTasksBody, /Для текущего фильтра открытых тасков нет/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
