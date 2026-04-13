@@ -2053,7 +2053,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     });
     const notedListBody = await notedListResponse.text();
     assert.equal(notedListResponse.status, 200);
-    assert.match(notedListBody, /Notes/);
+    assert.match(notedListBody, /Заметки/);
     assert.match(notedListBody, /Позвонить после 5 PM и уточнить код домофона\./);
 
     const discussionAt = "2026-04-17T09:15";
