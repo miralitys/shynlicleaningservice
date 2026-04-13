@@ -1571,7 +1571,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /data-admin-dialog-autopen="true"/);
     assert.match(focusedOrderBody, /data-admin-dialog-return-url="\/admin\/orders\?q=ops-request-1"/);
     assert.match(focusedOrderBody, /class="admin-dialog-head admin-dialog-hero"/);
+    assert.match(focusedOrderBody, /class="admin-dialog-hero-title-row"/);
     assert.match(focusedOrderBody, /class="admin-client-summary-panel admin-order-summary-panel"/);
+    assert.match(focusedOrderBody, /class="admin-inline-badge-row admin-order-summary-strip"/);
     assert.match(focusedOrderBody, /data-admin-picker-trigger="date"/);
     assert.match(focusedOrderBody, /data-admin-picker-trigger="time"/);
     assert.match(focusedOrderBody, /data-admin-time-panel/);
@@ -1606,6 +1608,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     );
     assert.match(focusedOrderBody, /data-admin-order-multiselect="true"/);
     assert.match(focusedOrderBody, /\.admin-order-multiselect-panel\s*\{[\s\S]*position: absolute;[\s\S]*z-index: 49;[\s\S]*overflow-y: auto;/);
+    assert.doesNotMatch(
+      focusedOrderBody,
+      /class="admin-inline-badge-row admin-order-summary-flags"/
+    );
     assert.doesNotMatch(focusedOrderBody, /Заказ выглядит готовым к работе/);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Дата</);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Время</);
@@ -1645,7 +1651,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const teamUpdatedBody = await teamUpdatedResponse.text();
     assert.equal(teamUpdatedResponse.status, 200);
     assert.match(teamUpdatedBody, /data-admin-dialog-autopen="true"/);
-    assert.match(teamUpdatedBody, /Anna Petrova, Diana Brooks/);
+    assert.match(teamUpdatedBody, /2 сотрудника/);
     assert.match(teamUpdatedBody, /type="checkbox" name="assignedStaff" value="Anna Petrova" checked/);
     assert.match(teamUpdatedBody, /type="checkbox" name="assignedStaff" value="Diana Brooks" checked/);
     assert.match(
@@ -1854,7 +1860,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const updatedOrdersBody = await updatedOrdersResponse.text();
     assert.equal(updatedOrdersResponse.status, 200);
     assert.match(updatedOrdersBody, /Rescheduled/);
-    assert.match(updatedOrdersBody, /Anna Petrova, Diana Brooks/);
+    assert.match(updatedOrdersBody, /2 сотрудника/);
     assert.match(updatedOrdersBody, /Monthly/);
     assert.match(updatedOrdersBody, /<option value="partial" selected>Partial/);
     assert.match(updatedOrdersBody, /type="checkbox" name="assignedStaff" value="Anna Petrova" checked/);
