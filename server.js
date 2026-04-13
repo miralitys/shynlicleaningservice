@@ -713,6 +713,7 @@ const handleAdminRequest = createAdminRequestHandler({
   parseCookies,
   parseFormBody,
   readBufferBody,
+  readJsonBody,
   readTextBody,
   redirectWithTiming,
   serializeCookie,

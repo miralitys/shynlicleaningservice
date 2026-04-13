@@ -1832,19 +1832,22 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ajaxCompletionPayload.message, /Отчёт клинера сохранён/);
     assert.ok(ajaxCompletionPayload.completion.updatedAtLabel);
 
-    const ajaxCompletionFallbackFormData = new URLSearchParams();
-    ajaxCompletionFallbackFormData.set("action", "save-order-completion");
-    ajaxCompletionFallbackFormData.set("entryId", entryId);
-    ajaxCompletionFallbackFormData.set("returnTo", `/admin/orders?order=${entryId}`);
-    ajaxCompletionFallbackFormData.set("cleanerComment", "Comment saved through ajax query fallback.");
+    const ajaxCompletionFallbackRequestPayload = {
+      action: "save-order-completion",
+      entryId,
+      returnTo: `/admin/orders?order=${entryId}`,
+      cleanerComment: "Comment saved through ajax query fallback.",
+    };
 
     const ajaxCompletionFallbackResponse = await fetch(`${started.baseUrl}/admin/orders?ajax=1`, {
       method: "POST",
       headers: {
-        "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        "content-type": "application/json;charset=UTF-8",
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
-      body: ajaxCompletionFallbackFormData,
+      body: JSON.stringify(ajaxCompletionFallbackRequestPayload),
     });
     assert.equal(ajaxCompletionFallbackResponse.status, 200);
     const ajaxCompletionFallbackPayload = await ajaxCompletionFallbackResponse.json();
