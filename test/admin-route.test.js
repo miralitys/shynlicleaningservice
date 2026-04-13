@@ -736,6 +736,10 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(assignmentsSectionResponse.status, 200);
     assert.match(assignmentsSectionBody, /class="admin-table admin-staff-schedule-table"/);
     assert.doesNotMatch(assignmentsSectionBody, /class="admin-table admin-staff-table"/);
+    assert.match(assignmentsSectionBody, /<th>Дорога<\/th>/);
+    assert.match(assignmentsSectionBody, /data-admin-travel-estimate="true"/);
+    assert.match(assignmentsSectionBody, /Из дома: считаем маршрут/i);
+    assert.match(assignmentsSectionBody, /Маршрут считается от дома сотрудника или от предыдущего заказа в этот день\./);
     const assignmentsTable = assignmentsSectionBody.match(
       /<table class="admin-table admin-staff-schedule-table">[\s\S]*?<\/table>/
     )?.[0];
