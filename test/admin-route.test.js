@@ -1185,6 +1185,7 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
 
 test("shows recent quote submissions in admin quote ops and retries CRM sync", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-order-media-admin-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -1209,6 +1210,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
   ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
     ADMIN_ORDER_MEDIA_STORAGE_DIR: path.join(tempDir, "order-media"),
     GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
@@ -1293,6 +1295,31 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const sessionCookieValue = getCookieValue(getSetCookies(twoFactorResponse), "shynli_admin_session");
     assert.ok(sessionCookieValue);
 
+    for (const [index, name] of ["Olga Martinez", "Anna Petrova", "Diana Brooks"].entries()) {
+      const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+        method: "POST",
+        redirect: "manual",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+        body: new URLSearchParams({
+          action: "create-staff",
+          name,
+          role: "cleaner",
+          phone: `31255501${String(10 + index).padStart(2, "0")}`,
+          email: `${name.toLowerCase().replace(/\s+/g, ".")}@example.com`,
+          address: `${100 + index} Main St, Naperville, IL 60540`,
+          compensationValue: "180",
+          compensationType: "fixed",
+          status: "active",
+          notes: "Orders team test",
+        }),
+      });
+      assert.equal(createStaffResponse.status, 303);
+      assert.match(createStaffResponse.headers.get("location") || "", /notice=staff-created/);
+    }
+
     const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -1343,6 +1370,33 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.ok(entryIdMatch);
     const entryId = entryIdMatch[1];
 
+    const staffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const findStaffIdByName = (name) =>
+      ((staffStorePayload.staff || []).find((record) => record && record.name === name) || {}).id || "";
+    const olgaId = findStaffIdByName("Olga Martinez");
+    const annaId = findStaffIdByName("Anna Petrova");
+    const dianaId = findStaffIdByName("Diana Brooks");
+    assert.ok(olgaId);
+    assert.ok(annaId);
+    assert.ok(dianaId);
+
+    const assignInitialTeamResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", entryId],
+        ["staffIds", olgaId],
+        ["status", "confirmed"],
+      ]),
+    });
+    assert.equal(assignInitialTeamResponse.status, 303);
+    assert.match(assignInitialTeamResponse.headers.get("location") || "", /notice=assignment-saved/);
+
     const focusedOrderResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=ops-request-1&order=${encodeURIComponent(entryId)}`,
       {
@@ -1388,6 +1442,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(focusedOrderBody, /Заказ выглядит готовым к работе/);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Дата</);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Время</);
+    assert.match(focusedOrderBody, /Olga Martinez/);
+    assert.match(focusedOrderBody, /type="checkbox" name="assignedStaff" value="Olga Martinez" checked/);
 
     const saveTeamForm = new URLSearchParams();
     saveTeamForm.set("entryId", entryId);
@@ -1439,6 +1495,13 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       teamUpdatedBody,
       /<button[^>]*aria-label="Отменить редактирование команды"[^>]*hidden/
     );
+
+    const updatedStaffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const savedAssignment = (updatedStaffStorePayload.assignments || []).find(
+      (record) => record && record.entryId === entryId
+    );
+    assert.ok(savedAssignment);
+    assert.deepEqual(savedAssignment.staffIds, [annaId, dianaId]);
 
     const saveAmountForm = new URLSearchParams();
     saveAmountForm.set("entryId", entryId);
