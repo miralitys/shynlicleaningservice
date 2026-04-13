@@ -1291,6 +1291,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /data-admin-auto-submit-delay="600"/);
     assert.match(quoteOpsBody, /data-admin-auto-submit-min-length="2"/);
     assert.match(quoteOpsBody, /data-admin-auto-submit-restore-focus="true"/);
+    assert.match(quoteOpsBody, /id="admin-quote-ops-filters"/);
+    assert.match(quoteOpsBody, /data-admin-auto-submit-scroll-target="#admin-quote-ops-filters"/);
+    assert.match(quoteOpsBody, /data-admin-auto-submit-scroll-offset="18"/);
+    assert.match(quoteOpsBody, /const autoSubmitScrollStorageKey = "adminAutoSubmitScroll"/);
     const adminScriptMatch = quoteOpsBody.match(/<script>\s*\(\(\) => \{([\s\S]*?)\}\)\(\);\s*<\/script>/);
     assert.ok(adminScriptMatch);
     assert.doesNotThrow(() => new Function(`(() => {${adminScriptMatch[1]}})();`));
