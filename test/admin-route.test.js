@@ -1368,6 +1368,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /data-admin-order-amount-cancel="admin-order-detail-dialog-[^"]+-amount-edit-panel"[\s\S]*hidden/);
     assert.match(focusedOrderBody, /data-admin-order-amount-action-for="admin-order-detail-dialog-[^"]+-amount-edit-panel"[\s\S]*hidden/);
     assert.match(focusedOrderBody, /\[data-admin-order-amount-editor\]\[hidden\],[\s\S]*\[data-admin-order-amount-action-for\]\[hidden\]/);
+    assert.match(focusedOrderBody, /data-admin-order-team-open="admin-order-detail-dialog-[^"]+-team-edit-panel"/);
+    assert.match(focusedOrderBody, /data-admin-order-team-cancel="admin-order-detail-dialog-[^"]+-team-edit-panel"/);
+    assert.match(focusedOrderBody, /data-admin-order-team-cancel="admin-order-detail-dialog-[^"]+-team-edit-panel"[\s\S]*hidden/);
+    assert.match(focusedOrderBody, /data-admin-order-team-action-for="admin-order-detail-dialog-[^"]+-team-edit-panel"[\s\S]*hidden/);
     assert.match(focusedOrderBody, /name="totalPrice"/);
     assert.match(focusedOrderBody, /name="totalPrice"[\s\S]*value="[0-9]+\.[0-9]{2}"/);
     assert.match(
@@ -1381,6 +1385,57 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(focusedOrderBody, /Заказ выглядит готовым к работе/);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Дата</);
     assert.doesNotMatch(focusedOrderBody, /admin-order-brief-fact-label">Время</);
+
+    const saveTeamForm = new URLSearchParams();
+    saveTeamForm.set("entryId", entryId);
+    saveTeamForm.set("returnTo", `/admin/orders?q=ops-request-1&order=${entryId}`);
+    saveTeamForm.append("assignedStaff", "Anna Petrova");
+    saveTeamForm.append("assignedStaff", "Diana Brooks");
+
+    const saveTeamResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: saveTeamForm,
+    });
+    assert.equal(saveTeamResponse.status, 303);
+    assert.match(
+      saveTeamResponse.headers.get("location") || "",
+      new RegExp(`(?=.*notice=order-saved)(?=.*order=${escapeRegex(entryId)})`)
+    );
+
+    const teamLocation = saveTeamResponse.headers.get("location");
+    assert.ok(teamLocation);
+    const teamUpdatedResponse = await fetch(`${started.baseUrl}${teamLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const teamUpdatedBody = await teamUpdatedResponse.text();
+    assert.equal(teamUpdatedResponse.status, 200);
+    assert.match(teamUpdatedBody, /data-admin-dialog-autopen="true"/);
+    assert.match(teamUpdatedBody, /Anna Petrova, Diana Brooks/);
+    assert.match(teamUpdatedBody, /type="checkbox" name="assignedStaff" value="Anna Petrova" checked/);
+    assert.match(teamUpdatedBody, /type="checkbox" name="assignedStaff" value="Diana Brooks" checked/);
+    assert.match(
+      teamUpdatedBody,
+      /<button[^>]*data-admin-order-team-edit-trigger="admin-order-detail-dialog-[^"]+-team-edit-panel"[^>]*>/
+    );
+    assert.match(
+      teamUpdatedBody,
+      /<form[^>]*data-admin-order-team-editor="admin-order-detail-dialog-[^"]+-team-edit-panel"[^>]*hidden/
+    );
+    assert.match(
+      teamUpdatedBody,
+      /<button[^>]*aria-label="Сохранить команду"[^>]*hidden/
+    );
+    assert.match(
+      teamUpdatedBody,
+      /<button[^>]*aria-label="Отменить редактирование команды"[^>]*hidden/
+    );
 
     const saveAmountForm = new URLSearchParams();
     saveAmountForm.set("entryId", entryId);
