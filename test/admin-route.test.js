@@ -1303,6 +1303,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /E-mail: jane@example\.com/);
     assert.match(quoteOpsBody, /Что заказал клиент/);
     assert.match(quoteOpsBody, /Поля из формы клиента/);
+    assert.match(quoteOpsBody, /Комментарий клиента/);
     assert.match(quoteOpsBody, /Gate code 2040/);
     assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
     assert.doesNotMatch(quoteOpsBody, /Persistent storage active/i);
@@ -1318,7 +1319,27 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(quoteOpsBody, /в текущей выборке/);
     assert.doesNotMatch(quoteOpsBody, /Критичных заявок нет/);
     assert.doesNotMatch(quoteOpsBody, /Последняя:/);
+    assert.doesNotMatch(quoteOpsBody, /Запрос:\s*Standard Cleaning/i);
+    assert.doesNotMatch(quoteOpsBody, /Клиент выбрал слот/i);
+    assert.doesNotMatch(quoteOpsBody, /Заявка ушла в CRM без ошибок/i);
+    assert.doesNotMatch(quoteOpsBody, /Адрес и комментарий/);
+    assert.doesNotMatch(quoteOpsBody, /Полный адрес/);
+    assert.doesNotMatch(quoteOpsBody, /Короткий адрес/);
     assert.doesNotMatch(quoteOpsBody, /admin-dialog-actions-row[\s\S]*Повторить отправку[\s\S]*Закрыть/);
+
+    const quoteOpsAddressSearchResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("123 Main St, Romeoville, IL 60446")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const quoteOpsAddressSearchBody = await quoteOpsAddressSearchResponse.text();
+    assert.equal(quoteOpsAddressSearchResponse.status, 200);
+    assert.match(quoteOpsAddressSearchBody, /Jane Doe/);
+    assert.match(quoteOpsAddressSearchBody, /Показано 1 из 1 заявок\./);
+    assert.doesNotMatch(quoteOpsAddressSearchBody, /По текущему фильтру заявок нет/);
 
     const removedExportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
       headers: {
