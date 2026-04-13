@@ -2167,7 +2167,7 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     assert.ok(taskId);
 
     for (const expected of [
-      /Перезвонить клиенту через 3 часа/,
+      /Связаться с клиентом/,
       /Перезвонить клиенту на следующий день утром/,
     ]) {
       const noAnswerResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
@@ -2199,6 +2199,9 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
       const updatedTasksBody = await updatedTasksResponse.text();
       assert.equal(updatedTasksResponse.status, 200);
       assert.match(updatedTasksBody, expected);
+      if (String(expected) === String(/Связаться с клиентом/)) {
+        assert.doesNotMatch(updatedTasksBody, /Перезвонить клиенту через 3 часа/);
+      }
       assert.match(updatedTasksBody, /Без ответа/);
       taskId = getLeadTaskIdByEntryId(updatedTasksBody, entryId);
       assert.ok(taskId);
