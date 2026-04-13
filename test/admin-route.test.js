@@ -1987,6 +1987,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(funnelBody, /Воронка заявок/);
     assert.match(funnelBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/quote-ops\?section=funnel"/);
     assert.match(funnelBody, /href="\/admin\/quote-ops\?section=tasks"/);
+    assert.doesNotMatch(funnelBody, /Весь поток заявок с сайта\./);
+    assert.doesNotMatch(funnelBody, /За 24 часа/);
     assert.match(funnelBody, /admin-orders-filter-toggle/);
     assert.match(funnelBody, /admin-clients-search-form/);
     assert.match(funnelBody, /data-lead-dropzone="new"/);
@@ -2047,6 +2049,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     const tasksBody = await tasksResponse.text();
     assert.equal(tasksResponse.status, 200);
     assert.match(tasksBody, /Таски по заявкам/);
+    assert.doesNotMatch(tasksBody, /Весь поток заявок с сайта\./);
+    assert.doesNotMatch(tasksBody, /За 24 часа/);
     assert.match(tasksBody, /admin-orders-filter-toggle/);
     assert.match(tasksBody, /admin-clients-search-form/);
     assert.match(tasksBody, /admin-quote-task-table/);
