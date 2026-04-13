@@ -1189,12 +1189,16 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /data-admin-dialog-return-url="\/admin\/orders\?q=ops-request-1"/);
     assert.match(focusedOrderBody, /data-admin-picker-trigger="date"/);
     assert.match(focusedOrderBody, /data-admin-picker-trigger="time"/);
+    assert.match(focusedOrderBody, /data-admin-time-panel/);
+    assert.match(focusedOrderBody, /<option value="AM">AM<\/option>/);
+    assert.match(focusedOrderBody, /<option value="PM">PM<\/option>/);
     assert.match(focusedOrderBody, /type="date"/);
     assert.match(focusedOrderBody, /type="time"/);
     assert.match(focusedOrderBody, /name="paymentStatus"/);
     assert.match(focusedOrderBody, /<option value="unpaid" selected>Unpaid/);
     assert.match(focusedOrderBody, /name="paymentMethod"/);
     assert.match(focusedOrderBody, /<option value="" selected>Not set/);
+    assert.doesNotMatch(focusedOrderBody, /Заказ выглядит готовым к работе/);
 
     const completionFormData = new FormData();
     completionFormData.set("action", "save-order-completion");
