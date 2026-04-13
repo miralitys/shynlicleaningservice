@@ -187,7 +187,7 @@ test("connects Google Mail OAuth and sends invite email through Gmail API", asyn
     JSON.parse(sendCalls[1].options.body).raw.replace(/-/g, "+").replace(/_/g, "/"),
     "base64"
   ).toString("utf8");
-  assert.match(reminderRawMessage, /Subject: Complete your SHYNLI W-9/);
+  assert.match(reminderRawMessage, /Subject: Complete your SHYNLI onboarding documents/);
   assert.match(reminderRawMessage, /account\/login/);
 });
 

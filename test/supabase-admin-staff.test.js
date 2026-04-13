@@ -139,6 +139,23 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
                     compensationType: "percent",
                     status: "active",
                     notes: "Quote-ops fallback row",
+                    contract: {
+                      contractorName: "Anna Petrova",
+                      contractorAddressLine1: "215 North Elm Street",
+                      contractorCityStateZip: "Naperville, IL 60540",
+                      contractorEmail: "anna@example.com",
+                      compensationType: "percent",
+                      compensationValue: "32",
+                      generatedAt: "2026-04-12T20:00:00.000Z",
+                      document: {
+                        relativePath: `${staffId}/contract.pdf`,
+                        fileName: "Anna-Petrova-contract.pdf",
+                        contentType: "application/pdf",
+                        sizeBytes: 4096,
+                        generatedAt: "2026-04-12T20:00:00.000Z",
+                        templateName: "Independent_Contractor_Agreement_Template.docx",
+                      },
+                    },
                     w9: {
                       legalName: "Anna Petrova",
                       federalTaxClassification: "individual",
@@ -236,6 +253,8 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
   assert.equal(snapshot.staff[0].compensationValue, "32");
   assert.equal(snapshot.staff[0].compensationType, "percent");
   assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
+  assert.equal(snapshot.staff[0].contract.contractorName, "Anna Petrova");
+  assert.equal(snapshot.staff[0].contract.document.relativePath, `${staffId}/contract.pdf`);
   assert.equal(snapshot.staff[0].w9.maskedTin, "***-**-0101");
   assert.equal(snapshot.staff[0].w9.document.relativePath, `${staffId}/w9.pdf`);
   assert.equal(snapshot.assignments.length, 1);

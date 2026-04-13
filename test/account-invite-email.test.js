@@ -83,11 +83,11 @@ test("builds W-9 reminder copy with optional account setup step", () => {
     requiresAccountSetup: true,
   });
 
-  assert.match(copy.text, /complete your SHYNLI W-9/i);
+  assert.match(copy.text, /complete your SHYNLI onboarding documents/i);
   assert.match(copy.text, /verify-email\?token=abc/);
   assert.match(copy.text, /account\/login/);
-  assert.match(copy.html, /Complete your W-9/);
-  assert.match(copy.html, /Open W-9 form/);
+  assert.match(copy.html, /Complete your onboarding documents/);
+  assert.match(copy.html, /Open documents/);
   assert.doesNotMatch(copy.html, /Open employee account/);
 });
 
@@ -195,8 +195,8 @@ test("sends W-9 reminder email through SMTP relay", async () => {
 
   assert.equal(response.id, "<smtp-message-w9@example.com>");
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].message.subject, "Complete your SHYNLI W-9");
-  assert.match(calls[0].message.text, /complete your SHYNLI W-9/i);
+  assert.equal(calls[0].message.subject, "Complete your SHYNLI onboarding documents");
+  assert.match(calls[0].message.text, /complete your SHYNLI onboarding documents/i);
   assert.match(calls[0].message.text, /verify-email\?token=abc/);
   assert.match(calls[0].message.text, /account\/login/);
 });

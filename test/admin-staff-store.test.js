@@ -125,6 +125,23 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
     );
 
     await store.updateStaff(olga.id, {
+      contract: {
+        contractorName: "Olga Martinez",
+        contractorAddressLine1: "742 Cedar Avenue",
+        contractorCityStateZip: "Aurora, IL 60506",
+        contractorEmail: "olga@example.com",
+        compensationType: "percent",
+        compensationValue: "45",
+        generatedAt: "2026-04-12T20:00:00.000Z",
+        document: {
+          relativePath: `${olga.id}/contract.pdf`,
+          fileName: "Olga-Martinez-contract.pdf",
+          contentType: "application/pdf",
+          sizeBytes: 4096,
+          generatedAt: "2026-04-12T20:00:00.000Z",
+          templateName: "Independent_Contractor_Agreement_Template.docx",
+        },
+      },
       w9: {
         legalName: "Olga Martinez",
         federalTaxClassification: "individual",
@@ -145,6 +162,8 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
     });
 
     snapshot = await store.getSnapshot();
+    assert.equal(snapshot.staff[1].contract.contractorName, "Olga Martinez");
+    assert.equal(snapshot.staff[1].contract.document.relativePath, `${olga.id}/contract.pdf`);
     assert.equal(snapshot.staff[1].w9.legalName, "Olga Martinez");
     assert.equal(snapshot.staff[1].w9.maskedTin, "***-**-0192");
     assert.equal(snapshot.staff[1].w9.document.relativePath, `${olga.id}/w9.pdf`);

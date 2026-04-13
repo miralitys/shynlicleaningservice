@@ -2712,7 +2712,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /<details class="admin-details" data-account-password-details>/i);
     assert.match(accountDashboardBody, /<summary>Обновить пароль<\/summary>/i);
     assert.doesNotMatch(accountDashboardBody, /<details class="admin-details" data-account-password-details" open>/i);
-    assert.match(accountDashboardBody, /Заполните W-9/i);
+    assert.match(accountDashboardBody, /Заполните документы сотрудника/i);
     assert.match(accountDashboardBody, /Подпишите форму мышкой, пальцем или стилусом/i);
     assert.match(accountDashboardBody, /data-account-w9-form/i);
     assert.match(accountDashboardBody, /data-account-w9-submit[^>]*disabled/i);
@@ -2726,7 +2726,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     const adminStaffBeforeW9Body = await adminStaffBeforeW9Response.text();
     assert.equal(adminStaffBeforeW9Response.status, 200);
-    assert.match(adminStaffBeforeW9Body, /Сотрудник ещё не заполнил W-9 в личном кабинете\./i);
+    assert.match(adminStaffBeforeW9Body, /Сотрудник ещё не завершил onboarding-документы/i);
     assert.match(adminStaffBeforeW9Body, /Отправить повторно/i);
 
     const invalidSaveW9Response = await fetch(`${started.baseUrl}/account`, {
@@ -2755,7 +2755,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     const invalidSaveW9Body = await invalidSaveW9Response.text();
     assert.equal(invalidSaveW9Response.status, 422);
-    assert.match(invalidSaveW9Body, /Не удалось создать W-9/i);
+    assert.match(invalidSaveW9Body, /Не удалось собрать документы сотрудника/i);
     assert.match(invalidSaveW9Body, /name="w9LegalName"[^>]*value="Alina Draft"/i);
     assert.match(invalidSaveW9Body, /name="w9BusinessName"[^>]*value="Alina Draft LLC"/i);
     assert.match(invalidSaveW9Body, /name="w9AddressLine1"[^>]*value="987 Draft Street"/i);
@@ -2796,6 +2796,11 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(saveW9Response.headers.get("location") || "", /notice=w9-saved/);
 
     const staffAfterW9Save = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(staffAfterW9Save.staff[0].contract.contractorName, "Alina Carter");
+    assert.equal(
+      staffAfterW9Save.staff[0].contract.document.relativePath,
+      path.join(staffId, "contract.pdf")
+    );
     assert.equal(staffAfterW9Save.staff[0].w9.legalName, "Alina Carter");
     assert.equal(staffAfterW9Save.staff[0].w9.maskedTin, "***-**-6789");
     assert.equal(staffAfterW9Save.staff[0].w9.document.relativePath, path.join(staffId, "w9.pdf"));
@@ -2810,13 +2815,27 @@ test("creates employee users in settings and serves a personal cabinet with assi
     );
     const accountW9PageBody = await accountW9PageResponse.text();
     assert.equal(accountW9PageResponse.status, 200);
-    assert.match(accountW9PageBody, /W-9 сохранён/i);
-    assert.match(accountW9PageBody, /Скачать PDF/i);
+    assert.match(accountW9PageBody, /Документы сотрудника сохранены/i);
+    assert.match(accountW9PageBody, /Скачать Contract/i);
+    assert.match(accountW9PageBody, /Скачать W-9/i);
     assert.match(accountW9PageBody, /Tax classification/i);
     assert.match(accountW9PageBody, /\*\*\*-\*\*-6789/);
     assert.match(accountW9PageBody, /<details class="admin-details" data-account-w9-details>/i);
-    assert.match(accountW9PageBody, /<summary>Обновить W-9<\/summary>/i);
+    assert.match(accountW9PageBody, /<summary>Обновить документы<\/summary>/i);
     assert.doesNotMatch(accountW9PageBody, /<details class="admin-details" data-account-w9-details" open>/i);
+
+    const accountContractDownloadResponse = await fetch(`${started.baseUrl}/account/contract`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    assert.equal(accountContractDownloadResponse.status, 200);
+    assert.equal(accountContractDownloadResponse.headers.get("content-type"), "application/pdf");
+    assert.match(
+      accountContractDownloadResponse.headers.get("content-disposition") || "",
+      /(attachment|inline);\s*filename=/i
+    );
+    assert.ok(Number(accountContractDownloadResponse.headers.get("content-length") || 0) > 0);
 
     const accountW9DownloadResponse = await fetch(`${started.baseUrl}/account/w9`, {
       headers: {
@@ -2838,10 +2857,32 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     const adminStaffAfterW9Body = await adminStaffAfterW9Response.text();
     assert.equal(adminStaffAfterW9Response.status, 200);
-    assert.match(adminStaffAfterW9Body, /Налоговая форма сотрудника/i);
-    assert.match(adminStaffAfterW9Body, /Скачать PDF/i);
+    assert.match(adminStaffAfterW9Body, /Документы сотрудника/i);
+    assert.match(adminStaffAfterW9Body, /Скачать Contract/i);
+    assert.match(adminStaffAfterW9Body, /Скачать W-9/i);
     assert.doesNotMatch(adminStaffAfterW9Body, /<iframe[^>]*admin-w9-preview-frame/i);
     assert.doesNotMatch(adminStaffAfterW9Body, /Отправить повторно/i);
+
+    const adminContractDownloadResponse = await fetch(
+      `${started.baseUrl}/admin/staff/contract?staffId=${encodeURIComponent(staffId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    assert.equal(adminContractDownloadResponse.status, 200);
+    assert.equal(adminContractDownloadResponse.headers.get("content-type"), "application/pdf");
+    assert.match(
+      adminContractDownloadResponse.headers.get("content-disposition") || "",
+      /attachment;\s*filename=/i
+    );
+    assert.equal(adminContractDownloadResponse.headers.get("x-frame-options"), "SAMEORIGIN");
+    assert.match(
+      adminContractDownloadResponse.headers.get("content-security-policy") || "",
+      /frame-ancestors 'self'/
+    );
+    assert.ok(Number(adminContractDownloadResponse.headers.get("content-length") || 0) > 0);
 
     const adminW9DownloadResponse = await fetch(
       `${started.baseUrl}/admin/staff/w9?staffId=${encodeURIComponent(staffId)}`,
@@ -3035,8 +3076,8 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
     });
     const staffPageBody = await staffPageResponse.text();
     assert.equal(staffPageResponse.status, 200);
-    assert.match(staffPageBody, /Сотрудник ещё не заполнил W-9 в личном кабинете\./i);
-    assert.match(staffPageBody, /получил письмо со ссылкой на форму W-9/i);
+    assert.match(staffPageBody, /Сотрудник ещё не завершил onboarding-документы\./i);
+    assert.match(staffPageBody, /Contract \+ W-9/i);
     assert.match(staffPageBody, /Отправить повторно/i);
 
     const resendResponse = await fetch(`${started.baseUrl}/admin/staff`, {
@@ -3066,16 +3107,16 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
     );
     const noticePageBody = await noticePageResponse.text();
     assert.equal(noticePageResponse.status, 200);
-    assert.match(noticePageBody, /Напоминание о заполнении W-9 отправлено сотруднику повторно\./i);
+    assert.match(noticePageBody, /Напоминание о Contract и W-9 отправлено сотруднику повторно\./i);
 
     assert.equal(smtpServer.messages.length, initialMessageCount + 1);
     const rawEmail = decodeQuotedPrintable(
       smtpServer.messages[smtpServer.messages.length - 1].raw
     );
-    assert.match(rawEmail, /Subject: Complete your SHYNLI W-9/);
+    assert.match(rawEmail, /Subject: Complete your SHYNLI onboarding documents/);
     assert.match(rawEmail, /rina\.powell@example\.com/);
     assert.match(rawEmail, /account\/login/);
-    assert.match(rawEmail, /Open W-9 form/);
+    assert.match(rawEmail, /Open documents/);
     assert.match(rawEmail, /next=3D%2Faccount%3Ffocus%3Dw9%23account-w9|next=%2Faccount%3Ffocus%3Dw9%23account-w9/);
     assert.doesNotMatch(rawEmail, /Confirm your SHYNLI employee email/);
 
@@ -3101,7 +3142,7 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
     );
     const reminderLoginPageBody = await reminderLoginPageResponse.text();
     assert.equal(reminderLoginPageResponse.status, 200);
-    assert.match(reminderLoginPageBody, /После входа откроется форма W-9/i);
+    assert.match(reminderLoginPageBody, /После входа откроется раздел документов сотрудника/i);
     assert.match(reminderLoginPageBody, /name="next" value="\/account\?focus=w9#account-w9"/i);
 
     const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
@@ -3134,9 +3175,9 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
     );
     const w9DashboardBody = await w9DashboardResponse.text();
     assert.equal(w9DashboardResponse.status, 200);
-    assert.match(w9DashboardBody, /Открылся раздел W-9/i);
+    assert.match(w9DashboardBody, /Открылся раздел документов сотрудника/i);
     assert.match(w9DashboardBody, /id="account-w9"/i);
-    assert.match(w9DashboardBody, /Сформировать W-9/i);
+    assert.match(w9DashboardBody, /Сформировать документы/i);
   } finally {
     await stopServer(started.child);
     await smtpServer.close();
@@ -3339,7 +3380,7 @@ test("keeps admin users out of the staff workspace and skips W-9 flow", async ()
     );
     const resendNoticeBody = await resendNoticeResponse.text();
     assert.equal(resendNoticeResponse.status, 200);
-    assert.match(resendNoticeBody, /Для админов W-9 не отправляется/i);
+    assert.match(resendNoticeBody, /Для админов onboarding-документы не отправляются/i);
 
     const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
       method: "POST",
