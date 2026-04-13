@@ -466,6 +466,9 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(staffResponse.status, 200);
     assert.match(staffBody, /class="admin-compact-summary-strip"/);
     assert.doesNotMatch(staffBody, /class="admin-stats-grid"/);
+    assert.match(staffBody, /class="admin-nav-sublinks"/);
+    assert.match(staffBody, /class="admin-nav-sublink" href="\/admin\/staff\?section=calendar">Календарь<\/a>/);
+    assert.match(staffBody, /class="admin-nav-sublink" href="\/admin\/staff\?section=assignments">График<\/a>/);
     assert.match(staffBody, /href="\/admin\/staff\?section=team"/);
     assert.match(staffBody, /href="\/admin\/staff\?section=calendar&calendarStart=/);
     assert.match(staffBody, /href="\/admin\/staff\?section=assignments"/);
@@ -565,6 +568,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(calendarSectionBody, /data-admin-dialog-open="admin-staff-assignment-dialog-/);
     assert.match(calendarSectionBody, /aria-label="Открыть заказ Jane Doe"/);
     assert.match(calendarSectionBody, /class="admin-dialog admin-dialog-wide" id="admin-staff-assignment-dialog-/);
+    assert.match(calendarSectionBody, /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff">Сотрудники<\/a>/);
+    assert.match(calendarSectionBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/staff\?section=calendar">Календарь<\/a>/);
 
     const assignmentsSectionResponse = await fetch(`${started.baseUrl}/admin/staff?section=assignments`, {
       headers: {
@@ -583,6 +588,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(assignmentsTable, /Jane Doe/);
     assert.ok(assignmentsTable.indexOf("Mary Pending") < assignmentsTable.indexOf("Jane Doe"));
     assert.match(assignmentsTable, /Mary Pending[\s\S]*Команда не назначена/i);
+    assert.match(assignmentsSectionBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/staff\?section=assignments">График<\/a>/);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.staff.length, 1);
