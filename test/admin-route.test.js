@@ -2156,6 +2156,10 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(notedListBody, /data-quote-entry-notes-form="true"/);
     assert.match(notedListBody, /Заметки/);
     assert.match(notedListBody, /Позвонить после 5 PM и уточнить код домофона\./);
+    assert.match(
+      notedListBody,
+      /document\.querySelectorAll\('\[data-quote-entry-notes-form="true"\]'\)[\s\S]*if \(activeSection !== "funnel"\) return;/
+    );
 
     const discussionAt = "2026-04-17T09:15";
     const updateStatusResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
