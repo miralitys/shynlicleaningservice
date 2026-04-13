@@ -2087,6 +2087,20 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.equal(updateStatusPayload.entry.leadStatus, "discussion");
     assert.equal(updateStatusPayload.entry.taskLabel, "Связаться с клиентом в назначенное время");
 
+    const dialogAfterStatusResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("funnel-request-1")}&entry=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const dialogAfterStatusBody = await dialogAfterStatusResponse.text();
+    assert.equal(dialogAfterStatusResponse.status, 200);
+    assert.match(dialogAfterStatusBody, /Связаться с клиентом в назначенное время/);
+    assert.doesNotMatch(dialogAfterStatusBody, /<span class="admin-badge admin-badge-success">Закрыта<\/span>/);
+    assert.doesNotMatch(dialogAfterStatusBody, /<span class="admin-badge admin-badge-muted">Отменена<\/span>/);
+
     const tasksResponse = await fetch(
       `${started.baseUrl}/admin/quote-ops?section=tasks&managerId=${encodeURIComponent(managerUserId)}&q=${encodeURIComponent("funnel-request-1")}`,
       {
