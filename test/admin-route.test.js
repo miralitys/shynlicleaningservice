@@ -2040,8 +2040,11 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /admin-orders-filter-toggle/);
     assert.match(tasksBody, /admin-clients-search-form/);
     assert.match(tasksBody, /admin-quote-task-table/);
+    assert.match(tasksBody, /<th>Таск<\/th>\s*<th>Дедлайн<\/th>\s*<th>Этап<\/th>\s*<th>Менеджер<\/th>\s*<th>Заявка<\/th>/);
     assert.doesNotMatch(tasksBody, /<th>Действия<\/th>/);
     assert.match(tasksBody, /data-admin-dialog-row="true"/);
+    assert.match(tasksBody, /admin-quote-task-row-overdue td/);
+    assert.match(tasksBody, /admin-quote-task-deadline-note-overdue/);
     assert.match(tasksBody, /Связаться с клиентом в назначенное время/);
     assert.match(tasksBody, /Mila Rivers/);
     assert.match(tasksBody, /Быстрые действия/);
