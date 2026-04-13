@@ -1999,6 +1999,9 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.doesNotMatch(funnelBody, /stageForm\.submit\(\)/);
     assert.match(funnelBody, /\.admin-quote-funnel-board\s*\{[^}]*align-items:\s*stretch;/);
     assert.match(funnelBody, /\.admin-quote-funnel-list\s*\{[^}]*flex:\s*1 1 auto;/);
+    assert.match(funnelBody, /\.admin-quote-funnel-card-detail\[hidden\]\s*\{\s*display:\s*none !important;/);
+    assert.doesNotMatch(funnelBody, /Найдено \d+ из \d+ заявок/);
+    assert.doesNotMatch(funnelBody, /Перетаскивайте карточки между колонками или откройте заявку по клику\./);
     assert.match(funnelBody, /data-admin-dialog-row="true"/);
     assert.match(funnelBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
 
