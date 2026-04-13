@@ -2184,8 +2184,25 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     assert.equal(tasksResponse.status, 200);
     assert.match(tasksBody, /admin-quote-task-table/);
     assert.match(tasksBody, /Связаться с клиентом/);
+    assert.match(
+      tasksBody,
+      new RegExp(`href="\\/admin\\/quote-ops\\?[^"]*entry=${entryId}[^"]*"[^>]*>Открыть заявку<`)
+    );
     let taskId = getLeadTaskIdByEntryId(tasksBody, entryId);
     assert.ok(taskId);
+
+    const directEntryResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("taskflow-request-1")}&entry=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const directEntryBody = await directEntryResponse.text();
+    assert.equal(directEntryResponse.status, 200);
+    assert.match(directEntryBody, /data-admin-dialog-autopen="true"/);
+    assert.match(directEntryBody, new RegExp(`data-admin-dialog-return-url="\\/admin\\/quote-ops\\?[^"]*q=taskflow-request-1[^"]*"`));
 
     for (const expected of [
       /Связаться с клиентом/,
