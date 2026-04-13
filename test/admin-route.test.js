@@ -1143,6 +1143,11 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /admin-compact-summary-strip/);
     assert.match(ordersBody, /Ближайшие выезды/);
     assert.match(ordersBody, /admin-orders-filter-inline-panel/);
+    assert.match(ordersBody, /data-admin-auto-submit="true"/);
+    assert.match(ordersBody, /data-admin-auto-submit-delay="600"/);
+    assert.match(ordersBody, /data-admin-auto-submit-min-length="2"/);
+    assert.match(ordersBody, /data-admin-auto-submit-restore-focus="true"/);
+    assert.match(ordersBody, /data-admin-auto-submit-scroll-target="#admin-orders-workspace"/);
     assert.match(ordersBody, /data-admin-dialog-row="true"/);
     assert.match(ordersBody, /class="admin-table-row-clickable"/);
     assert.match(ordersBody, /\.admin-table-wrap\s*\{[\s\S]*overflow-x: auto;[\s\S]*overflow-y: hidden;/);
@@ -1664,6 +1669,11 @@ test("renders the clients table with filters and request history", async () => {
     assert.doesNotMatch(clientsBody, /<th>Email<\/th>/);
     assert.doesNotMatch(clientsBody, /<th>Создан<\/th>/);
     assert.match(clientsBody, /Поиск по имени, email или телефону/i);
+    assert.match(clientsBody, /data-admin-auto-submit="true"/);
+    assert.match(clientsBody, /data-admin-auto-submit-delay="600"/);
+    assert.match(clientsBody, /data-admin-auto-submit-min-length="2"/);
+    assert.match(clientsBody, /data-admin-auto-submit-restore-focus="true"/);
+    assert.match(clientsBody, /data-admin-auto-submit-scroll-target="#admin-clients-workspace"/);
     assert.match(clientsBody, /Клик по строке открывает профиль/i);
     assert.match(clientsBody, /data-admin-row-href="\/admin\/clients\?client=/);
     assert.doesNotMatch(clientsBody, /Карточка клиента/i);
