@@ -2097,6 +2097,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(confirmedFunnelBody, /Подтверждено/);
     assert.match(confirmedFunnelBody, /Заказ создан/);
     assert.match(confirmedFunnelBody, /Mila Rivers/);
+    assert.match(confirmedFunnelBody, /data-quote-card-deadline-row="true" hidden/);
 
     const ordersResponse = await fetch(`${started.baseUrl}/admin/orders?q=${encodeURIComponent("Funnel Lead")}`, {
       headers: {
