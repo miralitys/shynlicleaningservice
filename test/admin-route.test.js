@@ -2040,9 +2040,11 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /admin-orders-filter-toggle/);
     assert.match(tasksBody, /admin-clients-search-form/);
     assert.match(tasksBody, /admin-quote-task-table/);
+    assert.doesNotMatch(tasksBody, /<th>Действия<\/th>/);
+    assert.match(tasksBody, /data-admin-dialog-row="true"/);
     assert.match(tasksBody, /Связаться с клиентом в назначенное время/);
     assert.match(tasksBody, /Mila Rivers/);
-    assert.match(tasksBody, /Результат звонка/);
+    assert.match(tasksBody, /Быстрые действия/);
     const taskId = getLeadTaskIdByEntryId(tasksBody, entryId);
     assert.ok(taskId);
 
