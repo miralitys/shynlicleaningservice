@@ -1790,7 +1790,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(saveCompletionResponse.status, 303);
     assert.match(saveCompletionResponse.headers.get("location") || "", /notice=completion-saved/);
 
-    const ajaxCompletionFormData = new FormData();
+    const ajaxCompletionFormData = new URLSearchParams();
     ajaxCompletionFormData.set("action", "save-order-completion");
     ajaxCompletionFormData.set("entryId", entryId);
     ajaxCompletionFormData.set("returnTo", `/admin/orders?order=${entryId}`);
@@ -1801,6 +1801,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       headers: {
         accept: "application/json",
         "x-shynli-admin-ajax": "1",
+        "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
       body: ajaxCompletionFormData,
