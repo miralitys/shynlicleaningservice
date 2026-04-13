@@ -1580,6 +1580,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /data-admin-time-panel/);
     assert.match(focusedOrderBody, /<option value="AM">AM<\/option>/);
     assert.match(focusedOrderBody, /<option value="PM">PM<\/option>/);
+    assert.match(
+      focusedOrderBody,
+      /<label class="admin-label admin-order-control-field">\s*Повторяемость[\s\S]*?<select class="admin-input" name="frequency">/
+    );
     assert.match(focusedOrderBody, /type="date"/);
     assert.match(focusedOrderBody, /type="time"/);
     assert.match(focusedOrderBody, /name="paymentStatus"/);
@@ -1828,6 +1832,29 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ajaxCompletionPayload.message, /Отчёт клинера сохранён/);
     assert.ok(ajaxCompletionPayload.completion.updatedAtLabel);
 
+    const ajaxCompletionFallbackFormData = new URLSearchParams();
+    ajaxCompletionFallbackFormData.set("action", "save-order-completion");
+    ajaxCompletionFallbackFormData.set("entryId", entryId);
+    ajaxCompletionFallbackFormData.set("returnTo", `/admin/orders?order=${entryId}`);
+    ajaxCompletionFallbackFormData.set("cleanerComment", "Comment saved through ajax query fallback.");
+
+    const ajaxCompletionFallbackResponse = await fetch(`${started.baseUrl}/admin/orders?ajax=1`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: ajaxCompletionFallbackFormData,
+    });
+    assert.equal(ajaxCompletionFallbackResponse.status, 200);
+    const ajaxCompletionFallbackPayload = await ajaxCompletionFallbackResponse.json();
+    assert.equal(ajaxCompletionFallbackPayload.ok, true);
+    assert.equal(ajaxCompletionFallbackPayload.notice, "completion-saved");
+    assert.equal(
+      ajaxCompletionFallbackPayload.completion.cleanerComment,
+      "Comment saved through ajax query fallback."
+    );
+
     const saveOrderForm = new URLSearchParams();
     saveOrderForm.set("entryId", entryId);
     saveOrderForm.set("returnTo", "/admin/orders");
@@ -1872,9 +1899,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /value="245\.50"/);
     assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
-    assert.match(updatedOrdersBody, /Cleaner finished successfully/);
-    assert.match(updatedOrdersBody, /Kitchen cabinets needed extra attention/);
-    assert.match(updatedOrdersBody, /Team double-checked the bathroom/);
+    assert.match(updatedOrdersBody, /Comment saved through ajax query fallback\./);
     const mediaMatches = Array.from(
       updatedOrdersBody.matchAll(new RegExp(`/admin/orders\\?media=1&amp;entryId=${escapeRegex(entryId)}&amp;asset=([^"&]+)`, "g"))
     );
