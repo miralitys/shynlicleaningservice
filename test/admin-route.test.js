@@ -1790,6 +1790,34 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(saveCompletionResponse.status, 303);
     assert.match(saveCompletionResponse.headers.get("location") || "", /notice=completion-saved/);
 
+    const ajaxCompletionFormData = new FormData();
+    ajaxCompletionFormData.set("action", "save-order-completion");
+    ajaxCompletionFormData.set("entryId", entryId);
+    ajaxCompletionFormData.set("returnTo", `/admin/orders?order=${entryId}`);
+    ajaxCompletionFormData.set("cleanerComment", "Cleaner finished successfully.\nKitchen cabinets needed extra attention.\nTeam double-checked the bathroom.");
+
+    const ajaxCompletionResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: ajaxCompletionFormData,
+    });
+    assert.equal(ajaxCompletionResponse.status, 200);
+    const ajaxCompletionPayload = await ajaxCompletionResponse.json();
+    assert.equal(ajaxCompletionPayload.ok, true);
+    assert.equal(ajaxCompletionPayload.notice, "completion-saved");
+    assert.equal(
+      ajaxCompletionPayload.completion.cleanerComment,
+      "Cleaner finished successfully.\nKitchen cabinets needed extra attention.\nTeam double-checked the bathroom."
+    );
+    assert.equal(ajaxCompletionPayload.completion.beforePhotos.length, 2);
+    assert.equal(ajaxCompletionPayload.completion.afterPhotos.length, 1);
+    assert.match(ajaxCompletionPayload.message, /Отчёт клинера сохранён/);
+    assert.ok(ajaxCompletionPayload.completion.updatedAtLabel);
+
     const saveOrderForm = new URLSearchParams();
     saveOrderForm.set("entryId", entryId);
     saveOrderForm.set("returnTo", "/admin/orders");
@@ -1836,6 +1864,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
     assert.match(updatedOrdersBody, /Cleaner finished successfully/);
     assert.match(updatedOrdersBody, /Kitchen cabinets needed extra attention/);
+    assert.match(updatedOrdersBody, /Team double-checked the bathroom/);
     const mediaMatches = Array.from(
       updatedOrdersBody.matchAll(new RegExp(`/admin/orders\\?media=1&amp;entryId=${escapeRegex(entryId)}&amp;asset=([^"&]+)`, "g"))
     );
