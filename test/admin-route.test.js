@@ -1369,7 +1369,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(
       focusedOrderBody,
       new RegExp(
-        `name="returnTo" value="/admin/orders\\?q=ops-request-1&amp;order=${escapeRegex(entryId)}&amp;amountEditor=1"`
+        `name="returnTo" value="/admin/orders\\?q=ops-request-1&amp;order=${escapeRegex(entryId)}"`
       )
     );
     assert.match(focusedOrderBody, /data-admin-order-multiselect="true"/);
@@ -1380,7 +1380,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
 
     const saveAmountForm = new URLSearchParams();
     saveAmountForm.set("entryId", entryId);
-    saveAmountForm.set("returnTo", `/admin/orders?q=ops-request-1&order=${entryId}&amountEditor=1`);
+    saveAmountForm.set("returnTo", `/admin/orders?q=ops-request-1&order=${entryId}`);
     saveAmountForm.set("totalPrice", "200.00");
 
     const saveAmountResponse = await fetch(`${started.baseUrl}/admin/orders`, {
@@ -1395,8 +1395,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(saveAmountResponse.status, 303);
     assert.match(
       saveAmountResponse.headers.get("location") || "",
-      new RegExp(`(?=.*notice=order-saved)(?=.*order=${escapeRegex(entryId)})(?=.*amountEditor=1)`)
+      new RegExp(`(?=.*notice=order-saved)(?=.*order=${escapeRegex(entryId)})`)
     );
+    assert.doesNotMatch(saveAmountResponse.headers.get("location") || "", /amountEditor=1/);
 
     const amountEditorLocation = saveAmountResponse.headers.get("location");
     assert.ok(amountEditorLocation);
@@ -1412,17 +1413,17 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(amountEditorBody, /value="200\.00"/);
     assert.match(
       amountEditorBody,
-      /<button[^>]*data-admin-order-amount-edit-trigger="admin-order-detail-dialog-[^"]+-amount-edit-panel"[^>]*hidden/
+      /<button[^>]*data-admin-order-amount-edit-trigger="admin-order-detail-dialog-[^"]+-amount-edit-panel"[^>]*>/
     );
-    assert.doesNotMatch(
+    assert.match(
       amountEditorBody,
       /<form[^>]*data-admin-order-amount-editor="admin-order-detail-dialog-[^"]+-amount-edit-panel"[^>]*hidden/
     );
-    assert.doesNotMatch(
+    assert.match(
       amountEditorBody,
       /<button[^>]*aria-label="Сохранить сумму"[^>]*hidden/
     );
-    assert.doesNotMatch(
+    assert.match(
       amountEditorBody,
       /<button[^>]*aria-label="Отменить редактирование суммы"[^>]*hidden/
     );
