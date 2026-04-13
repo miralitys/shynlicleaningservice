@@ -535,6 +535,7 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.doesNotMatch(dashboardBody, /Просроченные/);
     assert.doesNotMatch(dashboardBody, /На сегодня/);
     assert.doesNotMatch(dashboardBody, /Просрочено/);
+    assert.match(dashboardBody, /admin-dialog admin-dialog-wide admin-dialog-orders" id="admin-quote-task-result-dialog-/);
     assert.doesNotMatch(dashboardBody, /data-admin-dashboard-tasks="true"[\s\S]*Future Task Lead/);
     assert.match(unassignedSection, /Future No Team/);
     assert.doesNotMatch(unassignedSection, /Today Assigned/);
