@@ -856,6 +856,27 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(assignResponse.status, 303);
     assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
 
+    const ajaxAssignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", entryId],
+        ["staffIds", staffId],
+        ["status", "confirmed"],
+        ["notes", "Bring tall ladder"],
+      ]),
+    });
+    assert.equal(ajaxAssignResponse.status, 200);
+    const ajaxAssignPayload = await ajaxAssignResponse.json();
+    assert.equal(ajaxAssignPayload.ok, true);
+    assert.equal(ajaxAssignPayload.notice, "assignment-saved");
+
     const updatedStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -864,7 +885,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     const updatedStaffBody = await updatedStaffResponse.text();
     assert.equal(updatedStaffResponse.status, 200);
     assert.match(updatedStaffBody, /Подтверждено/);
-    assert.match(updatedStaffBody, /Bring ladder/);
+    assert.match(updatedStaffBody, /Bring tall ladder/);
     assert.match(updatedStaffBody, /Olga Stone/);
 
     const calendarSectionResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-03-25`, {
@@ -2823,7 +2844,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /\+1\(312\)555-0100[\s\S]*jane@example\.com[\s\S]*123 Main St, Romeoville, IL 60446/i);
     assert.doesNotMatch(selectedClientDialog, /client-request-3/);
     assert.match(selectedClientDialog, /123 Main St, Romeoville, IL 60446/);
-    assert.doesNotMatch(selectedClientBody, /Карточка клиента/i);
+    assert.doesNotMatch(selectedClientBody, /Карточка клиента обновлена/i);
     assert.doesNotMatch(selectedClientBody, /id="client-card"/);
 
     const plainfieldClientResponse = await fetch(
@@ -2952,6 +2973,25 @@ test("renders the clients table with filters and request history", async () => {
     const updatedClientUrl = new URL(updateClientLocation, started.baseUrl);
     currentJaneClientKey = updatedClientUrl.searchParams.get("client") || "";
     assert.equal(currentJaneClientKey, "3125550111");
+
+    const ajaxUpdateClientForm = new URLSearchParams(updateClientForm);
+    ajaxUpdateClientForm.set("clientKey", currentJaneClientKey);
+
+    const ajaxUpdateClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+      },
+      body: ajaxUpdateClientForm,
+    });
+    assert.equal(ajaxUpdateClientResponse.status, 200);
+    const ajaxUpdateClientPayload = await ajaxUpdateClientResponse.json();
+    assert.equal(ajaxUpdateClientPayload.ok, true);
+    assert.equal(ajaxUpdateClientPayload.notice, "client-saved");
+    assert.equal(ajaxUpdateClientPayload.clientKey, "3125550111");
 
     const updatedClientResponse = await fetch(`${started.baseUrl}${updateClientLocation}`, {
       headers: {
@@ -4294,6 +4334,34 @@ test("allows managers into admin workspace but blocks delete actions", async () 
     assert.equal(updateUserResponse.status, 303);
     assert.match(updateUserResponse.headers.get("location") || "", /notice=user-updated/);
 
+    const ajaxUpdateUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+      },
+      body: new URLSearchParams({
+        action: "update_user",
+        userId: managerUser.id,
+        staffId: managerStaff.id,
+        name: "Marta Greene",
+        role: "manager",
+        status: "active",
+        staffStatus: "active",
+        email: "marta.manager@example.com",
+        phone: "3315550198",
+        address: "500 Executive Dr, Naperville, IL 60563",
+        notes: "Updated by manager session via ajax",
+        password: "",
+      }),
+    });
+    assert.equal(ajaxUpdateUserResponse.status, 200);
+    const ajaxUpdateUserPayload = await ajaxUpdateUserResponse.json();
+    assert.equal(ajaxUpdateUserPayload.ok, true);
+    assert.equal(ajaxUpdateUserPayload.notice, "user-updated");
+
     const updatedUsersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     assert.equal(updatedUsersStorePayload.users[0].phone, "+1(331)555-0198");
 
@@ -4571,6 +4639,34 @@ test("updates linked user access role from the staff edit dialog", async () => {
     });
     assert.equal(updateStaffResponse.status, 303);
     assert.match(updateStaffResponse.headers.get("location") || "", /notice=staff-updated/);
+
+    const ajaxUpdateStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+      },
+      body: new URLSearchParams({
+        action: "update-staff",
+        staffId: staff.id,
+        userId: user.id,
+        name: "Emily Stone",
+        role: "manager",
+        phone: "3125550144",
+        email: "emily.cleaner@example.com",
+        address: "215 North Elm Street, Naperville, IL 60540",
+        compensationValue: "32.5",
+        compensationType: "percent",
+        status: "active",
+        notes: "Promoted from staff dialog via ajax",
+      }),
+    });
+    assert.equal(ajaxUpdateStaffResponse.status, 200);
+    const ajaxUpdateStaffPayload = await ajaxUpdateStaffResponse.json();
+    assert.equal(ajaxUpdateStaffPayload.ok, true);
+    assert.equal(ajaxUpdateStaffPayload.notice, "staff-updated");
 
     const updatedUsersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     const updatedStaffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
