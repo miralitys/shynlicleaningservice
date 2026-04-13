@@ -524,6 +524,9 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.ok(unassignedSection);
     assert.ok(todaySection);
     assert.match(newRequestsSection, /Fresh Lead/);
+    assert.match(newRequestsSection, /data-admin-dialog-row="true"/);
+    assert.match(newRequestsSection, /<span class="admin-table-link">Fresh Lead<\/span>/);
+    assert.doesNotMatch(newRequestsSection, /<a class="admin-table-link"/);
     assert.match(newRequestsSection, /overview-new-1/);
     assert.doesNotMatch(newRequestsSection, /Today Assigned/);
     assert.doesNotMatch(newRequestsSection, /Future No Team/);
