@@ -1512,7 +1512,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Jane Doe/);
     assert.match(ordersBody, /Weekly/);
-    assert.match(ordersBody, /Scheduled/);
+    assert.match(ordersBody, /Запланировано/);
     assert.match(ordersBody, /admin-compact-summary-strip/);
     assert.match(ordersBody, /Воронка заказов/);
     assert.match(ordersBody, /class="admin-order-funnel-board"/);
@@ -1919,7 +1919,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     });
     const updatedOrdersBody = await updatedOrdersResponse.text();
     assert.equal(updatedOrdersResponse.status, 200);
-    assert.match(updatedOrdersBody, /Rescheduled/);
+    assert.match(updatedOrdersBody, /Перенесено/);
     assert.match(updatedOrdersBody, /2 сотрудника/);
     assert.match(updatedOrdersBody, /Monthly/);
     assert.match(updatedOrdersBody, /<option value="partial" selected>Partial/);
