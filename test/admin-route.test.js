@@ -1650,6 +1650,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(focusedOrderBody, /Текущая сумма заказа/);
     assert.match(focusedOrderBody, /Olga Martinez/);
     assert.match(focusedOrderBody, /type="checkbox" name="assignedStaff" value="Olga Martinez" checked/);
+    assert.match(focusedOrderBody, /data-admin-order-completion-panel="true"/);
     assert.match(focusedOrderBody, /data-admin-order-cleaner-comment-panel="true"/);
     assert.match(focusedOrderBody, /data-admin-order-cleaner-comment-submit/);
 
