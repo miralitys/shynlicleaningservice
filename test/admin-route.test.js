@@ -3049,6 +3049,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(settingsBody, /Пользователи/i);
     assert.match(settingsBody, /class="admin-settings-nav-row"/);
     assert.match(settingsBody, /class="admin-settings-nav-actions"/);
+    const settingsNav = settingsBody.match(/<div class="admin-subnav-strip admin-settings-nav">[\s\S]*?<\/div>/)?.[0] || "";
+    assert.ok(settingsNav);
+    assert.ok(settingsNav.indexOf("Пользователи") < settingsNav.indexOf("Чек-листы"));
     assert.match(settingsBody, />Добавить сотрудника</);
     assert.match(settingsBody, /data-admin-dialog-open="admin-user-create-dialog"/);
     assert.match(settingsBody, /<dialog class="admin-dialog" id="admin-user-create-dialog"/);
