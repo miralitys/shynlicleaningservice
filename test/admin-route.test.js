@@ -1797,6 +1797,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Телефон<\/span>/);
     assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Услуга<\/span>/);
     assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Адрес<\/span>/);
+    assert.match(quoteOpsBody, /admin-client-info-grid admin-client-info-grid-three/);
     assert.match(quoteOpsBody, /<span class="admin-client-info-label">Создана<\/span>/);
     assert.match(quoteOpsBody, /<span class="admin-client-info-label">Менеджер<\/span>/);
     assert.match(quoteOpsBody, /Не назначен/);
