@@ -502,18 +502,18 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.equal(dashboardResponse.status, 200);
     assert.match(dashboardBody, /Новые заявки/i);
     assert.match(dashboardBody, /Таски на контроле/i);
-    assert.match(dashboardBody, /Клиенты без команды/i);
+    assert.match(dashboardBody, /Заказы без команды/i);
     assert.match(dashboardBody, /Заказы на сегодня/i);
     assert.ok(dashboardBody.indexOf("Назначена дата") < dashboardBody.indexOf("Новые заявки"));
     assert.ok(dashboardBody.indexOf("Новые заявки") < dashboardBody.indexOf("Таски на контроле"));
-    assert.ok(dashboardBody.indexOf("Таски на контроле") < dashboardBody.indexOf("Клиенты без команды"));
-    assert.ok(dashboardBody.indexOf("Клиенты без команды") < dashboardBody.indexOf("Заказы на сегодня"));
+    assert.ok(dashboardBody.indexOf("Таски на контроле") < dashboardBody.indexOf("Заказы без команды"));
+    assert.ok(dashboardBody.indexOf("Заказы без команды") < dashboardBody.indexOf("Заказы на сегодня"));
 
     const newRequestsSection = dashboardBody.match(
       /data-admin-dashboard-new-requests="true"[\s\S]*?<\/table>/
     )?.[0];
     const unassignedSection = dashboardBody.match(
-      /data-admin-dashboard-unassigned-clients="true"[\s\S]*?<\/table>/
+      /data-admin-dashboard-unassigned-orders="true"[\s\S]*?<\/table>/
     )?.[0];
     const todaySection = dashboardBody.match(
       /data-admin-dashboard-today-orders="true"[\s\S]*?<\/table>/
@@ -539,11 +539,12 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.doesNotMatch(dashboardBody, /data-admin-dashboard-tasks="true"[\s\S]*Future Task Lead/);
     assert.match(unassignedSection, /data-admin-dialog-row="true"/);
     assert.match(unassignedSection, /<span class="admin-table-link">Future No Team<\/span>/);
-    assert.match(dashboardBody, /id="admin-dashboard-client-dialog-/);
+    assert.match(dashboardBody, /id="admin-order-detail-dialog-/);
     assert.match(dashboardBody, /\.admin-quote-entry-detail-grid\s*\{/);
     assert.match(dashboardBody, /\.admin-quote-task-dialog-head\s*\{/);
     assert.match(unassignedSection, /Future No Team/);
     assert.doesNotMatch(unassignedSection, /Today Assigned/);
+    assert.match(unassignedSection, /Команда не назначена/);
     assert.match(todaySection, /data-admin-dialog-row="true"/);
     assert.match(todaySection, /<span class="admin-table-link">Today Assigned<\/span>/);
     assert.match(dashboardBody, /id="admin-order-detail-dialog-/);
