@@ -702,8 +702,11 @@ const handleAdminRequest = createAdminRequestHandler({
   getFormValues,
   getLeadConnectorClient,
   getRequestUrl,
+  getEntryOpenLeadTask,
   getEntryOrderCompletionData,
   getQuoteOpsFilters,
+  getLeadStatus,
+  formatAdminDateTime,
   normalizeLeadStatus,
   normalizeString,
   parseMultipartFormBody,
@@ -716,6 +719,7 @@ const handleAdminRequest = createAdminRequestHandler({
   shouldUseSecureCookies,
   writeHeadWithTiming,
   writeHtmlWithTiming,
+  writeJsonWithTiming,
 });
 
 const accountRenderers = createAccountRenderers({

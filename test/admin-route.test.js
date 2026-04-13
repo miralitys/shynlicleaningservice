@@ -1992,6 +1992,9 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(funnelBody, /data-lead-dropzone="new"/);
     assert.match(funnelBody, /data-quote-funnel-stage-form="true"/);
     assert.match(funnelBody, /admin-quote-funnel-discussion-dialog/);
+    assert.match(funnelBody, /data-quote-funnel-discussion-form="true"/);
+    assert.match(funnelBody, /X-SHYNLI-ADMIN-AJAX/);
+    assert.doesNotMatch(funnelBody, /stageForm\.submit\(\)/);
     assert.match(funnelBody, /data-admin-dialog-row="true"/);
     assert.match(funnelBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
 
@@ -2011,10 +2014,11 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     const discussionAt = "2026-04-17T09:15";
     const updateStatusResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       method: "POST",
-      redirect: "manual",
       headers: {
         "content-type": "application/x-www-form-urlencoded",
         cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
       },
       body: new URLSearchParams({
         action: "update-lead-status",
@@ -2025,8 +2029,12 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
         returnTo: "/admin/quote-ops?section=funnel",
       }),
     });
-    assert.equal(updateStatusResponse.status, 303);
-    assert.match(updateStatusResponse.headers.get("location") || "", /notice=lead-stage-saved/);
+    assert.equal(updateStatusResponse.status, 200);
+    const updateStatusPayload = await updateStatusResponse.json();
+    assert.equal(updateStatusPayload.ok, true);
+    assert.equal(updateStatusPayload.notice, "lead-stage-saved");
+    assert.equal(updateStatusPayload.entry.leadStatus, "discussion");
+    assert.equal(updateStatusPayload.entry.taskLabel, "Связаться с клиентом в назначенное время");
 
     const tasksResponse = await fetch(
       `${started.baseUrl}/admin/quote-ops?section=tasks&managerId=${encodeURIComponent(managerUserId)}&q=${encodeURIComponent("funnel-request-1")}`,
