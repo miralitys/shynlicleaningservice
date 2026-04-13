@@ -1322,6 +1322,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /Поля из формы клиента/);
     assert.match(quoteOpsBody, /Комментарий клиента/);
     assert.match(quoteOpsBody, /Gate code 2040/);
+    assert.doesNotMatch(quoteOpsBody, /Главные детали собраны в компактные блоки/);
     assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
     assert.doesNotMatch(quoteOpsBody, /Persistent storage active/i);
     assert.doesNotMatch(quoteOpsBody, /Подключено к Supabase/i);
