@@ -1645,6 +1645,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(focusedOrderBody, /Текущая сумма заказа/);
     assert.match(focusedOrderBody, /Olga Martinez/);
     assert.match(focusedOrderBody, /type="checkbox" name="assignedStaff" value="Olga Martinez" checked/);
+    assert.match(focusedOrderBody, /data-admin-order-cleaner-comment-panel="true"/);
+    assert.match(focusedOrderBody, /data-admin-order-cleaner-comment-submit/);
 
     const saveTeamForm = new URLSearchParams();
     saveTeamForm.set("entryId", entryId);
@@ -1808,7 +1810,6 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     completionFormData.set("action", "save-order-completion");
     completionFormData.set("entryId", entryId);
     completionFormData.set("returnTo", "/admin/orders");
-    completionFormData.set("cleanerComment", "Cleaner finished successfully.\nKitchen cabinets needed extra attention.");
     completionFormData.append("beforePhotos", new File([Buffer.from("before-image-1")], "before-one.jpg", { type: "image/jpeg" }));
     completionFormData.append("beforePhotos", new File([Buffer.from("before-image-2")], "before-two.jpg", { type: "image/jpeg" }));
     completionFormData.append("afterPhotos", new File([Buffer.from("after-image-1")], "after-one.jpg", { type: "image/jpeg" }));
@@ -1824,21 +1825,22 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(saveCompletionResponse.status, 303);
     assert.match(saveCompletionResponse.headers.get("location") || "", /notice=completion-saved/);
 
-    const ajaxCompletionFormData = new URLSearchParams();
-    ajaxCompletionFormData.set("action", "save-order-completion");
-    ajaxCompletionFormData.set("entryId", entryId);
-    ajaxCompletionFormData.set("returnTo", `/admin/orders?order=${entryId}`);
-    ajaxCompletionFormData.set("cleanerComment", "Cleaner finished successfully.\nKitchen cabinets needed extra attention.\nTeam double-checked the bathroom.");
+    const ajaxCleanerCommentRequestPayload = {
+      action: "save-order-cleaner-comment",
+      entryId,
+      returnTo: `/admin/orders?order=${entryId}`,
+      cleanerComment: "Cleaner finished successfully.\nKitchen cabinets needed extra attention.\nTeam double-checked the bathroom.",
+    };
 
     const ajaxCompletionResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
       headers: {
         accept: "application/json",
         "x-shynli-admin-ajax": "1",
-        "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+        "content-type": "application/json;charset=UTF-8",
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
-      body: ajaxCompletionFormData,
+      body: JSON.stringify(ajaxCleanerCommentRequestPayload),
     });
     assert.equal(ajaxCompletionResponse.status, 200);
     const ajaxCompletionPayload = await ajaxCompletionResponse.json();
@@ -1850,11 +1852,11 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     );
     assert.equal(ajaxCompletionPayload.completion.beforePhotos.length, 2);
     assert.equal(ajaxCompletionPayload.completion.afterPhotos.length, 1);
-    assert.match(ajaxCompletionPayload.message, /Отчёт клинера сохранён/);
+    assert.match(ajaxCompletionPayload.message, /Комментарий клинера сохранён/);
     assert.ok(ajaxCompletionPayload.completion.updatedAtLabel);
 
     const ajaxCompletionFallbackRequestPayload = {
-      action: "save-order-completion",
+      action: "save-order-cleaner-comment",
       entryId,
       returnTo: `/admin/orders?order=${entryId}`,
       cleanerComment: "Comment saved through ajax query fallback.",
