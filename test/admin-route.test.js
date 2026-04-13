@@ -607,8 +607,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Olga Stone/);
     assert.doesNotMatch(ordersBody, /Сотрудники и график/);
-    assert.match(ordersBody, /<select class="admin-input" name="assignedStaff">/);
-    assert.match(ordersBody, /<option value="Olga Stone" selected>Olga Stone<\/option>/);
+    assert.match(ordersBody, /class="admin-order-multiselect"/);
+    assert.match(ordersBody, /type="checkbox" name="assignedStaff" value="Olga Stone" checked/);
 
     const clearResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -1225,6 +1225,18 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(saveCompletionResponse.status, 303);
     assert.match(saveCompletionResponse.headers.get("location") || "", /notice=completion-saved/);
 
+    const saveOrderForm = new URLSearchParams();
+    saveOrderForm.set("entryId", entryId);
+    saveOrderForm.set("returnTo", "/admin/orders");
+    saveOrderForm.set("orderStatus", "rescheduled");
+    saveOrderForm.append("assignedStaff", "Anna Petrova");
+    saveOrderForm.append("assignedStaff", "Diana Brooks");
+    saveOrderForm.set("paymentStatus", "partial");
+    saveOrderForm.set("paymentMethod", "card");
+    saveOrderForm.set("selectedDate", "2026-03-24");
+    saveOrderForm.set("selectedTime", "11:30");
+    saveOrderForm.set("frequency", "monthly");
+
     const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
       redirect: "manual",
@@ -1232,17 +1244,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
         "content-type": "application/x-www-form-urlencoded",
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
-      body: new URLSearchParams({
-        entryId,
-        returnTo: "/admin/orders",
-        orderStatus: "rescheduled",
-        assignedStaff: "Maria",
-        paymentStatus: "partial",
-        paymentMethod: "card",
-        selectedDate: "2026-03-24",
-        selectedTime: "11:30",
-        frequency: "monthly",
-      }),
+      body: saveOrderForm,
     });
     assert.equal(saveOrderResponse.status, 303);
     assert.match(saveOrderResponse.headers.get("location") || "", /notice=order-saved/);
@@ -1255,9 +1257,11 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const updatedOrdersBody = await updatedOrdersResponse.text();
     assert.equal(updatedOrdersResponse.status, 200);
     assert.match(updatedOrdersBody, /Rescheduled/);
-    assert.match(updatedOrdersBody, /Maria/);
+    assert.match(updatedOrdersBody, /Anna Petrova, Diana Brooks/);
     assert.match(updatedOrdersBody, /Monthly/);
     assert.match(updatedOrdersBody, /<option value="partial" selected>Partial/);
+    assert.match(updatedOrdersBody, /type="checkbox" name="assignedStaff" value="Anna Petrova" checked/);
+    assert.match(updatedOrdersBody, /type="checkbox" name="assignedStaff" value="Diana Brooks" checked/);
     assert.match(updatedOrdersBody, /<option value="card" selected>Card/);
     assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
