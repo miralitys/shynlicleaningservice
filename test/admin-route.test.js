@@ -1203,6 +1203,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(focusedOrderBody, /<option value="unpaid" selected>Unpaid/);
     assert.match(focusedOrderBody, /name="paymentMethod"/);
     assert.match(focusedOrderBody, /<option value="" selected>Not set/);
+    assert.match(focusedOrderBody, /data-admin-toggle-target="admin-order-detail-dialog-[^"]+-amount-edit-panel"/);
+    assert.match(focusedOrderBody, /name="totalPrice"/);
+    assert.match(focusedOrderBody, /name="totalPrice"[\s\S]*value="[0-9]+\.[0-9]{2}"/);
     assert.match(focusedOrderBody, /data-admin-order-multiselect="true"/);
     assert.match(focusedOrderBody, /\.admin-order-multiselect-panel\s*\{[\s\S]*position: absolute;[\s\S]*z-index: 49;[\s\S]*overflow-y: auto;/);
     assert.doesNotMatch(focusedOrderBody, /Заказ выглядит готовым к работе/);
@@ -1237,6 +1240,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     saveOrderForm.append("assignedStaff", "Diana Brooks");
     saveOrderForm.set("paymentStatus", "partial");
     saveOrderForm.set("paymentMethod", "card");
+    saveOrderForm.set("totalPrice", "245.50");
     saveOrderForm.set("selectedDate", "2026-03-24");
     saveOrderForm.set("selectedTime", "11:30");
     saveOrderForm.set("frequency", "monthly");
@@ -1267,6 +1271,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /type="checkbox" name="assignedStaff" value="Anna Petrova" checked/);
     assert.match(updatedOrdersBody, /type="checkbox" name="assignedStaff" value="Diana Brooks" checked/);
     assert.match(updatedOrdersBody, /<option value="card" selected>Card/);
+    assert.match(updatedOrdersBody, /\$245\.50/);
+    assert.match(updatedOrdersBody, /name="totalPrice"/);
+    assert.match(updatedOrdersBody, /value="245\.50"/);
     assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
     assert.match(updatedOrdersBody, /Cleaner finished successfully/);
@@ -1325,6 +1332,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /Что заказал клиент/);
     assert.match(quoteOpsBody, /Поля из формы клиента/);
     assert.match(quoteOpsBody, /Комментарий клиента/);
+    assert.match(quoteOpsBody, /\$245\.50/);
     assert.match(quoteOpsBody, /Gate code 2040/);
     assert.doesNotMatch(quoteOpsBody, /Главные детали собраны в компактные блоки/);
     assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
