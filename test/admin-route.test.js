@@ -512,12 +512,6 @@ test("renders overview tables for unassigned clients and today's orders", async 
     const newRequestsSection = dashboardBody.match(
       /data-admin-dashboard-new-requests="true"[\s\S]*?<\/table>/
     )?.[0];
-    const overdueTasksSection = dashboardBody.match(
-      /data-admin-dashboard-overdue-tasks="true"[\s\S]*?<\/section>/
-    )?.[0];
-    const todayTasksSection = dashboardBody.match(
-      /data-admin-dashboard-today-tasks="true"[\s\S]*?<\/section>/
-    )?.[0];
     const unassignedSection = dashboardBody.match(
       /data-admin-dashboard-unassigned-clients="true"[\s\S]*?<\/table>/
     )?.[0];
@@ -527,16 +521,17 @@ test("renders overview tables for unassigned clients and today's orders", async 
 
     assert.ok(newRequestsSection);
     assert.match(dashboardBody, /data-admin-dashboard-tasks="true"/);
-    assert.ok(overdueTasksSection);
-    assert.ok(todayTasksSection);
     assert.ok(unassignedSection);
     assert.ok(todaySection);
     assert.match(newRequestsSection, /Fresh Lead/);
     assert.match(newRequestsSection, /overview-new-1/);
     assert.doesNotMatch(newRequestsSection, /Today Assigned/);
     assert.doesNotMatch(newRequestsSection, /Future No Team/);
-    assert.match(overdueTasksSection, /Overdue Task Lead/);
-    assert.match(todayTasksSection, /Fresh Lead/);
+    assert.match(dashboardBody, /Overdue Task Lead/);
+    assert.match(dashboardBody, /Fresh Lead/);
+    assert.doesNotMatch(dashboardBody, /Просроченные/);
+    assert.doesNotMatch(dashboardBody, /На сегодня/);
+    assert.doesNotMatch(dashboardBody, /Просрочено/);
     assert.doesNotMatch(dashboardBody, /data-admin-dashboard-tasks="true"[\s\S]*Future Task Lead/);
     assert.match(unassignedSection, /Future No Team/);
     assert.doesNotMatch(unassignedSection, /Today Assigned/);
