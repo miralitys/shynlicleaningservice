@@ -172,8 +172,8 @@ test("falls back to updating an existing contact after a duplicate response", as
       return createResponse(400, { message: "duplicate contact" });
     }
 
-    if (String(url).includes("/contacts/?phone=") && options.method === "GET") {
-      return createResponse(200, { contacts: [{ id: "contact-2" }] });
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=3125550100") && options.method === "GET") {
+      return createResponse(200, { contacts: [{ id: "contact-2", phone: "+1 (312) 555-0100" }] });
     }
 
     if (String(url).includes("/contacts/contact-2") && options.method === "PUT") {
@@ -236,8 +236,8 @@ test("falls back to updating an existing contact after any client-side create fa
       return createResponse(400, { message: "contact validation failed" });
     }
 
-    if (String(url).includes("/contacts/?phone=") && options.method === "GET") {
-      return createResponse(200, { contacts: [{ id: "contact-2b" }] });
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=3125550101") && options.method === "GET") {
+      return createResponse(200, { contacts: [{ id: "contact-2b", phone: "+1 (312) 555-0101" }] });
     }
 
     if (String(url).includes("/contacts/contact-2b") && options.method === "PUT") {
@@ -491,9 +491,9 @@ test("looks up the contact by phone before sending an SMS", async () => {
       body: options.body,
     });
 
-    if (String(url).includes("/contacts/?phone=3125550101") && options.method === "GET") {
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=3125550101") && options.method === "GET") {
       return createResponse(200, {
-        contacts: [{ id: "contact-lookup-123" }],
+        contacts: [{ id: "contact-lookup-123", phone: "+1 (312) 555-0101" }],
       });
     }
 
@@ -547,11 +547,11 @@ test("creates a contact on the fly when lookup fails before sending an SMS", asy
       body: options.body,
     });
 
-    if (String(url).includes("/contacts/?phone=3125550199") && options.method === "GET") {
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=3125550199") && options.method === "GET") {
       return createResponse(500, { message: "temporary lookup outage" });
     }
 
-    if (String(url).includes("/contacts/?email=sms.fallback%40example.com") && options.method === "GET") {
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100") && !String(url).includes("query=") && options.method === "GET") {
       return createResponse(200, { contacts: [] });
     }
 
@@ -608,4 +608,65 @@ test("creates a contact on the fly when lookup fails before sending an SMS", asy
   const smsPayload = JSON.parse(calls[3].body);
   assert.equal(smsPayload.contactId, "contact-created-199");
   assert.equal(smsPayload.toNumber, "+13125550199");
+});
+
+test("falls back to scanning contacts by phone digits when query search misses the existing contact", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=4244199102") && options.method === "GET") {
+      return createResponse(200, { contacts: [] });
+    }
+
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100") && !String(url).includes("query=") && options.method === "GET") {
+      return createResponse(200, {
+        contacts: [
+          { id: "contact-phone-scan-9102", phone: "(424) 419-9102" },
+        ],
+      });
+    }
+
+    if (String(url).includes("/conversations/messages") && options.method === "POST") {
+      return createResponse(200, {
+        message: { id: "message-phone-scan-9102" },
+        conversation: { id: "conversation-phone-scan-9102" },
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch,
+  });
+
+  const result = await client.sendSmsMessage({
+    phone: "424-419-9102",
+    customerName: "Ignored Name",
+    customerEmail: "ignored@example.com",
+    message: "Phone-only contact lookup should win.",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-phone-scan-9102");
+  assert.equal(result.createdContact, false);
+  assert.equal(result.usedExistingContact, true);
+  assert.equal(calls.length, 3);
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[1].method, "GET");
+
+  const smsPayload = JSON.parse(calls[2].body);
+  assert.equal(smsPayload.contactId, "contact-phone-scan-9102");
+  assert.equal(smsPayload.toNumber, "+14244199102");
 });
