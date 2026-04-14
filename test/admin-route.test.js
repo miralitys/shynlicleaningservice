@@ -6024,7 +6024,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.ok(submitBody.certificateUrl);
     assert.equal(
       submitBody.redirectUrl,
-      `/booking/confirm?token=${encodeURIComponent(resentConfirmationToken)}`
+      `/booking/confirm?token=${encodeURIComponent(resentConfirmationToken)}&confirmed=1`
     );
 
     const acceptedPageResponse = await fetch(`${started.baseUrl}${submitBody.redirectUrl}`);
@@ -6035,6 +6035,17 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(acceptedPageBody, /Open certificate PDF/);
     assert.doesNotMatch(acceptedPageBody, /Review and Sign/);
     assert.doesNotMatch(acceptedPageBody, /Confirm and Sign/);
+
+    const revisitAcceptedPageResponse = await fetch(
+      `${started.baseUrl}/booking/confirm?token=${encodeURIComponent(resentConfirmationToken)}`
+    );
+    const revisitAcceptedPageBody = await revisitAcceptedPageResponse.text();
+    assert.equal(revisitAcceptedPageResponse.status, 200);
+    assert.match(revisitAcceptedPageBody, /Your documents are already signed\./);
+    assert.match(revisitAcceptedPageBody, /No further action is required from you\./);
+    assert.match(revisitAcceptedPageBody, /Open certificate PDF/);
+    assert.doesNotMatch(revisitAcceptedPageBody, /Review and Sign/);
+    assert.doesNotMatch(revisitAcceptedPageBody, /Confirm and Sign/);
 
     const certificateResponse = await fetch(`${started.baseUrl}${submitBody.certificateUrl}`);
     const certificateBuffer = Buffer.from(await certificateResponse.arrayBuffer());
