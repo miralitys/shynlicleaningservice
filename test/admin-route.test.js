@@ -5289,6 +5289,15 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
         },
       },
     },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 201,
+      body: {
+        conversationId: "policy-conversation-1",
+        messageId: "policy-message-1",
+      },
+    },
   ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
@@ -5381,6 +5390,28 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.ok(confirmationUrlMatch);
     const confirmationToken = new URL(confirmationUrlMatch[0]).searchParams.get("token");
     assert.ok(confirmationToken);
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequest = captureLines.find((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    assert.ok(smsRequest);
+    const smsPayload = JSON.parse(smsRequest.body);
+    assert.equal(smsPayload.type, "SMS");
+    assert.equal(smsPayload.contactId, "policy-contact-1");
+    assert.equal(smsPayload.toNumber, "+13125553311");
+    assert.match(
+      smsPayload.message,
+      /Hi Policy, this is Shynli Cleaning Service\. To confirm your booking, please review and accept our service policies here:/
+    );
+    assert.match(
+      smsPayload.message,
+      new RegExp(escapeRegex(confirmationUrlMatch[0]))
+    );
 
     const invalidTokenResponse = await fetch(
       `${started.baseUrl}/api/policy-acceptance/not-a-real-token`
@@ -5517,6 +5548,20 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(updatedOrdersBody, /Подтверждение политик/);
     assert.match(updatedOrdersBody, /Открыть сертификат PDF/);
     assert.match(updatedOrdersBody, /Подписано/);
+
+    const orderDialogResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const orderDialogBody = await orderDialogResponse.text();
+    assert.equal(orderDialogResponse.status, 200);
+    assert.match(orderDialogBody, /История SMS/);
+    assert.match(orderDialogBody, /Автоматически/);
+    assert.match(orderDialogBody, /To confirm your booking, please review and accept our service policies here:/);
   } finally {
     await stopServer(started.child);
     await smtpServer.close();
