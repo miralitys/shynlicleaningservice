@@ -5396,11 +5396,11 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    const smsRequest = captureLines.find((record) =>
+    const smsRequests = captureLines.filter((record) =>
       String(record.url).includes("/conversations/messages")
     );
-    assert.ok(smsRequest);
-    const smsPayload = JSON.parse(smsRequest.body);
+    assert.equal(smsRequests.length, 1);
+    const smsPayload = JSON.parse(smsRequests[0].body);
     assert.equal(smsPayload.type, "SMS");
     assert.equal(smsPayload.contactId, "policy-contact-1");
     assert.equal(smsPayload.toNumber, "+13125553311");
@@ -5413,6 +5413,90 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       new RegExp(escapeRegex(confirmationUrlMatch[0]))
     );
 
+    const pendingAcceptanceResponse = await fetch(
+      `${started.baseUrl}/api/admin/policy-acceptance/${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const pendingAcceptanceBody = await pendingAcceptanceResponse.json();
+    assert.equal(pendingAcceptanceResponse.status, 200);
+    assert.equal(pendingAcceptanceBody.policyAccepted, false);
+    assert.ok(pendingAcceptanceBody.sentAt);
+    assert.ok(pendingAcceptanceBody.expiresAt);
+    const initialSentAtMs = Date.parse(pendingAcceptanceBody.sentAt);
+    const initialExpiresAtMs = Date.parse(pendingAcceptanceBody.expiresAt);
+    assert.ok(Number.isFinite(initialSentAtMs));
+    assert.ok(Number.isFinite(initialExpiresAtMs));
+    assert.ok(initialExpiresAtMs - initialSentAtMs >= 47 * 60 * 60 * 1000);
+    assert.ok(initialExpiresAtMs - initialSentAtMs <= 49 * 60 * 60 * 1000);
+
+    const resendResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "resend-order-policy",
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+      }),
+    });
+    assert.equal(resendResponse.status, 303);
+    assert.match(
+      resendResponse.headers.get("location") || "",
+      /notice=order-policy-resent/
+    );
+
+    assert.equal(smtpServer.messages.length, 2);
+    const resentEmail = decodeQuotedPrintable(smtpServer.messages[1].raw);
+    const resentConfirmationUrlMatch = resentEmail.match(
+      /https?:\/\/[^\s]+\/booking\/confirm\?token=[^\s"<]+/
+    );
+    assert.ok(resentConfirmationUrlMatch);
+    const resentConfirmationToken = new URL(resentConfirmationUrlMatch[0]).searchParams.get("token");
+    assert.ok(resentConfirmationToken);
+    assert.notEqual(resentConfirmationToken, confirmationToken);
+
+    const captureLinesAfterResend = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequestsAfterResend = captureLinesAfterResend.filter((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    assert.equal(smsRequestsAfterResend.length, 2);
+
+    const refreshedAcceptanceResponse = await fetch(
+      `${started.baseUrl}/api/admin/policy-acceptance/${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const refreshedAcceptanceBody = await refreshedAcceptanceResponse.json();
+    assert.equal(refreshedAcceptanceResponse.status, 200);
+    assert.ok(Date.parse(refreshedAcceptanceBody.expiresAt) > initialExpiresAtMs);
+
+    const pendingOrderDialogResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const pendingOrderDialogBody = await pendingOrderDialogResponse.text();
+    assert.equal(pendingOrderDialogResponse.status, 200);
+    assert.match(pendingOrderDialogBody, /Политика не подписана/);
+    assert.match(pendingOrderDialogBody, /Отправить ещё раз/);
+
     const invalidTokenResponse = await fetch(
       `${started.baseUrl}/api/policy-acceptance/not-a-real-token`
     );
@@ -5421,7 +5505,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.equal(invalidTokenBody.code, "POLICY_TOKEN_INVALID");
 
     const confirmationPageResponse = await fetch(
-      `${started.baseUrl}/booking/confirm?token=${encodeURIComponent(confirmationToken)}`
+      `${started.baseUrl}/booking/confirm?token=${encodeURIComponent(resentConfirmationToken)}`
     );
     const confirmationPageBody = await confirmationPageResponse.text();
     assert.equal(confirmationPageResponse.status, 200);
@@ -5434,7 +5518,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       confirmationPageBody,
       new RegExp(
         `<form class="form-stack" id="policy-acceptance-form" method="post" action="/booking/confirm\\?token=${escapeRegex(
-          encodeURIComponent(confirmationToken)
+          encodeURIComponent(resentConfirmationToken)
         )}">`
       )
     );
@@ -5442,7 +5526,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(confirmationPageBody, /window\.setTimeout\(updateButtonState, 300\)/);
 
     const uncheckedResponse = await fetch(
-      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(resentConfirmationToken)}/submit`,
       {
         method: "POST",
         headers: {
@@ -5460,7 +5544,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.equal(uncheckedBody.code, "POLICY_CHECKBOX_REQUIRED");
 
     const missingSignatureResponse = await fetch(
-      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(resentConfirmationToken)}/submit`,
       {
         method: "POST",
         headers: {
@@ -5478,7 +5562,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.equal(missingSignatureBody.code, "POLICY_SIGNATURE_REQUIRED");
 
     const submitResponse = await fetch(
-      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(resentConfirmationToken)}/submit`,
       {
         method: "POST",
         headers: {
@@ -5506,7 +5590,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.equal(certificateBuffer.subarray(0, 4).toString("utf8"), "%PDF");
 
     const duplicateSubmitResponse = await fetch(
-      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(resentConfirmationToken)}/submit`,
       {
         method: "POST",
         headers: {
