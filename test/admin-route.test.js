@@ -278,6 +278,9 @@ test("completes the admin login and TOTP verification flow", async () => {
     });
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
+    const refreshedSessionCookie =
+      getSetCookies(dashboardResponse).find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
+    assert.match(refreshedSessionCookie, /Path=\//);
     assert.match(dashboardBody, /Обзор/i);
     assert.match(dashboardBody, /Выйти/i);
     assert.match(dashboardBody, /admin-sidebar-workspace-card/);
