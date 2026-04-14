@@ -5430,6 +5430,14 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(confirmationPageBody, /Terms of Service/);
     assert.match(confirmationPageBody, /Payment and Cancellation Policy/);
     assert.doesNotMatch(confirmationPageBody, /id="confirm-button"[^>]*disabled/);
+    assert.match(
+      confirmationPageBody,
+      new RegExp(
+        `<form class="form-stack" id="policy-acceptance-form" method="post" action="/booking/confirm\\?token=${escapeRegex(
+          encodeURIComponent(confirmationToken)
+        )}">`
+      )
+    );
     assert.match(confirmationPageBody, /window\.requestAnimationFrame\(updateButtonState\)/);
     assert.match(confirmationPageBody, /window\.setTimeout\(updateButtonState, 300\)/);
 
