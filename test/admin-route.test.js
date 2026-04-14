@@ -285,6 +285,8 @@ test("completes the admin login and TOTP verification flow", async () => {
     assert.match(dashboardBody, /Выйти/i);
     assert.match(dashboardBody, /admin-sidebar-workspace-card/);
     assert.match(dashboardBody, /admin-sidebar-logout-button/);
+    assert.match(dashboardBody, /data-admin-logout-form="true"/);
+    assert.match(dashboardBody, /data-admin-logout-trigger="true"/);
     assert.doesNotMatch(dashboardBody, /admin-topbar/i);
     assert.doesNotMatch(dashboardBody, /Вы вошли как/i);
 
