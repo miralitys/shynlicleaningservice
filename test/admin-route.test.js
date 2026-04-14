@@ -2692,6 +2692,128 @@ test("sends SMS from the quote dialog through Go High Level", async () => {
   }
 });
 
+test("sends order SMS over ajax and keeps SMS history in the order dialog", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-sms-order-123",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        id: "message-sms-order-123",
+        conversationId: "conversation-sms-order-123",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "sms-order-request-1",
+      fullName: "Order SMS Lead",
+      phone: "(424) 419-9102",
+      email: "sms.order@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-04-20",
+      selectedTime: "10:30",
+      fullAddress: "901 Follow Up Drive, Bolingbrook, IL 60440",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "sms-order-request-1");
+    const returnTo = `/admin/orders?order=${encodeURIComponent(entryId)}`;
+
+    const beforeResponse = await fetch(`${started.baseUrl}${returnTo}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const beforeBody = await beforeResponse.text();
+    assert.equal(beforeResponse.status, 200);
+    assert.match(beforeBody, /data-admin-ghl-sms="true"/);
+    assert.match(beforeBody, /История SMS/);
+
+    const sendSmsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-order-sms",
+        entryId,
+        message: "Order SMS history test",
+        returnTo,
+      }),
+    });
+
+    assert.equal(sendSmsResponse.status, 200);
+    const sendSmsPayload = await sendSmsResponse.json();
+    assert.equal(sendSmsPayload.ok, true);
+    assert.equal(sendSmsPayload.notice, "order-sms-sent");
+    assert.equal(sendSmsPayload.sms.feedbackState, "success");
+    assert.equal(sendSmsPayload.sms.feedbackMessage, "SMS отправлена через Go High Level.");
+    assert.equal(sendSmsPayload.sms.draft, "");
+    assert.equal(sendSmsPayload.sms.historyCountLabel, "1 SMS");
+    assert.equal(sendSmsPayload.sms.history.length, 1);
+    assert.equal(sendSmsPayload.sms.history[0].message, "Order SMS history test");
+    assert.equal(sendSmsPayload.sms.history[0].source, "manual");
+    assert.equal(sendSmsPayload.sms.history[0].channel, "ghl");
+
+    const afterResponse = await fetch(`${started.baseUrl}${returnTo}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const afterBody = await afterResponse.text();
+    assert.equal(afterResponse.status, 200);
+    assert.match(afterBody, /История SMS/);
+    assert.match(afterBody, /Order SMS history test/);
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequest = captureLines.find((record) => String(record.url).includes("/conversations/messages"));
+    assert.ok(smsRequest);
+    assert.equal(smsRequest.method, "POST");
+
+    const smsPayload = JSON.parse(smsRequest.body);
+    assert.deepEqual(smsPayload, {
+      type: "SMS",
+      contactId: "contact-sms-order-123",
+      message: "Order SMS history test",
+      status: "pending",
+      toNumber: "+14244199102",
+    });
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("keeps storage diagnostics hidden on admin orders when Supabase falls back to memory", async () => {
   const fetchStub = createFetchStub([
     {
