@@ -5755,6 +5755,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     const certificateBuffer = Buffer.from(await certificateResponse.arrayBuffer());
     assert.equal(certificateResponse.status, 200);
     assert.match(certificateResponse.headers.get("content-type") || "", /application\/pdf/);
+    assert.equal(certificateResponse.headers.get("cache-control"), "no-store, max-age=0");
     assert.ok(certificateBuffer.length > 500);
     assert.equal(certificateBuffer.subarray(0, 4).toString("utf8"), "%PDF");
 
@@ -5819,6 +5820,10 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(
       regeneratedAdminCertificateResponse.headers.get("content-type") || "",
       /application\/pdf/
+    );
+    assert.equal(
+      regeneratedAdminCertificateResponse.headers.get("cache-control"),
+      "no-store, max-age=0"
     );
     assert.ok(regeneratedAdminCertificateBuffer.length > 500);
     assert.equal(regeneratedAdminCertificateBuffer.subarray(0, 4).toString("utf8"), "%PDF");
