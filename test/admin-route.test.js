@@ -5797,6 +5797,32 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       new RegExp(`/api/admin/policy-acceptance/${escapeRegex(entryId)}/certificate$`)
     );
 
+    const certificateAbsolutePath = path.join(
+      tempDir,
+      "policy-documents",
+      adminAcceptanceBody.certificateFile.relativePath
+    );
+    await fs.rm(certificateAbsolutePath, { force: true });
+
+    const regeneratedAdminCertificateResponse = await fetch(
+      `${started.baseUrl}${adminAcceptanceBody.certificateFile.downloadUrl}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const regeneratedAdminCertificateBuffer = Buffer.from(
+      await regeneratedAdminCertificateResponse.arrayBuffer()
+    );
+    assert.equal(regeneratedAdminCertificateResponse.status, 200);
+    assert.match(
+      regeneratedAdminCertificateResponse.headers.get("content-type") || "",
+      /application\/pdf/
+    );
+    assert.ok(regeneratedAdminCertificateBuffer.length > 500);
+    assert.equal(regeneratedAdminCertificateBuffer.subarray(0, 4).toString("utf8"), "%PDF");
+
     const updatedOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
       {
