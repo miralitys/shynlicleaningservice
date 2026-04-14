@@ -536,3 +536,76 @@ test("looks up the contact by phone before sending an SMS", async () => {
   assert.equal(payload.toNumber, "+13125550101");
   assert.equal(payload.message, "Please confirm tomorrow's appointment.");
 });
+
+test("creates a contact on the fly when lookup fails before sending an SMS", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/?phone=3125550199") && options.method === "GET") {
+      return createResponse(500, { message: "temporary lookup outage" });
+    }
+
+    if (String(url).includes("/contacts/?email=sms.fallback%40example.com") && options.method === "GET") {
+      return createResponse(200, { contacts: [] });
+    }
+
+    if (String(url).endsWith("/contacts/") && options.method === "POST") {
+      return createResponse(200, {
+        contact: { id: "contact-created-199" },
+      });
+    }
+
+    if (String(url).includes("/conversations/messages") && options.method === "POST") {
+      return createResponse(200, {
+        message: { id: "message-created-199" },
+        conversation: { id: "conversation-created-199" },
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch,
+  });
+
+  const result = await client.sendSmsMessage({
+    phone: "312-555-0199",
+    customerName: "SMS Fallback Client",
+    customerEmail: "sms.fallback@example.com",
+    message: "We found your order and are texting from SHYNLI.",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-created-199");
+  assert.equal(result.createdContact, true);
+  assert.equal(result.usedExistingContact, false);
+  assert.equal(result.updatedExistingContact, false);
+  assert.equal(result.phoneE164, "+13125550199");
+  assert.equal(calls.length, 4);
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[1].method, "GET");
+  assert.equal(calls[2].method, "POST");
+  assert.equal(calls[3].method, "POST");
+
+  const createPayload = JSON.parse(calls[2].body);
+  assert.equal(createPayload.firstName, "SMS");
+  assert.equal(createPayload.lastName, "Fallback Client");
+  assert.equal(createPayload.phone, "13125550199");
+  assert.equal(createPayload.email, "sms.fallback@example.com");
+
+  const smsPayload = JSON.parse(calls[3].body);
+  assert.equal(smsPayload.contactId, "contact-created-199");
+  assert.equal(smsPayload.toNumber, "+13125550199");
+});
