@@ -5213,6 +5213,118 @@ test("allows managers into admin workspace but blocks delete actions", async () 
   }
 });
 
+test("allows managers to create manual orders from the orders page", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-manager-manual-order-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Marta Greene",
+        role: "manager",
+        status: "active",
+        staffStatus: "active",
+        email: "marta.manager@example.com",
+        phone: "3125550198",
+        address: "500 Executive Dr, Naperville, IL 60563",
+        notes: "Can coordinate the full team",
+        password: "ManagerPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+    assert.match(createUserResponse.headers.get("location") || "", /notice=user-created/);
+
+    const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "marta.manager@example.com",
+        password: "ManagerPass123!",
+      }),
+    });
+    assert.equal(accountLoginResponse.status, 303);
+    assert.equal(accountLoginResponse.headers.get("location"), "/admin");
+
+    const userSessionCookieValue = getCookieValue(getSetCookies(accountLoginResponse), "shynli_user_session");
+    assert.ok(userSessionCookieValue);
+
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Добавить заказ/);
+    assert.match(ordersBody, /Добавить заказ вручную/);
+    assert.match(ordersBody, /create-manual-order/);
+
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Manager Created Customer",
+        customerPhone: "3125556611",
+        customerEmail: "manager.created@example.com",
+        serviceType: "standard",
+        selectedDate: "2026-04-24",
+        selectedTime: "09:30",
+        frequency: "",
+        totalPrice: "180.00",
+        fullAddress: "901 Aurora Avenue, Naperville, IL 60540",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const redirectLocation = createOrderResponse.headers.get("location") || "";
+    assert.match(redirectLocation, /notice=manual-order-created/);
+    const createdOrderId = new URL(redirectLocation, started.baseUrl).searchParams.get("order");
+    assert.ok(createdOrderId);
+
+    const createdOrderResponse = await fetch(`${started.baseUrl}${redirectLocation}`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const createdOrderBody = await createdOrderResponse.text();
+    assert.equal(createdOrderResponse.status, 200);
+    assert.match(createdOrderBody, /Заказ добавлен вручную/);
+    assert.match(createdOrderBody, /Manager Created Customer/);
+    assert.match(createdOrderBody, /901 Aurora Avenue, Naperville, IL 60540/);
+    assert.match(createdOrderBody, /\$180\.00/);
+    assert.match(createdOrderBody, new RegExp(`name="entryId" value="${escapeRegex(createdOrderId)}"`));
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("shows a readable SMTP invite error in the users settings page", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-invite-error-route-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
