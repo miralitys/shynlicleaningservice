@@ -424,3 +424,115 @@ test("auto-discovers opportunity pipeline and stage by configured names", async 
   assert.match(calls[3].body, /"pipelineId":"pipe-1"/);
   assert.match(calls[3].body, /"pipelineStageId":"stage-1"/);
 });
+
+test("sends an SMS through conversations API when contactId is provided", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+    });
+
+    if (String(url).includes("/conversations/messages") && options.method === "POST") {
+      return createResponse(200, {
+        id: "message-123",
+        conversationId: "conversation-123",
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch,
+  });
+
+  const result = await client.sendSmsMessage({
+    contactId: "contact-123",
+    phone: "312-555-0100",
+    message: "Your cleaner is on the way.",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-123");
+  assert.equal(result.phoneE164, "+13125550100");
+  assert.equal(result.conversationId, "conversation-123");
+  assert.equal(result.messageId, "message-123");
+  assert.equal(result.message, "Your cleaner is on the way.");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[0].headers.Authorization, "Bearer test-key");
+  assert.equal(calls[0].headers.Version, "2021-04-15");
+
+  const payload = JSON.parse(calls[0].body);
+  assert.deepEqual(payload, {
+    type: "SMS",
+    contactId: "contact-123",
+    message: "Your cleaner is on the way.",
+    status: "pending",
+    toNumber: "+13125550100",
+  });
+});
+
+test("looks up the contact by phone before sending an SMS", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/?phone=3125550101") && options.method === "GET") {
+      return createResponse(200, {
+        contacts: [{ id: "contact-lookup-123" }],
+      });
+    }
+
+    if (String(url).includes("/conversations/messages") && options.method === "POST") {
+      return createResponse(200, {
+        message: { id: "message-lookup-123" },
+        conversation: { id: "conversation-lookup-123" },
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch,
+  });
+
+  const result = await client.sendSmsMessage({
+    phone: "312-555-0101",
+    message: "Please confirm tomorrow's appointment.",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-lookup-123");
+  assert.equal(result.phoneE164, "+13125550101");
+  assert.equal(result.conversationId, "conversation-lookup-123");
+  assert.equal(result.messageId, "message-lookup-123");
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[1].method, "POST");
+  assert.equal(calls[1].headers.Version, "2021-04-15");
+
+  const payload = JSON.parse(calls[1].body);
+  assert.equal(payload.contactId, "contact-lookup-123");
+  assert.equal(payload.toNumber, "+13125550101");
+  assert.equal(payload.message, "Please confirm tomorrow's appointment.");
+});

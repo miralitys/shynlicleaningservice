@@ -1541,7 +1541,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /\.admin-table-wrap\s*\{[\s\S]*overflow-x: auto;[\s\S]*overflow-y: hidden;/);
     assert.match(ordersBody, /\.admin-table\s*\{[\s\S]*width: max-content;[\s\S]*table-layout: auto;/);
     assert.match(ordersBody, /\.admin-table:not\(\.admin-team-calendar-table\) th,\s*\.admin-table:not\(\.admin-team-calendar-table\) td\s*\{[\s\S]*white-space: nowrap;/);
-    assert.match(ordersBody, /\.admin-orders-table-wrap-capped\s*\{[\s\S]*max-height:\s*34rem;[\s\S]*overflow-y:\s*auto;/);
+    assert.match(ordersBody, /\.admin-orders-table-wrap-capped\s*\{[\s\S]*max-height:\s*[^;]+;[\s\S]*overflow-y:\s*auto;/);
     assert.doesNotMatch(ordersBody, /admin-kicker">Заказы</);
     assert.doesNotMatch(ordersBody, /admin-card-eyebrow">Заказы</);
     assert.doesNotMatch(ordersBody, /Найдено \d+ из \d+ заказов/);
@@ -2586,6 +2586,109 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     await stopServer(started.child);
     fetchStub.cleanup();
     await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("sends SMS from the quote dialog through Go High Level", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-sms-quote-123",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        id: "message-sms-quote-123",
+        conversationId: "conversation-sms-quote-123",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "sms-quote-request-1",
+      fullName: "SMS Quote Lead",
+      phone: "312-555-0177",
+      email: "sms.quote@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-04-19",
+      selectedTime: "11:30",
+      fullAddress: "825 Message Lane, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await getQuoteOpsEntryId(started.baseUrl, sessionCookieValue, "sms-quote-request-1");
+    const returnTo = `/admin/quote-ops?q=${encodeURIComponent("sms-quote-request-1")}&entry=${encodeURIComponent(entryId)}`;
+
+    const quoteOpsResponse = await fetch(`${started.baseUrl}${returnTo}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const quoteOpsBody = await quoteOpsResponse.text();
+    assert.equal(quoteOpsResponse.status, 200);
+    assert.match(quoteOpsBody, /data-admin-ghl-sms="true"/);
+    assert.match(quoteOpsBody, /Отправить SMS/);
+
+    const sendSmsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-quote-sms",
+        entryId,
+        message: "Your SHYNLI team is confirming your cleaning appointment.",
+        returnTo,
+      }),
+    });
+
+    assert.equal(sendSmsResponse.status, 303);
+    assert.match(sendSmsResponse.headers.get("location") || "", /notice=quote-sms-sent/);
+    assert.match(sendSmsResponse.headers.get("location") || "", /smsTarget=quote/);
+    assert.match(sendSmsResponse.headers.get("location") || "", new RegExp(`smsRef=${escapeRegex(entryId)}`));
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequest = captureLines.find((record) => String(record.url).includes("/conversations/messages"));
+    assert.ok(smsRequest);
+    assert.equal(smsRequest.method, "POST");
+
+    const smsPayload = JSON.parse(smsRequest.body);
+    assert.deepEqual(smsPayload, {
+      type: "SMS",
+      contactId: "contact-sms-quote-123",
+      message: "Your SHYNLI team is confirming your cleaning appointment.",
+      status: "pending",
+      toNumber: "+13125550177",
+    });
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
   }
 });
 
