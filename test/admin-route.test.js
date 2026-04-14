@@ -106,7 +106,10 @@ async function createAdminSession(baseUrl, config) {
   assert.equal(loginResponse.status, 303);
   assert.equal(loginResponse.headers.get("location"), "/admin/2fa");
 
-  const challengeCookieValue = getCookieValue(getSetCookies(loginResponse), "shynli_admin_challenge");
+  const loginCookies = getSetCookies(loginResponse);
+  const challengeCookie = loginCookies.find((cookie) => cookie.startsWith("shynli_admin_challenge=")) || "";
+  assert.match(challengeCookie, /Path=\//);
+  const challengeCookieValue = getCookieValue(loginCookies, "shynli_admin_challenge");
   assert.ok(challengeCookieValue);
 
   const code = generateTotpCode(config);
@@ -123,7 +126,10 @@ async function createAdminSession(baseUrl, config) {
   assert.equal(twoFactorResponse.status, 303);
   assert.equal(twoFactorResponse.headers.get("location"), "/admin");
 
-  const sessionCookieValue = getCookieValue(getSetCookies(twoFactorResponse), "shynli_admin_session");
+  const twoFactorCookies = getSetCookies(twoFactorResponse);
+  const sessionCookie = twoFactorCookies.find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
+  assert.match(sessionCookie, /Path=\//);
+  const sessionCookieValue = getCookieValue(twoFactorCookies, "shynli_admin_session");
   assert.ok(sessionCookieValue);
   return sessionCookieValue;
 }
