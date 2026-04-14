@@ -146,6 +146,7 @@ async function submitQuote(baseUrl, options) {
         rooms: options.rooms || 4,
         bathrooms: options.bathrooms || 2,
         squareMeters: options.squareMeters || 1600,
+        frequency: options.frequency || "",
         selectedDate: options.selectedDate || "2026-03-22",
         selectedTime: options.selectedTime || "09:00",
         fullAddress: options.fullAddress,
@@ -1973,7 +1974,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     });
     const filteredOrdersBody = await filteredOrdersResponse.text();
     assert.equal(filteredOrdersResponse.status, 200);
-    assert.match(filteredOrdersBody, /Найдено 1 из 1 заказов\./);
+    assert.match(filteredOrdersBody, /Найдено 2 из 2 заказов\./);
     assert.match(filteredOrdersBody, /С учётом поиска и фильтров\./);
     const mediaMatches = Array.from(
       updatedOrdersBody.matchAll(new RegExp(`/admin/orders\\?media=1&amp;entryId=${escapeRegex(entryId)}&amp;asset=([^"&]+)`, "g"))
@@ -2074,7 +2075,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const quoteOpsAddressSearchBody = await quoteOpsAddressSearchResponse.text();
     assert.equal(quoteOpsAddressSearchResponse.status, 200);
     assert.match(quoteOpsAddressSearchBody, /Jane Doe/);
-    assert.match(quoteOpsAddressSearchBody, /Показано 1 из 1 заявок\./);
+    assert.match(quoteOpsAddressSearchBody, /Показано 2 из 2 заявок\./);
     assert.doesNotMatch(quoteOpsAddressSearchBody, /По текущему фильтру заявок нет/);
 
     const removedExportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
@@ -2122,8 +2123,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     });
     const deletedOrdersBody = await deletedOrdersResponse.text();
     assert.equal(deletedOrdersResponse.status, 200);
-    assert.doesNotMatch(deletedOrdersBody, /Jane Doe/);
-    assert.doesNotMatch(deletedOrdersBody, /ops-request-1/);
+    assert.match(deletedOrdersBody, /Jane Doe/);
+    assert.doesNotMatch(deletedOrdersBody, /(?<![a-z0-9-])ops-request-1(?!-[a-z0-9])/i);
 
     const deletedQuoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       headers: {
@@ -2142,6 +2143,163 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       .filter(Boolean)
       .map((line) => JSON.parse(line));
     assert.equal(calls.length, 4);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("creates the next recurring order when a recurring order is completed", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-recurring-orders-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-recurring-123",
+        },
+      },
+    },
+    {
+      method: "PUT",
+      match: "/contacts/contact-recurring-123",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-recurring-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_CUSTOM_FIELDS_JSON: JSON.stringify({
+      fullAddress: "cf_full_address",
+    }),
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const recurringCases = [
+      {
+        requestId: "recurring-weekly-order",
+        fullName: "Recurring Weekly Client",
+        email: "recurring-weekly@example.com",
+        phone: "312-555-2101",
+        frequency: "weekly",
+        selectedDate: "2026-04-14",
+        selectedTime: "09:00",
+        fullAddress: "101 Weekly Lane, Aurora, IL",
+        expectedNextSchedule: "04/21/2026, 09:00 AM",
+      },
+      {
+        requestId: "recurring-biweekly-order",
+        fullName: "Recurring Biweekly Client",
+        email: "recurring-biweekly@example.com",
+        phone: "312-555-2102",
+        frequency: "biweekly",
+        selectedDate: "2026-04-14",
+        selectedTime: "11:30",
+        fullAddress: "202 Biweekly Drive, Naperville, IL",
+        expectedNextSchedule: "04/28/2026, 11:30 AM",
+      },
+      {
+        requestId: "recurring-monthly-order",
+        fullName: "Recurring Monthly Client",
+        email: "recurring-monthly@example.com",
+        phone: "312-555-2103",
+        frequency: "monthly",
+        selectedDate: "2026-04-14",
+        selectedTime: "15:15",
+        fullAddress: "303 Monthly Court, Elgin, IL",
+        expectedNextSchedule: "06/14/2026, 03:15 PM",
+      },
+    ];
+
+    for (const recurringCase of recurringCases) {
+      const quoteResponse = await submitQuote(started.baseUrl, recurringCase);
+      assert.equal(quoteResponse.status, 201);
+
+      recurringCase.entryId = await createOrderFromQuoteRequest(
+        started.baseUrl,
+        sessionCookieValue,
+        recurringCase.requestId
+      );
+
+      const completeResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+        method: "POST",
+        redirect: "manual",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+        body: new URLSearchParams({
+          entryId: recurringCase.entryId,
+          returnTo: "/admin/orders",
+          orderStatus: "completed",
+        }),
+      });
+
+      assert.equal(completeResponse.status, 303);
+      assert.match(completeResponse.headers.get("location") || "", /notice=order-saved/);
+    }
+
+    for (const recurringCase of recurringCases) {
+      const ordersResponse = await fetch(
+        `${started.baseUrl}/admin/orders?q=${encodeURIComponent(recurringCase.fullName)}`,
+        {
+          headers: {
+            cookie: `shynli_admin_session=${sessionCookieValue}`,
+          },
+        }
+      );
+      const ordersBody = await ordersResponse.text();
+
+      assert.equal(ordersResponse.status, 200);
+      assert.match(ordersBody, /Найдено 2 из \d+ заказов\./);
+      assert.match(ordersBody, new RegExp(escapeRegex(recurringCase.expectedNextSchedule)));
+      assert.match(ordersBody, /Завершено/);
+      assert.match(ordersBody, /Новые/);
+    }
+
+    const repeatCompleteResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: recurringCases[0].entryId,
+        returnTo: "/admin/orders",
+        orderStatus: "completed",
+      }),
+    });
+    assert.equal(repeatCompleteResponse.status, 303);
+
+    const weeklyOrdersAfterRepeatResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent(recurringCases[0].fullName)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const weeklyOrdersAfterRepeatBody = await weeklyOrdersAfterRepeatResponse.text();
+    assert.equal(weeklyOrdersAfterRepeatResponse.status, 200);
+    assert.match(weeklyOrdersAfterRepeatBody, /Найдено 2 из \d+ заказов\./);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
