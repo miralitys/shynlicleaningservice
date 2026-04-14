@@ -199,6 +199,74 @@ async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
   return entryIdMatch[1];
 }
 
+test("allows admins to add a manual order from the orders page", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Добавить заказ/);
+    assert.match(ordersBody, /Добавить заказ вручную/);
+    assert.match(ordersBody, /create-manual-order/);
+
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Manual Customer",
+        customerPhone: "3125557711",
+        customerEmail: "manual.customer@example.com",
+        serviceType: "deep",
+        selectedDate: "2026-04-22",
+        selectedTime: "13:30",
+        frequency: "biweekly",
+        totalPrice: "240.00",
+        fullAddress: "215 North Elm Street, Naperville, IL 60563",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const redirectLocation = createOrderResponse.headers.get("location") || "";
+    assert.match(redirectLocation, /notice=manual-order-created/);
+    const createdOrderId = new URL(redirectLocation, started.baseUrl).searchParams.get("order");
+    assert.ok(createdOrderId);
+
+    const createdOrderResponse = await fetch(`${started.baseUrl}${redirectLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const createdOrderBody = await createdOrderResponse.text();
+    assert.equal(createdOrderResponse.status, 200);
+    assert.match(createdOrderBody, /Заказ добавлен вручную/);
+    assert.match(createdOrderBody, /Manual Customer/);
+    assert.match(createdOrderBody, /Deep/);
+    assert.match(createdOrderBody, /Bi-weekly/);
+    assert.match(createdOrderBody, /215 North Elm Street, Naperville, IL 60563/);
+    assert.match(createdOrderBody, /\$240\.00/);
+    assert.match(createdOrderBody, new RegExp(`name="entryId" value="${escapeRegex(createdOrderId)}"`));
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
 test("serves the admin login page when admin secrets are configured", async () => {
   const started = await startServer({
     env: {
