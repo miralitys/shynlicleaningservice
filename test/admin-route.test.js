@@ -5429,6 +5429,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(confirmationPageBody, /Confirm and Sign/);
     assert.match(confirmationPageBody, /Terms of Service/);
     assert.match(confirmationPageBody, /Payment and Cancellation Policy/);
+    assert.doesNotMatch(confirmationPageBody, /id="confirm-button"[^>]*disabled/);
     assert.match(confirmationPageBody, /window\.requestAnimationFrame\(updateButtonState\)/);
     assert.match(confirmationPageBody, /window\.setTimeout\(updateButtonState, 300\)/);
 
