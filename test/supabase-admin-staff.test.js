@@ -187,6 +187,17 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
                         data: "dGVzdA==",
                       },
                     },
+                    smsHistory: [
+                      {
+                        id: "sms-fallback-1",
+                        message: "Fallback onboarding reminder",
+                        phone: "+16305550101",
+                        source: "automatic",
+                        targetType: "staff",
+                        targetRef: staffId,
+                        sentAt: "2026-04-12T20:15:00.000Z",
+                      },
+                    ],
                     createdAt: "2026-04-11T16:36:16.391Z",
                     updatedAt: "2026-04-11T16:36:16.391Z",
                   },
@@ -257,6 +268,8 @@ test("falls back to quote_ops_entries rows when dedicated staff tables are missi
   assert.equal(snapshot.staff[0].contract.document.relativePath, `${staffId}/contract.pdf`);
   assert.equal(snapshot.staff[0].w9.maskedTin, "***-**-0101");
   assert.equal(snapshot.staff[0].w9.document.relativePath, `${staffId}/w9.pdf`);
+  assert.equal(snapshot.staff[0].smsHistory.length, 1);
+  assert.equal(snapshot.staff[0].smsHistory[0].message, "Fallback onboarding reminder");
   assert.equal(snapshot.assignments.length, 1);
   assert.deepEqual(snapshot.assignments[0].staffIds, [staffId]);
   assert.equal(snapshot.assignments[0].calendarSync.google.byStaffId[staffId].eventId, "evt-fallback-1");

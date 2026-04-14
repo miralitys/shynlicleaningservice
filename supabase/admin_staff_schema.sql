@@ -10,7 +10,9 @@ create table if not exists public.admin_staff (
   status text not null check (status in ('active', 'inactive', 'on_leave')),
   notes text,
   calendar_connection jsonb,
+  contract_record jsonb,
   w9_record jsonb,
+  sms_history jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -37,7 +39,13 @@ alter table if exists public.admin_staff
   add column if not exists calendar_connection jsonb;
 
 alter table if exists public.admin_staff
+  add column if not exists contract_record jsonb;
+
+alter table if exists public.admin_staff
   add column if not exists w9_record jsonb;
+
+alter table if exists public.admin_staff
+  add column if not exists sms_history jsonb;
 
 create table if not exists public.admin_staff_assignments (
   entry_id uuid primary key references public.quote_ops_entries (id) on delete cascade,

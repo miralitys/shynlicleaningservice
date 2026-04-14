@@ -3025,6 +3025,141 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
   }
 });
 
+test("sends staff SMS over ajax and keeps SMS history in the staff dialog", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-sms-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [
+          {
+            id: "contact-staff-sms-123",
+            phone: "(630) 555-0101",
+          },
+        ],
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        id: "message-staff-sms-123",
+        conversationId: "conversation-staff-sms-123",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    await fs.writeFile(
+      staffStorePath,
+      `${JSON.stringify(
+        {
+          version: 1,
+          staff: [
+            {
+              id: "staff-sms-anna",
+              name: "Anna Petrova",
+              role: "Менеджер",
+              phone: "+1(630)555-0101",
+              email: "anna.petrova@example.com",
+              address: "720 Plainfield Rd, Willowbrook, IL 60527",
+              status: "active",
+            },
+          ],
+          assignments: [],
+        },
+        null,
+        2
+      )}\n`
+    );
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const pageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const pageBody = await pageResponse.text();
+    assert.equal(pageResponse.status, 200);
+    assert.match(pageBody, /SMS сотруднику/i);
+    assert.match(pageBody, /data-admin-ghl-sms="true"/i);
+
+    const sendSmsResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-staff-sms",
+        staffId: "staff-sms-anna",
+        message: "Staff SMS history test",
+        returnTo: "/admin/staff",
+      }),
+    });
+
+    assert.equal(sendSmsResponse.status, 200);
+    const sendSmsPayload = await sendSmsResponse.json();
+    assert.equal(sendSmsPayload.ok, true);
+    assert.equal(sendSmsPayload.notice, "staff-sms-sent");
+    assert.equal(sendSmsPayload.sms.feedbackState, "success");
+    assert.equal(sendSmsPayload.sms.feedbackMessage, "SMS отправлена через Go High Level.");
+    assert.equal(sendSmsPayload.sms.historyCountLabel, "1 SMS");
+    assert.equal(sendSmsPayload.sms.history.length, 1);
+    assert.equal(sendSmsPayload.sms.history[0].message, "Staff SMS history test");
+    assert.equal(sendSmsPayload.sms.history[0].source, "manual");
+
+    const afterResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const afterBody = await afterResponse.text();
+    assert.equal(afterResponse.status, 200);
+    assert.match(afterBody, /История SMS/);
+    assert.match(afterBody, /Staff SMS history test/);
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequest = captureLines.find((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    assert.ok(smsRequest);
+    const smsPayload = JSON.parse(smsRequest.body);
+    assert.deepEqual(smsPayload, {
+      type: "SMS",
+      contactId: "contact-staff-sms-123",
+      message: "Staff SMS history test",
+      status: "pending",
+      toNumber: "+16305550101",
+    });
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("keeps storage diagnostics hidden on admin orders when Supabase falls back to memory", async () => {
   const fetchStub = createFetchStub([
     {
@@ -4292,6 +4427,30 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const usersStorePath = path.join(tempDir, "admin-users-store.json");
   const smtpServer = await createSmtpTestServer();
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [
+          {
+            id: "contact-w9-rina-123",
+            phone: "(312) 555-0142",
+          },
+        ],
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        id: "message-w9-rina-123",
+        conversationId: "conversation-w9-rina-123",
+      },
+    },
+  ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     ADMIN_STAFF_STORE_PATH: staffStorePath,
@@ -4301,6 +4460,11 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
     ACCOUNT_INVITE_SMTP_HOST: smtpServer.host,
     ACCOUNT_INVITE_SMTP_PORT: String(smtpServer.port),
     ACCOUNT_INVITE_SMTP_REQUIRE_TLS: "0",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
   };
   const started = await startServer({ env });
   const config = loadAdminConfig(env);
@@ -4390,6 +4554,39 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
     assert.match(rawEmail, /next=3D%2Faccount%3Ffocus%3Dw9%23account-w9|next=%2Faccount%3Ffocus%3Dw9%23account-w9/);
     assert.doesNotMatch(rawEmail, /Confirm your SHYNLI employee email/);
 
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequest = captureLines.find((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    assert.ok(smsRequest);
+    const smsPayload = JSON.parse(smsRequest.body);
+    assert.equal(smsPayload.type, "SMS");
+    assert.equal(smsPayload.contactId, "contact-w9-rina-123");
+    assert.equal(smsPayload.status, "pending");
+    assert.equal(smsPayload.toNumber, "+13125550142");
+    assert.match(
+      smsPayload.message,
+      /Please complete and sign your Contract and W-9 here:/i
+    );
+
+    const staffPageAfterReminderResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageAfterReminderBody = await staffPageAfterReminderResponse.text();
+    assert.equal(staffPageAfterReminderResponse.status, 200);
+    assert.match(staffPageAfterReminderBody, /История SMS/);
+    assert.match(staffPageAfterReminderBody, /Автоматически/);
+    assert.match(
+      staffPageAfterReminderBody,
+      /Please complete and sign your Contract and W-9 here:/i
+    );
+
     const verifyUrlMatch = rawEmail.match(/https?:\/\/[^\s"]+\/account\/verify-email\?token=[^\s"]+/);
     assert.ok(verifyUrlMatch);
     const verifyUrl = new URL(
@@ -4451,6 +4648,7 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
   } finally {
     await stopServer(started.child);
     await smtpServer.close();
+    fetchStub.cleanup();
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });

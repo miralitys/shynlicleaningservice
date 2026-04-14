@@ -85,6 +85,16 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
         },
         tokenExpiresAt: "2026-04-11T18:00:00.000Z",
       },
+      smsHistory: [
+        {
+          message: "Welcome to SHYNLI staff onboarding",
+          phone: "+16305550101",
+          source: "automatic",
+          targetType: "staff",
+          targetRef: "staff-anna",
+          sentAt: "2026-04-12T18:00:00.000Z",
+        },
+      ],
     });
     const olga = await store.createStaff({
       name: "Olga Martinez",
@@ -118,6 +128,8 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
     assert.equal(snapshot.staff[0].compensationValue, "35");
     assert.equal(snapshot.staff[0].compensationType, "percent");
     assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
+    assert.equal(snapshot.staff[0].smsHistory.length, 1);
+    assert.equal(snapshot.staff[0].smsHistory[0].source, "automatic");
     assert.deepEqual(snapshot.assignments[0].staffIds.sort(), [anna.id, olga.id].sort());
     assert.equal(
       snapshot.assignments[0].calendarSync.google.byStaffId[anna.id].eventId,
@@ -197,7 +209,7 @@ test("uses the Supabase-backed store implementation when the client is configure
 
   assert.equal(store.mode, "supabase");
 
-  const anna = await store.createStaff({
+    const anna = await store.createStaff({
     name: "Anna Petrova",
     role: "Team Lead",
     email: "anna@example.com",
@@ -217,10 +229,20 @@ test("uses the Supabase-backed store implementation when the client is configure
         iv: "bb",
         tag: "cc",
         data: "dGVzdA==",
+        },
+        tokenExpiresAt: "2026-04-11T18:00:00.000Z",
       },
-      tokenExpiresAt: "2026-04-11T18:00:00.000Z",
-    },
-  });
+      smsHistory: [
+        {
+          message: "Remote onboarding reminder",
+          phone: "+16305550101",
+          source: "automatic",
+          targetType: "staff",
+          targetRef: "remote-anna",
+          sentAt: "2026-04-12T18:00:00.000Z",
+        },
+      ],
+    });
   const diana = await store.createStaff({
     name: "Diana Brooks",
     role: "Cleaner",
@@ -253,6 +275,8 @@ test("uses the Supabase-backed store implementation when the client is configure
   assert.equal(snapshot.staff[0].compensationValue, "150");
   assert.equal(snapshot.staff[0].compensationType, "fixed");
   assert.equal(snapshot.staff[0].calendar.accountEmail, "anna.cleaner@gmail.com");
+  assert.equal(snapshot.staff[0].smsHistory.length, 1);
+  assert.equal(snapshot.staff[0].smsHistory[0].message, "Remote onboarding reminder");
   assert.equal(snapshot.assignments[0].calendarSync.google.byStaffId[anna.id].eventId, "evt-remote-1");
 
   await store.deleteStaff(anna.id);
