@@ -2781,6 +2781,47 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
     assert.equal(sendSmsPayload.sms.history[0].source, "manual");
     assert.equal(sendSmsPayload.sms.history[0].channel, "ghl");
 
+    const secondSmsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-order-sms",
+        entryId,
+        message: "Second order SMS history test",
+        returnTo,
+      }),
+    });
+    assert.equal(secondSmsResponse.status, 200);
+
+    const thirdSmsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-order-sms",
+        entryId,
+        message: "Third order SMS history test",
+        returnTo,
+      }),
+    });
+    assert.equal(thirdSmsResponse.status, 200);
+    const thirdSmsPayload = await thirdSmsResponse.json();
+    assert.equal(thirdSmsPayload.ok, true);
+    assert.equal(thirdSmsPayload.sms.historyCountLabel, "3 SMS");
+    assert.equal(thirdSmsPayload.sms.history.length, 3);
+    assert.ok(
+      thirdSmsPayload.sms.history.some((entry) => entry.message === "Third order SMS history test")
+    );
+
     const afterResponse = await fetch(`${started.baseUrl}${returnTo}`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -2790,6 +2831,7 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
     assert.equal(afterResponse.status, 200);
     assert.match(afterBody, /История SMS/);
     assert.match(afterBody, /Order SMS history test/);
+    assert.match(afterBody, /admin-ghl-sms-history-list is-scrollable/);
 
     const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
       .trim()
