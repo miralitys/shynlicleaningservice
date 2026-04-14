@@ -6033,6 +6033,10 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(acceptedPageBody, /Thank you, everything is signed\./);
     assert.match(acceptedPageBody, /Booking confirmed/);
     assert.match(acceptedPageBody, /Open certificate PDF/);
+    assert.ok(
+      acceptedPageBody.indexOf("Thank you, everything is signed.") <
+        acceptedPageBody.indexOf("Booking Summary")
+    );
     assert.doesNotMatch(acceptedPageBody, /Review and Sign/);
     assert.doesNotMatch(acceptedPageBody, /Confirm and Sign/);
 
@@ -6044,6 +6048,10 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(revisitAcceptedPageBody, /Your documents are already signed\./);
     assert.match(revisitAcceptedPageBody, /No further action is required from you\./);
     assert.match(revisitAcceptedPageBody, /Open certificate PDF/);
+    assert.ok(
+      revisitAcceptedPageBody.indexOf("Your documents are already signed.") <
+        revisitAcceptedPageBody.indexOf("Booking Summary")
+    );
     assert.doesNotMatch(revisitAcceptedPageBody, /Review and Sign/);
     assert.doesNotMatch(revisitAcceptedPageBody, /Confirm and Sign/);
 
