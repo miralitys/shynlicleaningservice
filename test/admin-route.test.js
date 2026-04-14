@@ -6126,7 +6126,54 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.equal(orderDialogResponse.status, 200);
     assert.match(orderDialogBody, /История SMS/);
     assert.match(orderDialogBody, /Автоматически/);
+    assert.match(orderDialogBody, /Сбросить подтверждение/);
     assert.match(orderDialogBody, /To confirm your booking, please review and accept our service policies here:/);
+
+    const resetPolicyResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "reset-order-policy",
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+      }),
+    });
+    assert.equal(resetPolicyResponse.status, 303);
+    assert.match(
+      resetPolicyResponse.headers.get("location") || "",
+      /notice=order-policy-reset/
+    );
+
+    const resetAcceptanceResponse = await fetch(
+      `${started.baseUrl}/api/admin/policy-acceptance/${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const resetAcceptanceBody = await resetAcceptanceResponse.json();
+    assert.equal(resetAcceptanceResponse.status, 404);
+    assert.equal(resetAcceptanceBody.error, "Policy acceptance not found for this booking.");
+
+    const resetDialogResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}&notice=order-policy-reset`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const resetDialogBody = await resetDialogResponse.text();
+    assert.equal(resetDialogResponse.status, 200);
+    assert.match(resetDialogBody, /Подтверждение политик сброшено/);
+    assert.match(resetDialogBody, /Письмо ещё не отправлялось/);
+    assert.match(resetDialogBody, /Отправить ссылку/);
+    assert.doesNotMatch(resetDialogBody, /Открыть сертификат PDF/);
   } finally {
     await stopServer(started.child);
     await smtpServer.close();
