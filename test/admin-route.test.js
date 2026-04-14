@@ -6022,6 +6022,19 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.equal(submitBody.acceptance.policyAccepted, true);
     assert.ok(submitBody.acceptance.signedAt);
     assert.ok(submitBody.certificateUrl);
+    assert.equal(
+      submitBody.redirectUrl,
+      `/booking/confirm?token=${encodeURIComponent(resentConfirmationToken)}`
+    );
+
+    const acceptedPageResponse = await fetch(`${started.baseUrl}${submitBody.redirectUrl}`);
+    const acceptedPageBody = await acceptedPageResponse.text();
+    assert.equal(acceptedPageResponse.status, 200);
+    assert.match(acceptedPageBody, /Thank you, everything is signed\./);
+    assert.match(acceptedPageBody, /Booking confirmed/);
+    assert.match(acceptedPageBody, /Open certificate PDF/);
+    assert.doesNotMatch(acceptedPageBody, /Review and Sign/);
+    assert.doesNotMatch(acceptedPageBody, /Confirm and Sign/);
 
     const certificateResponse = await fetch(`${started.baseUrl}${submitBody.certificateUrl}`);
     const certificateBuffer = Buffer.from(await certificateResponse.arrayBuffer());
