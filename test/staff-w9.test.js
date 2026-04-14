@@ -126,6 +126,7 @@ test("generates a stored W-9 document and returns masked metadata", async () => 
   assert.equal(result.record.maskedTin, "***-**-6789");
   assert.equal(result.record.document.relativePath, path.join("staff-output-1", "w9.pdf"));
   assert.ok(result.record.document.sizeBytes > 0);
+  assert.ok(result.record.document.dataBase64);
 
   await fsp.rm(tempDocumentsDir, { recursive: true, force: true });
 });

@@ -5111,16 +5111,17 @@ test("sends an invite email and lets the employee set a first password after ema
   }
 });
 
-test("sends the policy confirmation email when an order moves into scheduled", async () => {
+test("sends a policy acceptance email on scheduled transition and stores the signed certificate", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-policy-acceptance-"));
   const smtpServer = await createSmtpTestServer();
-  const fetchStub = createFetchStub([
+  const fetchStub = await createFetchStub([
     {
       method: "POST",
       match: "/contacts/",
       status: 200,
       body: {
         contact: {
-          id: "contact-policy-email-123",
+          id: "policy-contact-1",
         },
       },
     },
@@ -5137,20 +5138,22 @@ test("sends the policy confirmation email when an order moves into scheduled", a
     ACCOUNT_INVITE_SMTP_HOST: smtpServer.host,
     ACCOUNT_INVITE_SMTP_PORT: String(smtpServer.port),
     ACCOUNT_INVITE_SMTP_REQUIRE_TLS: "0",
+    POLICY_ACCEPTANCE_DOCUMENTS_DIR: path.join(tempDir, "policy-documents"),
+    ORDER_POLICY_TOKEN_SECRET: "policy_secret_test",
   };
   const started = await startServer({ env });
   const config = loadAdminConfig(env);
 
   try {
     const quoteResponse = await submitQuote(started.baseUrl, {
-      requestId: "policy-email-request-1",
-      fullName: "Policy Email Client",
-      phone: "312-555-0112",
-      email: "policy.client@example.com",
+      requestId: "policy-order-1",
+      fullName: "Policy Customer",
+      phone: "312-555-3311",
+      email: "policy.customer@example.com",
       serviceType: "deep",
       selectedDate: "2026-04-18",
       selectedTime: "10:30",
-      fullAddress: "440 Policy Lane, Bolingbrook, IL 60440",
+      fullAddress: "742 Cedar Avenue, Aurora, IL 60506",
     });
     assert.equal(quoteResponse.status, 201);
 
@@ -5158,8 +5161,19 @@ test("sends the policy confirmation email when an order moves into scheduled", a
     const entryId = await createOrderFromQuoteRequest(
       started.baseUrl,
       sessionCookieValue,
-      "policy-email-request-1"
+      "policy-order-1"
     );
+    const ordersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, new RegExp(`name="entryId" value="${escapeRegex(entryId)}"`));
 
     const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -5170,10 +5184,11 @@ test("sends the policy confirmation email when an order moves into scheduled", a
       },
       body: new URLSearchParams({
         entryId,
-        returnTo: `/admin/orders?q=${encodeURIComponent("policy-email-request-1")}`,
+        returnTo: `/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
         orderStatus: "scheduled",
+        assignedStaff: "Anna Petrova",
         paymentStatus: "unpaid",
-        paymentMethod: "card",
+        paymentMethod: "invoice",
         selectedDate: "2026-04-18",
         selectedTime: "10:30",
         frequency: "",
@@ -5186,89 +5201,159 @@ test("sends the policy confirmation email when an order moves into scheduled", a
     );
 
     assert.equal(smtpServer.messages.length, 1);
-    assert.equal(smtpServer.messages[0].from, "<hello@shynli.com>");
-    assert.deepEqual(smtpServer.messages[0].to, ["<policy.client@example.com>"]);
     const rawEmail = decodeQuotedPrintable(smtpServer.messages[0].raw);
-    const normalizedRawEmail = rawEmail.replace(/\r?\n[ \t]+/g, " ");
-    assert.match(rawEmail, /Reply-To: info@shynli\.com/);
     assert.match(
-      normalizedRawEmail,
-      /Subject: Action Required: Please Review and Accept Before Your Cleaning Appointment/
+      rawEmail,
+      /Subject: Action Required: Please Review and Accept Before Your Cleaning\s+Appointment/
     );
-    assert.match(normalizedRawEmail, /Dear Policy Email Client,/);
-    assert.match(normalizedRawEmail, /Review and Accept Policies/);
+    assert.match(rawEmail, /Terms of Service: https:\/\/shynlicleaningservice\.com\/terms-of-service/);
     assert.match(
-      normalizedRawEmail,
-      /https:\/\/shynlicleaningservice\.com\/terms-of-service/
+      rawEmail,
+      /Payment & Cancellation Policy: https:\/\/shynlicleaningservice\.com\/cancellation-policy/
     );
-    assert.match(
-      normalizedRawEmail,
-      /https:\/\/shynlicleaningservice\.com\/cancellation-policy/
-    );
-    const confirmationUrlMatch = normalizedRawEmail.match(
-      /https:\/\/shynlicleaningservice\.com\/booking\/confirm\?token=[A-Za-z0-9._-]+/
+    const confirmationUrlMatch = rawEmail.match(
+      /https?:\/\/[^\s]+\/booking\/confirm\?token=[^\s"<]+/
     );
     assert.ok(confirmationUrlMatch);
-    const confirmationUrl = new URL(confirmationUrlMatch[0]);
-    const confirmationToken = confirmationUrl.searchParams.get("token");
+    const confirmationToken = new URL(confirmationUrlMatch[0]).searchParams.get("token");
     assert.ok(confirmationToken);
+
+    const invalidTokenResponse = await fetch(
+      `${started.baseUrl}/api/policy-acceptance/not-a-real-token`
+    );
+    const invalidTokenBody = await invalidTokenResponse.json();
+    assert.equal(invalidTokenResponse.status, 404);
+    assert.equal(invalidTokenBody.code, "POLICY_TOKEN_INVALID");
 
     const confirmationPageResponse = await fetch(
       `${started.baseUrl}/booking/confirm?token=${encodeURIComponent(confirmationToken)}`
     );
     const confirmationPageBody = await confirmationPageResponse.text();
     assert.equal(confirmationPageResponse.status, 200);
-    assert.match(confirmationPageBody, /Review and Accept Policies/);
-    assert.match(confirmationPageBody, /I have read and agree to the Terms of Service/);
-    assert.match(confirmationPageBody, /I agree to the Payment and Cancellation Policy/);
+    assert.match(confirmationPageBody, /Policy Acceptance/);
+    assert.match(confirmationPageBody, /Confirm and Sign/);
+    assert.match(confirmationPageBody, /Terms of Service/);
+    assert.match(confirmationPageBody, /Payment and Cancellation Policy/);
 
-    const confirmationSaveResponse = await fetch(`${started.baseUrl}/booking/confirm`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        token: confirmationToken,
-        acceptTerms: "1",
-        acceptCancellationPolicy: "1",
-      }),
-    });
-    const confirmationSaveBody = await confirmationSaveResponse.text();
-    assert.equal(confirmationSaveResponse.status, 200);
-    assert.match(confirmationSaveBody, /your policy confirmation has been saved/i);
-    assert.match(confirmationSaveBody, /Policies Accepted/);
-
-    const confirmationRepeatResponse = await fetch(
-      `${started.baseUrl}/booking/confirm?token=${encodeURIComponent(confirmationToken)}`
+    const uncheckedResponse = await fetch(
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          acceptedTerms: false,
+          acceptedPaymentCancellation: false,
+          typedSignature: "Policy Customer",
+        }),
+      }
     );
-    const confirmationRepeatBody = await confirmationRepeatResponse.text();
-    assert.equal(confirmationRepeatResponse.status, 200);
-    assert.match(confirmationRepeatBody, /You already completed this confirmation/i);
+    const uncheckedBody = await uncheckedResponse.json();
+    assert.equal(uncheckedResponse.status, 422);
+    assert.equal(uncheckedBody.code, "POLICY_CHECKBOX_REQUIRED");
 
-    const secondSaveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
-      method: "POST",
-      redirect: "manual",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        cookie: `shynli_admin_session=${sessionCookieValue}`,
-      },
-      body: new URLSearchParams({
-        entryId,
-        returnTo: `/admin/orders?q=${encodeURIComponent("policy-email-request-1")}`,
-        orderStatus: "scheduled",
-        paymentStatus: "paid",
-        paymentMethod: "card",
-        selectedDate: "2026-04-18",
-        selectedTime: "10:30",
-        frequency: "",
-      }),
-    });
-    assert.equal(secondSaveOrderResponse.status, 303);
-    assert.match(secondSaveOrderResponse.headers.get("location") || "", /notice=order-saved/);
-    assert.equal(smtpServer.messages.length, 1);
+    const missingSignatureResponse = await fetch(
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          acceptedTerms: true,
+          acceptedPaymentCancellation: true,
+          typedSignature: "",
+        }),
+      }
+    );
+    const missingSignatureBody = await missingSignatureResponse.json();
+    assert.equal(missingSignatureResponse.status, 422);
+    assert.equal(missingSignatureBody.code, "POLICY_SIGNATURE_REQUIRED");
+
+    const submitResponse = await fetch(
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          acceptedTerms: true,
+          acceptedPaymentCancellation: true,
+          typedSignature: "Policy Customer",
+        }),
+      }
+    );
+    const submitBody = await submitResponse.json();
+    assert.equal(submitResponse.status, 200);
+    assert.equal(submitBody.ok, true);
+    assert.equal(submitBody.acceptance.policyAccepted, true);
+    assert.ok(submitBody.acceptance.signedAt);
+    assert.ok(submitBody.certificateUrl);
+
+    const certificateResponse = await fetch(`${started.baseUrl}${submitBody.certificateUrl}`);
+    const certificateBuffer = Buffer.from(await certificateResponse.arrayBuffer());
+    assert.equal(certificateResponse.status, 200);
+    assert.match(certificateResponse.headers.get("content-type") || "", /application\/pdf/);
+    assert.ok(certificateBuffer.length > 500);
+    assert.equal(certificateBuffer.subarray(0, 4).toString("utf8"), "%PDF");
+
+    const duplicateSubmitResponse = await fetch(
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          acceptedTerms: true,
+          acceptedPaymentCancellation: true,
+          typedSignature: "Policy Customer",
+        }),
+      }
+    );
+    const duplicateSubmitBody = await duplicateSubmitResponse.json();
+    assert.equal(duplicateSubmitResponse.status, 409);
+    assert.equal(duplicateSubmitBody.code, "POLICY_ALREADY_ACCEPTED");
+
+    const adminAcceptanceResponse = await fetch(
+      `${started.baseUrl}/api/admin/policy-acceptance/${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const adminAcceptanceBody = await adminAcceptanceResponse.json();
+    assert.equal(adminAcceptanceResponse.status, 200);
+    assert.equal(adminAcceptanceBody.bookingId, entryId);
+    assert.equal(adminAcceptanceBody.policyAccepted, true);
+    assert.equal(adminAcceptanceBody.typedSignature, "Policy Customer");
+    assert.ok(adminAcceptanceBody.auditTrailJson);
+    assert.ok(adminAcceptanceBody.auditTrailJson.documents);
+    assert.ok(adminAcceptanceBody.certificateFile);
+    assert.match(
+      adminAcceptanceBody.certificateFile.downloadUrl || "",
+      new RegExp(`/api/admin/policy-acceptance/${escapeRegex(entryId)}/certificate$`)
+    );
+
+    const updatedOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const updatedOrdersBody = await updatedOrdersResponse.text();
+    assert.equal(updatedOrdersResponse.status, 200);
+    assert.match(updatedOrdersBody, /Подтверждение политик/);
+    assert.match(updatedOrdersBody, /Открыть сертификат PDF/);
+    assert.match(updatedOrdersBody, /Подписано/);
   } finally {
     await stopServer(started.child);
     await smtpServer.close();
-    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });

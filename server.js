@@ -37,9 +37,8 @@ const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request
 const { createSiteSanitizer } = require("./lib/site/sanitize");
 const { createSiteSeoHelpers } = require("./lib/site/seo");
 const {
-  ORDER_POLICY_CONFIRM_PATH,
-  buildOrderPolicyConfirmationUrl,
-  createOrderPolicyRequestHandler,
+  ADMIN_POLICY_ACCEPTANCE_API_BASE_PATH,
+  createOrderPolicyAcceptanceService,
 } = require("./lib/order-policy");
 const {
   createQuoteOpsStore: createQuoteOpsStoreModule,
@@ -534,8 +533,11 @@ const {
   getEntryAdminLeadData,
   getEntryLeadTasks,
   getEntryOpenLeadTask,
+  getEntryAdminOrderData,
   getEntryOrderCompletionData,
+  getEntryOrderPolicyAcceptanceData,
   getLeadStatus,
+  getOrderStatus,
   getOrdersFilters,
   getQuoteOpsFilters,
   isOrderCreatedEntry,
@@ -570,7 +572,20 @@ const {
   shouldUseSecureCookies,
 });
 
+const orderPolicyAcceptance = createOrderPolicyAcceptanceService({
+  env: process.env,
+  siteOrigin: SITE_ORIGIN,
+  getAdminAuthState,
+  getClientAddress,
+  getRequestUrl,
+  readJsonBody,
+  writeHeadWithTiming,
+  writeHtmlWithTiming,
+  writeJsonWithTiming,
+});
+
 const adminPageRenderers = createAdminPageRenderers({
+  ADMIN_POLICY_ACCEPTANCE_API_BASE_PATH,
   ADMIN_CLIENTS_PATH,
   ADMIN_INTEGRATIONS_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
@@ -674,6 +689,7 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_LOGIN_PATH,
   ADMIN_LOGOUT_PATH,
   ACCOUNT_LOGOUT_PATH,
+  ADMIN_POLICY_ACCEPTANCE_API_BASE_PATH,
   ADMIN_ORDERS_PATH,
   ADMIN_QUOTE_OPS_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
@@ -697,7 +713,6 @@ const handleAdminRequest = createAdminRequestHandler({
   adminSharedRenderers,
   adminTwoFactorRateLimiter,
   buildAdminQrMarkup,
-  buildOrderPolicyConfirmationUrl,
   buildAdminRedirectPath,
   buildOrdersReturnPath,
   buildQuoteOpsReturnPath,
@@ -712,14 +727,18 @@ const handleAdminRequest = createAdminRequestHandler({
   getFormValues,
   getLeadConnectorClient,
   getRequestUrl,
+  getEntryAdminOrderData,
   getEntryOpenLeadTask,
   getEntryOrderCompletionData,
+  getEntryOrderPolicyAcceptanceData,
   getQuoteOpsFilters,
   getLeadStatus,
+  getOrderStatus,
   formatAdminDateTime,
   normalizeLeadStatus,
   normalizeOrderStatus,
   normalizeString,
+  orderPolicyAcceptance,
   parseMultipartFormBody,
   parseCookies,
   parseFormBody,
@@ -732,14 +751,6 @@ const handleAdminRequest = createAdminRequestHandler({
   writeHeadWithTiming,
   writeHtmlWithTiming,
   writeJsonWithTiming,
-});
-
-const handleOrderPolicyRequest = createOrderPolicyRequestHandler({
-  formatAdminDateTime,
-  formatAdminServiceLabel,
-  parseFormBody,
-  readTextBody,
-  writeHeadWithTiming,
 });
 
 const accountRenderers = createAccountRenderers({
@@ -862,7 +873,6 @@ const handleSiteRequest = createSiteRequestHandler({
   ALERT_EVENT_LOOP_P95_MS,
   ALERT_P95_MS,
   ALERT_P99_MS,
-  ORDER_POLICY_CONFIRM_PATH,
   PERF_ENDPOINT_ENABLED,
   PERF_ENDPOINT_TOKEN,
   PUBLIC_ASSET_DIRECTORIES,
@@ -874,10 +884,10 @@ const handleSiteRequest = createSiteRequestHandler({
   STRIPE_CHECKOUT_ENDPOINT,
   handleAccountRequest,
   handleAdminRequest,
-  handleOrderPolicyRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
   normalizeRoute,
+  orderPolicyAcceptance,
   siteStaticHelpers,
   writeHeadWithTiming,
   writeJsonWithTiming,
