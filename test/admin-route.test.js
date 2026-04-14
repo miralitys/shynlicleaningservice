@@ -5891,6 +5891,8 @@ test("sends an invite email and lets the employee set a first password after ema
 
 test("sends a policy acceptance email on scheduled transition and stores the signed certificate", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-policy-acceptance-"));
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const smtpServer = await createSmtpTestServer();
   const fetchStub = await createFetchStub([
     {
@@ -5925,6 +5927,8 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     ACCOUNT_INVITE_SMTP_HOST: smtpServer.host,
     ACCOUNT_INVITE_SMTP_PORT: String(smtpServer.port),
     ACCOUNT_INVITE_SMTP_REQUIRE_TLS: "0",
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
     POLICY_ACCEPTANCE_DOCUMENTS_DIR: path.join(tempDir, "policy-documents"),
     ORDER_POLICY_TOKEN_SECRET: "policy_secret_test",
   };
@@ -6275,6 +6279,77 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       new RegExp(`/api/admin/policy-acceptance/${escapeRegex(entryId)}/certificate$`)
     );
 
+    const createManagerResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Policy Manager",
+        role: "manager",
+        status: "active",
+        staffStatus: "active",
+        email: "policy.manager@example.com",
+        phone: "3125557744",
+        address: "500 Executive Dr, Naperville, IL 60563",
+        notes: "Can review signed policy certificates",
+        password: "",
+      }),
+    });
+    assert.equal(createManagerResponse.status, 303);
+    assert.match(createManagerResponse.headers.get("location") || "", /notice=user-created-email-sent/);
+    assert.equal(smtpServer.messages.length, 3);
+
+    const managerInviteEmail = decodeQuotedPrintable(smtpServer.messages[2].raw);
+    const managerVerifyUrlMatch = managerInviteEmail.match(
+      /https?:\/\/[^\s]+\/account\/verify-email\?token=[^\s=]+/
+    );
+    assert.ok(managerVerifyUrlMatch);
+    const managerVerificationToken = new URL(managerVerifyUrlMatch[0]).searchParams.get("token");
+    assert.ok(managerVerificationToken);
+
+    const managerVerifyResponse = await fetch(
+      `${started.baseUrl}/account/verify-email?token=${encodeURIComponent(managerVerificationToken)}`,
+      {
+        redirect: "manual",
+      }
+    );
+    assert.equal(managerVerifyResponse.status, 303);
+    assert.equal(
+      managerVerifyResponse.headers.get("location"),
+      "/account/login?notice=email-verified-password-setup&email=policy.manager%40example.com"
+    );
+    const managerPasswordSetupCookieValue = getCookieValue(
+      getSetCookies(managerVerifyResponse),
+      "shynli_user_password_setup"
+    );
+    assert.ok(managerPasswordSetupCookieValue);
+
+    const managerSetupPasswordResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_password_setup=${managerPasswordSetupCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "setup-first-password",
+        email: "policy.manager@example.com",
+        newPassword: "ManagerPass123!",
+        confirmPassword: "ManagerPass123!",
+      }),
+    });
+    assert.equal(managerSetupPasswordResponse.status, 303);
+    assert.equal(managerSetupPasswordResponse.headers.get("location"), "/admin");
+    const managerSessionCookieValue = getCookieValue(
+      getSetCookies(managerSetupPasswordResponse),
+      "shynli_user_session"
+    );
+    assert.ok(managerSessionCookieValue);
+
     const certificateAbsolutePath = path.join(
       tempDir,
       "policy-documents",
@@ -6305,6 +6380,38 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.ok(regeneratedAdminCertificateBuffer.length > 500);
     assert.equal(regeneratedAdminCertificateBuffer.subarray(0, 4).toString("utf8"), "%PDF");
 
+    const managerAcceptanceResponse = await fetch(
+      `${started.baseUrl}/api/admin/policy-acceptance/${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${managerSessionCookieValue}`,
+        },
+      }
+    );
+    const managerAcceptanceBody = await managerAcceptanceResponse.json();
+    assert.equal(managerAcceptanceResponse.status, 200);
+    assert.equal(managerAcceptanceBody.bookingId, entryId);
+    assert.equal(managerAcceptanceBody.policyAccepted, true);
+    assert.match(
+      managerAcceptanceBody.certificateFile.downloadUrl || "",
+      new RegExp(`/api/admin/policy-acceptance/${escapeRegex(entryId)}/certificate$`)
+    );
+
+    const managerCertificateResponse = await fetch(
+      `${started.baseUrl}${managerAcceptanceBody.certificateFile.downloadUrl}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${managerSessionCookieValue}`,
+        },
+      }
+    );
+    const managerCertificateBuffer = Buffer.from(await managerCertificateResponse.arrayBuffer());
+    assert.equal(managerCertificateResponse.status, 200);
+    assert.match(managerCertificateResponse.headers.get("content-type") || "", /application\/pdf/);
+    assert.equal(managerCertificateResponse.headers.get("cache-control"), "no-store, max-age=0");
+    assert.ok(managerCertificateBuffer.length > 500);
+    assert.equal(managerCertificateBuffer.subarray(0, 4).toString("utf8"), "%PDF");
+
     const updatedOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
       {
@@ -6333,6 +6440,18 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(orderDialogBody, /Автоматически/);
     assert.match(orderDialogBody, /Сбросить подтверждение/);
     assert.match(orderDialogBody, /To confirm your booking, please review and accept our service policies here:/);
+
+    const managerOrderDialogResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${managerSessionCookieValue}`,
+        },
+      }
+    );
+    const managerOrderDialogBody = await managerOrderDialogResponse.text();
+    assert.equal(managerOrderDialogResponse.status, 200);
+    assert.match(managerOrderDialogBody, /Открыть сертификат PDF/);
 
     const resetPolicyResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",

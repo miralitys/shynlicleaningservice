@@ -573,10 +573,41 @@ const {
   shouldUseSecureCookies,
 });
 
+let usersStore = null;
+
 const orderPolicyAcceptance = createOrderPolicyAcceptanceService({
   env: process.env,
   siteOrigin: SITE_ORIGIN,
   getAdminAuthState,
+  hasAdminWorkspaceAccess: async (req) => {
+    const adminState = getAdminAuthState(req);
+    if (adminState && adminState.session) return true;
+    if (!accountAuth || !usersStore) return false;
+
+    const userAuthConfig =
+      typeof accountAuth.loadUserAuthConfig === "function"
+        ? accountAuth.loadUserAuthConfig(process.env)
+        : { configured: false };
+    if (!userAuthConfig || !userAuthConfig.configured) return false;
+
+    const cookies = parseCookies(req && req.headers ? req.headers.cookie : "");
+    const token = cookies[USER_SESSION_COOKIE];
+    if (!token) return false;
+
+    try {
+      const session = accountAuth.verifyUserSessionToken(token, userAuthConfig);
+      const user = await usersStore.getUserById(session.userId, { includeSecret: true });
+      const role = normalizeString(user && user.role, 32).toLowerCase();
+      return Boolean(
+        user &&
+        user.status === "active" &&
+        (!user.emailVerificationRequired || user.emailVerifiedAt) &&
+        (role === "admin" || role === "manager")
+      );
+    } catch {
+      return false;
+    }
+  },
   getClientAddress,
   getRequestUrl,
   parseFormBody,
@@ -941,7 +972,7 @@ async function main() {
     normalizeString,
   });
   const settingsStore = createAdminSettingsStore();
-  const usersStore = createAdminUsersStore({
+  usersStore = createAdminUsersStore({
     createSupabaseAdminUsersClient,
     env: process.env,
     fetch: global.fetch,
