@@ -4027,6 +4027,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(usersStorePayload.users[0].staffId, staffId);
     assert.equal(usersStorePayload.users[0].email, "alina.staff@example.com");
     assert.equal(usersStorePayload.users[0].role, "cleaner");
+    assert.equal(usersStorePayload.users[0].isEmployee, true);
     assert.equal(usersStorePayload.users[0].emailVerificationRequired, false);
     assert.ok(usersStorePayload.users[0].emailVerifiedAt);
     assert.match(usersStorePayload.users[0].passwordHash, /^scrypt\$/);
@@ -4809,6 +4810,7 @@ test("keeps admin users out of the staff workspace and skips W-9 flow", async ()
     assert.equal(staffPayload.staff[0].role, "Админ");
     const staffId = staffPayload.staff[0].id;
     const userId = usersPayload.users[0].id;
+    assert.equal(usersPayload.users[0].isEmployee, false);
 
     const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
@@ -4903,6 +4905,78 @@ test("keeps admin users out of the staff workspace and skips W-9 flow", async ()
     });
     assert.equal(saveW9Response.status, 303);
     assert.equal(saveW9Response.headers.get("location"), "/admin");
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("allows admin users marked as employees into staff scheduling and onboarding documents", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-admin-employee-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Ramis Admin",
+        role: "admin",
+        isEmployee: "1",
+        status: "active",
+        staffStatus: "active",
+        email: "ramis.admin.employee@example.com",
+        phone: "3125550191",
+        address: "742 Cedar Avenue, Aurora, IL 60506",
+        notes: "Admin can also take jobs",
+        password: "AdminPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+
+    const staffPayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const usersPayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(staffPayload.staff[0].role, "Админ");
+    assert.equal(usersPayload.users[0].isEmployee, true);
+
+    const staffPageResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffPageBody = await staffPageResponse.text();
+    assert.equal(staffPageResponse.status, 200);
+    assert.match(staffPageBody, /Ramis Admin/i);
+
+    const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "ramis.admin.employee@example.com",
+        password: "AdminPass123!",
+        next: "/account?focus=w9#account-w9",
+      }),
+    });
+    assert.equal(accountLoginResponse.status, 303);
+    assert.equal(accountLoginResponse.headers.get("location"), "/account?focus=w9#account-w9");
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
@@ -5112,8 +5186,8 @@ test("shows a readable SMTP invite error in the users settings page", async () =
             passwordHash: hashPassword("StrongPass123!"),
             status: "active",
             role: "cleaner",
-            emailVerificationRequired: false,
-            emailVerifiedAt: new Date().toISOString(),
+            emailVerificationRequired: true,
+            emailVerifiedAt: "",
             inviteEmailLastError:
               "ACCOUNT_INVITE_EMAIL_SEND_FAILED:535-5.7.8 Username and Password not accepted.",
           },
@@ -5131,7 +5205,7 @@ test("shows a readable SMTP invite error in the users settings page", async () =
     const settingsBody = await settingsResponse.text();
 
     assert.equal(settingsResponse.status, 200);
-    assert.match(settingsBody, /Письмо не ушло/i);
+    assert.match(settingsBody, /Ждёт подтверждения email/i);
     assert.match(settingsBody, /SMTP не принял логин или app password/i);
     assert.doesNotMatch(settingsBody, /Отправить письмо ещё раз/i);
   } finally {

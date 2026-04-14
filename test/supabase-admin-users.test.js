@@ -122,6 +122,7 @@ test("falls back to quote_ops_entries rows when the dedicated users table is mis
                     passwordHash: "scrypt$example",
                     status: "active",
                     role: "manager",
+                    isEmployee: true,
                     createdAt: "2026-04-11T18:01:11.000Z",
                     updatedAt: "2026-04-11T18:05:00.000Z",
                     lastLoginAt: "2026-04-11T18:06:00.000Z",
@@ -146,6 +147,7 @@ test("falls back to quote_ops_entries rows when the dedicated users table is mis
   assert.equal(snapshot.users[0].staffId, "staff-anna");
   assert.equal(snapshot.users[0].email, "anna@example.com");
   assert.equal(snapshot.users[0].role, "manager");
+  assert.equal(snapshot.users[0].isEmployee, true);
   assert.equal(snapshot.users[0].emailVerificationRequired, true);
   assert.equal(snapshot.users[0].lastLoginAt, "2026-04-11T18:06:00.000Z");
   assert.ok(calls.some((call) => call.url.includes("/rest/v1/quote_ops_entries")));
@@ -194,6 +196,7 @@ test("writes admin user rows into quote_ops_entries when the dedicated table is 
     passwordHash: "scrypt$example",
     status: "inactive",
     role: "cleaner",
+    isEmployee: true,
     createdAt: "2026-04-11T18:10:00.000Z",
     updatedAt: "2026-04-11T18:12:00.000Z",
     lastLoginAt: "",
@@ -211,6 +214,7 @@ test("writes admin user rows into quote_ops_entries when the dedicated table is 
   assert.equal(payload.contact_id, "staff-olga");
   assert.equal(payload.service_name, "cleaner");
   assert.equal(payload.code, "inactive");
+  assert.equal(payload.payload_for_retry.user.isEmployee, true);
   assert.equal(payload.payload_for_retry.user.passwordHash, "scrypt$example");
   assert.equal(payload.payload_for_retry.user.inviteEmailLastError, "SMTP rejected the credentials.");
 });

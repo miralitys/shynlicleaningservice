@@ -57,6 +57,7 @@ test("stores user accounts for employee portals", async () => {
       passwordHash: hashPassword("StrongPassword123!"),
       status: "active",
       role: "manager",
+      isEmployee: true,
     });
 
     assert.equal(user.staffId, "staff-anna");
@@ -64,6 +65,7 @@ test("stores user accounts for employee portals", async () => {
     assert.equal(user.phone, "+1(312)555-0199");
     assert.equal(user.status, "active");
     assert.equal(user.role, "manager");
+    assert.equal(user.isEmployee, true);
     assert.equal(user.emailVerificationRequired, false);
     assert.equal(user.emailVerifiedAt, "");
     assert.ok(user.id);
@@ -96,6 +98,7 @@ test("stores user accounts for employee portals", async () => {
       phone: "+1(331)555-0110",
       status: "inactive",
       role: "cleaner",
+      isEmployee: true,
       emailVerificationRequired: true,
       emailVerifiedAt: "",
       inviteEmailSentAt: "2026-04-11T12:00:00.000Z",
@@ -106,6 +109,7 @@ test("stores user accounts for employee portals", async () => {
     assert.equal(updated.phone, "+1(331)555-0110");
     assert.equal(updated.status, "inactive");
     assert.equal(updated.role, "cleaner");
+    assert.equal(updated.isEmployee, true);
     assert.equal(updated.emailVerificationRequired, true);
     assert.equal(updated.emailVerifiedAt, "");
     assert.equal(updated.inviteEmailSentAt, "2026-04-11T12:00:00.000Z");
@@ -146,6 +150,7 @@ test("uses the Supabase-backed users store when the client is configured", async
     passwordHash: hashPassword("StrongPassword123!"),
     status: "active",
     role: "manager",
+    isEmployee: true,
     emailVerificationRequired: true,
     inviteEmailSentAt: "2026-04-11T12:00:00.000Z",
   });
@@ -158,6 +163,7 @@ test("uses the Supabase-backed users store when the client is configured", async
   assert.ok(found);
   assert.match(found.passwordHash, /^scrypt\$/);
   assert.equal(found.emailVerificationRequired, true);
+  assert.equal(found.isEmployee, true);
 
   const updated = await store.updateUser(user.id, {
     email: "anna.peterson@example.com",
@@ -206,10 +212,32 @@ test("keeps invited users without a password hash until they finish first login"
     const storedUser = await store.findUserByEmail("invite@example.com", { includeSecret: true });
     assert.ok(storedUser);
     assert.equal(storedUser.passwordHash, "");
+    assert.equal(storedUser.isEmployee, true);
 
     const snapshot = await store.getSnapshot();
     assert.equal(snapshot.users.length, 1);
     assert.equal(snapshot.users[0].email, "invite@example.com");
+  } finally {
+    await fsp.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("defaults admins to non-employee until the flag is enabled", async () => {
+  const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "shynli-users-store-admin-"));
+  const storePath = path.join(tempDir, "admin-users-store.json");
+  const store = createAdminUsersStore({ filePath: storePath });
+
+  try {
+    const user = await store.createUser({
+      staffId: "staff-admin",
+      email: "admin@example.com",
+      phone: "+1(312)555-0188",
+      passwordHash: hashPassword("StrongPassword123!"),
+      role: "admin",
+      status: "active",
+    });
+
+    assert.equal(user.isEmployee, false);
   } finally {
     await fsp.rm(tempDir, { recursive: true, force: true });
   }

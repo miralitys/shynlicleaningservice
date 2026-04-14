@@ -6,6 +6,7 @@ create table if not exists public.admin_users (
   password_hash text not null,
   status text not null default 'active',
   role text not null default 'cleaner',
+  is_employee boolean not null default true,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   last_login_at timestamptz,
@@ -18,6 +19,9 @@ create table if not exists public.admin_users (
 create index if not exists admin_users_status_idx on public.admin_users (status);
 create index if not exists admin_users_role_idx on public.admin_users (role);
 create index if not exists admin_users_updated_at_idx on public.admin_users (updated_at desc);
+
+alter table if exists public.admin_users
+  add column if not exists is_employee boolean not null default true;
 
 create or replace function public.set_admin_users_updated_at()
 returns trigger
