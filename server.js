@@ -11,6 +11,7 @@ const accountAuth = require("./lib/account-auth");
 const {
   loadAccountInviteEmailConfig,
   sendAccountInviteEmail,
+  sendOrderPolicyConfirmationEmail,
   sendStaffW9ReminderEmail,
 } = require("./lib/account-invite-email");
 const { createAdminMailStore } = require("./lib/admin-mail-store");
@@ -35,6 +36,11 @@ const { createSiteStaticHelpers } = require("./lib/site/assets");
 const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request-handler");
 const { createSiteSanitizer } = require("./lib/site/sanitize");
 const { createSiteSeoHelpers } = require("./lib/site/seo");
+const {
+  ORDER_POLICY_CONFIRM_PATH,
+  buildOrderPolicyConfirmationUrl,
+  createOrderPolicyRequestHandler,
+} = require("./lib/order-policy");
 const {
   createQuoteOpsStore: createQuoteOpsStoreModule,
   filterQuoteOpsEntries: filterQuoteOpsEntriesModule,
@@ -650,6 +656,9 @@ const accountInviteEmail = {
   async sendW9Reminder() {
     throw new Error("ACCOUNT_INVITE_EMAIL_NOT_CONFIGURED");
   },
+  async sendOrderPolicyConfirmation() {
+    throw new Error("ACCOUNT_INVITE_EMAIL_NOT_CONFIGURED");
+  },
 };
 
 const handleAdminRequest = createAdminRequestHandler({
@@ -688,6 +697,7 @@ const handleAdminRequest = createAdminRequestHandler({
   adminSharedRenderers,
   adminTwoFactorRateLimiter,
   buildAdminQrMarkup,
+  buildOrderPolicyConfirmationUrl,
   buildAdminRedirectPath,
   buildOrdersReturnPath,
   buildQuoteOpsReturnPath,
@@ -708,6 +718,7 @@ const handleAdminRequest = createAdminRequestHandler({
   getLeadStatus,
   formatAdminDateTime,
   normalizeLeadStatus,
+  normalizeOrderStatus,
   normalizeString,
   parseMultipartFormBody,
   parseCookies,
@@ -721,6 +732,14 @@ const handleAdminRequest = createAdminRequestHandler({
   writeHeadWithTiming,
   writeHtmlWithTiming,
   writeJsonWithTiming,
+});
+
+const handleOrderPolicyRequest = createOrderPolicyRequestHandler({
+  formatAdminDateTime,
+  formatAdminServiceLabel,
+  parseFormBody,
+  readTextBody,
+  writeHeadWithTiming,
 });
 
 const accountRenderers = createAccountRenderers({
@@ -843,6 +862,7 @@ const handleSiteRequest = createSiteRequestHandler({
   ALERT_EVENT_LOOP_P95_MS,
   ALERT_P95_MS,
   ALERT_P99_MS,
+  ORDER_POLICY_CONFIRM_PATH,
   PERF_ENDPOINT_ENABLED,
   PERF_ENDPOINT_TOKEN,
   PUBLIC_ASSET_DIRECTORIES,
@@ -854,6 +874,7 @@ const handleSiteRequest = createSiteRequestHandler({
   STRIPE_CHECKOUT_ENDPOINT,
   handleAccountRequest,
   handleAdminRequest,
+  handleOrderPolicyRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
   normalizeRoute,
@@ -1011,6 +1032,30 @@ async function main() {
     }
 
     return sendStaffW9ReminderEmail({
+      ...payload,
+      env: process.env,
+      fetch: global.fetch,
+    });
+  };
+
+  accountInviteEmail.sendOrderPolicyConfirmation = async function sendOrderPolicyConfirmation(
+    payload,
+    config = {}
+  ) {
+    const legacyConfig = loadAccountInviteEmailConfig(process.env);
+    const googleStatus =
+      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
+        ? await googleMailIntegration.getStatus(config)
+        : null;
+
+    if (googleStatus && googleStatus.connected) {
+      return googleMailIntegration.sendOrderPolicyConfirmationEmail(payload, config, {
+        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+        replyToEmail: legacyConfig.replyToEmail || "",
+      });
+    }
+
+    return sendOrderPolicyConfirmationEmail({
       ...payload,
       env: process.env,
       fetch: global.fetch,

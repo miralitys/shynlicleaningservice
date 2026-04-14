@@ -5007,3 +5007,165 @@ test("sends an invite email and lets the employee set a first password after ema
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
+
+test("sends the policy confirmation email when an order moves into scheduled", async () => {
+  const smtpServer = await createSmtpTestServer();
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-policy-email-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    ACCOUNT_INVITE_EMAIL_FROM: "hello@shynli.com",
+    ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynli.com",
+    ACCOUNT_INVITE_SMTP_HOST: smtpServer.host,
+    ACCOUNT_INVITE_SMTP_PORT: String(smtpServer.port),
+    ACCOUNT_INVITE_SMTP_REQUIRE_TLS: "0",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "policy-email-request-1",
+      fullName: "Policy Email Client",
+      phone: "312-555-0112",
+      email: "policy.client@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-04-18",
+      selectedTime: "10:30",
+      fullAddress: "440 Policy Lane, Bolingbrook, IL 60440",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "policy-email-request-1"
+    );
+
+    const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?q=${encodeURIComponent("policy-email-request-1")}`,
+        orderStatus: "scheduled",
+        paymentStatus: "unpaid",
+        paymentMethod: "card",
+        selectedDate: "2026-04-18",
+        selectedTime: "10:30",
+        frequency: "",
+      }),
+    });
+    assert.equal(saveOrderResponse.status, 303);
+    assert.match(
+      saveOrderResponse.headers.get("location") || "",
+      /notice=order-saved-policy-email-sent/
+    );
+
+    assert.equal(smtpServer.messages.length, 1);
+    assert.equal(smtpServer.messages[0].from, "<hello@shynli.com>");
+    assert.deepEqual(smtpServer.messages[0].to, ["<policy.client@example.com>"]);
+    const rawEmail = decodeQuotedPrintable(smtpServer.messages[0].raw);
+    const normalizedRawEmail = rawEmail.replace(/\r?\n[ \t]+/g, " ");
+    assert.match(rawEmail, /Reply-To: info@shynli\.com/);
+    assert.match(
+      normalizedRawEmail,
+      /Subject: Action Required: Please Review and Accept Before Your Cleaning Appointment/
+    );
+    assert.match(normalizedRawEmail, /Dear Policy Email Client,/);
+    assert.match(normalizedRawEmail, /Review and Accept Policies/);
+    assert.match(
+      normalizedRawEmail,
+      /https:\/\/shynlicleaningservice\.com\/terms-of-service/
+    );
+    assert.match(
+      normalizedRawEmail,
+      /https:\/\/shynlicleaningservice\.com\/cancellation-policy/
+    );
+    const confirmationUrlMatch = normalizedRawEmail.match(
+      /https:\/\/shynlicleaningservice\.com\/booking\/confirm\?token=[A-Za-z0-9._-]+/
+    );
+    assert.ok(confirmationUrlMatch);
+    const confirmationUrl = new URL(confirmationUrlMatch[0]);
+    const confirmationToken = confirmationUrl.searchParams.get("token");
+    assert.ok(confirmationToken);
+
+    const confirmationPageResponse = await fetch(
+      `${started.baseUrl}/booking/confirm?token=${encodeURIComponent(confirmationToken)}`
+    );
+    const confirmationPageBody = await confirmationPageResponse.text();
+    assert.equal(confirmationPageResponse.status, 200);
+    assert.match(confirmationPageBody, /Review and Accept Policies/);
+    assert.match(confirmationPageBody, /I have read and agree to the Terms of Service/);
+    assert.match(confirmationPageBody, /I agree to the Payment and Cancellation Policy/);
+
+    const confirmationSaveResponse = await fetch(`${started.baseUrl}/booking/confirm`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        token: confirmationToken,
+        acceptTerms: "1",
+        acceptCancellationPolicy: "1",
+      }),
+    });
+    const confirmationSaveBody = await confirmationSaveResponse.text();
+    assert.equal(confirmationSaveResponse.status, 200);
+    assert.match(confirmationSaveBody, /your policy confirmation has been saved/i);
+    assert.match(confirmationSaveBody, /Policies Accepted/);
+
+    const confirmationRepeatResponse = await fetch(
+      `${started.baseUrl}/booking/confirm?token=${encodeURIComponent(confirmationToken)}`
+    );
+    const confirmationRepeatBody = await confirmationRepeatResponse.text();
+    assert.equal(confirmationRepeatResponse.status, 200);
+    assert.match(confirmationRepeatBody, /You already completed this confirmation/i);
+
+    const secondSaveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?q=${encodeURIComponent("policy-email-request-1")}`,
+        orderStatus: "scheduled",
+        paymentStatus: "paid",
+        paymentMethod: "card",
+        selectedDate: "2026-04-18",
+        selectedTime: "10:30",
+        frequency: "",
+      }),
+    });
+    assert.equal(secondSaveOrderResponse.status, 303);
+    assert.match(secondSaveOrderResponse.headers.get("location") || "", /notice=order-saved/);
+    assert.equal(smtpServer.messages.length, 1);
+  } finally {
+    await stopServer(started.child);
+    await smtpServer.close();
+    fetchStub.cleanup();
+  }
+});
