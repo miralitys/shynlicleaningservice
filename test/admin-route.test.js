@@ -5051,7 +5051,7 @@ test("allows admin users marked as employees into staff scheduling and onboardin
   }
 });
 
-test("allows managers into admin workspace but blocks delete actions", async () => {
+test("gives managers the same admin workspace access as admins", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-manager-role-route-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const usersStorePath = path.join(tempDir, "admin-users-store.json");
@@ -5133,8 +5133,8 @@ test("allows managers into admin workspace but blocks delete actions", async () 
     const settingsBody = await settingsResponse.text();
     assert.equal(settingsResponse.status, 200);
     assert.match(settingsBody, /Пользователи/i);
-    assert.doesNotMatch(settingsBody, /aria-label="Удалить пользователя"/i);
-    assert.doesNotMatch(settingsBody, /Почта приглашений/i);
+    assert.match(settingsBody, /aria-label="Удалить пользователя"/i);
+    assert.match(settingsBody, /Почта приглашений/i);
 
     const updateUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
       method: "POST",
@@ -5192,21 +5192,14 @@ test("allows managers into admin workspace but blocks delete actions", async () 
     const updatedUsersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     assert.equal(updatedUsersStorePayload.users[0].phone, "+1(331)555-0198");
 
-    const deleteUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
-      method: "POST",
+    const connectMailResponse = await fetch(`${started.baseUrl}/admin/google-mail/connect`, {
+      redirect: "manual",
       headers: {
-        "content-type": "application/x-www-form-urlencoded",
         cookie: `shynli_user_session=${userSessionCookieValue}`,
       },
-      body: new URLSearchParams({
-        action: "delete_user",
-        userId: managerUser.id,
-      }),
     });
-    const deleteUserBody = await deleteUserResponse.text();
-    assert.equal(deleteUserResponse.status, 403);
-    assert.match(deleteUserBody, /Недостаточно прав/i);
-    assert.match(deleteUserBody, /Удаление доступно только администратору/i);
+    assert.equal(connectMailResponse.status, 303);
+    assert.match(connectMailResponse.headers.get("location") || "", /notice=mail-unavailable/);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
