@@ -5398,6 +5398,8 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(confirmationPageBody, /Confirm and Sign/);
     assert.match(confirmationPageBody, /Terms of Service/);
     assert.match(confirmationPageBody, /Payment and Cancellation Policy/);
+    assert.match(confirmationPageBody, /window\.requestAnimationFrame\(updateButtonState\)/);
+    assert.match(confirmationPageBody, /window\.setTimeout\(updateButtonState, 300\)/);
 
     const uncheckedResponse = await fetch(
       `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
