@@ -6504,3 +6504,195 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
+
+test("sends policy acceptance by SMS only when the order has no email", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-policy-sms-only-"));
+  const fetchStub = await createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [],
+      },
+    },
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "policy-sms-only-contact-1",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 201,
+      body: {
+        conversationId: "policy-sms-only-conversation-1",
+        messageId: "policy-sms-only-message-1",
+      },
+    },
+  ]);
+  const smtpServer = await createSmtpTestServer();
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    ACCOUNT_INVITE_EMAIL_FROM: "hello@shynli.com",
+    ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynli.com",
+    ACCOUNT_INVITE_SMTP_HOST: smtpServer.host,
+    ACCOUNT_INVITE_SMTP_PORT: String(smtpServer.port),
+    ACCOUNT_INVITE_SMTP_REQUIRE_TLS: "0",
+    POLICY_ACCEPTANCE_DOCUMENTS_DIR: path.join(tempDir, "policy-documents"),
+    ORDER_POLICY_TOKEN_SECRET: "policy_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "SMS Only Customer",
+        customerPhone: "3125554422",
+        customerEmail: "",
+        serviceType: "deep",
+        selectedDate: "",
+        selectedTime: "",
+        frequency: "",
+        totalPrice: "240.00",
+        fullAddress: "215 North Elm Street, Naperville, IL 60563",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const createRedirectLocation = createOrderResponse.headers.get("location") || "";
+    assert.match(createRedirectLocation, /notice=manual-order-created/);
+    const entryId = new URL(createRedirectLocation, started.baseUrl).searchParams.get("order");
+    assert.ok(entryId);
+
+    const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+        orderStatus: "scheduled",
+        assignedStaff: "Anna Petrova",
+        paymentStatus: "unpaid",
+        paymentMethod: "invoice",
+        selectedDate: "2026-05-11",
+        selectedTime: "09:00",
+        frequency: "",
+      }),
+    });
+    assert.equal(saveOrderResponse.status, 303);
+    assert.match(
+      saveOrderResponse.headers.get("location") || "",
+      /notice=order-saved-policy-sms-sent/
+    );
+
+    assert.equal(smtpServer.messages.length, 0);
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequests = captureLines.filter((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    assert.equal(smsRequests.length, 1);
+    const firstSmsPayload = JSON.parse(smsRequests[0].body);
+    assert.equal(firstSmsPayload.type, "SMS");
+    assert.equal(firstSmsPayload.contactId, "policy-sms-only-contact-1");
+    assert.equal(firstSmsPayload.toNumber, "+13125554422");
+    assert.match(
+      firstSmsPayload.message,
+      /Hi SMS, this is Shynli Cleaning Service\. To confirm your booking, please review and accept our service policies here:/
+    );
+
+    const pendingAcceptanceResponse = await fetch(
+      `${started.baseUrl}/api/admin/policy-acceptance/${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const pendingAcceptanceBody = await pendingAcceptanceResponse.json();
+    assert.equal(pendingAcceptanceResponse.status, 200);
+    assert.equal(pendingAcceptanceBody.policyAccepted, false);
+    assert.ok(pendingAcceptanceBody.sentAt);
+    assert.ok(!pendingAcceptanceBody.lastError);
+
+    const orderDialogResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const orderDialogBody = await orderDialogResponse.text();
+    assert.equal(orderDialogResponse.status, 200);
+    assert.match(orderDialogBody, /Подтверждение политик/);
+    assert.match(orderDialogBody, /Политика не подписана/);
+    assert.doesNotMatch(orderDialogBody, /Recipient email is missing/);
+    assert.doesNotMatch(orderDialogBody, /Ошибка отправки/);
+
+    const resendResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "resend-order-policy",
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+      }),
+    });
+    assert.equal(resendResponse.status, 303);
+    assert.match(
+      resendResponse.headers.get("location") || "",
+      /notice=order-policy-resent-sms-only/
+    );
+
+    assert.equal(smtpServer.messages.length, 0);
+
+    const captureLinesAfterResend = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequestsAfterResend = captureLinesAfterResend.filter((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    assert.equal(smsRequestsAfterResend.length, 2);
+  } finally {
+    await stopServer(started.child);
+    await smtpServer.close();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
