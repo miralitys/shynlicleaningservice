@@ -5098,7 +5098,7 @@ test("gives managers the same admin workspace access as admins", async () => {
     assert.equal(staffStorePayload.staff.length, 1);
     const managerStaff = staffStorePayload.staff[0];
 
-    const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+    const accountLoginResponse = await fetch(`${started.baseUrl}/admin/login`, {
       method: "POST",
       redirect: "manual",
       headers: {
@@ -5111,6 +5111,7 @@ test("gives managers the same admin workspace access as admins", async () => {
     });
     assert.equal(accountLoginResponse.status, 303);
     assert.equal(accountLoginResponse.headers.get("location"), "/admin");
+    assert.ok(!getCookieValue(getSetCookies(accountLoginResponse), "shynli_admin_challenge"));
 
     const userSessionCookieValue = getCookieValue(getSetCookies(accountLoginResponse), "shynli_user_session");
     assert.ok(userSessionCookieValue);
