@@ -248,6 +248,128 @@ const REDIRECT_ROUTES = new Map([
 const SITE_ORIGIN = normalizeConfiguredOrigin(
   process.env.PUBLIC_SITE_ORIGIN || process.env.SITE_BASE_URL || "https://shynlicleaningservice.com"
 );
+const BLOG_CATEGORY_PAGES = Object.freeze([
+  {
+    path: "/blog/checklists",
+    label: "Checklists",
+    title: "Home Cleaning Checklists & Room-by-Room Guides | SHYNLI Blog",
+    description:
+      "Practical home cleaning checklists for kitchens, bathrooms, recurring resets, move-out prep, and seasonal routines.",
+    ogTitle: "Home Cleaning Checklists & Room-by-Room Guides | SHYNLI Blog",
+    ogDescription:
+      "Practical home cleaning checklists for kitchens, bathrooms, recurring resets, move-out prep, and seasonal routines.",
+  },
+  {
+    path: "/blog/whats-included",
+    label: "What's Included",
+    title: "What’s Included in House Cleaning? | SHYNLI Blog",
+    description:
+      "Clear guides on what is included in regular cleaning, deep cleaning, move-out cleaning, and turnover service.",
+    ogTitle: "What’s Included in House Cleaning? | SHYNLI Blog",
+    ogDescription:
+      "Clear guides on what is included in regular cleaning, deep cleaning, move-out cleaning, and turnover service.",
+  },
+  {
+    path: "/blog/services",
+    label: "Services",
+    title: "House Cleaning Services Explained | SHYNLI Blog",
+    description:
+      "Compare house cleaning services, understand when each one fits best, and choose the right service for your home.",
+    ogTitle: "House Cleaning Services Explained | SHYNLI Blog",
+    ogDescription:
+      "Compare house cleaning services, understand when each one fits best, and choose the right service for your home.",
+  },
+  {
+    path: "/blog/bathroom",
+    label: "Bathroom",
+    title: "Bathroom Cleaning Guides, Tips & Checklists | SHYNLI Blog",
+    description:
+      "Bathroom cleaning guides for soap scum, mirrors, grout, fixtures, weekly upkeep, and deep-clean bathroom resets.",
+    ogTitle: "Bathroom Cleaning Guides, Tips & Checklists | SHYNLI Blog",
+    ogDescription:
+      "Bathroom cleaning guides for soap scum, mirrors, grout, fixtures, weekly upkeep, and deep-clean bathroom resets.",
+  },
+  {
+    path: "/blog/kitchen",
+    label: "Kitchen",
+    title: "Kitchen Cleaning Guides, Tips & Checklists | SHYNLI Blog",
+    description:
+      "Kitchen cleaning guides for counters, sinks, cabinets, appliances, grease buildup, and routine kitchen maintenance.",
+    ogTitle: "Kitchen Cleaning Guides, Tips & Checklists | SHYNLI Blog",
+    ogDescription:
+      "Kitchen cleaning guides for counters, sinks, cabinets, appliances, grease buildup, and routine kitchen maintenance.",
+  },
+  {
+    path: "/blog/floors",
+    label: "Floors",
+    title: "Floor Cleaning Guides for Hardwood, Tile & More | SHYNLI Blog",
+    description:
+      "Floor cleaning advice for hardwood, tile, vinyl, dust buildup, mopping frequency, and home traffic patterns.",
+    ogTitle: "Floor Cleaning Guides for Hardwood, Tile & More | SHYNLI Blog",
+    ogDescription:
+      "Floor cleaning advice for hardwood, tile, vinyl, dust buildup, mopping frequency, and home traffic patterns.",
+  },
+  {
+    path: "/blog/dust",
+    label: "Dust",
+    title: "Dusting Guides, Routines & Cleaning Tips | SHYNLI Blog",
+    description:
+      "Dusting guides for shelves, baseboards, blinds, vents, high surfaces, and routines that keep homes feeling cleaner.",
+    ogTitle: "Dusting Guides, Routines & Cleaning Tips | SHYNLI Blog",
+    ogDescription:
+      "Dusting guides for shelves, baseboards, blinds, vents, high surfaces, and routines that keep homes feeling cleaner.",
+  },
+  {
+    path: "/blog/pet-hair",
+    label: "Pet Hair",
+    title: "Pet Hair Cleaning Tips & Home Maintenance Guides | SHYNLI Blog",
+    description:
+      "Pet hair cleaning tips for floors, furniture, corners, recurring upkeep, and keeping a home guest-ready.",
+    ogTitle: "Pet Hair Cleaning Tips & Home Maintenance Guides | SHYNLI Blog",
+    ogDescription:
+      "Pet hair cleaning tips for floors, furniture, corners, recurring upkeep, and keeping a home guest-ready.",
+  },
+  {
+    path: "/blog/move-in-move-out",
+    label: "Move-in / Move-out",
+    title: "Move-In & Move-Out Cleaning Guides | SHYNLI Blog",
+    description:
+      "Move-in and move-out cleaning guides for empty homes, landlord expectations, deposits, turnovers, and final walkthrough prep.",
+    ogTitle: "Move-In & Move-Out Cleaning Guides | SHYNLI Blog",
+    ogDescription:
+      "Move-in and move-out cleaning guides for empty homes, landlord expectations, deposits, turnovers, and final walkthrough prep.",
+  },
+  {
+    path: "/blog/airbnb",
+    label: "Airbnb",
+    title: "Airbnb Cleaning Guides & Turnover Tips | SHYNLI Blog",
+    description:
+      "Airbnb cleaning guides for turnover speed, guest-ready presentation, restocking rhythm, and short-term rental upkeep.",
+    ogTitle: "Airbnb Cleaning Guides & Turnover Tips | SHYNLI Blog",
+    ogDescription:
+      "Airbnb cleaning guides for turnover speed, guest-ready presentation, restocking rhythm, and short-term rental upkeep.",
+  },
+  {
+    path: "/blog/seasonal",
+    label: "Seasonal",
+    title: "Seasonal Cleaning Guides for Spring, Holidays & More | SHYNLI Blog",
+    description:
+      "Seasonal cleaning guides for spring resets, holiday prep, weather changes, and deeper home maintenance moments.",
+    ogTitle: "Seasonal Cleaning Guides for Spring, Holidays & More | SHYNLI Blog",
+    ogDescription:
+      "Seasonal cleaning guides for spring resets, holiday prep, weather changes, and deeper home maintenance moments.",
+  },
+  {
+    path: "/blog/cleaning-hacks",
+    label: "Cleaning Hacks",
+    title: "Cleaning Hacks, Time-Saving Tips & Shortcuts | SHYNLI Blog",
+    description:
+      "Cleaning hacks and practical shortcuts for busy homes that need faster resets, better routines, and less backtracking.",
+    ogTitle: "Cleaning Hacks, Time-Saving Tips & Shortcuts | SHYNLI Blog",
+    ogDescription:
+      "Cleaning hacks and practical shortcuts for busy homes that need faster resets, better routines, and less backtracking.",
+  },
+]);
 const NOINDEX_ROUTES = new Set([
   "/home-calculator",
   "/oauth/callback",
@@ -259,6 +381,7 @@ const NOINDEX_ROUTES = new Set([
 const BREADCRUMB_LABELS = new Map([
   ["/about-us", "About Us"],
   ["/blog", "Blog"],
+  ...BLOG_CATEGORY_PAGES.map((page) => [page.path, page.label]),
   ["/cancellation-policy", "Cancellation Policy"],
   ["/contacts", "Contact Us"],
   ["/faq", "FAQ"],
@@ -319,6 +442,18 @@ const ROUTE_META_OVERRIDES = {
     canonical: `${SITE_ORIGIN}/quote`,
     robots: "noindex,nofollow",
   },
+  ...Object.fromEntries(
+    BLOG_CATEGORY_PAGES.map((page) => [
+      page.path,
+      {
+        title: page.title,
+        description: page.description,
+        ogTitle: page.ogTitle,
+        ogDescription: page.ogDescription,
+        canonical: `${SITE_ORIGIN}${page.path}`,
+      },
+    ])
+  ),
 };
 
 const CONTENT_TYPES = {
@@ -596,42 +731,6 @@ const {
 });
 
 let usersStore = null;
-let staffStore = null;
-
-async function listLeadManagers() {
-  if (!usersStore || typeof usersStore.getSnapshot !== "function") {
-    return [];
-  }
-
-  let staffNameById = new Map();
-  if (staffStore && typeof staffStore.getSnapshot === "function") {
-    const staffSnapshot = await staffStore.getSnapshot();
-    staffNameById = new Map(
-      (Array.isArray(staffSnapshot && staffSnapshot.staff) ? staffSnapshot.staff : [])
-        .map((record) => [
-          normalizeString(record && record.id, 120),
-          normalizeString(record && record.name, 200),
-        ])
-        .filter(([id, name]) => Boolean(id && name))
-    );
-  }
-
-  const usersSnapshot = await usersStore.getSnapshot();
-  return (Array.isArray(usersSnapshot && usersSnapshot.users) ? usersSnapshot.users : [])
-    .filter((user) => {
-      const role = normalizeString(user && user.role, 32).toLowerCase();
-      const status = normalizeString(user && user.status, 32).toLowerCase();
-      return status === "active" && role === "manager";
-    })
-    .map((user) => {
-      const id = normalizeString(user && user.id, 120);
-      const email = normalizeString(user && user.email, 250).toLowerCase();
-      const name = staffNameById.get(normalizeString(user && user.staffId, 120)) || email || "Менеджер";
-      return { id, email, name };
-    })
-    .filter((manager) => Boolean(manager.id && manager.name))
-    .sort((left, right) => left.name.localeCompare(right.name, "ru"));
-}
 
 const orderPolicyAcceptance = createOrderPolicyAcceptanceService({
   env: process.env,
@@ -906,7 +1005,6 @@ const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiH
   createQuoteToken,
   enforcePostRateLimit,
   getLeadConnectorClient,
-  listLeadManagers,
   getStripeClient,
   getStripeReturnOrigin,
   normalizeString,
@@ -1042,7 +1140,7 @@ async function main() {
     env: process.env,
     fetch: global.fetch,
   });
-  staffStore = createAdminStaffStore({
+  const staffStore = createAdminStaffStore({
     createSupabaseAdminStaffClient,
     env: process.env,
     fetch: global.fetch,
