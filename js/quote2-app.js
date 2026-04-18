@@ -144,10 +144,8 @@
   };
 
   function normalizeUsPhoneDigits(value) {
-    let digits = String(value || "").replace(/\D/g, "");
+    const digits = String(value || "").replace(/\D/g, "");
     if (!digits) return "";
-    if (digits.length === 10) digits = `1${digits}`;
-    if (digits.length > 11) digits = digits.slice(-11);
     if (digits.length === 11 && digits.startsWith("1")) return digits;
     return "";
   }
