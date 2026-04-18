@@ -102,6 +102,17 @@ test("renders featured checklist article link on /blog/checklists", () => {
   assert.match(html, /Start with the strongest guides in this topic\./);
 });
 
+test("renders featured what's included article links on /blog/whats-included", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/whats-included");
+
+  assert.match(html, /what-is-included-in-regular-house-cleaning/);
+  assert.match(html, /what-is-included-in-a-deep-cleaning-service/);
+  assert.match(html, /deep-cleaning-vs-regular-cleaning-difference/);
+  assert.match(html, /move-out-cleaning-vs-deep-cleaning/);
+  assert.match(html, /how-long-does-a-deep-cleaning-take/);
+  assert.match(html, /What’s <span style="color: rgb\(158, 68, 90\);">Included<\/span>/);
+});
+
 test("renders long-form checklist article route with more than 3000 words", () => {
   const html = sanitizeHtml(
     sourceHtml,
@@ -174,6 +185,28 @@ test("renders all checklist articles with live route structure and long-form con
     assert.ok(
       getWordCount(html) > 2200,
       `Expected ${article.path} to exceed 2200 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all what's included articles with live route structure and long-form content", () => {
+  const whatsIncludedArticles = BLOG_ARTICLES.filter(
+    (article) => article.categoryPath === "/blog/whats-included"
+  );
+
+  for (const article of whatsIncludedArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1700,
+      `Expected ${article.path} to exceed 1700 words, got ${getWordCount(html)}`
     );
   }
 });
