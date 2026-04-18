@@ -241,6 +241,13 @@ a {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.quote2-step-card > .quote2-field-grid + .quote2-field-grid,
+.quote2-step-card > .quote2-field-grid + .quote2-time-grid,
+.quote2-step-card > .quote2-field-grid + .quote2-inline-actions,
+.quote2-step-card > .quote2-time-grid + .quote2-inline-actions {
+  margin-top: 18px;
+}
+
 .quote2-field {
   display: grid;
   gap: 10px;
