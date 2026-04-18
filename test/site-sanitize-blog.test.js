@@ -75,10 +75,52 @@ function getSoftLinkTargets(html) {
   );
 }
 
+function splitTopLevelArticleSections(html) {
+  const sectionMarker = '<section class="shynli-blog-article__section"';
+  const sections = [];
+
+  let start = String(html || "").indexOf(sectionMarker);
+  while (start !== -1) {
+    let depth = 0;
+    let position = start;
+    let end = -1;
+
+    while (position < html.length) {
+      const nextOpen = html.indexOf("<section", position);
+      const nextClose = html.indexOf("</section>", position);
+
+      if (nextClose === -1) {
+        throw new Error("Unbalanced section markup while parsing article sections in test.");
+      }
+
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        depth += 1;
+        position = nextOpen + "<section".length;
+        continue;
+      }
+
+      depth -= 1;
+      position = nextClose + "</section>".length;
+      if (depth === 0) {
+        end = position;
+        break;
+      }
+    }
+
+    if (end === -1) {
+      throw new Error("Could not find the end of a top-level article section in test.");
+    }
+
+    sections.push(html.slice(start, end));
+    start = html.indexOf(sectionMarker, end);
+  }
+
+  return sections;
+}
+
 function getSoftLinkSectionCount(html) {
-  return [...html.matchAll(/<section class="shynli-blog-article__section"[\s\S]*?<\/section>/g)].filter(
-    (match) => /data-soft-link-slot=/.test(match[0])
-  ).length;
+  return splitTopLevelArticleSections(html).filter((section) => /data-soft-link-slot=/.test(section))
+    .length;
 }
 
 test("renders blog hub topic links and stable CTA button styles on /blog", () => {
@@ -266,6 +308,18 @@ test("renders second checklist article route with printable weekly plan", () => 
   assert.ok(
     getWordCount(html) > 2800,
     `Expected second long-form article to exceed 2800 words, got ${getWordCount(html)}`
+  );
+});
+
+test("keeps summary cards and following sections structurally separate in article layouts", () => {
+  const html = sanitizeHtml(
+    sourceHtml,
+    "/blog/whats-included/what-is-included-in-a-deep-cleaning-service"
+  );
+
+  assert.match(
+    html,
+    /<div class="shynli-blog-article__summary-grid">[\s\S]*<\/div>\s*<div class="shynli-blog-article__action-row">[\s\S]*<\/div>\s*<\/section>\s*<section class="shynli-blog-article__section" id="what-makes-it-deep">/
   );
 });
 
