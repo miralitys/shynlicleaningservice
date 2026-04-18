@@ -68,6 +68,9 @@ test("serves the blog page with blog-specific stylesheet hints", async () => {
   );
   assert.match(linkHeader, /<\/css\/tilda-feed-1\.1\.min\.css>; rel=preload; as=style/);
   assert.match(linkHeader, /<\/css\/tilda-slds-1\.4\.min\.css>; rel=preload; as=style/);
+  assert.match(linkHeader, /<\/js\/tilda-feed-1\.1\.min\.js>; rel=preload; as=script/);
+  assert.match(linkHeader, /<\/js\/tilda-slds-1\.4\.min\.js>; rel=preload; as=script/);
+  assert.match(linkHeader, /<\/js\/hammer\.min\.js>; rel=preload; as=script/);
   assert.doesNotMatch(linkHeader, /quote2\.css/);
   assert.match(body, /Shynli Cleaning <span style="color: rgb\(158, 68, 90\);">Blog<\/span>/i);
 });
