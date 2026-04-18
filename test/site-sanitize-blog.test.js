@@ -69,6 +69,9 @@ test("renders blog hub topic links and stable CTA button styles on /blog", () =>
 
   assert.match(html, /href="\/blog\/checklists"/);
   assert.match(html, /Find the cleaning guide you actually need\./);
+  assert.doesNotMatch(html, /Recent Posts/);
+  assert.doesNotMatch(html, /All Blog Posts/);
+  assert.doesNotMatch(html, /data-feed-recid="1769860233"/);
   assert.match(
     html,
     /\.shynli-blog-quote-button\{display:flex;align-items:center;justify-content:center;width:100%;min-height:68px/
@@ -100,6 +103,10 @@ test("renders long-form checklist article route with more than 3000 words", () =
   assert.match(html, /<h1 class="shynli-blog-article__title">House Cleaning Checklist for Busy Homeowners<\/h1>/);
   assert.match(html, /Quick navigation/);
   assert.match(html, /Want the result without doing the whole checklist yourself\?/);
+  assert.doesNotMatch(html, /Recent Posts/);
+  assert.doesNotMatch(html, /All Blog Posts/);
+  assert.doesNotMatch(html, /data-feed-recid="1769860233"/);
+  assert.doesNotMatch(html, /The article feed below stays filtered to this category/);
   assert.match(html, /\.shynli-blog-article__toc\{position:sticky;top:110px;.*max-height:calc\(100vh - 140px\);overflow:auto;/);
   assert.match(html, /\.shynli-blog-article__callout\{display:grid;gap:10px;padding:22px 24px;border-radius:22px;background:#efe7de;/);
   assert.ok(
