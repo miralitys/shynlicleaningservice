@@ -128,9 +128,16 @@ test("renders featured kitchen article links on /blog/kitchen", () => {
   assert.match(html, /how-to-clean-microwave-inside-fast/);
 });
 
+test("renders featured pet hair article links on /blog/pet-hair", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/pet-hair");
+
+  assert.match(html, /how-to-remove-pet-hair-from-stairs-carpet/);
+  assert.match(html, /how-to-remove-dog-hair-from-couch-fabric/);
+  assert.match(html, /best-vacuum-tips-for-pet-hair/);
+});
+
 test("renders an empty-state for categories that do not have published article clusters yet", () => {
   for (const route of [
-    "/blog/pet-hair",
     "/blog/move-in-move-out",
     "/blog/airbnb",
     "/blog/seasonal",
@@ -319,6 +326,26 @@ test("renders all kitchen articles with live route structure and long-form conte
   const kitchenArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/kitchen");
 
   for (const article of kitchenArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1400,
+      `Expected ${article.path} to exceed 1400 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all pet hair articles with live route structure and long-form content", () => {
+  const petHairArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/pet-hair");
+
+  for (const article of petHairArticles) {
     const html = sanitizeHtml(sourceHtml, article.path);
 
     assert.match(
