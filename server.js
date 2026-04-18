@@ -13,6 +13,7 @@ const {
   sendAccountInviteEmail,
   sendOrderPolicyConfirmationEmail,
   sendQuoteRequestConfirmationEmail,
+  sendReviewRequestEmail,
   sendStaffW9ReminderEmail,
 } = require("./lib/account-invite-email");
 const { createAutoNotificationService } = require("./lib/auto-notifications");
@@ -1356,6 +1357,30 @@ async function main() {
     });
   };
 
+  accountInviteEmail.sendReviewRequest = async function sendReviewRequest(
+    payload,
+    config = {}
+  ) {
+    const legacyConfig = loadAccountInviteEmailConfig(process.env);
+    const googleStatus =
+      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
+        ? await googleMailIntegration.getStatus(config)
+        : null;
+
+    if (googleStatus && googleStatus.connected) {
+      return googleMailIntegration.sendReviewRequestEmail(payload, config, {
+        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+        replyToEmail: legacyConfig.replyToEmail || "",
+      });
+    }
+
+    return sendReviewRequestEmail({
+      ...payload,
+      env: process.env,
+      fetch: global.fetch,
+    });
+  };
+
   accountInviteEmail.sendOrderPolicyConfirmation = async function sendOrderPolicyConfirmation(
     payload,
     config = {}
@@ -1390,6 +1415,7 @@ async function main() {
     listLeadManagers,
     quoteOpsLedger,
     siteOrigin: SITE_ORIGIN,
+    reviewUrl: process.env.CUSTOMER_REVIEW_URL || "https://maps.app.goo.gl/4u9s7onykNrJEEn99",
     staffStore,
     log: (entry) => requestLogger.log(entry),
   });

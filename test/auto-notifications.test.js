@@ -279,3 +279,58 @@ test("sends client reminder SMS at 48h, 24h and 1h without duplicates", async ()
   assert.equal(thirdSweep.sent, 1);
   assert.equal(leadConnectorClient.calls.length, 3);
 });
+
+test("sends review request email and SMS once when an order enters awaiting-review", async () => {
+  const entry = createOrderEntry({
+    id: "order-review-1",
+    payloadForRetry: {
+      orderState: {
+        status: "awaiting-review",
+      },
+      adminOrder: {
+        status: "awaiting-review",
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const emailCalls = [];
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+    reviewUrl: "https://maps.app.goo.gl/4u9s7onykNrJEEn99",
+    accountInviteEmail: {
+      async getStatus() {
+        return { configured: true };
+      },
+      async sendReviewRequest(payload) {
+        emailCalls.push(payload);
+        return { sentAt: new Date().toISOString() };
+      },
+    },
+  });
+
+  const firstResult = await service.notifyAwaitingReviewRequest({
+    entry,
+    leadConnectorClient,
+  });
+
+  assert.equal(firstResult.customerEmailSent, true);
+  assert.equal(firstResult.customerSmsSent, true);
+  assert.equal(emailCalls.length, 1);
+  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.match(leadConnectorClient.calls[0].message, /quick review/i);
+  assert.match(leadConnectorClient.calls[0].message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+  assert.equal((firstResult.entry.payloadForRetry.adminSms.history || []).length, 1);
+  const firstNotificationState = getOrderNotificationState(firstResult.entry);
+  assert.ok(firstNotificationState.reviewRequest.emailSentAt);
+  assert.ok(firstNotificationState.reviewRequest.smsSentAt);
+
+  const secondResult = await service.notifyAwaitingReviewRequest({
+    entry: firstResult.entry,
+    leadConnectorClient,
+  });
+  assert.equal(secondResult.customerEmailSent, false);
+  assert.equal(secondResult.customerSmsSent, false);
+  assert.equal(emailCalls.length, 1);
+  assert.equal(leadConnectorClient.calls.length, 1);
+});

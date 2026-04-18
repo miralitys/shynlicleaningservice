@@ -6,10 +6,12 @@ const assert = require("node:assert/strict");
 const {
   buildInviteEmailCopy,
   buildQuoteRequestConfirmationEmailCopy,
+  buildReviewRequestEmailCopy,
   buildW9ReminderEmailCopy,
   loadAccountInviteEmailConfig,
   sendAccountInviteEmail,
   sendQuoteRequestConfirmationEmail,
+  sendReviewRequestEmail,
   sendStaffW9ReminderEmail,
 } = require("../lib/account-invite-email");
 
@@ -107,6 +109,21 @@ test("builds quote confirmation email copy for customer requests", () => {
   assert.match(copy.text, /2026-04-20 at 09:00/);
   assert.match(copy.text, /123 Main St/);
   assert.match(copy.html, /We received your request/);
+});
+
+test("builds review request email copy for completed visits", () => {
+  const copy = buildReviewRequestEmailCopy({
+    clientName: "Jane Doe",
+    serviceName: "Deep Cleaning",
+    fullAddress: "123 Main St, Chicago, IL 60601",
+    reviewUrl: "https://maps.app.goo.gl/4u9s7onykNrJEEn99",
+  });
+
+  assert.match(copy.text, /Jane Doe/);
+  assert.match(copy.text, /Deep Cleaning/);
+  assert.match(copy.text, /123 Main St/);
+  assert.match(copy.text, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+  assert.match(copy.html, /Leave us a quick review/);
 });
 
 test("sends invite email through SMTP relay", async () => {
@@ -250,4 +267,36 @@ test("sends quote confirmation email through SMTP relay", async () => {
   assert.equal(calls[0].message.subject, "We received your cleaning request");
   assert.match(calls[0].message.text, /Jane Doe/);
   assert.match(calls[0].message.text, /Deep Cleaning/);
+});
+
+test("sends review request email through SMTP relay", async () => {
+  const calls = [];
+  const response = await sendReviewRequestEmail({
+    env: {
+      ACCOUNT_INVITE_SMTP_HOST: "smtp-relay.gmail.com",
+      ACCOUNT_INVITE_SMTP_PORT: "587",
+      ACCOUNT_INVITE_SMTP_USER: "relay@shynlicleaningservice.com",
+      ACCOUNT_INVITE_SMTP_PASSWORD: "secret",
+      ACCOUNT_INVITE_EMAIL_FROM: "hello@shynlicleaningservice.com",
+      ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynlicleaningservice.com",
+    },
+    createTransport: (transportConfig) => ({
+      async sendMail(message) {
+        calls.push({ transportConfig, message });
+        return { messageId: "<smtp-message-review@example.com>" };
+      },
+      close() {},
+    }),
+    toEmail: "client@example.com",
+    clientName: "Jane Doe",
+    serviceName: "Deep Cleaning",
+    fullAddress: "123 Main St, Chicago, IL 60601",
+    reviewUrl: "https://maps.app.goo.gl/4u9s7onykNrJEEn99",
+  });
+
+  assert.equal(response.id, "<smtp-message-review@example.com>");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].message.subject, "How was your cleaning? Leave us a quick review");
+  assert.match(calls[0].message.text, /leave us a quick review/i);
+  assert.match(calls[0].message.text, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
 });

@@ -7320,6 +7320,168 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
   }
 });
 
+test("sends a review request email and SMS when an order moves to awaiting-review", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-review-request-"));
+  const smtpServer = await createSmtpTestServer();
+  const fetchStub = await createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "review-contact-1",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 201,
+      body: {
+        conversationId: "review-conversation-1",
+        messageId: "review-message-1",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    ACCOUNT_INVITE_EMAIL_FROM: "hello@shynli.com",
+    ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynli.com",
+    ACCOUNT_INVITE_SMTP_HOST: smtpServer.host,
+    ACCOUNT_INVITE_SMTP_PORT: String(smtpServer.port),
+    ACCOUNT_INVITE_SMTP_REQUIRE_TLS: "0",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "review-order-1",
+      fullName: "Review Customer",
+      phone: "312-555-4455",
+      email: "review.customer@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-04-22",
+      selectedTime: "11:00",
+      fullAddress: "415 Review Avenue, Aurora, IL 60504",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "review-order-1"
+    );
+
+    const moveToAwaitingReviewResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+        orderStatus: "awaiting-review",
+        paymentStatus: "paid",
+        paymentMethod: "card",
+        selectedDate: "2026-04-22",
+        selectedTime: "11:00",
+        frequency: "",
+      }),
+    });
+    assert.equal(moveToAwaitingReviewResponse.status, 303);
+    assert.match(moveToAwaitingReviewResponse.headers.get("location") || "", /notice=order-saved/);
+
+    const deliveredEmails = smtpServer.messages.map((message) =>
+      decodeQuotedPrintable(message.raw)
+    );
+    const reviewRequestEmails = deliveredEmails.filter((rawEmail) =>
+      /Leave us a quick review/i.test(rawEmail) &&
+      /https:\/\/maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/.test(rawEmail)
+    );
+    assert.equal(reviewRequestEmails.length, 1);
+    assert.match(reviewRequestEmails[0], /review.customer@example.com/i);
+    assert.match(reviewRequestEmails[0], /https:\/\/maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const reviewSmsRequests = captureLines.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return /quick review/i.test(JSON.parse(record.body).message || "");
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(reviewSmsRequests.length, 1);
+    const reviewSmsPayload = JSON.parse(reviewSmsRequests[0].body);
+    assert.equal(reviewSmsPayload.contactId, "review-contact-1");
+    assert.equal(reviewSmsPayload.toNumber, "+13125554455");
+    assert.match(reviewSmsPayload.message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+
+    const repeatSaveResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+        orderStatus: "awaiting-review",
+        paymentStatus: "paid",
+        paymentMethod: "card",
+        selectedDate: "2026-04-22",
+        selectedTime: "11:00",
+        frequency: "",
+      }),
+    });
+    assert.equal(repeatSaveResponse.status, 303);
+
+    const deliveredEmailsAfterRepeat = smtpServer.messages.map((message) =>
+      decodeQuotedPrintable(message.raw)
+    );
+    const reviewRequestEmailsAfterRepeat = deliveredEmailsAfterRepeat.filter((rawEmail) =>
+      /Leave us a quick review/i.test(rawEmail) &&
+      /https:\/\/maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/.test(rawEmail)
+    );
+    assert.equal(reviewRequestEmailsAfterRepeat.length, 1);
+
+    const captureLinesAfterRepeat = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const reviewSmsRequestsAfterRepeat = captureLinesAfterRepeat.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return /quick review/i.test(JSON.parse(record.body).message || "");
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(reviewSmsRequestsAfterRepeat.length, 1);
+  } finally {
+    await stopServer(started.child);
+    smtpServer.close();
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("sends policy acceptance by SMS only when the order has no email", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-policy-sms-only-"));
   const fetchStub = await createFetchStub([
