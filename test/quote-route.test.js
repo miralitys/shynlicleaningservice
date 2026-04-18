@@ -194,12 +194,13 @@ test("accepts valid quote submissions through the backend CRM helper", async () 
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
+    const contactCalls = calls.filter((call) => /\/contacts\/$/.test(call.url));
 
-    assert.equal(calls.length, 1);
-    assert.equal(calls[0].method, "POST");
-    assert.match(calls[0].url, /\/contacts\/$/);
-    assert.match(calls[0].body, /"firstName":"Jane"/);
-    assert.match(calls[0].body, /"lastName":"Doe"/);
+    assert.equal(contactCalls.length, 1);
+    assert.equal(contactCalls[0].method, "POST");
+    assert.match(contactCalls[0].url, /\/contacts\/$/);
+    assert.match(contactCalls[0].body, /"firstName":"Jane"/);
+    assert.match(contactCalls[0].body, /"lastName":"Doe"/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

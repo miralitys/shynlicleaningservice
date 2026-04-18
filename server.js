@@ -12,8 +12,10 @@ const {
   loadAccountInviteEmailConfig,
   sendAccountInviteEmail,
   sendOrderPolicyConfirmationEmail,
+  sendQuoteRequestConfirmationEmail,
   sendStaffW9ReminderEmail,
 } = require("./lib/account-invite-email");
+const { createAutoNotificationService } = require("./lib/auto-notifications");
 const { createAdminMailStore } = require("./lib/admin-mail-store");
 const {
   createAdminGoogleMailClient,
@@ -762,6 +764,52 @@ const {
 
 let usersStore = null;
 let leadManagersStaffStore = null;
+let autoNotificationService = null;
+
+async function listLeadManagers() {
+  if (!usersStore || typeof usersStore.getSnapshot !== "function") {
+    return [];
+  }
+
+  const [usersSnapshot, staffSnapshot] = await Promise.all([
+    usersStore.getSnapshot(),
+    leadManagersStaffStore && typeof leadManagersStaffStore.getSnapshot === "function"
+      ? leadManagersStaffStore.getSnapshot()
+      : Promise.resolve({ staff: [] }),
+  ]);
+
+  const staffMetaById = new Map(
+    (Array.isArray(staffSnapshot && staffSnapshot.staff) ? staffSnapshot.staff : [])
+      .map((record) => [
+        normalizeString(record && record.id, 120),
+        {
+          name: normalizeString(record && record.name, 200),
+          phone: normalizeString(record && record.phone, 80),
+        },
+      ])
+      .filter(([id]) => Boolean(id))
+  );
+
+  return (Array.isArray(usersSnapshot && usersSnapshot.users) ? usersSnapshot.users : [])
+    .filter((user) => {
+      const role = normalizeString(user && user.role, 32).toLowerCase();
+      const status = normalizeString(user && user.status, 32).toLowerCase();
+      return status === "active" && role === "manager";
+    })
+    .map((user) => {
+      const id = normalizeString(user && user.id, 120);
+      const email = normalizeString(user && user.email, 250).toLowerCase();
+      const staffMeta = staffMetaById.get(normalizeString(user && user.staffId, 120)) || {};
+      return {
+        id,
+        email,
+        phone: normalizeString(staffMeta.phone || user.phone, 80),
+        name: normalizeString(staffMeta.name, 200) || email || "Менеджер",
+      };
+    })
+    .filter((manager) => Boolean(manager.id))
+    .sort((left, right) => left.name.localeCompare(right.name, "ru"));
+}
 
 const orderPolicyAcceptance = createOrderPolicyAcceptanceService({
   env: process.env,
@@ -1035,47 +1083,9 @@ const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiH
   calculateQuotePricing,
   createQuoteToken,
   enforcePostRateLimit,
+  getAutoNotificationService: () => autoNotificationService,
   getLeadConnectorClient,
-  listLeadManagers: async () => {
-    if (!usersStore || typeof usersStore.getSnapshot !== "function") {
-      return [];
-    }
-
-    const [usersSnapshot, staffSnapshot] = await Promise.all([
-      usersStore.getSnapshot(),
-      leadManagersStaffStore && typeof leadManagersStaffStore.getSnapshot === "function"
-        ? leadManagersStaffStore.getSnapshot()
-        : Promise.resolve({ staff: [] }),
-    ]);
-
-    const staffNameById = new Map(
-      (Array.isArray(staffSnapshot && staffSnapshot.staff) ? staffSnapshot.staff : [])
-        .map((record) => [
-          normalizeString(record && record.id, 120),
-          normalizeString(record && record.name, 200),
-        ])
-        .filter(([id, name]) => Boolean(id && name))
-    );
-
-    return (Array.isArray(usersSnapshot && usersSnapshot.users) ? usersSnapshot.users : [])
-      .filter((user) => {
-        const role = normalizeString(user && user.role, 32).toLowerCase();
-        const status = normalizeString(user && user.status, 32).toLowerCase();
-        return status === "active" && role === "manager";
-      })
-      .map((user) => {
-        const id = normalizeString(user && user.id, 120);
-        const email = normalizeString(user && user.email, 250).toLowerCase();
-        const staffId = normalizeString(user && user.staffId, 120);
-        return {
-          id,
-          email,
-          name: staffNameById.get(staffId) || email || "Менеджер",
-        };
-      })
-      .filter((manager) => Boolean(manager.id))
-      .sort((left, right) => left.name.localeCompare(right.name, "ru"));
-  },
+  listLeadManagers,
   getStripeClient,
   getStripeReturnOrigin,
   normalizeString,
@@ -1315,6 +1325,30 @@ async function main() {
     });
   };
 
+  accountInviteEmail.sendQuoteRequestConfirmation = async function sendQuoteRequestConfirmation(
+    payload,
+    config = {}
+  ) {
+    const legacyConfig = loadAccountInviteEmailConfig(process.env);
+    const googleStatus =
+      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
+        ? await googleMailIntegration.getStatus(config)
+        : null;
+
+    if (googleStatus && googleStatus.connected) {
+      return googleMailIntegration.sendQuoteRequestConfirmationEmail(payload, config, {
+        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+        replyToEmail: legacyConfig.replyToEmail || "",
+      });
+    }
+
+    return sendQuoteRequestConfirmationEmail({
+      ...payload,
+      env: process.env,
+      fetch: global.fetch,
+    });
+  };
+
   accountInviteEmail.sendOrderPolicyConfirmation = async function sendOrderPolicyConfirmation(
     payload,
     config = {}
@@ -1338,6 +1372,41 @@ async function main() {
       fetch: global.fetch,
     });
   };
+
+  autoNotificationService = createAutoNotificationService({
+    accountInviteEmail,
+    getLeadConnectorClient,
+    getMailConfig: () =>
+      adminAuth && typeof adminAuth.loadAdminConfig === "function"
+        ? adminAuth.loadAdminConfig(process.env)
+        : {},
+    listLeadManagers,
+    quoteOpsLedger,
+    siteOrigin: SITE_ORIGIN,
+    staffStore,
+    log: (entry) => requestLogger.log(entry),
+  });
+
+  const autoNotificationSweepTimer = setInterval(() => {
+    if (!autoNotificationService || typeof autoNotificationService.runClientReminderSweep !== "function") {
+      return;
+    }
+    autoNotificationService.runClientReminderSweep().catch((error) => {
+      requestLogger.log({
+        ts: new Date().toISOString(),
+        type: "auto_notification_sweep_error",
+        message: normalizeString(error && error.message ? error.message : "Auto notification sweep failed.", 300),
+      });
+    });
+  }, 5 * 60 * 1000);
+  autoNotificationSweepTimer.unref();
+  autoNotificationService.runClientReminderSweep().catch((error) => {
+    requestLogger.log({
+      ts: new Date().toISOString(),
+      type: "auto_notification_bootstrap_error",
+      message: normalizeString(error && error.message ? error.message : "Initial auto notification sweep failed.", 300),
+    });
+  });
 
   const perfSummaryTimer = setInterval(() => {
     const requestSnapshot = requestPerfWindow.snapshot();
@@ -1395,6 +1464,7 @@ async function main() {
     });
 
     await handleSiteRequest(req, res, requestStartNs, requestContext, requestLogger, {
+      autoNotificationService,
       eventLoopStats,
       googleMailIntegration,
       htmlCache,
@@ -1414,6 +1484,7 @@ async function main() {
   function shutdown(signal) {
     if (shuttingDown) return;
     shuttingDown = true;
+    clearInterval(autoNotificationSweepTimer);
     clearInterval(perfSummaryTimer);
     eventLoopStats.close();
     requestLogger.log({

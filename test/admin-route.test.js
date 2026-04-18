@@ -2209,7 +2209,14 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    assert.equal(calls.length, 4);
+    const crmSyncCalls = calls.filter((record) =>
+      String(record.url).includes("/contacts/")
+    );
+    const autoSmsCalls = calls.filter((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    assert.equal(crmSyncCalls.length, 4);
+    assert.equal(autoSmsCalls.length, 1);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -3042,7 +3049,15 @@ test("sends SMS from the quote dialog through Go High Level", async () => {
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    const smsRequest = captureLines.find((record) => String(record.url).includes("/conversations/messages"));
+    const smsRequest = captureLines.find((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return JSON.parse(record.body).message ===
+          "Your SHYNLI team is confirming your cleaning appointment.";
+      } catch {
+        return false;
+      }
+    });
     assert.ok(smsRequest);
     assert.equal(smsRequest.method, "POST");
 
@@ -3143,8 +3158,8 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
     assert.equal(sendSmsPayload.sms.feedbackState, "success");
     assert.equal(sendSmsPayload.sms.feedbackMessage, "SMS отправлена через Go High Level.");
     assert.equal(sendSmsPayload.sms.draft, "");
-    assert.equal(sendSmsPayload.sms.historyCountLabel, "1 SMS");
-    assert.equal(sendSmsPayload.sms.history.length, 1);
+    assert.equal(sendSmsPayload.sms.historyCountLabel, "2 SMS");
+    assert.equal(sendSmsPayload.sms.history.length, 2);
     assert.equal(sendSmsPayload.sms.history[0].message, "Order SMS history test");
     assert.equal(sendSmsPayload.sms.history[0].source, "manual");
     assert.equal(sendSmsPayload.sms.history[0].channel, "ghl");
@@ -3184,8 +3199,8 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
     assert.equal(thirdSmsResponse.status, 200);
     const thirdSmsPayload = await thirdSmsResponse.json();
     assert.equal(thirdSmsPayload.ok, true);
-    assert.equal(thirdSmsPayload.sms.historyCountLabel, "3 SMS");
-    assert.equal(thirdSmsPayload.sms.history.length, 3);
+    assert.equal(thirdSmsPayload.sms.historyCountLabel, "4 SMS");
+    assert.equal(thirdSmsPayload.sms.history.length, 4);
     assert.ok(
       thirdSmsPayload.sms.history.some((entry) => entry.message === "Third order SMS history test")
     );
@@ -3206,7 +3221,14 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    const smsRequest = captureLines.find((record) => String(record.url).includes("/conversations/messages"));
+    const smsRequest = captureLines.find((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return JSON.parse(record.body).message === "Order SMS history test";
+      } catch {
+        return false;
+      }
+    });
     assert.ok(smsRequest);
     assert.equal(smsRequest.method, "POST");
 
@@ -4014,7 +4036,14 @@ test("renders the clients table with filters and request history", async () => {
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    assert.equal(calls.length, 3);
+    const contactCalls = calls.filter((record) =>
+      String(record.url).includes("/contacts/")
+    );
+    const autoSmsCalls = calls.filter((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    assert.equal(contactCalls.length, 3);
+    assert.equal(autoSmsCalls.length, 3);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
@@ -6392,8 +6421,16 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(policyLaneBeforeAcceptance, /data-order-dropzone="policy"/);
     assert.doesNotMatch(scheduledLaneBeforeAcceptance, /Policy Customer/);
 
-    assert.equal(smtpServer.messages.length, 1);
-    const rawEmail = decodeQuotedPrintable(smtpServer.messages[0].raw);
+    const deliveredEmails = smtpServer.messages.map((message) =>
+      decodeQuotedPrintable(message.raw)
+    );
+    const policyEmails = deliveredEmails.filter((rawEmail) =>
+      /Subject: Action Required: Please Review and Accept Before Your Cleaning\s+Appointment/.test(
+        rawEmail
+      )
+    );
+    assert.equal(policyEmails.length, 1);
+    const rawEmail = policyEmails[0];
     assert.match(
       rawEmail,
       /Subject: Action Required: Please Review and Accept Before Your Cleaning\s+Appointment/
@@ -6418,8 +6455,17 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     const smsRequests = captureLines.filter((record) =>
       String(record.url).includes("/conversations/messages")
     );
-    assert.equal(smsRequests.length, 1);
-    const smsPayload = JSON.parse(smsRequests[0].body);
+    const policySmsRequests = smsRequests.filter((record) => {
+      try {
+        return /please review and accept our service policies here:/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(policySmsRequests.length, 1);
+    const smsPayload = JSON.parse(policySmsRequests[0].body);
     assert.equal(smsPayload.type, "SMS");
     assert.equal(smsPayload.contactId, "policy-contact-1");
     assert.equal(smsPayload.toNumber, "+13125553311");
@@ -6471,8 +6517,16 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       /notice=order-policy-resent/
     );
 
-    assert.equal(smtpServer.messages.length, 2);
-    const resentEmail = decodeQuotedPrintable(smtpServer.messages[1].raw);
+    const deliveredEmailsAfterResend = smtpServer.messages.map((message) =>
+      decodeQuotedPrintable(message.raw)
+    );
+    const policyEmailsAfterResend = deliveredEmailsAfterResend.filter((rawEmail) =>
+      /Subject: Action Required: Please Review and Accept Before Your Cleaning\s+Appointment/.test(
+        rawEmail
+      )
+    );
+    assert.equal(policyEmailsAfterResend.length, 2);
+    const resentEmail = policyEmailsAfterResend[1];
     const resentConfirmationUrlMatch = resentEmail.match(
       /https?:\/\/[^\s]+\/booking\/confirm\?token=[^\s"<]+/
     );
@@ -6489,7 +6543,16 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     const smsRequestsAfterResend = captureLinesAfterResend.filter((record) =>
       String(record.url).includes("/conversations/messages")
     );
-    assert.equal(smsRequestsAfterResend.length, 2);
+    const policySmsRequestsAfterResend = smsRequestsAfterResend.filter((record) => {
+      try {
+        return /please review and accept our service policies here:/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(policySmsRequestsAfterResend.length, 2);
 
     const refreshedAcceptanceResponse = await fetch(
       `${started.baseUrl}/api/admin/policy-acceptance/${encodeURIComponent(entryId)}`,
@@ -6702,9 +6765,15 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     });
     assert.equal(createManagerResponse.status, 303);
     assert.match(createManagerResponse.headers.get("location") || "", /notice=user-created-email-sent/);
-    assert.equal(smtpServer.messages.length, 3);
+    const deliveredEmailsAfterManagerCreate = smtpServer.messages.map((message) =>
+      decodeQuotedPrintable(message.raw)
+    );
+    const managerInviteEmails = deliveredEmailsAfterManagerCreate.filter((rawEmail) =>
+      /Subject: Confirm your SHYNLI employee email/.test(rawEmail)
+    );
+    assert.equal(managerInviteEmails.length, 1);
 
-    const managerInviteEmail = decodeQuotedPrintable(smtpServer.messages[2].raw);
+    const managerInviteEmail = managerInviteEmails[0];
     const managerVerifyUrlMatch = managerInviteEmail.match(
       /https?:\/\/[^\s]+\/account\/verify-email\?token=[^\s=]+/
     );

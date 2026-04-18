@@ -5,9 +5,11 @@ const assert = require("node:assert/strict");
 
 const {
   buildInviteEmailCopy,
+  buildQuoteRequestConfirmationEmailCopy,
   buildW9ReminderEmailCopy,
   loadAccountInviteEmailConfig,
   sendAccountInviteEmail,
+  sendQuoteRequestConfirmationEmail,
   sendStaffW9ReminderEmail,
 } = require("../lib/account-invite-email");
 
@@ -89,6 +91,22 @@ test("builds W-9 reminder copy with optional account setup step", () => {
   assert.match(copy.html, /Complete your onboarding documents/);
   assert.match(copy.html, /Open documents/);
   assert.doesNotMatch(copy.html, /Open employee account/);
+});
+
+test("builds quote confirmation email copy for customer requests", () => {
+  const copy = buildQuoteRequestConfirmationEmailCopy({
+    clientName: "Jane Doe",
+    serviceName: "Deep Cleaning",
+    selectedDate: "2026-04-20",
+    selectedTime: "09:00",
+    fullAddress: "123 Main St, Chicago, IL 60601",
+  });
+
+  assert.match(copy.text, /Jane Doe/);
+  assert.match(copy.text, /Deep Cleaning/);
+  assert.match(copy.text, /2026-04-20 at 09:00/);
+  assert.match(copy.text, /123 Main St/);
+  assert.match(copy.html, /We received your request/);
 });
 
 test("sends invite email through SMTP relay", async () => {
@@ -199,4 +217,37 @@ test("sends W-9 reminder email through SMTP relay", async () => {
   assert.match(calls[0].message.text, /complete your SHYNLI onboarding documents/i);
   assert.match(calls[0].message.text, /verify-email\?token=abc/);
   assert.match(calls[0].message.text, /account\/login/);
+});
+
+test("sends quote confirmation email through SMTP relay", async () => {
+  const calls = [];
+  const response = await sendQuoteRequestConfirmationEmail({
+    env: {
+      ACCOUNT_INVITE_SMTP_HOST: "smtp-relay.gmail.com",
+      ACCOUNT_INVITE_SMTP_PORT: "587",
+      ACCOUNT_INVITE_SMTP_USER: "relay@shynlicleaningservice.com",
+      ACCOUNT_INVITE_SMTP_PASSWORD: "secret",
+      ACCOUNT_INVITE_EMAIL_FROM: "hello@shynlicleaningservice.com",
+      ACCOUNT_INVITE_EMAIL_REPLY_TO: "info@shynlicleaningservice.com",
+    },
+    createTransport: (transportConfig) => ({
+      async sendMail(message) {
+        calls.push({ transportConfig, message });
+        return { messageId: "<smtp-message-quote@example.com>" };
+      },
+      close() {},
+    }),
+    toEmail: "client@example.com",
+    clientName: "Jane Doe",
+    serviceName: "Deep Cleaning",
+    selectedDate: "2026-04-20",
+    selectedTime: "09:00",
+    fullAddress: "123 Main St, Chicago, IL 60601",
+  });
+
+  assert.equal(response.id, "<smtp-message-quote@example.com>");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].message.subject, "We received your cleaning request");
+  assert.match(calls[0].message.text, /Jane Doe/);
+  assert.match(calls[0].message.text, /Deep Cleaning/);
 });
