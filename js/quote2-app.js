@@ -88,6 +88,8 @@
     addressConfirmed: false,
     profileAutoOpened: false,
     lastAppleCalendarUrl: "",
+    autocompleteRequested: false,
+    autocompleteMounted: false,
   };
 
   const elements = {
@@ -699,6 +701,8 @@
   }
 
   function mountAutocomplete() {
+    if (state.autocompleteMounted) return;
+
     if (typeof window.google === "undefined" || !window.google.maps || !window.google.maps.places) {
       initAddressFallback();
       return;
@@ -714,21 +718,28 @@
       autocomplete.addListener("place_changed", function () {
         handlePlaceSelect(autocomplete.getPlace());
       });
+      state.autocompleteMounted = true;
     } catch (error) {
       initAddressFallback();
     }
   }
 
-  function initAutocomplete() {
+  function ensureAutocompleteReady() {
     if (!GOOGLE_PLACES_API_KEY) {
       initAddressFallback();
       return;
     }
 
+    if (state.autocompleteMounted) return;
+
     if (typeof window.google !== "undefined" && window.google.maps && window.google.maps.places) {
       mountAutocomplete();
       return;
     }
+
+    if (state.autocompleteRequested) return;
+
+    state.autocompleteRequested = true;
 
     window.__quote2GooglePlacesReady = function () {
       mountAutocomplete();
@@ -745,6 +756,24 @@
     document.head.appendChild(script);
   }
 
+  function initAutocomplete() {
+    if (!GOOGLE_PLACES_API_KEY) {
+      initAddressFallback();
+      return;
+    }
+
+    const requestAutocomplete = function () {
+      ensureAutocompleteReady();
+    };
+
+    elements.addressInput.addEventListener("focus", requestAutocomplete, { once: true });
+    elements.addressInput.addEventListener("pointerdown", requestAutocomplete, { once: true });
+    elements.addressInput.addEventListener("touchstart", requestAutocomplete, {
+      once: true,
+      passive: true,
+    });
+  }
+
   function openAddonsStep() {
     state.profileConfirmed = true;
     refreshStepVisibility({ skipScroll: true });
@@ -754,6 +783,7 @@
   function openAddressStep() {
     state.addonsConfirmed = true;
     refreshStepVisibility({ skipScroll: true });
+    ensureAutocompleteReady();
     scrollToCard(elements.stepCards.address);
   }
 
