@@ -145,8 +145,17 @@ test("renders featured move-in move-out article links on /blog/move-in-move-out"
   assert.match(html, /Move-In \/ Move-Out <span style="color: rgb\(158, 68, 90\);">Guides<\/span>/);
 });
 
+test("renders featured airbnb article links on /blog/airbnb", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/airbnb");
+
+  assert.match(html, /airbnb-turnover-cleaning-checklist-with-photos/);
+  assert.match(html, /how-to-schedule-airbnb-cleanings-between-guests/);
+  assert.match(html, /how-to-set-cleaning-fees-for-airbnb/);
+  assert.match(html, /Airbnb <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
+});
+
 test("renders an empty-state for categories that do not have published article clusters yet", () => {
-  for (const route of ["/blog/airbnb", "/blog/seasonal", "/blog/cleaning-hacks"]) {
+  for (const route of ["/blog/seasonal", "/blog/cleaning-hacks"]) {
     const html = sanitizeHtml(sourceHtml, route);
 
     assert.match(html, /Fresh guides for this section are being added\./);
@@ -372,6 +381,26 @@ test("renders all move-in move-out articles with live route structure and long-f
   );
 
   for (const article of moveArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1400,
+      `Expected ${article.path} to exceed 1400 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all airbnb articles with live route structure and long-form content", () => {
+  const airbnbArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/airbnb");
+
+  for (const article of airbnbArticles) {
     const html = sanitizeHtml(sourceHtml, article.path);
 
     assert.match(
