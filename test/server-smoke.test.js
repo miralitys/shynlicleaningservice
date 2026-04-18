@@ -37,7 +37,8 @@ test("serves the quote preview page through the static route layer", async () =>
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
-  assert.match(body, /Contact details/i);
+  assert.match(body, /Request a Quote/i);
+  assert.match(body, /Enter your full name and phone number to calculate the service cost/i);
   assert.match(body, /Name/i);
 });
 
