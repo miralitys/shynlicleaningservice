@@ -54,6 +54,24 @@ test("serves the quote page through the static route layer", async () => {
   assert.match(body, /Name/i);
 });
 
+test("serves the blog page with blog-specific stylesheet hints", async () => {
+  const response = await fetch(`${BASE_URL}/blog`);
+  const body = await response.text();
+  const linkHeader = response.headers.get("link") || "";
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(linkHeader, /<\/css\/tilda-grid-3\.0\.min\.css>; rel=preload; as=style/);
+  assert.match(
+    linkHeader,
+    /<\/css\/tilda-blocks-page108872586\.min\.css\?t=\d+>; rel=preload; as=style/
+  );
+  assert.match(linkHeader, /<\/css\/tilda-feed-1\.1\.min\.css>; rel=preload; as=style/);
+  assert.match(linkHeader, /<\/css\/tilda-slds-1\.4\.min\.css>; rel=preload; as=style/);
+  assert.doesNotMatch(linkHeader, /quote2\.css/);
+  assert.match(body, /Shynli Cleaning <span style="color: rgb\(158, 68, 90\);">Blog<\/span>/i);
+});
+
 test("redirects /quote2 into the main quote flow", async () => {
   const response = await fetch(`${BASE_URL}/quote2`, {
     redirect: "manual",
