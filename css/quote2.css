@@ -312,6 +312,38 @@ a {
   box-shadow: 0 0 0 4px rgba(158, 67, 90, 0.12);
 }
 
+#quote2SelectedDate {
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.2;
+}
+
+@supports (-webkit-touch-callout: none) {
+  #quote2SelectedDate {
+    -webkit-appearance: textfield;
+    appearance: textfield;
+    display: block;
+    padding-right: 40px;
+    background-color: rgba(255, 255, 255, 0.98);
+  }
+
+  #quote2SelectedDate::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.2em;
+  }
+
+  #quote2SelectedDate::-webkit-datetime-edit,
+  #quote2SelectedDate::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+
+  #quote2SelectedDate::-webkit-calendar-picker-indicator {
+    opacity: 1;
+    margin: 0;
+    padding: 0;
+  }
+}
+
 .quote2-service-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: 18px;
