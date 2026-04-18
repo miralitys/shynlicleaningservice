@@ -381,6 +381,12 @@ const BLOG_ARTICLE_PAGES = Object.freeze(
     ogDescription: article.ogDescription || article.description || article.excerpt || "",
   }))
 );
+const BLOG_ROUTE_HTML_FILE = "page108872586.html";
+const MANAGED_BLOG_HTML_ROUTES = Object.freeze([
+  ["/blog", BLOG_ROUTE_HTML_FILE],
+  ...BLOG_CATEGORY_PAGES.map((page) => [page.path, BLOG_ROUTE_HTML_FILE]),
+  ...BLOG_ARTICLE_PAGES.map((page) => [page.path, BLOG_ROUTE_HTML_FILE]),
+]);
 const NOINDEX_ROUTES = new Set([
   "/home-calculator",
   "/oauth/callback",
@@ -1118,6 +1124,7 @@ async function main() {
   const routes = await loadSiteRoutes({
     ROUTES_PATH,
     fsp,
+    managedHtmlRoutes: MANAGED_BLOG_HTML_ROUTES,
     normalizeRoute,
   });
   const runtimeIndex = await siteStaticHelpers.buildRuntimeIndex(routes);
