@@ -2043,6 +2043,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
     assert.match(quoteOpsBody, /class="admin-table-row-clickable"/);
     assert.match(quoteOpsBody, /data-admin-dialog-row="true"/);
+    assert.match(quoteOpsBody, /Удалить заявку/);
+    assert.match(quoteOpsBody, /data-admin-confirm-message="Удалить эту заявку из системы без возможности восстановления\?"/);
     assert.match(quoteOpsBody, /Телефон: \+1\(312\)555-0100/);
     assert.match(quoteOpsBody, /E-mail: jane@example\.com/);
     assert.match(quoteOpsBody, /admin-client-metric-card-wide/);
@@ -2153,6 +2155,39 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(deletedQuoteOpsResponse.status, 200);
     assert.match(deletedQuoteOpsBody, /Jane Doe/);
     assert.match(deletedQuoteOpsBody, /ops-request-1/);
+
+    const deleteLeadResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "delete-lead-entry",
+        entryId,
+        returnTo: `/admin/quote-ops?entry=${encodeURIComponent(entryId)}`,
+      }),
+    });
+    assert.equal(deleteLeadResponse.status, 303);
+    assert.match(deleteLeadResponse.headers.get("location") || "", /notice=lead-deleted/);
+    assert.doesNotMatch(deleteLeadResponse.headers.get("location") || "", /(?:\?|&)entry=/);
+
+    const removedQuoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const removedQuoteOpsBody = await removedQuoteOpsResponse.text();
+    assert.equal(removedQuoteOpsResponse.status, 200);
+    assert.doesNotMatch(
+      removedQuoteOpsBody,
+      /(?<![a-z0-9-])ops-request-1(?!-[a-z0-9])/i
+    );
+    assert.doesNotMatch(
+      removedQuoteOpsBody,
+      new RegExp(`admin-quote-entry-detail-dialog-${escapeRegex(entryId)}`)
+    );
 
     const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
     const calls = captureRaw
