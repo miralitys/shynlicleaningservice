@@ -5965,6 +5965,24 @@ test("gives managers the same admin workspace access as admins", async () => {
     assert.match(dashboardBody, /Обзор/i);
     assert.match(dashboardBody, /Менеджер/i);
 
+    const managerWorkspacePages = [
+      { path: "/admin/orders", pattern: /Заказы/i },
+      { path: "/admin/clients", pattern: /Клиенты/i },
+      { path: "/admin/staff", pattern: /Сотрудники/i },
+      { path: "/admin/quote-ops", pattern: /Заявки/i },
+    ];
+
+    for (const page of managerWorkspacePages) {
+      const response = await fetch(`${started.baseUrl}${page.path}`, {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      });
+      const body = await response.text();
+      assert.equal(response.status, 200);
+      assert.match(body, page.pattern);
+    }
+
     const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=users`, {
       headers: {
         cookie: `shynli_user_session=${userSessionCookieValue}`,
