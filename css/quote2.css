@@ -312,37 +312,75 @@ a {
   box-shadow: 0 0 0 4px rgba(158, 67, 90, 0.12);
 }
 
-#quote2SelectedDate {
-  min-width: 0;
-  max-width: 100%;
+.quote2-date-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid var(--quote2-input);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  padding: 0 18px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quote2-date-shell:focus-within {
+  border-color: var(--quote2-accent);
+  box-shadow: 0 0 0 4px rgba(158, 67, 90, 0.12);
+}
+
+.quote2-date-display {
+  display: block;
+  width: 100%;
+  color: var(--quote2-text);
+  font: inherit;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.quote2-date-display.is-placeholder {
+  color: var(--quote2-muted);
+}
+
+#quote2SelectedDate {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 @supports (-webkit-touch-callout: none) {
   #quote2SelectedDate {
-    -webkit-appearance: textfield;
-    appearance: textfield;
-    display: block;
-    width: calc(100% - 36px);
-    max-width: calc(100% - 36px);
-    padding-right: 40px;
-    background-color: rgba(255, 255, 255, 0.98);
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   #quote2SelectedDate::-webkit-date-and-time-value {
-    text-align: left;
-    min-height: 1.2em;
+    opacity: 0;
   }
 
   #quote2SelectedDate::-webkit-datetime-edit,
   #quote2SelectedDate::-webkit-datetime-edit-fields-wrapper {
     padding: 0;
+    opacity: 0;
   }
 
   #quote2SelectedDate::-webkit-calendar-picker-indicator {
-    opacity: 1;
+    opacity: 0;
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
   }
 }
 

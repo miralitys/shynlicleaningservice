@@ -128,6 +128,7 @@
     state: document.getElementById("quote2State"),
     zipCode: document.getElementById("quote2ZipCode"),
     selectedDate: document.getElementById("quote2SelectedDate"),
+    selectedDateDisplay: document.getElementById("quote2SelectedDateDisplay"),
     selectedTime: document.getElementById("quote2SelectedTime"),
     timeSlots: Array.from(document.querySelectorAll("#quote2TimeSlots [data-time]")),
     additionalDetails: document.getElementById("quote2AdditionalDetails"),
@@ -411,6 +412,37 @@
     });
   }
 
+  function formatSelectedDateLabel(value) {
+    const normalized = String(value || "").trim();
+    if (!normalized) return "Select date";
+
+    const parts = normalized.split("-");
+    if (parts.length !== 3) return normalized;
+
+    const year = Number.parseInt(parts[0], 10);
+    const month = Number.parseInt(parts[1], 10);
+    const day = Number.parseInt(parts[2], 10);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+      return normalized;
+    }
+
+    const dateObject = new Date(year, month - 1, day, 12);
+    if (Number.isNaN(dateObject.getTime())) return normalized;
+
+    return dateObject.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  function syncSelectedDateDisplay() {
+    if (!elements.selectedDateDisplay) return;
+    const value = String(elements.selectedDate.value || "").trim();
+    elements.selectedDateDisplay.textContent = formatSelectedDateLabel(value);
+    elements.selectedDateDisplay.classList.toggle("is-placeholder", !value);
+  }
+
   function getFullAddress() {
     return String(elements.addressInput.value || "").trim();
   }
@@ -667,6 +699,9 @@
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     elements.selectedDate.min = now.toISOString().split("T")[0];
+    elements.selectedDate.addEventListener("input", syncSelectedDateDisplay);
+    elements.selectedDate.addEventListener("change", syncSelectedDateDisplay);
+    syncSelectedDateDisplay();
   }
 
   function handlePlaceSelect(place) {
