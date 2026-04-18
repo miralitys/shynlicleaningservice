@@ -914,7 +914,7 @@
     elements.successAddress.textContent = addressLabel;
     elements.successTotal.textContent = formatCurrency(calculatorData.totalPrice || 0);
     elements.successNote.textContent =
-      "The CRM already has this request. You can continue to payment now or come back to the same quote flow later.";
+      "If you're ready, you can continue to payment now or come back to this quote later.";
 
     elements.payNowButton.disabled = !state.latestCheckoutData.quoteToken;
     elements.googleCalendarButton.href = buildGoogleCalendarUrl(calculatorData, serviceLabel);
