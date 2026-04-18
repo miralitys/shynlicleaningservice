@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 
+const { BLOG_ARTICLES } = require("../lib/site/blog-articles");
 const { loadSiteRoutes } = require("../lib/site/request-handler");
 
 function normalizeRoute(rawPath) {
@@ -32,7 +33,7 @@ test("loadSiteRoutes merges managed html routes for generated blog pages", async
       fsp: fs,
       managedHtmlRoutes: [
         ["/blog/checklists", "page108872586.html"],
-        ["/blog/checklists/weekly-cleaning-checklist-for-a-3-bedroom-house", "page108872586.html"],
+        ...BLOG_ARTICLES.map((article) => [article.path, "page108872586.html"]),
       ],
       normalizeRoute,
     });
@@ -40,10 +41,9 @@ test("loadSiteRoutes merges managed html routes for generated blog pages", async
     assert.equal(routes["/"], "page108488156.html");
     assert.equal(routes["/blog"], "page108872586.html");
     assert.equal(routes["/blog/checklists"], "page108872586.html");
-    assert.equal(
-      routes["/blog/checklists/weekly-cleaning-checklist-for-a-3-bedroom-house"],
-      "page108872586.html"
-    );
+    for (const article of BLOG_ARTICLES) {
+      assert.equal(routes[article.path], "page108872586.html");
+    }
   } finally {
     await fs.rm(tempDir, { recursive: true, force: true });
   }

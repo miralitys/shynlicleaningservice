@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
+const { BLOG_ARTICLES } = require("../lib/site/blog-articles");
 const { createSiteSanitizer } = require("../lib/site/sanitize");
 
 function normalizeRoute(rawPath) {
@@ -62,6 +63,10 @@ function getWordCount(html) {
     .trim()
     .split(" ")
     .filter(Boolean).length;
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 test("renders blog hub topic links and stable CTA button styles on /blog", () => {
@@ -150,4 +155,25 @@ test("renders second checklist article route with printable weekly plan", () => 
     getWordCount(html) > 2800,
     `Expected second long-form article to exceed 2800 words, got ${getWordCount(html)}`
   );
+});
+
+test("renders all checklist articles with live route structure and long-form content", () => {
+  const checklistArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/checklists");
+
+  for (const article of checklistArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /data-blog-print/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 2200,
+      `Expected ${article.path} to exceed 2200 words, got ${getWordCount(html)}`
+    );
+  }
 });
