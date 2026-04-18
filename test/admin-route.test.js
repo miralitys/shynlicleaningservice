@@ -1672,7 +1672,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
           rooms: 4,
           bathrooms: 2,
           squareMeters: 1600,
-          hasPets: "yes",
+          hasPets: "cat",
           basementCleaning: "yes",
           services: ["ovenCleaning", "insideCabinets"],
           quantityServices: {
@@ -1788,6 +1788,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /Interior Windows Cleaning/);
     assert.match(ordersBody, /Apt 4B/);
     assert.match(ordersBody, /Romeoville/);
+    assert.match(ordersBody, /Питомцы[\s\S]*Кошка/);
     assert.match(ordersBody, /03\/22\/2026, 09:00 AM/);
     assert.match(ordersBody, /Please call on arrival/);
     assert.match(ordersBody, /Gate code 2040/);
