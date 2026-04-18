@@ -151,6 +151,12 @@
     return "";
   }
 
+  function isCompleteUsPhone(value) {
+    const normalizedDigits = normalizeUsPhoneDigits(value);
+    if (!normalizedDigits) return false;
+    return /^\+1 \(\d{3}\) \d{3}-\d{4}$/.test(String(value || "").trim());
+  }
+
   function formatPhoneProgressive(value) {
     let digits = String(value || "").replace(/\D/g, "");
     if (!digits) return "";
@@ -442,7 +448,7 @@
   function isContactStepComplete() {
     return (
       elements.fullName.value.trim().length > 0 &&
-      Boolean(normalizeUsPhoneDigits(elements.phone.value))
+      isCompleteUsPhone(elements.phone.value)
     );
   }
 
@@ -727,13 +733,14 @@
   function validateForm() {
     const fullName = elements.fullName.value.trim();
     const phoneDigits = normalizeUsPhoneDigits(elements.phone.value);
+    const phoneComplete = isCompleteUsPhone(elements.phone.value);
 
     if (!fullName) {
       setFormError("Please enter the customer's name.");
       return false;
     }
 
-    if (!phoneDigits) {
+    if (!phoneDigits || !phoneComplete) {
       setFormError("Please enter a valid US phone number.");
       return false;
     }
