@@ -69,6 +69,18 @@ function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function getSoftLinkTargets(html) {
+  return [...html.matchAll(/class="shynli-blog-article__soft-link"[^>]*data-soft-link-target="([^"]+)"/g)].map(
+    (match) => match[1]
+  );
+}
+
+function getSoftLinkSectionCount(html) {
+  return [...html.matchAll(/<section class="shynli-blog-article__section"[\s\S]*?<\/section>/g)].filter(
+    (match) => /data-soft-link-slot=/.test(match[0])
+  ).length;
+}
+
 test("renders blog hub topic links and stable CTA button styles on /blog", () => {
   const html = sanitizeHtml(sourceHtml, "/blog");
 
@@ -255,6 +267,33 @@ test("renders second checklist article route with printable weekly plan", () => 
     getWordCount(html) > 2800,
     `Expected second long-form article to exceed 2800 words, got ${getWordCount(html)}`
   );
+});
+
+test("renders exactly three soft internal links on every managed blog article", () => {
+  for (const article of BLOG_ARTICLES) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+    const targets = getSoftLinkTargets(html);
+
+    assert.equal(
+      targets.length,
+      3,
+      `Expected exactly three soft internal links for ${article.path}, got ${targets.length}`
+    );
+    assert.equal(
+      new Set(targets).size,
+      3,
+      `Expected three unique internal-link targets for ${article.path}`
+    );
+    assert.ok(
+      targets.every((target) => target !== article.path),
+      `Expected ${article.path} not to self-link in soft internal links`
+    );
+    assert.equal(
+      getSoftLinkSectionCount(html),
+      3,
+      `Expected soft internal links to be distributed across three sections for ${article.path}`
+    );
+  }
 });
 
 test("renders all checklist articles with live route structure and long-form content", () => {
