@@ -34,6 +34,15 @@ function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function getOrderFunnelLaneSlice(html, laneStatus, nextLaneStatus = "") {
+  const source = String(html || "");
+  const laneMarker = `admin-order-funnel-column-${laneStatus}`;
+  const startIndex = source.indexOf(laneMarker);
+  if (startIndex === -1) return "";
+  const endIndex = nextLaneStatus ? source.indexOf(`admin-order-funnel-column-${nextLaneStatus}`, startIndex) : -1;
+  return source.slice(startIndex, endIndex === -1 ? undefined : endIndex);
+}
+
 function normalizeEmailSource(value) {
   return String(value || "").replace(/=\r?\n/g, "");
 }
@@ -1540,12 +1549,14 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /Воронка заказов/);
     assert.match(ordersBody, /class="admin-order-funnel-board"/);
     assert.match(ordersBody, /\.admin-order-funnel-board\s*\{[\s\S]*display:\s*flex;[\s\S]*flex-wrap:\s*nowrap;[\s\S]*overflow-x:\s*auto;/);
+    assert.match(ordersBody, /admin-order-funnel-column-policy/);
     assert.match(ordersBody, /admin-order-funnel-column-scheduled/);
     assert.match(ordersBody, /admin-order-funnel-column-invoice-sent/);
     assert.match(ordersBody, /admin-order-funnel-column-paid/);
     assert.match(ordersBody, /admin-order-funnel-column-awaiting-review/);
     assert.match(ordersBody, /data-order-funnel-card="true"/);
     assert.match(ordersBody, /data-order-funnel-status="/);
+    assert.doesNotMatch(ordersBody, /data-order-dropzone="policy"/);
     assert.match(ordersBody, /data-order-dropzone="scheduled"/);
     assert.match(ordersBody, /data-order-funnel-stage-form="true"/);
     assert.match(ordersBody, /X-SHYNLI-ADMIN-AJAX/);
@@ -6118,6 +6129,31 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       /notice=order-saved-policy-email-sent/
     );
 
+    const ordersAwaitingPolicyResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const ordersAwaitingPolicyBody = await ordersAwaitingPolicyResponse.text();
+    assert.equal(ordersAwaitingPolicyResponse.status, 200);
+    const policyLaneBeforeAcceptance = getOrderFunnelLaneSlice(
+      ordersAwaitingPolicyBody,
+      "policy",
+      "scheduled"
+    );
+    const scheduledLaneBeforeAcceptance = getOrderFunnelLaneSlice(
+      ordersAwaitingPolicyBody,
+      "scheduled",
+      "in-progress"
+    );
+    assert.match(policyLaneBeforeAcceptance, /Policy Customer/);
+    assert.match(policyLaneBeforeAcceptance, /Политика/);
+    assert.doesNotMatch(policyLaneBeforeAcceptance, /data-order-dropzone="policy"/);
+    assert.doesNotMatch(scheduledLaneBeforeAcceptance, /Policy Customer/);
+
     assert.equal(smtpServer.messages.length, 1);
     const rawEmail = decodeQuotedPrintable(smtpServer.messages[0].raw);
     assert.match(
@@ -6552,6 +6588,18 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(updatedOrdersBody, /Подтверждение политик/);
     assert.match(updatedOrdersBody, /Открыть сертификат PDF/);
     assert.match(updatedOrdersBody, /Подписано/);
+    const policyLaneAfterAcceptance = getOrderFunnelLaneSlice(
+      updatedOrdersBody,
+      "policy",
+      "scheduled"
+    );
+    const scheduledLaneAfterAcceptance = getOrderFunnelLaneSlice(
+      updatedOrdersBody,
+      "scheduled",
+      "in-progress"
+    );
+    assert.doesNotMatch(policyLaneAfterAcceptance, /Policy Customer/);
+    assert.match(scheduledLaneAfterAcceptance, /Policy Customer/);
 
     const orderDialogResponse = await fetch(
       `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
