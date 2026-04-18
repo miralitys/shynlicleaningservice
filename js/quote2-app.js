@@ -83,17 +83,15 @@
 
   const state = {
     latestCheckoutData: null,
+    profileConfirmed: false,
+    addonsConfirmed: false,
+    addressConfirmed: false,
+    profileAutoOpened: false,
+    lastAppleCalendarUrl: "",
   };
 
   const elements = {
     globalNotice: document.getElementById("quote2GlobalNotice"),
-    summaryTotal: document.getElementById("quote2SummaryTotal"),
-    summaryService: document.getElementById("quote2SummaryService"),
-    summaryFrequency: document.getElementById("quote2SummaryFrequency"),
-    summaryHome: document.getElementById("quote2SummaryHome"),
-    summaryDuration: document.getElementById("quote2SummaryDuration"),
-    summarySchedule: document.getElementById("quote2SummarySchedule"),
-    summaryAddress: document.getElementById("quote2SummaryAddress"),
     successCard: document.getElementById("quote2SuccessCard"),
     successService: document.getElementById("quote2SuccessService"),
     successSchedule: document.getElementById("quote2SuccessSchedule"),
@@ -106,9 +104,9 @@
     form: document.getElementById("quote2Form"),
     formError: document.getElementById("quote2FormError"),
     submitButton: document.getElementById("quote2SubmitButton"),
-    fullName: document.getElementById("quote2FullName"),
+    firstName: document.getElementById("quote2FirstName"),
+    lastName: document.getElementById("quote2LastName"),
     phone: document.getElementById("quote2Phone"),
-    email: document.getElementById("quote2Email"),
     serviceType: document.getElementById("quote2ServiceType"),
     serviceButtons: Array.from(document.querySelectorAll("#quote2ServiceButtons [data-service]")),
     frequencyField: document.getElementById("quote2FrequencyField"),
@@ -133,6 +131,17 @@
     timeSlots: Array.from(document.querySelectorAll("#quote2TimeSlots [data-time]")),
     additionalDetails: document.getElementById("quote2AdditionalDetails"),
     consentCheckbox: document.getElementById("quote2ConsentCheckbox"),
+    continueToAddons: document.getElementById("quote2ContinueToAddons"),
+    continueToAddress: document.getElementById("quote2ContinueToAddress"),
+    continueToNotes: document.getElementById("quote2ContinueToNotes"),
+    estimateTargets: Array.from(document.querySelectorAll('[data-quote2-estimate="true"]')),
+    stepCards: {
+      contact: document.querySelector('[data-step-card="contact"]'),
+      profile: document.querySelector('[data-step-card="profile"]'),
+      addons: document.querySelector('[data-step-card="addons"]'),
+      address: document.querySelector('[data-step-card="address"]'),
+      notes: document.querySelector('[data-step-card="notes"]'),
+    },
   };
 
   function normalizeUsPhoneDigits(value) {
@@ -176,6 +185,19 @@
     }
     const parsed = Number.parseFloat(rawValue);
     return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function splitFullName(fullName) {
+    const parts = String(fullName || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (parts.length === 0) return { firstName: "", lastName: "" };
+    if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+    return {
+      firstName: parts[0],
+      lastName: parts.slice(1).join(" "),
+    };
   }
 
   function getSelectedServiceType() {
@@ -275,7 +297,7 @@
     const includedServices = typePricing.includedServices || [];
     const defaultSelectedServices = typePricing.defaultSelectedServices || [];
 
-    elements.services.forEach((checkbox) => {
+    elements.services.forEach(function (checkbox) {
       const serviceKey = checkbox.value;
       const isIncluded = includedServices.indexOf(serviceKey) >= 0;
       const isDefaultSelected = defaultSelectedServices.indexOf(serviceKey) >= 0;
@@ -297,7 +319,7 @@
     const includedServices = typePricing.includedServices || [];
     const defaultSelectedServices = typePricing.defaultSelectedServices || [];
 
-    elements.services.forEach((checkbox) => {
+    elements.services.forEach(function (checkbox) {
       checkbox.checked = false;
       checkbox.disabled = false;
       if (defaultSelectedServices.indexOf(checkbox.value) >= 0) {
@@ -313,7 +335,11 @@
   }
 
   function getSelectedServices() {
-    return elements.services.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+    return elements.services.filter(function (checkbox) {
+      return checkbox.checked;
+    }).map(function (checkbox) {
+      return checkbox.value;
+    });
   }
 
   function calculateCurrentPricing() {
@@ -428,39 +454,58 @@
     elements.formError.textContent = message;
   }
 
-  function updateSummary() {
-    const pricing = calculateCurrentPricing();
-    const scheduleLabel = getScheduleLabel(elements.selectedDate.value, elements.selectedTime.value);
-    const addressLabel = getCompleteAddress() || "Add an address to continue";
-
-    elements.summaryTotal.textContent = formatCurrency(pricing.totalPrice);
-    elements.summaryService.textContent = SERVICE_LABELS[pricing.serviceType] || "Cleaning Service";
-    elements.summaryFrequency.textContent =
-      pricing.serviceType === "regular" ? FREQUENCY_LABELS[pricing.frequency] || "Biweekly" : "One-time visit";
-    elements.summaryHome.textContent = `${pricing.rooms} beds, ${pricing.bathrooms} bath`;
-    elements.summaryDuration.textContent = pricing.durationLabel;
-    elements.summarySchedule.textContent = scheduleLabel;
-    elements.summaryAddress.textContent = addressLabel;
+  function isContactStepComplete() {
+    return (
+      elements.firstName.value.trim().length > 0 &&
+      elements.lastName.value.trim().length > 0 &&
+      Boolean(normalizeUsPhoneDigits(elements.phone.value))
+    );
   }
 
-  function updateSuccessState() {
-    if (!state.latestCheckoutData) return;
-    const calculatorData = state.latestCheckoutData.calculatorData || {};
-    const serviceLabel = SERVICE_LABELS[calculatorData.serviceType] || "Cleaning Service";
-    const scheduleLabel = getScheduleLabel(calculatorData.selectedDate, calculatorData.selectedTime);
-    const addressLabel = calculatorData.address || calculatorData.fullAddress || "Pending";
+  function isAddressStepComplete() {
+    return Boolean(getFullAddress() && elements.selectedDate.value && elements.selectedTime.value);
+  }
 
-    elements.successService.textContent = serviceLabel;
-    elements.successSchedule.textContent = scheduleLabel;
-    elements.successAddress.textContent = addressLabel;
-    elements.successTotal.textContent = formatCurrency(calculatorData.totalPrice || 0);
-    elements.successNote.textContent = state.latestCheckoutData.contactData.email
-      ? "Email is on file, so you can continue to payment now or return later from the same quote link."
-      : "No email on file is okay. We can continue by phone and SMS, and you can still finish payment here.";
+  function updateEstimateTargets() {
+    const pricing = calculateCurrentPricing();
+    elements.estimateTargets.forEach(function (target) {
+      target.textContent = formatCurrency(pricing.totalPrice);
+    });
+    elements.submitButton.textContent = `Send request — ${formatCurrency(pricing.totalPrice)}`;
+    elements.continueToNotes.disabled = !isAddressStepComplete();
+  }
 
-    elements.payNowButton.disabled = !state.latestCheckoutData.quoteToken;
-    elements.googleCalendarButton.href = buildGoogleCalendarUrl(calculatorData, serviceLabel);
-    elements.appleCalendarButton.href = buildAppleCalendarBlobUrl(calculatorData, serviceLabel);
+  function scrollToCard(card) {
+    if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function refreshStepVisibility(options) {
+    const settings = options || {};
+    const contactReady = isContactStepComplete();
+
+    if (!contactReady) {
+      state.profileConfirmed = false;
+      state.addonsConfirmed = false;
+      state.addressConfirmed = false;
+      state.profileAutoOpened = false;
+    }
+
+    const profileVisible = contactReady;
+    const addonsVisible = profileVisible && state.profileConfirmed;
+    const addressVisible = addonsVisible && state.addonsConfirmed;
+    const notesVisible = addressVisible && state.addressConfirmed;
+
+    const profileWasHidden = elements.stepCards.profile.hidden;
+    elements.stepCards.profile.hidden = !profileVisible;
+    elements.stepCards.addons.hidden = !addonsVisible;
+    elements.stepCards.address.hidden = !addressVisible;
+    elements.stepCards.notes.hidden = !notesVisible;
+
+    if (profileVisible && profileWasHidden && !settings.skipScroll && !state.profileAutoOpened) {
+      state.profileAutoOpened = true;
+      scrollToCard(elements.stepCards.profile);
+    }
   }
 
   function setSelectedTime(timeValue) {
@@ -468,7 +513,7 @@
     elements.timeSlots.forEach(function (button) {
       button.classList.toggle("is-active", button.getAttribute("data-time") === timeValue);
     });
-    updateSummary();
+    updateEstimateTargets();
   }
 
   function setServiceType(serviceType) {
@@ -482,7 +527,7 @@
       elements.frequency.value = "biweekly";
     }
     applyIncludedServiceDefaults(nextValue);
-    updateSummary();
+    updateEstimateTargets();
   }
 
   function initServiceButtons() {
@@ -501,7 +546,7 @@
     });
   }
 
-  function initStepers() {
+  function initSteppers() {
     elements.stepperButtons.forEach(function (button) {
       button.addEventListener("click", function () {
         const targetId = button.getAttribute("data-stepper-target");
@@ -510,7 +555,7 @@
         if (!target) return;
         const nextValue = Math.max(0, (Number.parseInt(target.value || "0", 10) || 0) + direction);
         target.value = String(nextValue);
-        updateSummary();
+        updateEstimateTargets();
       });
     });
 
@@ -518,7 +563,7 @@
       input.addEventListener("input", function () {
         const nextValue = Math.max(0, Number.parseInt(input.value || "0", 10) || 0);
         input.value = String(nextValue);
-        updateSummary();
+        updateEstimateTargets();
       });
     });
   }
@@ -533,8 +578,10 @@
     const prefilledName = queryName || storedName;
     const prefilledPhone = queryPhone || storedPhone;
 
-    if (prefilledName && !elements.fullName.value.trim()) {
-      elements.fullName.value = prefilledName;
+    if (prefilledName) {
+      const parts = splitFullName(prefilledName);
+      if (!elements.firstName.value.trim()) elements.firstName.value = parts.firstName;
+      if (!elements.lastName.value.trim()) elements.lastName.value = parts.lastName;
     }
 
     if (prefilledPhone && !elements.phone.value.trim()) {
@@ -545,13 +592,20 @@
   function initPhoneInput() {
     elements.phone.addEventListener("input", function () {
       elements.phone.value = formatPhoneProgressive(elements.phone.value);
+      refreshStepVisibility();
+    });
+  }
+
+  function initContactInputs() {
+    [elements.firstName, elements.lastName].forEach(function (field) {
+      field.addEventListener("input", function () {
+        refreshStepVisibility();
+      });
     });
   }
 
   function initGeneralFieldListeners() {
     [
-      elements.fullName,
-      elements.email,
       elements.frequency,
       elements.rooms,
       elements.bathrooms,
@@ -566,14 +620,14 @@
       elements.selectedDate,
       elements.additionalDetails,
     ].forEach(function (field) {
-      field.addEventListener("input", updateSummary);
-      field.addEventListener("change", updateSummary);
+      field.addEventListener("input", updateEstimateTargets);
+      field.addEventListener("change", updateEstimateTargets);
     });
 
     elements.services.forEach(function (checkbox) {
       checkbox.addEventListener("change", function () {
         syncIncludedServiceStates(getSelectedServiceType());
-        updateSummary();
+        updateEstimateTargets();
       });
     });
   }
@@ -608,11 +662,11 @@
     if (stateValue) elements.state.value = stateValue;
     if (zipCode) elements.zipCode.value = zipCode;
 
-    updateSummary();
+    updateEstimateTargets();
   }
 
   function initAddressFallback() {
-    elements.addressInput.addEventListener("input", updateSummary);
+    elements.addressInput.addEventListener("input", updateEstimateTargets);
   }
 
   function mountAutocomplete() {
@@ -662,14 +716,41 @@
     document.head.appendChild(script);
   }
 
-  function validateForm() {
-    const fullName = elements.fullName.value.trim();
-    const phoneDigits = normalizeUsPhoneDigits(elements.phone.value);
-    const email = elements.email.value.trim();
-    const address = getFullAddress();
+  function openAddonsStep() {
+    state.profileConfirmed = true;
+    refreshStepVisibility({ skipScroll: true });
+    scrollToCard(elements.stepCards.addons);
+  }
 
-    if (!fullName) {
-      setFormError("Please enter the customer's full name.");
+  function openAddressStep() {
+    state.addonsConfirmed = true;
+    refreshStepVisibility({ skipScroll: true });
+    scrollToCard(elements.stepCards.address);
+  }
+
+  function openNotesStep() {
+    if (!isAddressStepComplete()) {
+      setFormError("Please complete the address, date, and preferred arrival time first.");
+      return;
+    }
+    setFormError("");
+    state.addressConfirmed = true;
+    refreshStepVisibility({ skipScroll: true });
+    scrollToCard(elements.stepCards.notes);
+  }
+
+  function validateForm() {
+    const firstName = elements.firstName.value.trim();
+    const lastName = elements.lastName.value.trim();
+    const phoneDigits = normalizeUsPhoneDigits(elements.phone.value);
+
+    if (!lastName) {
+      setFormError("Please enter the customer's last name.");
+      return false;
+    }
+
+    if (!firstName) {
+      setFormError("Please enter the customer's first name.");
       return false;
     }
 
@@ -678,23 +759,8 @@
       return false;
     }
 
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setFormError("Please enter a valid email address or leave the email field empty.");
-      return false;
-    }
-
-    if (!address) {
-      setFormError("Please enter the service address.");
-      return false;
-    }
-
-    if (!elements.selectedDate.value) {
-      setFormError("Please choose the preferred service date.");
-      return false;
-    }
-
-    if (!elements.selectedTime.value) {
-      setFormError("Please choose the preferred arrival window.");
+    if (!isAddressStepComplete()) {
+      setFormError("Please complete the service address, date, and preferred arrival time.");
       return false;
     }
 
@@ -709,12 +775,17 @@
 
   function buildQuotePayload() {
     const pricing = calculateCurrentPricing();
+    const firstName = elements.firstName.value.trim();
+    const lastName = elements.lastName.value.trim();
+    const fullName = `${firstName} ${lastName}`.trim();
     const fullAddress = getFullAddress();
     const completeAddress = getCompleteAddress() || fullAddress;
     const contactData = {
-      fullName: elements.fullName.value.trim(),
+      firstName: firstName,
+      lastName: lastName,
+      fullName: fullName,
       phone: normalizeUsPhoneDigits(elements.phone.value),
-      email: elements.email.value.trim(),
+      email: "",
     };
 
     const calculatorData = {
@@ -751,7 +822,7 @@
       calculatorData: calculatorData,
       fullName: contactData.fullName,
       phone: contactData.phone,
-      email: contactData.email,
+      email: "",
       serviceType: calculatorData.serviceType,
       totalPrice: calculatorData.totalPrice,
       selectedDate: calculatorData.selectedDate,
@@ -839,9 +910,33 @@
   }
 
   function buildAppleCalendarBlobUrl(calculatorData, serviceLabel) {
+    if (state.lastAppleCalendarUrl) {
+      URL.revokeObjectURL(state.lastAppleCalendarUrl);
+      state.lastAppleCalendarUrl = "";
+    }
     const icsContent = buildIcsContent(calculatorData, serviceLabel);
     const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
-    return URL.createObjectURL(blob);
+    state.lastAppleCalendarUrl = URL.createObjectURL(blob);
+    return state.lastAppleCalendarUrl;
+  }
+
+  function updateSuccessState() {
+    if (!state.latestCheckoutData) return;
+    const calculatorData = state.latestCheckoutData.calculatorData || {};
+    const serviceLabel = SERVICE_LABELS[calculatorData.serviceType] || "Cleaning Service";
+    const scheduleLabel = getScheduleLabel(calculatorData.selectedDate, calculatorData.selectedTime);
+    const addressLabel = calculatorData.address || calculatorData.fullAddress || "Pending";
+
+    elements.successService.textContent = serviceLabel;
+    elements.successSchedule.textContent = scheduleLabel;
+    elements.successAddress.textContent = addressLabel;
+    elements.successTotal.textContent = formatCurrency(calculatorData.totalPrice || 0);
+    elements.successNote.textContent =
+      "The CRM already has this request. You can continue to payment now or come back to the same quote flow later.";
+
+    elements.payNowButton.disabled = !state.latestCheckoutData.quoteToken;
+    elements.googleCalendarButton.href = buildGoogleCalendarUrl(calculatorData, serviceLabel);
+    elements.appleCalendarButton.href = buildAppleCalendarBlobUrl(calculatorData, serviceLabel);
   }
 
   async function handleSubmit(event) {
@@ -871,7 +966,7 @@
         quoteToken: (submissionResult && submissionResult.quoteToken) || "",
       };
 
-      updateSummary();
+      updateEstimateTargets();
       updateSuccessState();
       elements.successCard.hidden = false;
       elements.form.hidden = true;
@@ -903,7 +998,7 @@
         },
         body: JSON.stringify({
           quoteToken: state.latestCheckoutData.quoteToken,
-          customerEmail: state.latestCheckoutData.contactData.email || "",
+          customerEmail: "",
           returnPath: QUOTE_PAGE_PATH,
         }),
       });
@@ -934,19 +1029,28 @@
     }
   }
 
+  function initContinueButtons() {
+    elements.continueToAddons.addEventListener("click", openAddonsStep);
+    elements.continueToAddress.addEventListener("click", openAddressStep);
+    elements.continueToNotes.addEventListener("click", openNotesStep);
+  }
+
   function init() {
     if (!elements.form) return;
 
     initDateInput();
     initServiceButtons();
     initTimeSlots();
-    initStepers();
+    initSteppers();
+    initContactInputs();
     initPhoneInput();
     initGeneralFieldListeners();
+    initContinueButtons();
     initAutocomplete();
     applyPrefilledContactData();
     setServiceType("regular");
-    updateSummary();
+    updateEstimateTargets();
+    refreshStepVisibility({ skipScroll: true });
     showPaymentStatusFromQuery();
 
     elements.form.addEventListener("submit", handleSubmit);

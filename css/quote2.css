@@ -47,8 +47,12 @@ a {
   color: inherit;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .quote2-page {
-  max-width: 1380px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -116,19 +120,15 @@ a {
 .quote2-global-notice {
   display: grid;
   gap: 12px;
-  margin-bottom: 18px;
+  max-width: 980px;
+  margin: 0 auto 18px;
 }
 
 .quote2-shell {
   display: grid;
   gap: 22px;
-}
-
-.quote2-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-  gap: 22px;
-  align-items: start;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
 .quote2-card {
@@ -139,100 +139,38 @@ a {
   backdrop-filter: blur(14px);
 }
 
-.quote2-hero-copy,
-.quote2-summary,
 .quote2-success-card,
 .quote2-form-shell > .quote2-card {
   padding: 30px;
 }
 
-.quote2-title {
-  margin: 12px 0 16px;
-  font-size: clamp(2.2rem, 4vw, 4rem);
-  line-height: 0.98;
-  font-weight: 900;
-  font-style: italic;
-  letter-spacing: -0.05em;
+.quote2-step-card {
+  position: relative;
+  padding-left: 42px !important;
 }
 
-.quote2-subtitle,
-.quote2-section-copy,
-.quote2-action-hint,
-.quote2-success-note,
-.quote2-field-note {
-  color: var(--quote2-muted);
-  font-size: 1rem;
-  line-height: 1.7;
-}
-
-.quote2-pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 24px;
-}
-
-.quote2-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: var(--quote2-accent-soft);
-  color: var(--quote2-accent);
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.quote2-summary-card {
-  position: sticky;
+.quote2-step-card::before {
+  content: "";
+  position: absolute;
   top: 24px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
-}
-
-.quote2-summary-price {
-  margin: 14px 0 22px;
-  font-size: clamp(2.3rem, 5vw, 4rem);
-  line-height: 1;
-  font-weight: 900;
-  font-style: italic;
-  letter-spacing: -0.06em;
-}
-
-.quote2-summary-stack {
-  display: grid;
-  gap: 14px;
-}
-
-.quote2-summary-stack-compact {
-  gap: 12px;
-}
-
-.quote2-summary-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(228, 228, 231, 0.9);
-}
-
-.quote2-summary-row:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-
-.quote2-summary-label {
-  color: var(--quote2-muted);
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 700;
+  left: 24px;
+  width: 3px;
+  height: calc(100% - 48px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(158, 67, 90, 0.45), rgba(158, 67, 90, 0.05));
 }
 
 .quote2-section-head {
   display: grid;
   gap: 10px;
   margin-bottom: 22px;
+}
+
+.quote2-section-head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
 }
 
 .quote2-section-title {
@@ -244,14 +182,42 @@ a {
   letter-spacing: -0.04em;
 }
 
+.quote2-section-copy,
+.quote2-action-hint,
+.quote2-success-note,
+.quote2-field-note {
+  color: var(--quote2-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.quote2-step-estimate {
+  margin: 0;
+  color: var(--quote2-muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.quote2-step-estimate strong {
+  color: var(--quote2-text);
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-left: 8px;
+}
+
 .quote2-form-shell {
   display: grid;
   gap: 22px;
 }
 
-.quote2-field-grid {
+.quote2-field-grid,
+.quote2-service-grid,
+.quote2-time-grid,
+.quote2-addon-grid,
+.quote2-quantity-grid {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .quote2-field-grid-two {
@@ -293,7 +259,7 @@ a {
   padding: 0 18px;
   font: inherit;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .quote2-textarea {
@@ -307,14 +273,6 @@ a {
 .quote2-stepper-input:focus {
   border-color: var(--quote2-accent);
   box-shadow: 0 0 0 4px rgba(158, 67, 90, 0.12);
-}
-
-.quote2-service-grid,
-.quote2-time-grid,
-.quote2-addon-grid,
-.quote2-quantity-grid {
-  display: grid;
-  gap: 14px;
 }
 
 .quote2-service-grid {
@@ -547,6 +505,36 @@ a {
   box-shadow: var(--quote2-shadow-sm);
 }
 
+.quote2-summary-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.quote2-summary-stack-compact {
+  gap: 12px;
+}
+
+.quote2-summary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(228, 228, 231, 0.9);
+}
+
+.quote2-summary-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.quote2-summary-label {
+  color: var(--quote2-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
 .quote2-success-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -562,15 +550,6 @@ a {
 }
 
 @media (max-width: 1180px) {
-  .quote2-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .quote2-summary-card {
-    position: relative;
-    top: auto;
-  }
-
   .quote2-field-grid-four,
   .quote2-time-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -594,10 +573,6 @@ a {
     align-items: flex-start;
   }
 
-  .quote2-title {
-    font-size: 2.4rem;
-  }
-
   .quote2-field-grid-two,
   .quote2-field-grid-three,
   .quote2-field-grid-four,
@@ -609,11 +584,19 @@ a {
     grid-template-columns: 1fr;
   }
 
-  .quote2-hero-copy,
-  .quote2-summary,
   .quote2-success-card,
   .quote2-form-shell > .quote2-card {
     padding: 24px;
+  }
+
+  .quote2-form-shell > .quote2-step-card {
+    padding-left: 32px !important;
+  }
+
+  .quote2-step-card::before {
+    left: 18px;
+    top: 18px;
+    height: calc(100% - 36px);
   }
 
   .quote2-inline-actions-end {
@@ -636,23 +619,28 @@ a {
     border-radius: 14px;
   }
 
-  .quote2-title {
-    font-size: 1.96rem;
-  }
-
   .quote2-section-title {
     font-size: 1.6rem;
   }
 
-  .quote2-summary-price {
-    font-size: 2.5rem;
-  }
-
-  .quote2-hero-copy,
-  .quote2-summary,
   .quote2-success-card,
   .quote2-form-shell > .quote2-card {
     padding: 20px;
+  }
+
+  .quote2-form-shell > .quote2-step-card {
+    padding-left: 24px !important;
+  }
+
+  .quote2-step-card::before {
+    left: 14px;
+    top: 16px;
+    height: calc(100% - 32px);
+  }
+
+  .quote2-section-head-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .quote2-button,

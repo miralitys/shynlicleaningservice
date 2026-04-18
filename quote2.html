@@ -36,53 +36,6 @@
       <div id="quote2GlobalNotice" class="quote2-global-notice" aria-live="polite"></div>
 
       <main class="quote2-shell">
-        <section class="quote2-hero quote2-card">
-          <div class="quote2-hero-copy">
-            <p class="quote2-kicker">CRM STYLE PREVIEW</p>
-            <h1 class="quote2-title">Request your cleaning quote in the new workspace format.</h1>
-            <p class="quote2-subtitle">
-              This preview sends the same real quote submission into the CRM, but through the new
-              `/quote2` experience so we can test layout, pricing, scheduling, and checkout safely.
-            </p>
-            <div class="quote2-pill-row">
-              <span class="quote2-pill">Live pricing</span>
-              <span class="quote2-pill">CRM-connected</span>
-              <span class="quote2-pill">Stripe-ready</span>
-              <span class="quote2-pill">Google Places</span>
-            </div>
-          </div>
-          <aside class="quote2-summary quote2-card quote2-summary-card" id="quote2SummaryCard">
-            <p class="quote2-kicker">INSTANT ESTIMATE</p>
-            <p class="quote2-summary-price" id="quote2SummaryTotal">$135</p>
-            <div class="quote2-summary-stack">
-              <div class="quote2-summary-row">
-                <span class="quote2-summary-label">Service</span>
-                <strong id="quote2SummaryService">Regular Cleaning</strong>
-              </div>
-              <div class="quote2-summary-row">
-                <span class="quote2-summary-label">Visit cadence</span>
-                <strong id="quote2SummaryFrequency">Biweekly</strong>
-              </div>
-              <div class="quote2-summary-row">
-                <span class="quote2-summary-label">Home profile</span>
-                <strong id="quote2SummaryHome">2 beds, 1 bath</strong>
-              </div>
-              <div class="quote2-summary-row">
-                <span class="quote2-summary-label">Estimated duration</span>
-                <strong id="quote2SummaryDuration">2h 45m - 3h</strong>
-              </div>
-              <div class="quote2-summary-row">
-                <span class="quote2-summary-label">Requested time</span>
-                <strong id="quote2SummarySchedule">Not selected yet</strong>
-              </div>
-              <div class="quote2-summary-row">
-                <span class="quote2-summary-label">Service address</span>
-                <strong id="quote2SummaryAddress">Add an address to continue</strong>
-              </div>
-            </div>
-          </aside>
-        </section>
-
         <section id="quote2SuccessCard" class="quote2-card quote2-success-card" hidden>
           <p class="quote2-kicker">REQUEST RECEIVED</p>
           <h2 class="quote2-section-title">Thank you. Your request has been sent.</h2>
@@ -125,33 +78,38 @@
         </section>
 
         <form id="quote2Form" class="quote2-form-shell" novalidate>
-          <section class="quote2-card">
+          <section class="quote2-card quote2-step-card" data-step-card="contact">
             <div class="quote2-section-head">
               <p class="quote2-kicker">STEP 1</p>
               <h2 class="quote2-section-title">Contact details</h2>
-              <p class="quote2-section-copy">We need your name and phone to create the request in the CRM. Email is optional.</p>
+              <p class="quote2-section-copy">Enter the customer's last name, first name, and phone number. As soon as this is complete, the next block opens.</p>
             </div>
             <div class="quote2-field-grid quote2-field-grid-three">
               <label class="quote2-field">
-                <span>Full name</span>
-                <input id="quote2FullName" name="fullName" class="quote2-input" type="text" autocomplete="name" placeholder="Emily Johnson" required />
+                <span>Last name</span>
+                <input id="quote2LastName" name="lastName" class="quote2-input" type="text" autocomplete="family-name" placeholder="Johnson" required />
+              </label>
+              <label class="quote2-field">
+                <span>First name</span>
+                <input id="quote2FirstName" name="firstName" class="quote2-input" type="text" autocomplete="given-name" placeholder="Emily" required />
               </label>
               <label class="quote2-field">
                 <span>Phone</span>
                 <input id="quote2Phone" name="phone" class="quote2-input" type="tel" autocomplete="tel" placeholder="+1 (630) 555-0102" required />
               </label>
-              <label class="quote2-field">
-                <span>Email (optional)</span>
-                <input id="quote2Email" name="email" class="quote2-input" type="email" autocomplete="email" placeholder="emily@example.com" />
-              </label>
             </div>
           </section>
 
-          <section class="quote2-card">
+          <section class="quote2-card quote2-step-card" data-step-card="profile" hidden>
             <div class="quote2-section-head">
-              <p class="quote2-kicker">STEP 2</p>
-              <h2 class="quote2-section-title">Cleaning profile</h2>
-              <p class="quote2-section-copy">Choose the service, home size, and extras. The estimate updates instantly.</p>
+              <div class="quote2-section-head-row">
+                <div>
+                  <p class="quote2-kicker">STEP 2</p>
+                  <h2 class="quote2-section-title">Cleaning profile</h2>
+                </div>
+                <p class="quote2-step-estimate">Estimate <strong data-quote2-estimate="true">$135</strong></p>
+              </div>
+              <p class="quote2-section-copy">Choose the service type and home profile, then continue to add-ons.</p>
             </div>
 
             <div class="quote2-service-grid" id="quote2ServiceButtons" role="radiogroup" aria-label="Service type">
@@ -237,12 +195,21 @@
                 </select>
               </label>
             </div>
+
+            <div class="quote2-inline-actions quote2-inline-actions-end">
+              <button id="quote2ContinueToAddons" class="quote2-button quote2-button-secondary" type="button">Continue to add-ons</button>
+            </div>
           </section>
 
-          <section class="quote2-card">
+          <section class="quote2-card quote2-step-card" data-step-card="addons" hidden>
             <div class="quote2-section-head">
-              <p class="quote2-kicker">STEP 3</p>
-              <h2 class="quote2-section-title">Add-ons</h2>
+              <div class="quote2-section-head-row">
+                <div>
+                  <p class="quote2-kicker">STEP 3</p>
+                  <h2 class="quote2-section-title">Add-ons</h2>
+                </div>
+                <p class="quote2-step-estimate">Estimate <strong data-quote2-estimate="true">$135</strong></p>
+              </div>
               <p class="quote2-section-copy">Select any one-time extras you want included in the estimate.</p>
             </div>
 
@@ -333,12 +300,21 @@
                 </div>
               </div>
             </div>
+
+            <div class="quote2-inline-actions quote2-inline-actions-end">
+              <button id="quote2ContinueToAddress" class="quote2-button quote2-button-secondary" type="button">Continue to address and schedule</button>
+            </div>
           </section>
 
-          <section class="quote2-card">
+          <section class="quote2-card quote2-step-card" data-step-card="address" hidden>
             <div class="quote2-section-head">
-              <p class="quote2-kicker">STEP 4</p>
-              <h2 class="quote2-section-title">Address and schedule</h2>
+              <div class="quote2-section-head-row">
+                <div>
+                  <p class="quote2-kicker">STEP 4</p>
+                  <h2 class="quote2-section-title">Address and schedule</h2>
+                </div>
+                <p class="quote2-step-estimate">Estimate <strong data-quote2-estimate="true">$135</strong></p>
+              </div>
               <p class="quote2-section-copy">Pick the service address, then choose the date and arrival window you prefer.</p>
             </div>
 
@@ -379,12 +355,21 @@
               <button class="quote2-time-slot" type="button" data-time="16:00">4:00 PM</button>
             </div>
             <input id="quote2SelectedTime" name="selectedTime" type="hidden" value="" />
+
+            <div class="quote2-inline-actions quote2-inline-actions-end">
+              <button id="quote2ContinueToNotes" class="quote2-button quote2-button-secondary" type="button">Continue to final notes</button>
+            </div>
           </section>
 
-          <section class="quote2-card">
+          <section class="quote2-card quote2-step-card" data-step-card="notes" hidden>
             <div class="quote2-section-head">
-              <p class="quote2-kicker">STEP 5</p>
-              <h2 class="quote2-section-title">Final notes</h2>
+              <div class="quote2-section-head-row">
+                <div>
+                  <p class="quote2-kicker">STEP 5</p>
+                  <h2 class="quote2-section-title">Final notes</h2>
+                </div>
+                <p class="quote2-step-estimate">Estimate <strong data-quote2-estimate="true">$135</strong></p>
+              </div>
               <p class="quote2-section-copy">Add anything the team should know before we reach out.</p>
             </div>
 
@@ -405,8 +390,8 @@
             <div id="quote2FormError" class="quote2-form-error" hidden></div>
 
             <div class="quote2-inline-actions quote2-inline-actions-end">
-              <button id="quote2SubmitButton" class="quote2-button" type="submit">Send request</button>
               <span class="quote2-action-hint">This preview still creates the real CRM quote entry.</span>
+              <button id="quote2SubmitButton" class="quote2-button" type="submit">Send request</button>
             </div>
           </section>
         </form>
