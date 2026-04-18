@@ -112,6 +112,14 @@ test("renders featured floors article links on /blog/floors", () => {
   assert.match(html, /Floor <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
 });
 
+test("renders featured dust article links on /blog/dust", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/dust");
+
+  assert.match(html, /how-to-reduce-dust-in-house-fast/);
+  assert.match(html, /cleaning-routine-for-allergies-at-home/);
+  assert.match(html, /how-to-clean-ceiling-fans-without-dust-falling/);
+});
+
 test("renders featured checklist article link on /blog/checklists", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/checklists");
 
@@ -244,6 +252,26 @@ test("renders all bathroom articles with live route structure and long-form cont
   const bathroomArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/bathroom");
 
   for (const article of bathroomArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1400,
+      `Expected ${article.path} to exceed 1400 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all dust articles with live route structure and long-form content", () => {
+  const dustArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/dust");
+
+  for (const article of dustArticles) {
     const html = sanitizeHtml(sourceHtml, article.path);
 
     assert.match(
