@@ -94,6 +94,15 @@ test("renders category-specific heading and filter runtime on /blog/bathroom", (
   );
 });
 
+test("renders featured bathroom article links on /blog/bathroom", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/bathroom");
+
+  assert.match(html, /how-to-remove-hard-water-stains-from-shower-glass/);
+  assert.match(html, /how-to-remove-soap-scum-from-shower-doors/);
+  assert.match(html, /best-way-to-clean-grout-in-shower/);
+  assert.match(html, /Bathroom <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
+});
+
 test("renders featured checklist article link on /blog/checklists", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/checklists");
 
@@ -218,6 +227,26 @@ test("renders all what's included articles with live route structure and long-fo
     assert.ok(
       getWordCount(html) > 1700,
       `Expected ${article.path} to exceed 1700 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all bathroom articles with live route structure and long-form content", () => {
+  const bathroomArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/bathroom");
+
+  for (const article of bathroomArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1400,
+      `Expected ${article.path} to exceed 1400 words, got ${getWordCount(html)}`
     );
   }
 });
