@@ -752,10 +752,35 @@ test("loads SMS history by resolving the contact from phone when contactId is mi
       return createResponse(200, {
         contacts: [
           {
+            id: "contact-424-old",
+            phone: "(424) 419-9102",
+          },
+          {
             id: "contact-424",
             phone: "(424) 419-9102",
           },
         ],
+      });
+    }
+
+    if (
+      String(url).includes("/contacts/?locationId=loc-1&limit=100") &&
+      !String(url).includes("query=") &&
+      options.method === "GET"
+    ) {
+      return createResponse(200, {
+        contacts: [
+          {
+            id: "contact-424",
+            phone: "(424) 419-9102",
+          },
+        ],
+      });
+    }
+
+    if (String(url).includes("/conversations/search?locationId=loc-1&contactId=contact-424-old") && options.method === "GET") {
+      return createResponse(200, {
+        conversations: [],
       });
     }
 
