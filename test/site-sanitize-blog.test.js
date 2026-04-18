@@ -154,17 +154,22 @@ test("renders featured airbnb article links on /blog/airbnb", () => {
   assert.match(html, /Airbnb <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
 });
 
-test("renders an empty-state for categories that do not have published article clusters yet", () => {
-  for (const route of ["/blog/seasonal", "/blog/cleaning-hacks"]) {
-    const html = sanitizeHtml(sourceHtml, route);
+test("renders featured seasonal article links on /blog/seasonal", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/seasonal");
 
-    assert.match(html, /Fresh guides for this section are being added\./);
-    assert.match(
-      html,
-      /This category page is ready\. The article library for this topic has not been published yet\./
-    );
-    assert.doesNotMatch(html, /class="shynli-blog-featured__card"/);
-  }
+  assert.match(html, /cleaning-checklist-before-thanksgiving-hosting/);
+  assert.match(html, /post-holiday-deep-cleaning-checklist/);
+  assert.match(html, /spring-deep-cleaning-for-families/);
+  assert.match(html, /Seasonal <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
+});
+
+test("renders featured cleaning hacks article links on /blog/cleaning-hacks", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/cleaning-hacks");
+
+  assert.match(html, /fastest-way-to-clean-a-bathroom-in-20-minutes/);
+  assert.match(html, /fastest-way-to-clean-kitchen-in-30-minutes/);
+  assert.match(html, /15-minute-daily-cleaning-routine/);
+  assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Hacks<\/span>/);
 });
 
 test("renders featured checklist article link on /blog/checklists", () => {
@@ -401,6 +406,48 @@ test("renders all airbnb articles with live route structure and long-form conten
   const airbnbArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/airbnb");
 
   for (const article of airbnbArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1400,
+      `Expected ${article.path} to exceed 1400 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all seasonal articles with live route structure and long-form content", () => {
+  const seasonalArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/seasonal");
+
+  for (const article of seasonalArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1400,
+      `Expected ${article.path} to exceed 1400 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all cleaning hacks articles with live route structure and long-form content", () => {
+  const cleaningHacksArticles = BLOG_ARTICLES.filter(
+    (article) => article.categoryPath === "/blog/cleaning-hacks"
+  );
+
+  for (const article of cleaningHacksArticles) {
     const html = sanitizeHtml(sourceHtml, article.path);
 
     assert.match(
