@@ -137,6 +137,9 @@ test("renders second checklist article route with printable weekly plan", () => 
   assert.match(html, /<h1 class="shynli-blog-article__title">Weekly Cleaning Checklist for a 3 Bedroom House<\/h1>/);
   assert.match(html, /Quick Answer: Weekly Cleaning Checklist for a 3 Bedroom House/);
   assert.match(html, /Printable Weekly Cleaning Checklist/);
+  assert.match(html, /Weekly reset visual/);
+  assert.match(html, /One weekly system for a lived-in 3 bedroom house\./);
+  assert.match(html, /class="shynli-blog-article__hero-visual"/);
   assert.match(
     html,
     /class="shynli-blog-article__toc-link" href="\/blog\/checklists\/weekly-cleaning-checklist-for-a-3-bedroom-house#quick-answer" data-target-id="quick-answer"/
@@ -146,6 +149,7 @@ test("renders second checklist article route with printable weekly plan", () => 
   assert.match(html, /Weekly Bedroom Cleaning Checklist/);
   assert.match(html, /Weekly Bathroom Cleaning Checklist/);
   assert.match(html, /data-blog-print/);
+  assert.match(html, /\.shynli-blog-article__hero-visual-shell\{display:grid;grid-template-columns:minmax\(260px,.9fr\) minmax\(0,1.2fr\);gap:18px;/);
   assert.ok(
     getWordCount(html) > 2800,
     `Expected second long-form article to exceed 2800 words, got ${getWordCount(html)}`
