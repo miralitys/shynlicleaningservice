@@ -211,6 +211,7 @@ a {
 .quote2-action-hint,
 .quote2-success-note,
 .quote2-field-note {
+  margin: 0;
   color: var(--quote2-muted);
   font-size: 1rem;
   line-height: 1.7;
@@ -247,6 +248,20 @@ a {
 .quote2-step-card > .quote2-field-grid + .quote2-inline-actions,
 .quote2-step-card > .quote2-time-grid + .quote2-inline-actions {
   margin-top: 18px;
+}
+
+.quote2-step-card[data-step-card="contact"] .quote2-section-head {
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.quote2-step-card[data-step-card="contact"] .quote2-section-copy,
+.quote2-step-card[data-step-card="contact"] .quote2-field-note {
+  line-height: 1.45;
+}
+
+.quote2-step-card[data-step-card="contact"] > .quote2-field-grid + .quote2-field-note {
+  margin-top: 10px;
 }
 
 .quote2-field {
