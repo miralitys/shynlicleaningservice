@@ -96,9 +96,12 @@ test("renders long-form checklist article route with more than 3000 words", () =
     "/blog/checklists/house-cleaning-checklist-for-busy-homeowners"
   );
 
-  assert.match(html, /House Cleaning Checklist <span style="color: rgb\(158, 68, 90\);">for Busy Homeowners<\/span>/);
+  assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Checklists<\/span>/);
+  assert.match(html, /<h1 class="shynli-blog-article__title">House Cleaning Checklist for Busy Homeowners<\/h1>/);
   assert.match(html, /Quick navigation/);
   assert.match(html, /Want the result without doing the whole checklist yourself\?/);
+  assert.match(html, /\.shynli-blog-article__toc\{position:sticky;top:110px;.*max-height:calc\(100vh - 140px\);overflow:auto;/);
+  assert.match(html, /\.shynli-blog-article__callout\{display:grid;gap:10px;padding:22px 24px;border-radius:22px;background:#efe7de;/);
   assert.ok(
     getWordCount(html) > 3000,
     `Expected long-form article to exceed 3000 words, got ${getWordCount(html)}`
