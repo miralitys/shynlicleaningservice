@@ -51,6 +51,19 @@ const sanitizeHtml = createSiteSanitizer({
   siteSeoHelpers,
 }).sanitizeHtml;
 
+function getWordCount(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean).length;
+}
+
 test("renders blog hub topic links and stable CTA button styles on /blog", () => {
   const html = sanitizeHtml(sourceHtml, "/blog");
 
@@ -68,4 +81,26 @@ test("renders category-specific heading and filter runtime on /blog/bathroom", (
   assert.match(html, /Bathroom <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
   assert.match(html, /Bathroom cleaning advice people actually search when the room stops feeling clean\./);
   assert.match(html, /CURRENT_CATEGORY=\{"label":"Bathroom","aliases":\["bathroom","bathrooms"\]\}/);
+});
+
+test("renders featured checklist article link on /blog/checklists", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/checklists");
+
+  assert.match(html, /house-cleaning-checklist-for-busy-homeowners/);
+  assert.match(html, /Start with the strongest guide in this topic\./);
+});
+
+test("renders long-form checklist article route with more than 3000 words", () => {
+  const html = sanitizeHtml(
+    sourceHtml,
+    "/blog/checklists/house-cleaning-checklist-for-busy-homeowners"
+  );
+
+  assert.match(html, /House Cleaning Checklist <span style="color: rgb\(158, 68, 90\);">for Busy Homeowners<\/span>/);
+  assert.match(html, /Quick navigation/);
+  assert.match(html, /Want the result without doing the whole checklist yourself\?/);
+  assert.ok(
+    getWordCount(html) > 3000,
+    `Expected long-form article to exceed 3000 words, got ${getWordCount(html)}`
+  );
 });

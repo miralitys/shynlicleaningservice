@@ -33,6 +33,7 @@ const {
 const { createRequestHelpers } = require("./lib/http/request");
 const { createTimingHelpers } = require("./lib/http/timing");
 const { createSiteStaticHelpers } = require("./lib/site/assets");
+const { BLOG_ARTICLES } = require("./lib/site/blog-articles");
 const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request-handler");
 const { createSiteSanitizer } = require("./lib/site/sanitize");
 const { createSiteSeoHelpers } = require("./lib/site/seo");
@@ -370,6 +371,16 @@ const BLOG_CATEGORY_PAGES = Object.freeze([
       "Cleaning hacks and practical shortcuts for busy homes that need faster resets, better routines, and less backtracking.",
   },
 ]);
+const BLOG_ARTICLE_PAGES = Object.freeze(
+  BLOG_ARTICLES.map((article) => ({
+    path: article.path,
+    label: article.title,
+    title: article.metaTitle || article.title,
+    description: article.description || article.excerpt || "",
+    ogTitle: article.ogTitle || article.metaTitle || article.title,
+    ogDescription: article.ogDescription || article.description || article.excerpt || "",
+  }))
+);
 const NOINDEX_ROUTES = new Set([
   "/home-calculator",
   "/oauth/callback",
@@ -382,6 +393,7 @@ const BREADCRUMB_LABELS = new Map([
   ["/about-us", "About Us"],
   ["/blog", "Blog"],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, page.label]),
+  ...BLOG_ARTICLE_PAGES.map((page) => [page.path, page.label]),
   ["/cancellation-policy", "Cancellation Policy"],
   ["/contacts", "Contact Us"],
   ["/faq", "FAQ"],
@@ -444,6 +456,18 @@ const ROUTE_META_OVERRIDES = {
   },
   ...Object.fromEntries(
     BLOG_CATEGORY_PAGES.map((page) => [
+      page.path,
+      {
+        title: page.title,
+        description: page.description,
+        ogTitle: page.ogTitle,
+        ogDescription: page.ogDescription,
+        canonical: `${SITE_ORIGIN}${page.path}`,
+      },
+    ])
+  ),
+  ...Object.fromEntries(
+    BLOG_ARTICLE_PAGES.map((page) => [
       page.path,
       {
         title: page.title,
