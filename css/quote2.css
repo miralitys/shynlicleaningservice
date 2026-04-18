@@ -603,6 +603,28 @@ a {
   border: 1px solid var(--quote2-border);
 }
 
+.quote2-success-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.quote2-success-primary {
+  width: 100%;
+  min-width: 0;
+}
+
+.quote2-success-actions-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quote2-success-secondary {
+  width: 100%;
+  min-width: 0;
+}
+
 @media (max-width: 1180px) {
   .quote2-field-grid-four,
   .quote2-time-grid {
@@ -641,6 +663,10 @@ a {
   .quote2-success-card,
   .quote2-form-shell > .quote2-card {
     padding: 24px;
+  }
+
+  .quote2-success-actions-secondary {
+    grid-template-columns: 1fr;
   }
 
   .quote2-form-shell > .quote2-step-card {

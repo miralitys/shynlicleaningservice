@@ -413,15 +413,53 @@
     return String(elements.addressInput.value || "").trim();
   }
 
+  function normalizeAddressSearchValue(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[.,]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function addressHasComponent(address, component) {
+    const trimmedComponent = String(component || "").trim();
+    if (!trimmedComponent) return false;
+
+    const normalizedAddress = normalizeAddressSearchValue(address);
+    if (!normalizedAddress) return false;
+
+    if (/^[A-Za-z]{2}$/.test(trimmedComponent)) {
+      const statePattern = new RegExp(`(^|\\W)${trimmedComponent.toLowerCase()}($|\\W)`, "i");
+      return statePattern.test(normalizedAddress);
+    }
+
+    return normalizedAddress.includes(normalizeAddressSearchValue(trimmedComponent));
+  }
+
   function getCompleteAddress() {
-    const parts = [
-      getFullAddress(),
+    const fullAddress = getFullAddress();
+    const parts = [fullAddress];
+    const optionalParts = [
       String(elements.addressLine2.value || "").trim(),
       String(elements.city.value || "").trim(),
       String(elements.state.value || "").trim(),
       String(elements.zipCode.value || "").trim(),
-    ].filter(Boolean);
-    return parts.join(", ");
+    ];
+
+    optionalParts.forEach(function (part) {
+      if (!part) return;
+      if (addressHasComponent(fullAddress, part)) return;
+      parts.push(part);
+    });
+
+    const uniqueParts = [];
+    parts.filter(Boolean).forEach(function (part) {
+      if (uniqueParts.some(function (existingPart) { return addressHasComponent(existingPart, part) || addressHasComponent(part, existingPart); })) {
+        return;
+      }
+      uniqueParts.push(part);
+    });
+    return uniqueParts.join(", ");
   }
 
   function setNotice(message, tone) {
