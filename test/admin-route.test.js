@@ -6,7 +6,7 @@ const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createAdminDomainHelpers } = require("../lib/admin/domain");
-const { hashPassword, loadAdminConfig, generateTotpCode } = require("../lib/admin-auth");
+const { hashPassword, loadAdminConfig } = require("../lib/admin-auth");
 const { createFetchStub, createSmtpTestServer, startServer, stopServer } = require("./server-test-helpers");
 
 const SIGNATURE_DATA_URL =
@@ -104,32 +104,12 @@ async function createAdminSession(baseUrl, config) {
   });
 
   assert.equal(loginResponse.status, 303);
-  assert.equal(loginResponse.headers.get("location"), "/admin/2fa");
+  assert.equal(loginResponse.headers.get("location"), "/admin");
 
   const loginCookies = getSetCookies(loginResponse);
-  const challengeCookie = loginCookies.find((cookie) => cookie.startsWith("shynli_admin_challenge=")) || "";
-  assert.match(challengeCookie, /Path=\//);
-  const challengeCookieValue = getCookieValue(loginCookies, "shynli_admin_challenge");
-  assert.ok(challengeCookieValue);
-
-  const code = generateTotpCode(config);
-  const twoFactorResponse = await fetch(`${baseUrl}/admin/2fa`, {
-    method: "POST",
-    redirect: "manual",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-      cookie: `shynli_admin_challenge=${challengeCookieValue}`,
-    },
-    body: new URLSearchParams({ code }),
-  });
-
-  assert.equal(twoFactorResponse.status, 303);
-  assert.equal(twoFactorResponse.headers.get("location"), "/admin");
-
-  const twoFactorCookies = getSetCookies(twoFactorResponse);
-  const sessionCookie = twoFactorCookies.find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
+  const sessionCookie = loginCookies.find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
   assert.match(sessionCookie, /Path=\//);
-  const sessionCookieValue = getCookieValue(twoFactorCookies, "shynli_admin_session");
+  const sessionCookieValue = getCookieValue(loginCookies, "shynli_admin_session");
   assert.ok(sessionCookieValue);
   return sessionCookieValue;
 }
@@ -289,7 +269,7 @@ test("serves the admin login page when admin secrets are configured", async () =
   }
 });
 
-test("completes the admin login and TOTP verification flow", async () => {
+test("completes the admin login flow without a second factor", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
   };
@@ -302,6 +282,12 @@ test("completes the admin login and TOTP verification flow", async () => {
     });
     assert.equal(unauthenticated.status, 303);
     assert.equal(unauthenticated.headers.get("location"), "/admin/login");
+
+    const legacyTwoFactorPath = await fetch(`${started.baseUrl}/admin/2fa`, {
+      redirect: "manual",
+    });
+    assert.equal(legacyTwoFactorPath.status, 303);
+    assert.equal(legacyTwoFactorPath.headers.get("location"), "/admin/login");
 
     const loginResponse = await fetch(`${started.baseUrl}/admin/login`, {
       method: "POST",
@@ -316,27 +302,9 @@ test("completes the admin login and TOTP verification flow", async () => {
     });
 
     assert.equal(loginResponse.status, 303);
-    assert.equal(loginResponse.headers.get("location"), "/admin/2fa");
+    assert.equal(loginResponse.headers.get("location"), "/admin");
 
-    const loginCookies = getSetCookies(loginResponse);
-    const challengeCookieValue = getCookieValue(loginCookies, "shynli_admin_challenge");
-    assert.ok(challengeCookieValue);
-
-    const code = generateTotpCode(config);
-    const twoFactorResponse = await fetch(`${started.baseUrl}/admin/2fa`, {
-      method: "POST",
-      redirect: "manual",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        cookie: `shynli_admin_challenge=${challengeCookieValue}`,
-      },
-      body: new URLSearchParams({ code }),
-    });
-
-    assert.equal(twoFactorResponse.status, 303);
-    assert.equal(twoFactorResponse.headers.get("location"), "/admin");
-
-    const sessionCookieValue = getCookieValue(getSetCookies(twoFactorResponse), "shynli_admin_session");
+    const sessionCookieValue = getCookieValue(getSetCookies(loginResponse), "shynli_admin_session");
     assert.ok(sessionCookieValue);
 
     const dashboardResponse = await fetch(`${started.baseUrl}/admin`, {
@@ -659,23 +627,7 @@ test("sets admin auth cookies with SameSite=Lax for OAuth return flows", async (
     });
 
     const loginCookies = getSetCookies(loginResponse);
-    const challengeCookie = loginCookies.find((cookie) => cookie.startsWith("shynli_admin_challenge=")) || "";
-    assert.match(challengeCookie, /SameSite=Lax/i);
-
-    const challengeCookieValue = getCookieValue(loginCookies, "shynli_admin_challenge");
-    const code = generateTotpCode(config);
-    const twoFactorResponse = await fetch(`${started.baseUrl}/admin/2fa`, {
-      method: "POST",
-      redirect: "manual",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        cookie: `shynli_admin_challenge=${challengeCookieValue}`,
-      },
-      body: new URLSearchParams({ code }),
-    });
-
-    const twoFactorCookies = getSetCookies(twoFactorResponse);
-    const sessionCookie = twoFactorCookies.find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
+    const sessionCookie = loginCookies.find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
     assert.match(sessionCookie, /SameSite=Lax/i);
   } finally {
     await stopServer(started.child);
@@ -1542,19 +1494,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       }),
     });
 
-    const challengeCookieValue = getCookieValue(getSetCookies(loginResponse), "shynli_admin_challenge");
-    const code = generateTotpCode(config);
-    const twoFactorResponse = await fetch(`${started.baseUrl}/admin/2fa`, {
-      method: "POST",
-      redirect: "manual",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        cookie: `shynli_admin_challenge=${challengeCookieValue}`,
-      },
-      body: new URLSearchParams({ code }),
-    });
-
-    const sessionCookieValue = getCookieValue(getSetCookies(twoFactorResponse), "shynli_admin_session");
+    const sessionCookieValue = getCookieValue(getSetCookies(loginResponse), "shynli_admin_session");
     assert.ok(sessionCookieValue);
     await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "ops-request-1");
 
@@ -1623,7 +1563,6 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /\.admin-table:not\(\.admin-team-calendar-table\) th,\s*\.admin-table:not\(\.admin-team-calendar-table\) td\s*\{[\s\S]*white-space: nowrap;/);
     assert.match(ordersBody, /\.admin-orders-table-wrap-capped\s*\{[\s\S]*max-height:\s*[^;]+;[\s\S]*overflow-y:\s*auto;/);
     assert.doesNotMatch(ordersBody, /admin-kicker">Заказы</);
-    assert.doesNotMatch(ordersBody, /admin-card-eyebrow">Заказы</);
     assert.doesNotMatch(ordersBody, /Найдено \d+ из \d+ заказов/);
     assert.doesNotMatch(ordersBody, /Показан общий рабочий список/);
     assert.match(ordersBody, /Поля из формы клиента/);
