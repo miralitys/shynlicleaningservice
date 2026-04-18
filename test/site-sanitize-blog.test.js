@@ -120,6 +120,14 @@ test("renders featured dust article links on /blog/dust", () => {
   assert.match(html, /how-to-clean-ceiling-fans-without-dust-falling/);
 });
 
+test("renders featured kitchen article links on /blog/kitchen", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/kitchen");
+
+  assert.match(html, /how-to-clean-greasy-kitchen-cabinets/);
+  assert.match(html, /how-to-clean-stainless-steel-appliances-without-streaks/);
+  assert.match(html, /how-to-clean-microwave-inside-fast/);
+});
+
 test("renders featured checklist article link on /blog/checklists", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/checklists");
 
@@ -272,6 +280,26 @@ test("renders all dust articles with live route structure and long-form content"
   const dustArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/dust");
 
   for (const article of dustArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1400,
+      `Expected ${article.path} to exceed 1400 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all kitchen articles with live route structure and long-form content", () => {
+  const kitchenArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/kitchen");
+
+  for (const article of kitchenArticles) {
     const html = sanitizeHtml(sourceHtml, article.path);
 
     assert.match(
