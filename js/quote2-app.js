@@ -952,7 +952,7 @@
     elements.successAddress.textContent = addressLabel;
     elements.successTotal.textContent = formatCurrency(calculatorData.totalPrice || 0);
     elements.successNote.textContent =
-      "If you're ready, you can continue to payment now or come back to this quote later.";
+      "You can pay now or after your cleaning is complete.";
 
     elements.payNowButton.disabled = !state.latestCheckoutData.quoteToken;
     elements.googleCalendarButton.href = buildGoogleCalendarUrl(calculatorData, serviceLabel);
