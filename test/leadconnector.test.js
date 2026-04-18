@@ -847,10 +847,7 @@ test("loads SMS history by scanning additional contact pages when the phone matc
       body: options.body,
     });
 
-    if (
-      String(url).includes("/contacts/?locationId=loc-1&limit=100&query=4244199102") &&
-      options.method === "GET"
-    ) {
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=") && options.method === "GET") {
       return createResponse(200, {
         contacts: [],
       });
