@@ -5179,6 +5179,97 @@ test("allows admin users marked as employees into staff scheduling and onboardin
   }
 });
 
+test("persists an unchecked assignable-orders flag for non-admin users", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-user-assignable-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Marta Greene",
+        role: "manager",
+        status: "active",
+        staffStatus: "active",
+        email: "marta.manager@example.com",
+        phone: "3125550198",
+        address: "500 Executive Dr, Naperville, IL 60563",
+        notes: "Can coordinate the full team",
+        password: "ManagerPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+
+    const initialUsersPayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const managerUser = initialUsersPayload.users[0];
+    assert.equal(managerUser.isEmployee, true);
+
+    const updateUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update_user",
+        userId: managerUser.id,
+        staffId: managerUser.staffId,
+        name: "Marta Greene",
+        role: "manager",
+        isEmployee: "0",
+        status: "active",
+        staffStatus: "active",
+        email: "marta.manager@example.com",
+        phone: "3125550198",
+        address: "500 Executive Dr, Naperville, IL 60563",
+        notes: "No longer assignable",
+        password: "",
+      }),
+    });
+    assert.equal(updateUserResponse.status, 303);
+    assert.match(updateUserResponse.headers.get("location") || "", /notice=user-updated/);
+
+    const updatedUsersPayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(updatedUsersPayload.users[0].isEmployee, false);
+
+    const settingsResponse = await fetch(`${started.baseUrl}/admin/settings?section=users`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const settingsBody = await settingsResponse.text();
+    assert.equal(settingsResponse.status, 200);
+
+    const dialogMatch = settingsBody.match(
+      new RegExp(
+        `id="admin-settings-user-dialog-${escapeRegex(managerUser.id)}"[\\s\\S]*?<\\/dialog>`
+      )
+    );
+    assert.ok(dialogMatch);
+    assert.doesNotMatch(dialogMatch[0], /name="isEmployee" value="1" checked/);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("gives managers the same admin workspace access as admins", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-manager-role-route-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
