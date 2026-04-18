@@ -520,6 +520,7 @@ const ALERT_P99_MS = Number(process.env.ALERT_P99_MS || 1000);
 const ALERT_5XX_RATE = Number(process.env.ALERT_5XX_RATE || 0.01);
 const ALERT_EVENT_LOOP_P95_MS = Number(process.env.ALERT_EVENT_LOOP_P95_MS || 100);
 const STRIPE_CHECKOUT_ENDPOINT = "/api/stripe/checkout-session";
+const STRIPE_WEBHOOK_ENDPOINT = "/api/stripe/webhook";
 const QUOTE_REQUEST_ENDPOINT = "/api/quote/request";
 const QUOTE_SUBMIT_ENDPOINT = "/api/quote/submit";
 const MAX_JSON_BODY_BYTES = Number(process.env.MAX_JSON_BODY_BYTES || 64 * 1024);
@@ -693,6 +694,7 @@ const {
   applyLeadEntryUpdates,
   applyClientEntryUpdates,
   applyOrderEntryUpdates,
+  applyPaymentEntryUpdates,
   buildRecurringOrderSubmission,
   buildAdminQrMarkup,
   buildAdminRedirectPath,
@@ -1070,13 +1072,14 @@ const handleAccountRequest = createAccountRequestHandler({
   writeHtmlWithTiming,
 });
 
-const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiHandlers({
+const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest, handleStripeWebhookRequest } = createApiHandlers({
   MAX_JSON_BODY_BYTES,
   QUOTE_PUBLIC_PATH,
   QUOTE_PUBLIC_PATHS,
   QUOTE_SUBMIT_ENDPOINT,
   SITE_ORIGIN,
   STRIPE_CHECKOUT_ENDPOINT,
+  STRIPE_WEBHOOK_ENDPOINT,
   STRIPE_MAX_AMOUNT_CENTS,
   STRIPE_MIN_AMOUNT_CENTS,
   QuoteTokenError,
@@ -1089,6 +1092,7 @@ const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiH
   getStripeClient,
   getStripeReturnOrigin,
   normalizeString,
+  readBufferBody,
   readJsonBody,
   verifyQuoteToken,
   writeHeadWithTiming,
@@ -1156,10 +1160,12 @@ const handleSiteRequest = createSiteRequestHandler({
   REDIRECT_ROUTES,
   SITE_DIR,
   STRIPE_CHECKOUT_ENDPOINT,
+  STRIPE_WEBHOOK_ENDPOINT,
   handleAccountRequest,
   handleAdminRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
+  handleStripeWebhookRequest,
   normalizeRoute,
   orderPolicyAcceptance,
   siteStaticHelpers,
@@ -1208,6 +1214,7 @@ async function main() {
     applyLeadEntryUpdates,
     applyClientEntryUpdates,
     applyOrderEntryUpdates,
+    applyPaymentEntryUpdates,
     createSupabaseQuoteOpsClient,
     normalizeString,
   });

@@ -670,3 +670,70 @@ test("falls back to scanning contacts by phone digits when query search misses t
   assert.equal(smsPayload.contactId, "contact-phone-scan-9102");
   assert.equal(smsPayload.toNumber, "+14244199102");
 });
+
+test("loads inbound and outbound SMS history from a conversation", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+    });
+
+    if (String(url).includes("/conversations/conversation-555/messages") && options.method === "GET") {
+      return createResponse(200, {
+        messages: [
+          {
+            id: "message-outbound-1",
+            type: "TYPE_SMS",
+            direction: "outbound",
+            body: "Your booking is confirmed.",
+            dateAdded: "2026-04-18T14:00:00.000Z",
+            conversationId: "conversation-555",
+            phone: "+13125550100",
+          },
+          {
+            id: "message-inbound-1",
+            type: "TYPE_SMS",
+            direction: "inbound",
+            body: "Thank you!",
+            dateAdded: "2026-04-18T14:05:00.000Z",
+            conversationId: "conversation-555",
+            phone: "+13125550100",
+          },
+        ],
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch,
+  });
+
+  const result = await client.getSmsHistory({
+    contactId: "contact-555",
+    phone: "312-555-0100",
+    conversationId: "conversation-555",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-555");
+  assert.equal(result.phoneE164, "+13125550100");
+  assert.equal(result.history.length, 2);
+  assert.equal(result.history[0].direction, "inbound");
+  assert.equal(result.history[0].source, "client");
+  assert.equal(result.history[0].message, "Thank you!");
+  assert.equal(result.history[1].direction, "outbound");
+  assert.equal(result.history[1].source, "manual");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[0].headers.Version, "2021-04-15");
+});

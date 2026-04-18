@@ -1,12 +1,13 @@
 "use strict";
 
+const crypto = require("node:crypto");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createAdminDomainHelpers } = require("../lib/admin/domain");
-const { hashPassword, loadAdminConfig } = require("../lib/admin-auth");
+const { generateTotpCode, hashPassword, loadAdminConfig } = require("../lib/admin-auth");
 const { createFetchStub, createSmtpTestServer, startServer, stopServer } = require("./server-test-helpers");
 
 const SIGNATURE_DATA_URL =
@@ -113,14 +114,48 @@ async function createAdminSession(baseUrl, config) {
   });
 
   assert.equal(loginResponse.status, 303);
-  assert.equal(loginResponse.headers.get("location"), "/admin");
-
   const loginCookies = getSetCookies(loginResponse);
+  if ((loginResponse.headers.get("location") || "") === "/admin/2fa") {
+    const challengeCookieValue = getCookieValue(loginCookies, "shynli_admin_challenge");
+    assert.ok(challengeCookieValue);
+
+    const twoFactorResponse = await fetch(`${baseUrl}/admin/2fa`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_challenge=${challengeCookieValue}`,
+      },
+      body: new URLSearchParams({
+        code: generateTotpCode(config),
+      }),
+    });
+
+    assert.equal(twoFactorResponse.status, 303);
+    assert.equal(twoFactorResponse.headers.get("location"), "/admin");
+    const twoFactorCookies = getSetCookies(twoFactorResponse);
+    const sessionCookie = twoFactorCookies.find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
+    assert.match(sessionCookie, /Path=\//);
+    const sessionCookieValue = getCookieValue(twoFactorCookies, "shynli_admin_session");
+    assert.ok(sessionCookieValue);
+    return sessionCookieValue;
+  }
+
+  assert.equal(loginResponse.headers.get("location"), "/admin");
   const sessionCookie = loginCookies.find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
   assert.match(sessionCookie, /Path=\//);
   const sessionCookieValue = getCookieValue(loginCookies, "shynli_admin_session");
   assert.ok(sessionCookieValue);
   return sessionCookieValue;
+}
+
+function createStripeWebhookSignature(payload, secret, timestamp = Math.floor(Date.now() / 1000)) {
+  const body = typeof payload === "string" ? payload : JSON.stringify(payload);
+  const signature = crypto
+    .createHmac("sha256", secret)
+    .update(`${timestamp}.${body}`)
+    .digest("hex");
+  return `t=${timestamp},v1=${signature}`;
 }
 
 async function submitQuote(baseUrl, options) {
@@ -377,6 +412,174 @@ test("completes the admin login flow without a second factor", async () => {
     assert.equal(logoutResponse.headers.get("location"), "/admin/login");
   } finally {
     await stopServer(started.child);
+  }
+});
+
+test("requires a second factor when ADMIN_TOTP_SECRET is configured", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_TOTP_SECRET: "JBSWY3DPEHPK3PXP",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const loginPageResponse = await fetch(`${started.baseUrl}/admin/login`);
+    const loginPageBody = await loginPageResponse.text();
+    assert.equal(loginPageResponse.status, 200);
+    assert.match(loginPageBody, /код из приложения/i);
+
+    const loginResponse = await fetch(`${started.baseUrl}/admin/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: config.email,
+        password: "1HKLOR1!",
+      }),
+    });
+
+    assert.equal(loginResponse.status, 303);
+    assert.equal(loginResponse.headers.get("location"), "/admin/2fa");
+    const challengeCookieValue = getCookieValue(getSetCookies(loginResponse), "shynli_admin_challenge");
+    assert.ok(challengeCookieValue);
+    assert.equal(getCookieValue(getSetCookies(loginResponse), "shynli_admin_session"), "");
+
+    const twoFactorPageResponse = await fetch(`${started.baseUrl}/admin/2fa`, {
+      headers: {
+        cookie: `shynli_admin_challenge=${challengeCookieValue}`,
+      },
+    });
+    const twoFactorPageBody = await twoFactorPageResponse.text();
+    assert.equal(twoFactorPageResponse.status, 200);
+    assert.match(twoFactorPageBody, /Подтверждение входа/i);
+    assert.match(twoFactorPageBody, /Шаг 2 из 2/i);
+
+    const twoFactorResponse = await fetch(`${started.baseUrl}/admin/2fa`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_challenge=${challengeCookieValue}`,
+      },
+      body: new URLSearchParams({
+        code: generateTotpCode(config),
+      }),
+    });
+
+    assert.equal(twoFactorResponse.status, 303);
+    assert.equal(twoFactorResponse.headers.get("location"), "/admin");
+    const sessionCookieValue = getCookieValue(getSetCookies(twoFactorResponse), "shynli_admin_session");
+    assert.ok(sessionCookieValue);
+
+    const dashboardResponse = await fetch(`${started.baseUrl}/admin`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    assert.equal(dashboardResponse.status, 200);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
+test("reconciles Stripe checkout completion into order payment state without touching site UI", async () => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const requestId = `stripe-webhook-order-${uniqueSuffix}`;
+  const customerName = `Webhook Customer ${uniqueSuffix}`;
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-stripe-webhook-order",
+        },
+      },
+    },
+  ]);
+  const webhookSecret = "whsec_test_order_payment";
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    STRIPE_WEBHOOK_SECRET: webhookSecret,
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId,
+      fullName: customerName,
+      phone: "3125550911",
+      email: "paid.customer@example.com",
+      fullAddress: "400 Payment Ave, Naperville, IL 60540",
+      serviceType: "deep",
+      selectedDate: "2026-04-24",
+      selectedTime: "10:30",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      customerName
+    );
+
+    const webhookPayload = {
+      id: "evt_checkout_completed_test",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_paid_order",
+          client_reference_id: requestId,
+          metadata: {
+            request_id: requestId,
+          },
+          payment_intent: "pi_test_paid_order",
+          amount_total: 20500,
+          currency: "usd",
+          payment_status: "paid",
+          customer_details: {
+            email: "paid.customer@example.com",
+          },
+        },
+      },
+    };
+    const webhookBody = JSON.stringify(webhookPayload);
+    const webhookResponse = await fetch(`${started.baseUrl}/api/stripe/webhook`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "stripe-signature": createStripeWebhookSignature(webhookBody, webhookSecret),
+      },
+      body: webhookBody,
+    });
+    assert.equal(webhookResponse.status, 200);
+
+    const focusedOrderResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const focusedOrderBody = await focusedOrderResponse.text();
+    assert.equal(focusedOrderResponse.status, 200);
+    assert.match(focusedOrderBody, /<option value="paid" selected>Paid/);
+    assert.match(focusedOrderBody, /<option value="card" selected>Card/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
   }
 });
 
@@ -3240,6 +3443,136 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
       status: "pending",
       toNumber: "+14244199102",
     });
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
+test("loads inbound SMS replies into the order dialog history", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-sms-order-321",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        id: "message-sms-order-321",
+        conversationId: "conversation-sms-order-321",
+      },
+    },
+    {
+      method: "GET",
+      match: "/conversations/conversation-sms-order-321/messages",
+      status: 200,
+      body: {
+        messages: [
+          {
+            id: "message-sms-order-321",
+            type: "TYPE_SMS",
+            direction: "outbound",
+            body: "Please confirm your order.",
+            dateAdded: "2026-04-18T14:00:00.000Z",
+            conversationId: "conversation-sms-order-321",
+            phone: "+14244199102",
+          },
+          {
+            id: "message-sms-order-reply-321",
+            type: "TYPE_SMS",
+            direction: "inbound",
+            body: "Yes, confirmed.",
+            dateAdded: "2026-04-18T14:05:00.000Z",
+            conversationId: "conversation-sms-order-321",
+            phone: "+14244199102",
+          },
+        ],
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "sms-order-reply-request-1",
+      fullName: "Order SMS Reply Lead",
+      phone: "(424) 419-9102",
+      email: "sms.reply@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-04-20",
+      selectedTime: "10:30",
+      fullAddress: "901 Follow Up Drive, Bolingbrook, IL 60440",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "sms-order-reply-request-1"
+    );
+    const returnTo = `/admin/orders?order=${encodeURIComponent(entryId)}`;
+
+    const sendSmsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-order-sms",
+        entryId,
+        message: "Please confirm your order.",
+        returnTo,
+      }),
+    });
+
+    assert.equal(sendSmsResponse.status, 200);
+
+    const historyResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "load-order-sms-history",
+        entryId,
+        returnTo,
+      }),
+    });
+
+    assert.equal(historyResponse.status, 200);
+    const historyPayload = await historyResponse.json();
+    assert.equal(historyPayload.ok, true);
+    assert.equal(historyPayload.sms.historyCountLabel, "2 SMS");
+    assert.equal(historyPayload.sms.history.length, 2);
+    assert.equal(historyPayload.sms.history[0].direction, "inbound");
+    assert.equal(historyPayload.sms.history[0].directionLabel, "Входящее");
+    assert.equal(historyPayload.sms.history[0].sourceLabel, "Клиент");
+    assert.equal(historyPayload.sms.history[0].message, "Yes, confirmed.");
+    assert.equal(historyPayload.sms.history[1].message, "Please confirm your order.");
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
