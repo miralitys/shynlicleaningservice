@@ -93,7 +93,8 @@ test("renders featured checklist article link on /blog/checklists", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/checklists");
 
   assert.match(html, /house-cleaning-checklist-for-busy-homeowners/);
-  assert.match(html, /Start with the strongest guide in this topic\./);
+  assert.match(html, /weekly-cleaning-checklist-for-a-3-bedroom-house/);
+  assert.match(html, /Start with the strongest guides in this topic\./);
 });
 
 test("renders long-form checklist article route with more than 3000 words", () => {
@@ -123,5 +124,30 @@ test("renders long-form checklist article route with more than 3000 words", () =
   assert.ok(
     getWordCount(html) > 3000,
     `Expected long-form article to exceed 3000 words, got ${getWordCount(html)}`
+  );
+});
+
+test("renders second checklist article route with printable weekly plan", () => {
+  const html = sanitizeHtml(
+    sourceHtml,
+    "/blog/checklists/weekly-cleaning-checklist-for-a-3-bedroom-house"
+  );
+
+  assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Checklists<\/span>/);
+  assert.match(html, /<h1 class="shynli-blog-article__title">Weekly Cleaning Checklist for a 3 Bedroom House<\/h1>/);
+  assert.match(html, /Quick Answer: Weekly Cleaning Checklist for a 3 Bedroom House/);
+  assert.match(html, /Printable Weekly Cleaning Checklist/);
+  assert.match(
+    html,
+    /class="shynli-blog-article__toc-link" href="\/blog\/checklists\/weekly-cleaning-checklist-for-a-3-bedroom-house#quick-answer" data-target-id="quick-answer"/
+  );
+  assert.match(html, /Need help resetting a 3 bedroom house every week\?/);
+  assert.match(html, /What to Clean Every Week in a 3 Bedroom House/);
+  assert.match(html, /Weekly Bedroom Cleaning Checklist/);
+  assert.match(html, /Weekly Bathroom Cleaning Checklist/);
+  assert.match(html, /data-blog-print/);
+  assert.ok(
+    getWordCount(html) > 2800,
+    `Expected second long-form article to exceed 2800 words, got ${getWordCount(html)}`
   );
 });
