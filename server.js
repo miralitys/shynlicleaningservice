@@ -761,6 +761,7 @@ const {
 });
 
 let usersStore = null;
+let leadManagersStaffStore = null;
 
 const orderPolicyAcceptance = createOrderPolicyAcceptanceService({
   env: process.env,
@@ -1035,6 +1036,46 @@ const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiH
   createQuoteToken,
   enforcePostRateLimit,
   getLeadConnectorClient,
+  listLeadManagers: async () => {
+    if (!usersStore || typeof usersStore.getSnapshot !== "function") {
+      return [];
+    }
+
+    const [usersSnapshot, staffSnapshot] = await Promise.all([
+      usersStore.getSnapshot(),
+      leadManagersStaffStore && typeof leadManagersStaffStore.getSnapshot === "function"
+        ? leadManagersStaffStore.getSnapshot()
+        : Promise.resolve({ staff: [] }),
+    ]);
+
+    const staffNameById = new Map(
+      (Array.isArray(staffSnapshot && staffSnapshot.staff) ? staffSnapshot.staff : [])
+        .map((record) => [
+          normalizeString(record && record.id, 120),
+          normalizeString(record && record.name, 200),
+        ])
+        .filter(([id, name]) => Boolean(id && name))
+    );
+
+    return (Array.isArray(usersSnapshot && usersSnapshot.users) ? usersSnapshot.users : [])
+      .filter((user) => {
+        const role = normalizeString(user && user.role, 32).toLowerCase();
+        const status = normalizeString(user && user.status, 32).toLowerCase();
+        return status === "active" && role === "manager";
+      })
+      .map((user) => {
+        const id = normalizeString(user && user.id, 120);
+        const email = normalizeString(user && user.email, 250).toLowerCase();
+        const staffId = normalizeString(user && user.staffId, 120);
+        return {
+          id,
+          email,
+          name: staffNameById.get(staffId) || email || "Менеджер",
+        };
+      })
+      .filter((manager) => Boolean(manager.id))
+      .sort((left, right) => left.name.localeCompare(right.name, "ru"));
+  },
   getStripeClient,
   getStripeReturnOrigin,
   normalizeString,
@@ -1176,6 +1217,7 @@ async function main() {
     env: process.env,
     fetch: global.fetch,
   });
+  leadManagersStaffStore = staffStore;
   const orderMediaStorage = createAdminOrderMediaStorage({
     env: process.env,
     fetch: global.fetch,

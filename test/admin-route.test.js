@@ -1020,6 +1020,7 @@ test("creates staff members and assigns them to orders through the staff workspa
 
 test("connects a cleaner to Google Calendar and syncs confirmed assignments into SHYNLI Work", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-google-calendar-route-"));
+  const assignmentDate = getChicagoDateValue(1);
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -1104,7 +1105,7 @@ test("connects a cleaner to Google Calendar and syncs confirmed assignments into
       phone: "312-555-0198",
       email: "emily@example.com",
       serviceType: "deep",
-      selectedDate: "2026-04-18",
+      selectedDate: assignmentDate,
       selectedTime: "09:00",
       fullAddress: "215 North Elm Street, Naperville, IL 60540",
     });
@@ -1191,7 +1192,7 @@ test("connects a cleaner to Google Calendar and syncs confirmed assignments into
     assert.equal(assignResponse.status, 303);
     assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
 
-    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-04-18`, {
+    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=${encodeURIComponent(assignmentDate)}`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -1228,6 +1229,8 @@ test("connects a cleaner to Google Calendar and syncs confirmed assignments into
 
 test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavailable", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-google-calendar-conflict-"));
+  const assignmentDate = getChicagoDateValue(1);
+  const nextDay = getChicagoDateValue(2);
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -1281,8 +1284,8 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
           {
             id: "dayoff-1",
             summary: "Day off",
-            start: { date: "2026-04-18" },
-            end: { date: "2026-04-19" },
+            start: { date: assignmentDate },
+            end: { date: nextDay },
           },
         ],
       },
@@ -1310,7 +1313,7 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
       phone: "312-555-0112",
       email: "sophia@example.com",
       serviceType: "deep",
-      selectedDate: "2026-04-18",
+      selectedDate: assignmentDate,
       selectedTime: "10:00",
       fullAddress: "742 Cedar Avenue, Aurora, IL 60506",
     });
@@ -1386,7 +1389,7 @@ test("blocks assignment when a connected cleaner marked day off in SHYNLI Unavai
     assert.match(assignResponse.headers.get("location") || "", /notice=assignment-conflict/);
     assert.match(assignResponse.headers.get("location") || "", /staff=Diana/);
 
-    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-04-18`, {
+    const calendarPageResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=${encodeURIComponent(assignmentDate)}`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
