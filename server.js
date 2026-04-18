@@ -234,6 +234,8 @@ const ORDER_STATUS_VALUES = new Set(["new", "scheduled", "in-progress", "complet
 const ORDER_FREQUENCY_VALUES = new Set(["weekly", "biweekly", "monthly"]);
 const ORDER_ASSIGNMENT_VALUES = new Set(["all", "assigned", "unassigned"]);
 const QUOTE_PUBLIC_PATH = "/quote";
+const QUOTE_V2_PUBLIC_PATH = "/quote2";
+const QUOTE_PUBLIC_PATHS = new Set([QUOTE_PUBLIC_PATH, QUOTE_V2_PUBLIC_PATH]);
 const REDIRECT_ROUTES = new Map([
   ["/home-simple", "/"],
   ["/действуй", "/quote"],
@@ -249,6 +251,7 @@ const NOINDEX_ROUTES = new Set([
   "/home-calculator",
   "/oauth/callback",
   "/quote",
+  "/quote2",
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
 ]);
@@ -263,6 +266,7 @@ const BREADCRUMB_LABELS = new Map([
   ["/pricing", "Pricing"],
   ["/privacy-policy", "Privacy Policy"],
   ["/quote", "Quote"],
+  ["/quote2", "Quote 2"],
   ["/service-areas", "Service Areas"],
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
@@ -295,6 +299,16 @@ const ROUTE_META_OVERRIDES = {
     robots: "noindex,nofollow",
   },
   "/quote": {
+    robots: "noindex,nofollow",
+  },
+  "/quote2": {
+    title: "Instant Cleaning Quote Preview | Shynli Cleaning",
+    description:
+      "Preview the new Shynli Cleaning quote experience with live pricing, scheduling, and CRM-connected submission.",
+    ogTitle: "Instant Cleaning Quote Preview | Shynli Cleaning",
+    ogDescription:
+      "Test the next Shynli Cleaning quote flow with live pricing, scheduling, and CRM-connected submission.",
+    canonical: `${SITE_ORIGIN}/quote2`,
     robots: "noindex,nofollow",
   },
 };
@@ -837,6 +851,7 @@ const handleAccountRequest = createAccountRequestHandler({
 const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiHandlers({
   MAX_JSON_BODY_BYTES,
   QUOTE_PUBLIC_PATH,
+  QUOTE_PUBLIC_PATHS,
   QUOTE_SUBMIT_ENDPOINT,
   SITE_ORIGIN,
   STRIPE_CHECKOUT_ENDPOINT,

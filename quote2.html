@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quote Preview</title>
+    <meta property="og:url" content="/quote2" />
+    <meta property="og:title" content="Quote Preview" />
+    <meta property="og:description" content="" />
+    <meta property="og:type" content="website" />
+    <link rel="canonical" href="/quote2" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500;1,600;1,700;1,800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/quote2.css" />
+  </head>
+  <body class="quote2-body">
+    <div class="quote2-page">
+      <header class="quote2-topbar">
+        <a class="quote2-brand" href="/">
+          <span class="quote2-brand-mark">S</span>
+          <span class="quote2-brand-copy">
+            <span class="quote2-kicker">SHYNLI CLEANING</span>
+            <span class="quote2-brand-title">Quote Preview</span>
+          </span>
+        </a>
+        <a class="quote2-link" href="/quote">Open current /quote</a>
+      </header>
+
+      <div id="quote2GlobalNotice" class="quote2-global-notice" aria-live="polite"></div>
+
+      <main class="quote2-shell">
+        <section class="quote2-hero quote2-card">
+          <div class="quote2-hero-copy">
+            <p class="quote2-kicker">CRM STYLE PREVIEW</p>
+            <h1 class="quote2-title">Request your cleaning quote in the new workspace format.</h1>
+            <p class="quote2-subtitle">
+              This preview sends the same real quote submission into the CRM, but through the new
+              `/quote2` experience so we can test layout, pricing, scheduling, and checkout safely.
+            </p>
+            <div class="quote2-pill-row">
+              <span class="quote2-pill">Live pricing</span>
+              <span class="quote2-pill">CRM-connected</span>
+              <span class="quote2-pill">Stripe-ready</span>
+              <span class="quote2-pill">Google Places</span>
+            </div>
+          </div>
+          <aside class="quote2-summary quote2-card quote2-summary-card" id="quote2SummaryCard">
+            <p class="quote2-kicker">INSTANT ESTIMATE</p>
+            <p class="quote2-summary-price" id="quote2SummaryTotal">$135</p>
+            <div class="quote2-summary-stack">
+              <div class="quote2-summary-row">
+                <span class="quote2-summary-label">Service</span>
+                <strong id="quote2SummaryService">Regular Cleaning</strong>
+              </div>
+              <div class="quote2-summary-row">
+                <span class="quote2-summary-label">Visit cadence</span>
+                <strong id="quote2SummaryFrequency">Biweekly</strong>
+              </div>
+              <div class="quote2-summary-row">
+                <span class="quote2-summary-label">Home profile</span>
+                <strong id="quote2SummaryHome">2 beds, 1 bath</strong>
+              </div>
+              <div class="quote2-summary-row">
+                <span class="quote2-summary-label">Estimated duration</span>
+                <strong id="quote2SummaryDuration">2h 45m - 3h</strong>
+              </div>
+              <div class="quote2-summary-row">
+                <span class="quote2-summary-label">Requested time</span>
+                <strong id="quote2SummarySchedule">Not selected yet</strong>
+              </div>
+              <div class="quote2-summary-row">
+                <span class="quote2-summary-label">Service address</span>
+                <strong id="quote2SummaryAddress">Add an address to continue</strong>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section id="quote2SuccessCard" class="quote2-card quote2-success-card" hidden>
+          <p class="quote2-kicker">REQUEST RECEIVED</p>
+          <h2 class="quote2-section-title">Thank you. Your request has been sent.</h2>
+          <p class="quote2-section-copy">
+            The CRM has the new quote already. You can continue to payment now, or keep this page
+            open while we review the request.
+          </p>
+          <div class="quote2-success-grid">
+            <div class="quote2-success-panel">
+              <div class="quote2-summary-stack quote2-summary-stack-compact">
+                <div class="quote2-summary-row">
+                  <span class="quote2-summary-label">Service</span>
+                  <strong id="quote2SuccessService">Regular Cleaning</strong>
+                </div>
+                <div class="quote2-summary-row">
+                  <span class="quote2-summary-label">Requested time</span>
+                  <strong id="quote2SuccessSchedule">Pending</strong>
+                </div>
+                <div class="quote2-summary-row">
+                  <span class="quote2-summary-label">Address</span>
+                  <strong id="quote2SuccessAddress">Pending</strong>
+                </div>
+                <div class="quote2-summary-row">
+                  <span class="quote2-summary-label">Estimate</span>
+                  <strong id="quote2SuccessTotal">$0</strong>
+                </div>
+              </div>
+            </div>
+            <div class="quote2-success-panel">
+              <p class="quote2-success-note" id="quote2SuccessNote">
+                You can finish checkout now or return later from the same quote flow.
+              </p>
+              <div class="quote2-inline-actions">
+                <button class="quote2-button" id="quote2PayNowButton" type="button">Pay now</button>
+                <a class="quote2-button quote2-button-secondary" id="quote2GoogleCalendarButton" href="#" target="_blank" rel="noreferrer">Google Calendar</a>
+                <a class="quote2-button quote2-button-secondary" id="quote2AppleCalendarButton" href="#" download="shynli-cleaning.ics">Apple Calendar</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <form id="quote2Form" class="quote2-form-shell" novalidate>
+          <section class="quote2-card">
+            <div class="quote2-section-head">
+              <p class="quote2-kicker">STEP 1</p>
+              <h2 class="quote2-section-title">Contact details</h2>
+              <p class="quote2-section-copy">We need your name and phone to create the request in the CRM. Email is optional.</p>
+            </div>
+            <div class="quote2-field-grid quote2-field-grid-three">
+              <label class="quote2-field">
+                <span>Full name</span>
+                <input id="quote2FullName" name="fullName" class="quote2-input" type="text" autocomplete="name" placeholder="Emily Johnson" required />
+              </label>
+              <label class="quote2-field">
+                <span>Phone</span>
+                <input id="quote2Phone" name="phone" class="quote2-input" type="tel" autocomplete="tel" placeholder="+1 (630) 555-0102" required />
+              </label>
+              <label class="quote2-field">
+                <span>Email (optional)</span>
+                <input id="quote2Email" name="email" class="quote2-input" type="email" autocomplete="email" placeholder="emily@example.com" />
+              </label>
+            </div>
+          </section>
+
+          <section class="quote2-card">
+            <div class="quote2-section-head">
+              <p class="quote2-kicker">STEP 2</p>
+              <h2 class="quote2-section-title">Cleaning profile</h2>
+              <p class="quote2-section-copy">Choose the service, home size, and extras. The estimate updates instantly.</p>
+            </div>
+
+            <div class="quote2-service-grid" id="quote2ServiceButtons" role="radiogroup" aria-label="Service type">
+              <button class="quote2-service-card is-active" type="button" data-service="regular">
+                <span class="quote2-service-label">Regular Cleaning</span>
+                <span class="quote2-service-copy">Best for recurring maintenance visits.</span>
+              </button>
+              <button class="quote2-service-card" type="button" data-service="deep">
+                <span class="quote2-service-label">Deep Cleaning</span>
+                <span class="quote2-service-copy">Reset the space before ongoing service.</span>
+              </button>
+              <button class="quote2-service-card" type="button" data-service="moving">
+                <span class="quote2-service-label">Move In/Out</span>
+                <span class="quote2-service-copy">Extra detail for empty or transitioning homes.</span>
+              </button>
+            </div>
+            <input id="quote2ServiceType" name="serviceType" type="hidden" value="regular" />
+
+            <div class="quote2-field-grid quote2-field-grid-four">
+              <label class="quote2-field" id="quote2FrequencyField">
+                <span>Frequency</span>
+                <select id="quote2Frequency" name="frequency" class="quote2-input">
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly" selected>Biweekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </label>
+              <label class="quote2-field">
+                <span>Bedrooms</span>
+                <select id="quote2Rooms" name="rooms" class="quote2-input">
+                  <option value="1">1 bedroom</option>
+                  <option value="2" selected>2 bedrooms</option>
+                  <option value="3">3 bedrooms</option>
+                  <option value="4">4 bedrooms</option>
+                  <option value="5">5 bedrooms</option>
+                </select>
+              </label>
+              <label class="quote2-field">
+                <span>Bathrooms</span>
+                <select id="quote2Bathrooms" name="bathrooms" class="quote2-input">
+                  <option value="1" selected>1 bathroom</option>
+                  <option value="1.5">1.5 bathrooms</option>
+                  <option value="2">2 bathrooms</option>
+                  <option value="2.5">2.5 bathrooms</option>
+                  <option value="3">3 bathrooms</option>
+                  <option value="3.5">3.5 bathrooms</option>
+                  <option value="4">4 bathrooms</option>
+                  <option value="4.5">4.5 bathrooms</option>
+                  <option value="5">5 bathrooms</option>
+                  <option value="5.5">5.5 bathrooms</option>
+                </select>
+              </label>
+              <label class="quote2-field">
+                <span>Square footage</span>
+                <select id="quote2SquareFeet" name="squareMeters" class="quote2-input">
+                  <option value="0" selected>Up to 1,200 sq ft</option>
+                  <option value="1600">1,201 - 1,600 sq ft</option>
+                  <option value="2250">1,601 - 2,250 sq ft</option>
+                  <option value="2750">2,251 - 2,750 sq ft</option>
+                  <option value="3250">2,751 - 3,250 sq ft</option>
+                  <option value="3750">3,251 - 3,750 sq ft</option>
+                  <option value="4500">3,751 - 4,500 sq ft</option>
+                  <option value="5500">4,501 - 5,500 sq ft</option>
+                  <option value="6500">5,501+ sq ft</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="quote2-field-grid quote2-field-grid-two">
+              <label class="quote2-field">
+                <span>Include basement</span>
+                <select id="quote2BasementCleaning" name="basementCleaning" class="quote2-input">
+                  <option value="no" selected>No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </label>
+              <label class="quote2-field">
+                <span>Pets in the home</span>
+                <select id="quote2HasPets" name="hasPets" class="quote2-input">
+                  <option value="" selected>Not specified</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="quote2-card">
+            <div class="quote2-section-head">
+              <p class="quote2-kicker">STEP 3</p>
+              <h2 class="quote2-section-title">Add-ons</h2>
+              <p class="quote2-section-copy">Select any one-time extras you want included in the estimate.</p>
+            </div>
+
+            <div class="quote2-addon-grid" id="quote2FixedServices">
+              <label class="quote2-addon-item">
+                <input type="checkbox" name="services" value="ovenCleaning" />
+                <span class="quote2-addon-copy">
+                  <strong>Inside oven</strong>
+                  <small data-service-price="ovenCleaning">+$45</small>
+                </span>
+              </label>
+              <label class="quote2-addon-item">
+                <input type="checkbox" name="services" value="refrigeratorCleaning" />
+                <span class="quote2-addon-copy">
+                  <strong>Inside fridge</strong>
+                  <small data-service-price="refrigeratorCleaning">+$45</small>
+                </span>
+              </label>
+              <label class="quote2-addon-item">
+                <input type="checkbox" name="services" value="baseboardCleaning" />
+                <span class="quote2-addon-copy">
+                  <strong>Wet baseboards</strong>
+                  <small data-service-price="baseboardCleaning">+$22</small>
+                </span>
+              </label>
+              <label class="quote2-addon-item">
+                <input type="checkbox" name="services" value="doorsCleaning" />
+                <span class="quote2-addon-copy">
+                  <strong>Doors</strong>
+                  <small data-service-price="doorsCleaning">+$22</small>
+                </span>
+              </label>
+              <label class="quote2-addon-item">
+                <input type="checkbox" name="services" value="insideCabinets" />
+                <span class="quote2-addon-copy">
+                  <strong>Inside cabinets</strong>
+                  <small data-service-price="insideCabinets">+$45</small>
+                </span>
+              </label>
+              <label class="quote2-addon-item">
+                <input type="checkbox" name="services" value="rangeHood" />
+                <span class="quote2-addon-copy">
+                  <strong>Range hood</strong>
+                  <small data-service-price="rangeHood">+$22</small>
+                </span>
+              </label>
+              <label class="quote2-addon-item">
+                <input type="checkbox" name="services" value="furniturePolishing" />
+                <span class="quote2-addon-copy">
+                  <strong>Wood furniture polishing</strong>
+                  <small data-service-price="furniturePolishing">+$20</small>
+                </span>
+              </label>
+            </div>
+
+            <div class="quote2-quantity-grid">
+              <div class="quote2-quantity-item" data-quantity-service="interiorWindowsCleaning">
+                <div class="quote2-quantity-copy">
+                  <strong>Interior windows</strong>
+                  <small>$6 each</small>
+                </div>
+                <div class="quote2-stepper">
+                  <button type="button" class="quote2-stepper-button" data-stepper-target="quote2InteriorWindowsCleaning" data-stepper-direction="-1">-</button>
+                  <input id="quote2InteriorWindowsCleaning" name="interiorWindowsCleaning" class="quote2-stepper-input" type="number" min="0" value="0" />
+                  <button type="button" class="quote2-stepper-button" data-stepper-target="quote2InteriorWindowsCleaning" data-stepper-direction="1">+</button>
+                </div>
+              </div>
+              <div class="quote2-quantity-item" data-quantity-service="blindsCleaning">
+                <div class="quote2-quantity-copy">
+                  <strong>Blinds</strong>
+                  <small>$8 each</small>
+                </div>
+                <div class="quote2-stepper">
+                  <button type="button" class="quote2-stepper-button" data-stepper-target="quote2BlindsCleaning" data-stepper-direction="-1">-</button>
+                  <input id="quote2BlindsCleaning" name="blindsCleaning" class="quote2-stepper-input" type="number" min="0" value="0" />
+                  <button type="button" class="quote2-stepper-button" data-stepper-target="quote2BlindsCleaning" data-stepper-direction="1">+</button>
+                </div>
+              </div>
+              <div class="quote2-quantity-item" data-quantity-service="bedLinenChange">
+                <div class="quote2-quantity-copy">
+                  <strong>Bed linen change</strong>
+                  <small>$8 each</small>
+                </div>
+                <div class="quote2-stepper">
+                  <button type="button" class="quote2-stepper-button" data-stepper-target="quote2BedLinenChange" data-stepper-direction="-1">-</button>
+                  <input id="quote2BedLinenChange" name="bedLinenChange" class="quote2-stepper-input" type="number" min="0" value="0" />
+                  <button type="button" class="quote2-stepper-button" data-stepper-target="quote2BedLinenChange" data-stepper-direction="1">+</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="quote2-card">
+            <div class="quote2-section-head">
+              <p class="quote2-kicker">STEP 4</p>
+              <h2 class="quote2-section-title">Address and schedule</h2>
+              <p class="quote2-section-copy">Pick the service address, then choose the date and arrival window you prefer.</p>
+            </div>
+
+            <div class="quote2-field-grid quote2-field-grid-two">
+              <label class="quote2-field quote2-field-full">
+                <span>Service address</span>
+                <input id="quote2AddressInput" name="address" class="quote2-input" type="text" autocomplete="street-address" placeholder="215 North Elm Street, Naperville, IL" required />
+                <small class="quote2-field-note">Google Places will autocomplete when the browser key is configured. Otherwise you can type the address manually.</small>
+              </label>
+              <label class="quote2-field">
+                <span>Apartment / unit (optional)</span>
+                <input id="quote2AddressLine2" name="addressLine2" class="quote2-input" type="text" autocomplete="address-line2" placeholder="Apt 4B" />
+              </label>
+              <label class="quote2-field">
+                <span>City</span>
+                <input id="quote2City" name="city" class="quote2-input" type="text" autocomplete="address-level2" placeholder="Naperville" />
+              </label>
+              <label class="quote2-field">
+                <span>State</span>
+                <input id="quote2State" name="state" class="quote2-input" type="text" autocomplete="address-level1" placeholder="IL" maxlength="20" />
+              </label>
+              <label class="quote2-field">
+                <span>ZIP code</span>
+                <input id="quote2ZipCode" name="zipCode" class="quote2-input" type="text" autocomplete="postal-code" placeholder="60563" />
+              </label>
+              <label class="quote2-field">
+                <span>Preferred date</span>
+                <input id="quote2SelectedDate" name="selectedDate" class="quote2-input" type="date" required />
+              </label>
+            </div>
+
+            <div class="quote2-time-grid" id="quote2TimeSlots" role="radiogroup" aria-label="Preferred time">
+              <button class="quote2-time-slot" type="button" data-time="08:00">8:00 AM</button>
+              <button class="quote2-time-slot" type="button" data-time="09:00">9:00 AM</button>
+              <button class="quote2-time-slot" type="button" data-time="10:00">10:00 AM</button>
+              <button class="quote2-time-slot" type="button" data-time="12:00">12:00 PM</button>
+              <button class="quote2-time-slot" type="button" data-time="14:00">2:00 PM</button>
+              <button class="quote2-time-slot" type="button" data-time="16:00">4:00 PM</button>
+            </div>
+            <input id="quote2SelectedTime" name="selectedTime" type="hidden" value="" />
+          </section>
+
+          <section class="quote2-card">
+            <div class="quote2-section-head">
+              <p class="quote2-kicker">STEP 5</p>
+              <h2 class="quote2-section-title">Final notes</h2>
+              <p class="quote2-section-copy">Add anything the team should know before we reach out.</p>
+            </div>
+
+            <div class="quote2-field-grid">
+              <label class="quote2-field">
+                <span>Additional details</span>
+                <textarea id="quote2AdditionalDetails" name="additionalDetails" class="quote2-textarea" rows="5" placeholder="Gate code, parking notes, access instructions, preferred products, or anything else that will help the crew."></textarea>
+              </label>
+            </div>
+
+            <label class="quote2-consent">
+              <input id="quote2ConsentCheckbox" type="checkbox" required />
+              <span>
+                I agree to receive scheduling, booking, and follow-up messages by SMS and email when available.
+              </span>
+            </label>
+
+            <div id="quote2FormError" class="quote2-form-error" hidden></div>
+
+            <div class="quote2-inline-actions quote2-inline-actions-end">
+              <button id="quote2SubmitButton" class="quote2-button" type="submit">Send request</button>
+              <span class="quote2-action-hint">This preview still creates the real CRM quote entry.</span>
+            </div>
+          </section>
+        </form>
+      </main>
+    </div>
+
+    <script src="js/quote2-app.js"></script>
+  </body>
+</html>

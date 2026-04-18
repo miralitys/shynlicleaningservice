@@ -54,11 +54,13 @@ test("does not publicly expose /__perf by default", async () => {
 });
 
 test("does not ship a hardcoded live Google Places key in the quote page", async () => {
-  const response = await fetch(`${BASE_URL}/quote`);
-  const body = await response.text();
+  for (const route of ["/quote", "/quote2"]) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
 
-  assert.equal(response.status, 200);
-  assert.doesNotMatch(body, /AIza[0-9A-Za-z_-]{20,}/);
+    assert.equal(response.status, 200);
+    assert.doesNotMatch(body, /AIza[0-9A-Za-z_-]{20,}/);
+  }
 });
 
 test("only reflects the Google Places browser key on /quote when explicitly configured", async () => {
@@ -75,11 +77,13 @@ test("only reflects the Google Places browser key on /quote when explicitly conf
     assert.equal(homeResponse.status, 200);
     assert.doesNotMatch(homeBody, new RegExp(browserKey));
 
-    const quoteResponse = await fetch(`${started.baseUrl}/quote`);
-    const quoteBody = await quoteResponse.text();
-    assert.equal(quoteResponse.status, 200);
-    assert.match(quoteBody, new RegExp(browserKey));
-    assert.match(quoteBody, /window\.__shynliRuntimeConfig/);
+    for (const route of ["/quote", "/quote2"]) {
+      const quoteResponse = await fetch(`${started.baseUrl}${route}`);
+      const quoteBody = await quoteResponse.text();
+      assert.equal(quoteResponse.status, 200);
+      assert.match(quoteBody, new RegExp(browserKey));
+      assert.match(quoteBody, /window\.__shynliRuntimeConfig/);
+    }
   } finally {
     await stopServer(started.child);
   }
@@ -194,6 +198,53 @@ test("uses the canonical configured origin for Stripe URLs", async () => {
     assert.equal(captured.options.cancel_url, "https://shynlicleaningservice.com/quote?payment=cancelled");
     assert.doesNotMatch(captured.options.success_url, /attacker\.example/);
     assert.doesNotMatch(captured.options.cancel_url, /attacker\.example/);
+  } finally {
+    await stopServer(started.child);
+    stripeStub.cleanup();
+  }
+});
+
+test("allows the quote preview page to set its own Stripe return path", async () => {
+  const stripeStub = createStripeStub();
+  const quoteSecret = "quote_secret_test";
+  const started = await startServer({
+    env: {
+      QUOTE_SIGNING_SECRET: quoteSecret,
+      STRIPE_SECRET_KEY: "sk_test_stub",
+      STRIPE_CAPTURE_FILE: stripeStub.captureFile,
+      STRIPE_STUB_ENTRY: stripeStub.stubEntry,
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/api/stripe/checkout-session`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        quoteToken: createQuoteToken(
+          {
+            totalPrice: 125,
+            totalPriceCents: 12500,
+            serviceType: "deep",
+            serviceName: "Deep Cleaning",
+            selectedDate: "2026-03-22",
+            selectedTime: "09:00",
+            fullAddress: "123 Main St, Romeoville, IL 60446",
+            customerName: "Jane Doe",
+            customerPhone: "3125550100",
+          },
+          { env: { QUOTE_SIGNING_SECRET: quoteSecret } }
+        ),
+        returnPath: "/quote2",
+      }),
+    });
+
+    assert.equal(response.status, 200);
+    const captured = await readJsonFile(stripeStub.captureFile);
+    assert.equal(captured.options.success_url, "https://shynlicleaningservice.com/quote2?payment=success");
+    assert.equal(captured.options.cancel_url, "https://shynlicleaningservice.com/quote2?payment=cancelled");
   } finally {
     await stopServer(started.child);
     stripeStub.cleanup();
