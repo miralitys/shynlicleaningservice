@@ -247,6 +247,7 @@ a {
 .quote2-step-card > .quote2-field-grid + .quote2-time-grid,
 .quote2-step-card > .quote2-field-grid + .quote2-inline-actions,
 .quote2-step-card > .quote2-time-grid + .quote2-inline-actions,
+.quote2-step-card > .quote2-time-grid + input[type="hidden"] + .quote2-inline-actions,
 .quote2-step-card > .quote2-addon-grid + .quote2-quantity-grid,
 .quote2-step-card > .quote2-addon-grid + .quote2-inline-actions,
 .quote2-step-card > .quote2-quantity-grid + .quote2-inline-actions {
