@@ -133,6 +133,7 @@
     continueToAddons: document.getElementById("quote2ContinueToAddons"),
     continueToAddress: document.getElementById("quote2ContinueToAddress"),
     continueToNotes: document.getElementById("quote2ContinueToNotes"),
+    stickyEstimate: document.getElementById("quote2StickyEstimate"),
     estimateTargets: Array.from(document.querySelectorAll('[data-quote2-estimate="true"]')),
     stepCards: {
       contact: document.querySelector('[data-step-card="contact"]'),
@@ -484,6 +485,9 @@
     elements.stepCards.addons.hidden = !addonsVisible;
     elements.stepCards.address.hidden = !addressVisible;
     elements.stepCards.notes.hidden = !notesVisible;
+    if (elements.stickyEstimate) {
+      elements.stickyEstimate.hidden = !profileVisible;
+    }
 
     if (profileVisible && profileWasHidden && !settings.skipScroll && !state.profileAutoOpened) {
       state.profileAutoOpened = true;
@@ -941,6 +945,9 @@
       updateSuccessState();
       elements.successCard.hidden = false;
       elements.form.hidden = true;
+      if (elements.stickyEstimate) {
+        elements.stickyEstimate.hidden = true;
+      }
       setNotice("Quote request submitted successfully from /quote2.", "success");
       elements.successCard.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
