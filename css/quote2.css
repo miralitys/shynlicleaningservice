@@ -257,8 +257,7 @@ a {
   grid-column: 1 / -1;
 }
 
-.quote2-field > span,
-.quote2-consent span {
+.quote2-field > span {
   font-size: 0.94rem;
   font-weight: 700;
 }
@@ -429,15 +428,32 @@ a {
   margin-top: 6px;
   padding: 18px 20px;
   border-radius: 20px;
-  background: rgba(15, 118, 110, 0.08);
-  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(236, 244, 255, 0.86);
+  border: 1px solid rgba(147, 197, 253, 0.7);
 }
 
 .quote2-consent input {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   margin-top: 2px;
   accent-color: var(--quote2-accent);
+  flex: 0 0 auto;
+}
+
+.quote2-consent-copy {
+  color: var(--quote2-text);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.quote2-consent-link {
+  color: #ff7a59;
+  text-decoration: none;
+}
+
+.quote2-consent-link:hover {
+  text-decoration: underline;
 }
 
 .quote2-form-error,
