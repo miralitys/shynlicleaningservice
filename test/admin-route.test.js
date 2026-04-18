@@ -1556,7 +1556,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /admin-order-funnel-column-awaiting-review/);
     assert.match(ordersBody, /data-order-funnel-card="true"/);
     assert.match(ordersBody, /data-order-funnel-status="/);
-    assert.doesNotMatch(ordersBody, /data-order-dropzone="policy"/);
+    assert.match(ordersBody, /data-order-dropzone="policy"/);
     assert.match(ordersBody, /data-order-dropzone="scheduled"/);
     assert.match(ordersBody, /data-order-funnel-stage-form="true"/);
     assert.match(ordersBody, /X-SHYNLI-ADMIN-AJAX/);
@@ -6114,7 +6114,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       body: new URLSearchParams({
         entryId,
         returnTo: `/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
-        orderStatus: "scheduled",
+        orderStatus: "policy",
         assignedStaff: "Anna Petrova",
         paymentStatus: "unpaid",
         paymentMethod: "invoice",
@@ -6151,7 +6151,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     );
     assert.match(policyLaneBeforeAcceptance, /Policy Customer/);
     assert.match(policyLaneBeforeAcceptance, /Политика/);
-    assert.doesNotMatch(policyLaneBeforeAcceptance, /data-order-dropzone="policy"/);
+    assert.match(policyLaneBeforeAcceptance, /data-order-dropzone="policy"/);
     assert.doesNotMatch(scheduledLaneBeforeAcceptance, /Policy Customer/);
 
     assert.equal(smtpServer.messages.length, 1);
