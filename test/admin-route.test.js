@@ -3472,6 +3472,18 @@ test("loads inbound SMS replies into the order dialog history", async () => {
     },
     {
       method: "GET",
+      match: "/conversations/search",
+      status: 200,
+      body: {
+        conversations: [
+          {
+            id: "conversation-sms-order-321",
+          },
+        ],
+      },
+    },
+    {
+      method: "GET",
       match: "/conversations/conversation-sms-order-321/messages",
       status: 200,
       body: {
@@ -3576,6 +3588,98 @@ test("loads inbound SMS replies into the order dialog history", async () => {
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
+  }
+});
+
+test("records inbound SMS replies from the GHL webhook into the order dialog history", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_LOCATION_ID: "location-123",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Webhook SMS Lead",
+        customerPhone: "4244199102",
+        customerEmail: "sms.webhook@example.com",
+        serviceType: "regular",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:30",
+        totalPrice: "155.00",
+        fullAddress: "901 Follow Up Drive, Bolingbrook, IL 60440",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const entryId = new URL(createOrderResponse.headers.get("location") || "", started.baseUrl).searchParams.get("order");
+    assert.ok(entryId);
+    const returnTo = `/admin/orders?order=${encodeURIComponent(entryId)}`;
+
+    const webhookResponse = await fetch(`${started.baseUrl}/api/ghl/inbound-sms`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType: "InboundMessage",
+        messageType: "SMS",
+        direction: "inbound",
+        from: "+1 (424) 419-9102",
+        body: "Webhook says hello.",
+        dateAdded: "2026-04-18T15:05:00.000Z",
+        conversationId: "conversation-webhook-order-1",
+        messageId: "message-webhook-order-1",
+        contactId: "contact-webhook-order-1",
+        locationId: "location-123",
+      }),
+    });
+
+    assert.equal(webhookResponse.status, 200);
+    const webhookPayload = await webhookResponse.json();
+    assert.equal(webhookPayload.received, true);
+    assert.equal(webhookPayload.matched, true);
+    assert.equal(webhookPayload.target, "entry");
+    assert.equal(webhookPayload.targetId, entryId);
+
+    const historyResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "load-order-sms-history",
+        entryId,
+        returnTo,
+      }),
+    });
+
+    assert.equal(historyResponse.status, 200);
+    const historyPayload = await historyResponse.json();
+    assert.equal(historyPayload.ok, true);
+    assert.equal(historyPayload.sms.historyCountLabel, "1 SMS");
+    assert.equal(historyPayload.sms.history.length, 1);
+    assert.equal(historyPayload.sms.history[0].direction, "inbound");
+    assert.equal(historyPayload.sms.history[0].directionLabel, "Входящее");
+    assert.equal(historyPayload.sms.history[0].source, "client");
+    assert.equal(historyPayload.sms.history[0].sourceLabel, "Клиент");
+    assert.equal(historyPayload.sms.history[0].message, "Webhook says hello.");
+  } finally {
+    await stopServer(started.child);
   }
 });
 

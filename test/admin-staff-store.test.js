@@ -323,3 +323,37 @@ test("uses the Supabase-backed store implementation when the client is configure
   snapshot = await store.getSnapshot();
   assert.equal(snapshot.assignments.length, 0);
 });
+
+test("preserves inbound client SMS history source in the file-backed staff store", async () => {
+  const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "shynli-staff-source-"));
+  const storePath = path.join(tempDir, "admin-staff-store.json");
+  const store = createAdminStaffStore({ filePath: storePath });
+
+  try {
+    const record = await store.createStaff({
+      name: "Inbound SMS Staff",
+      phone: "+1 (630) 555-0109",
+      smsHistory: [
+        {
+          message: "Client replied to onboarding SMS",
+          phone: "+16305550109",
+          source: "client",
+          direction: "inbound",
+          channel: "ghl",
+          targetType: "staff",
+          targetRef: "inbound-sms-staff",
+          sentAt: "2026-04-18T15:05:00.000Z",
+        },
+      ],
+    });
+
+    const snapshot = await store.getSnapshot();
+    const storedRecord = snapshot.staff.find((candidate) => candidate.id === record.id);
+    assert.ok(storedRecord);
+    assert.equal(storedRecord.smsHistory.length, 1);
+    assert.equal(storedRecord.smsHistory[0].source, "client");
+    assert.equal(storedRecord.smsHistory[0].direction, "inbound");
+  } finally {
+    await fsp.rm(tempDir, { recursive: true, force: true });
+  }
+});

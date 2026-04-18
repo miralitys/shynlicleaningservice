@@ -371,3 +371,61 @@ test("writes staff rows into quote_ops_entries when dedicated tables are missing
   assert.equal(payload.payload_for_retry.staff.w9.document.fileName, "Olga-Martinez.pdf");
   assert.equal(payload.payload_for_retry.staff.calendar.accountEmail, "olga.cleaner@gmail.com");
 });
+
+test("preserves inbound client SMS history source in the Supabase admin staff snapshot", async () => {
+  const staffId = "2c3f4b6d-88d8-4d08-a7cd-9a1b5af629c4";
+  const client = createSupabaseAdminStaffClient({
+    env: {
+      SUPABASE_URL: "https://example.supabase.co",
+      SUPABASE_SERVICE_ROLE_KEY: "sb_secret_example123",
+    },
+    fetch: async (url) => {
+      if (url.includes("/rest/v1/admin_staff?")) {
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return JSON.stringify([
+              {
+                id: staffId,
+                name: "Inbound SMS Staff",
+                phone: "+1 (630) 555-0109",
+                sms_history: [
+                  {
+                    id: "sms-staff-client-1",
+                    message: "Client replied to onboarding SMS",
+                    phone: "+16305550109",
+                    source: "client",
+                    direction: "inbound",
+                    channel: "ghl",
+                    targetType: "staff",
+                    targetRef: staffId,
+                    sentAt: "2026-04-18T15:05:00.000Z",
+                  },
+                ],
+                created_at: "2026-04-18T15:00:00.000Z",
+                updated_at: "2026-04-18T15:05:00.000Z",
+              },
+            ]);
+          },
+        };
+      }
+      if (url.includes("/rest/v1/admin_staff_assignments?")) {
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return JSON.stringify([]);
+          },
+        };
+      }
+      throw new Error(`Unexpected request URL: ${url}`);
+    },
+  });
+
+  const snapshot = await client.fetchSnapshot();
+  assert.equal(snapshot.staff.length, 1);
+  assert.equal(snapshot.staff[0].smsHistory.length, 1);
+  assert.equal(snapshot.staff[0].smsHistory[0].source, "client");
+  assert.equal(snapshot.staff[0].smsHistory[0].direction, "inbound");
+});
