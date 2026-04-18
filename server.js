@@ -384,6 +384,23 @@ const BLOG_ARTICLE_PAGES = Object.freeze(
     ogDescription: article.ogDescription || article.description || article.excerpt || "",
   }))
 );
+function toSitemapDateOnlyIso(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return `${raw}T00:00:00.000Z`;
+  }
+  const parsed = Date.parse(raw);
+  if (Number.isNaN(parsed)) return "";
+  return new Date(parsed).toISOString();
+}
+
+const LATEST_BLOG_ARTICLE_LASTMOD = BLOG_ARTICLES.reduce((latest, article) => {
+  const current = toSitemapDateOnlyIso(article && article.publishedAt);
+  if (!current) return latest;
+  if (!latest) return current;
+  return current > latest ? current : latest;
+}, "");
 const BLOG_ROUTE_HTML_FILE = "page108872586.html";
 const MANAGED_BLOG_HTML_ROUTES = Object.freeze([
   ["/blog", BLOG_ROUTE_HTML_FILE],
@@ -397,6 +414,15 @@ const NOINDEX_ROUTES = new Set([
   "/quote2",
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
+]);
+const SITEMAP_EXCLUDED_ROUTES = new Set([
+  ...NOINDEX_ROUTES,
+  ...Array.from(REDIRECT_ROUTES.keys()),
+]);
+const SITEMAP_LASTMOD_OVERRIDES = new Map([
+  ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
+  ...BLOG_CATEGORY_PAGES.map((page) => [page.path, LATEST_BLOG_ARTICLE_LASTMOD]),
+  ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.publishedAt)]),
 ]);
 const BREADCRUMB_LABELS = new Map([
   ["/about-us", "About Us"],
@@ -1163,6 +1189,9 @@ const handleSiteRequest = createSiteRequestHandler({
   PERF_ENDPOINT_TOKEN,
   PUBLIC_ASSET_DIRECTORIES,
   PUBLIC_ASSET_FILES,
+  SITE_ORIGIN,
+  SITEMAP_EXCLUDED_ROUTES,
+  SITEMAP_LASTMOD_OVERRIDES,
   GHL_INBOUND_SMS_WEBHOOK_ENDPOINT,
   QUOTE_REQUEST_ENDPOINT,
   QUOTE_SUBMIT_ENDPOINT,
