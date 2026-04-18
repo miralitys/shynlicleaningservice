@@ -5546,6 +5546,9 @@ test("shows Gmail connect controls in the users settings page when Google Mail O
 
     assert.equal(settingsResponse.status, 200);
     assert.match(settingsBody, /Почта приглашений/i);
+    assert.match(settingsBody, /<details class="admin-details admin-settings-disclosure">/);
+    assert.doesNotMatch(settingsBody, /<details class="admin-details admin-settings-disclosure" open>/);
+    assert.match(settingsBody, /Открыть детали/);
     assert.match(settingsBody, />Подключить Gmail</);
     assert.doesNotMatch(settingsBody, /Добавьте GOOGLE_MAIL_CLIENT_ID/i);
 
