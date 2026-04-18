@@ -737,3 +737,77 @@ test("loads inbound and outbound SMS history from a conversation", async () => {
   assert.equal(calls[0].method, "GET");
   assert.equal(calls[0].headers.Version, "2021-04-15");
 });
+
+test("loads SMS history by resolving the contact from phone when contactId is missing", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=4244199102") && options.method === "GET") {
+      return createResponse(200, {
+        contacts: [
+          {
+            id: "contact-424",
+            phone: "(424) 419-9102",
+          },
+        ],
+      });
+    }
+
+    if (String(url).includes("/conversations/search?locationId=loc-1&contactId=contact-424") && options.method === "GET") {
+      return createResponse(200, {
+        conversations: [
+          {
+            id: "conversation-424",
+          },
+        ],
+      });
+    }
+
+    if (String(url).includes("/conversations/conversation-424/messages") && options.method === "GET") {
+      return createResponse(200, {
+        messages: [
+          {
+            id: "message-inbound-424",
+            type: "TYPE_SMS",
+            direction: "inbound",
+            body: "Привет!",
+            dateAdded: "2026-04-18T15:10:00.000Z",
+            conversationId: "conversation-424",
+            phone: "+14244199102",
+          },
+        ],
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch,
+  });
+
+  const result = await client.getSmsHistory({
+    phone: "4244199102",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-424");
+  assert.equal(result.phoneE164, "+14244199102");
+  assert.equal(result.conversationIds.length, 1);
+  assert.equal(result.conversationIds[0], "conversation-424");
+  assert.equal(result.history.length, 1);
+  assert.equal(result.history[0].direction, "inbound");
+  assert.equal(result.history[0].source, "client");
+  assert.equal(result.history[0].message, "Привет!");
+});
