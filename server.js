@@ -1182,6 +1182,7 @@ async function main() {
     client: googleCalendarClient,
     quoteOpsLedger,
     staffStore,
+    usersStore,
   });
   const googleMailClient = createAdminGoogleMailClient({
     env: process.env,

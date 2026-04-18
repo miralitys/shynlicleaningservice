@@ -5270,6 +5270,147 @@ test("persists an unchecked assignable-orders flag for non-admin users", async (
   }
 });
 
+test("keeps non-assignable users out of the calendar and order assignment flows", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-user-assignable-enforcement-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-assignable-123",
+        },
+      },
+    },
+  ]);
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Nina Hidden",
+        role: "cleaner",
+        isEmployee: "0",
+        status: "active",
+        staffStatus: "active",
+        email: "nina.hidden@example.com",
+        phone: "3125550177",
+        address: "177 Hidden Ln, Aurora, IL 60504",
+        notes: "Should stay out of assignments",
+        password: "CleanerPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+
+    const usersPayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const staffPayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const blockedUser = usersPayload.users[0];
+    const blockedStaff = staffPayload.staff[0];
+    assert.equal(blockedUser.isEmployee, false);
+    assert.equal(blockedStaff.name, "Nina Hidden");
+
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "assignable-hidden-request-1",
+      fullName: "Calendar Hidden Customer",
+      phone: "312-555-0189",
+      email: "calendar.hidden@example.com",
+      selectedDate: "2026-04-21",
+      selectedTime: "09:00",
+      fullAddress: "215 North Elm Street, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "assignable-hidden-request-1"
+    );
+
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.doesNotMatch(
+      ordersBody,
+      /name="assignedStaff" value="Nina Hidden"/
+    );
+
+    const calendarResponse = await fetch(
+      `${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-04-21`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const calendarBody = await calendarResponse.text();
+    assert.equal(calendarResponse.status, 200);
+    assert.doesNotMatch(calendarBody, /Nina Hidden/);
+
+    const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", entryId],
+        ["staffIds", blockedStaff.id],
+        ["status", "confirmed"],
+        ["notes", "Manual tamper attempt"],
+      ]),
+    });
+    assert.equal(assignResponse.status, 303);
+    assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
+
+    const updatedStaffPayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const savedAssignment = updatedStaffPayload.assignments.find((record) => record.entryId === entryId);
+    assert.ok(savedAssignment);
+    assert.deepEqual(savedAssignment.staffIds, []);
+
+    const refreshedOrdersResponse = await fetch(`${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const refreshedOrdersBody = await refreshedOrdersResponse.text();
+    assert.equal(refreshedOrdersResponse.status, 200);
+    assert.doesNotMatch(refreshedOrdersBody, /Nina Hidden/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("gives managers the same admin workspace access as admins", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-manager-role-route-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
