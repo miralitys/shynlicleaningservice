@@ -128,6 +128,25 @@ test("renders featured kitchen article links on /blog/kitchen", () => {
   assert.match(html, /how-to-clean-microwave-inside-fast/);
 });
 
+test("renders an empty-state for categories that do not have published article clusters yet", () => {
+  for (const route of [
+    "/blog/pet-hair",
+    "/blog/move-in-move-out",
+    "/blog/airbnb",
+    "/blog/seasonal",
+    "/blog/cleaning-hacks",
+  ]) {
+    const html = sanitizeHtml(sourceHtml, route);
+
+    assert.match(html, /Fresh guides for this section are being added\./);
+    assert.match(
+      html,
+      /This category page is ready\. The article library for this topic has not been published yet\./
+    );
+    assert.doesNotMatch(html, /class="shynli-blog-featured__card"/);
+  }
+});
+
 test("renders featured checklist article link on /blog/checklists", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/checklists");
 
