@@ -20,6 +20,7 @@ test.after(async () => {
 test("serves the home page through the custom route layer", async () => {
   const response = await fetch(`${BASE_URL}/`);
   const body = await response.text();
+  const linkHeader = response.headers.get("link") || "";
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
@@ -28,15 +29,26 @@ test("serves the home page through the custom route layer", async () => {
   assert.equal(response.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
   assert.equal(response.headers.get("permissions-policy"), "camera=(), geolocation=(), microphone=()");
   assert.match(response.headers.get("content-security-policy") || "", /frame-ancestors 'none'/);
+  assert.match(linkHeader, /<https:\/\/fonts\.googleapis\.com>; rel=preconnect/);
+  assert.match(linkHeader, /<https:\/\/fonts\.gstatic\.com>; rel=preconnect; crossorigin/);
+  assert.match(linkHeader, /<\/css\/tilda-grid-3\.0\.min\.css>; rel=preload; as=style/);
+  assert.match(
+    linkHeader,
+    /<\/css\/tilda-blocks-page108488156\.min\.css\?t=\d+>; rel=preload; as=style/
+  );
   assert.match(body, /Shynli Cleaning/i);
 });
 
 test("serves the quote page through the static route layer", async () => {
   const response = await fetch(`${BASE_URL}/quote`);
   const body = await response.text();
+  const linkHeader = response.headers.get("link") || "";
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(linkHeader, /<\/css\/quote2\.css\?v=[^>]+>; rel=preload; as=style/);
+  assert.match(linkHeader, /<\/js\/quote2-app\.js\?v=[^>]+>; rel=preload; as=script/);
+  assert.doesNotMatch(linkHeader, /tilda-grid-3\.0\.min\.css/);
   assert.match(body, /Request a Quote/i);
   assert.match(body, /Enter your full name and phone number to calculate the service cost/i);
   assert.match(body, /Name/i);
