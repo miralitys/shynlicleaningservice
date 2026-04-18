@@ -44,7 +44,6 @@ const {
   createQuoteOpsStore: createQuoteOpsStoreModule,
   filterQuoteOpsEntries: filterQuoteOpsEntriesModule,
 } = require("./lib/quote-ops/store");
-const { createAdminOrdersStore } = require("./lib/admin-orders-store");
 const {
   createBufferedLogger,
   createEventLoopStats,
@@ -354,7 +353,6 @@ const ALERT_P99_MS = Number(process.env.ALERT_P99_MS || 1000);
 const ALERT_5XX_RATE = Number(process.env.ALERT_5XX_RATE || 0.01);
 const ALERT_EVENT_LOOP_P95_MS = Number(process.env.ALERT_EVENT_LOOP_P95_MS || 100);
 const STRIPE_CHECKOUT_ENDPOINT = "/api/stripe/checkout-session";
-const STRIPE_WEBHOOK_ENDPOINT = "/api/stripe/webhook";
 const QUOTE_REQUEST_ENDPOINT = "/api/quote/request";
 const QUOTE_SUBMIT_ENDPOINT = "/api/quote/submit";
 const MAX_JSON_BODY_BYTES = Number(process.env.MAX_JSON_BODY_BYTES || 64 * 1024);
@@ -525,7 +523,6 @@ const adminSharedRenderers = createAdminSharedRenderers({
 });
 
 const {
-  applyPaymentEntryUpdates,
   applyLeadEntryUpdates,
   applyClientEntryUpdates,
   applyOrderEntryUpdates,
@@ -859,14 +856,13 @@ const handleAccountRequest = createAccountRequestHandler({
   writeHtmlWithTiming,
 });
 
-const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest, handleStripeWebhookRequest } = createApiHandlers({
+const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiHandlers({
   MAX_JSON_BODY_BYTES,
   QUOTE_PUBLIC_PATH,
   QUOTE_PUBLIC_PATHS,
   QUOTE_SUBMIT_ENDPOINT,
   SITE_ORIGIN,
   STRIPE_CHECKOUT_ENDPOINT,
-  STRIPE_WEBHOOK_ENDPOINT,
   STRIPE_MAX_AMOUNT_CENTS,
   STRIPE_MIN_AMOUNT_CENTS,
   QuoteTokenError,
@@ -877,7 +873,6 @@ const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest, handleStripeW
   getStripeClient,
   getStripeReturnOrigin,
   normalizeString,
-  readBufferBody,
   readJsonBody,
   verifyQuoteToken,
   writeHeadWithTiming,
@@ -945,12 +940,10 @@ const handleSiteRequest = createSiteRequestHandler({
   REDIRECT_ROUTES,
   SITE_DIR,
   STRIPE_CHECKOUT_ENDPOINT,
-  STRIPE_WEBHOOK_ENDPOINT,
   handleAccountRequest,
   handleAdminRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
-  handleStripeWebhookRequest,
   normalizeRoute,
   orderPolicyAcceptance,
   siteStaticHelpers,
@@ -993,24 +986,14 @@ async function main() {
     roundNumber,
   });
   const eventLoopStats = createEventLoopStats({ roundNumber });
-  const orderStore = createAdminOrdersStore({
-    collectAdminOrderRecords,
-    normalizeString,
-  });
   const quoteOpsLedger = createQuoteOpsStoreModule({
     QUOTE_OPS_LEDGER_LIMIT,
-    applyPaymentEntryUpdates,
     applyLeadEntryUpdates,
     applyClientEntryUpdates,
     applyOrderEntryUpdates,
     createSupabaseQuoteOpsClient,
     normalizeString,
-    orderStore,
   });
-  await orderStore.replaceEntries(
-    await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }),
-    "startup-sync"
-  );
   const settingsStore = createAdminSettingsStore();
   usersStore = createAdminUsersStore({
     createSupabaseAdminUsersClient,
@@ -1213,7 +1196,6 @@ async function main() {
       usersStore,
       settingsStore,
       staffStore,
-      orderStore,
       orderMediaStorage,
       accountInviteEmail,
     });
