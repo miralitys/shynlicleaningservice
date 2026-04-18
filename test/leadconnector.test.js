@@ -706,6 +706,28 @@ test("loads inbound and outbound SMS history from a conversation", async () => {
       });
     }
 
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=3125550100") && options.method === "GET") {
+      return createResponse(200, {
+        contacts: [{ id: "contact-555", phone: "+1 (312) 555-0100" }],
+      });
+    }
+
+    if (
+      String(url).includes("/contacts/?locationId=loc-1&limit=100") &&
+      !String(url).includes("query=") &&
+      options.method === "GET"
+    ) {
+      return createResponse(200, {
+        contacts: [{ id: "contact-555", phone: "+1 (312) 555-0100" }],
+      });
+    }
+
+    if (String(url).includes("/conversations/search?locationId=loc-1&contactId=contact-555") && options.method === "GET") {
+      return createResponse(200, {
+        conversations: [{ id: "conversation-555" }],
+      });
+    }
+
     throw new Error(`Unexpected call: ${url}`);
   };
 
@@ -733,9 +755,8 @@ test("loads inbound and outbound SMS history from a conversation", async () => {
   assert.equal(result.history[0].message, "Thank you!");
   assert.equal(result.history[1].direction, "outbound");
   assert.equal(result.history[1].source, "manual");
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].method, "GET");
-  assert.equal(calls[0].headers.Version, "2021-04-15");
+  assert.equal(calls.at(-1).method, "GET");
+  assert.equal(calls.at(-1).headers.Version, "2021-04-15");
 });
 
 test("loads SMS history by resolving the contact from phone when contactId is missing", async () => {
@@ -937,4 +958,110 @@ test("loads SMS history by scanning additional contact pages when the phone matc
   assert.equal(result.history.length, 1);
   assert.equal(result.history[0].direction, "inbound");
   assert.equal(result.history[0].message, "Ответ со второй страницы");
+});
+
+test("augments stored conversation history with other GHL conversations found by phone", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/?locationId=loc-1&limit=100&query=4244199102") && options.method === "GET") {
+      return createResponse(200, {
+        contacts: [
+          {
+            id: "contact-424",
+            phone: "(424) 419-9102",
+          },
+        ],
+      });
+    }
+
+    if (
+      String(url).includes("/contacts/?locationId=loc-1&limit=100") &&
+      !String(url).includes("query=") &&
+      options.method === "GET"
+    ) {
+      return createResponse(200, {
+        contacts: [
+          {
+            id: "contact-424",
+            phone: "(424) 419-9102",
+          },
+        ],
+      });
+    }
+
+    if (String(url).includes("/conversations/search?locationId=loc-1&contactId=contact-424") && options.method === "GET") {
+      return createResponse(200, {
+        conversations: [
+          {
+            id: "conversation-424-inbound",
+          },
+        ],
+      });
+    }
+
+    if (String(url).includes("/conversations/conversation-424-stored/messages") && options.method === "GET") {
+      return createResponse(200, {
+        messages: [
+          {
+            id: "message-outbound-stored",
+            type: "TYPE_SMS",
+            direction: "outbound",
+            body: "Исходящее из истории",
+            dateAdded: "2026-04-18T15:00:00.000Z",
+            conversationId: "conversation-424-stored",
+            phone: "+14244199102",
+          },
+        ],
+      });
+    }
+
+    if (String(url).includes("/conversations/conversation-424-inbound/messages") && options.method === "GET") {
+      return createResponse(200, {
+        messages: [
+          {
+            id: "message-inbound-424",
+            type: "TYPE_SMS",
+            direction: "inbound",
+            body: "Входящий ответ клиента",
+            dateAdded: "2026-04-18T15:10:00.000Z",
+            conversationId: "conversation-424-inbound",
+            phone: "+14244199102",
+          },
+        ],
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch,
+  });
+
+  const result = await client.getSmsHistory({
+    phone: "4244199102",
+    conversationId: "conversation-424-stored",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "contact-424");
+  assert.deepEqual(
+    result.conversationIds.sort(),
+    ["conversation-424-inbound", "conversation-424-stored"].sort()
+  );
+  assert.equal(result.history.length, 2);
+  assert.equal(result.history[0].direction, "inbound");
+  assert.equal(result.history[1].direction, "outbound");
 });
