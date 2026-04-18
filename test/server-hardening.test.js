@@ -204,7 +204,7 @@ test("uses the canonical configured origin for Stripe URLs", async () => {
   }
 });
 
-test("allows the quote preview page to set its own Stripe return path", async () => {
+test("allows the quote page to set its own Stripe return path", async () => {
   const stripeStub = createStripeStub();
   const quoteSecret = "quote_secret_test";
   const started = await startServer({
@@ -237,14 +237,14 @@ test("allows the quote preview page to set its own Stripe return path", async ()
           },
           { env: { QUOTE_SIGNING_SECRET: quoteSecret } }
         ),
-        returnPath: "/quote2",
+        returnPath: "/quote",
       }),
     });
 
     assert.equal(response.status, 200);
     const captured = await readJsonFile(stripeStub.captureFile);
-    assert.equal(captured.options.success_url, "https://shynlicleaningservice.com/quote2?payment=success");
-    assert.equal(captured.options.cancel_url, "https://shynlicleaningservice.com/quote2?payment=cancelled");
+    assert.equal(captured.options.success_url, "https://shynlicleaningservice.com/quote?payment=success");
+    assert.equal(captured.options.cancel_url, "https://shynlicleaningservice.com/quote?payment=cancelled");
   } finally {
     await stopServer(started.child);
     stripeStub.cleanup();

@@ -31,8 +31,8 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /Shynli Cleaning/i);
 });
 
-test("serves the quote preview page through the static route layer", async () => {
-  const response = await fetch(`${BASE_URL}/quote2`);
+test("serves the quote page through the static route layer", async () => {
+  const response = await fetch(`${BASE_URL}/quote`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
@@ -40,6 +40,15 @@ test("serves the quote preview page through the static route layer", async () =>
   assert.match(body, /Request a Quote/i);
   assert.match(body, /Enter your full name and phone number to calculate the service cost/i);
   assert.match(body, /Name/i);
+});
+
+test("redirects /quote2 into the main quote flow", async () => {
+  const response = await fetch(`${BASE_URL}/quote2`, {
+    redirect: "manual",
+  });
+
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.get("location"), "/quote");
 });
 
 test("redirects the /%D0%B4%D0%B5%D0%B9%D1%81%D1%82%D0%B2%D1%83%D0%B9 smoke path into the quote flow", async () => {

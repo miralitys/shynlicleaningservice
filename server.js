@@ -44,6 +44,7 @@ const {
   createQuoteOpsStore: createQuoteOpsStoreModule,
   filterQuoteOpsEntries: filterQuoteOpsEntriesModule,
 } = require("./lib/quote-ops/store");
+const { createAdminOrdersStore } = require("./lib/admin-orders-store");
 const {
   createBufferedLogger,
   createEventLoopStats,
@@ -239,6 +240,7 @@ const QUOTE_PUBLIC_PATHS = new Set([QUOTE_PUBLIC_PATH, QUOTE_V2_PUBLIC_PATH]);
 const REDIRECT_ROUTES = new Map([
   ["/home-simple", "/"],
   ["/действуй", "/quote"],
+  [QUOTE_V2_PUBLIC_PATH, QUOTE_PUBLIC_PATH],
   ["/admin/setup", ADMIN_ROOT_PATH],
   ["/admin/users", ADMIN_ROOT_PATH],
   [ADMIN_INTEGRATIONS_PATH, ADMIN_ROOT_PATH],
@@ -266,7 +268,7 @@ const BREADCRUMB_LABELS = new Map([
   ["/pricing", "Pricing"],
   ["/privacy-policy", "Privacy Policy"],
   ["/quote", "Quote"],
-  ["/quote2", "Quote 2"],
+  ["/quote2", "Quote"],
   ["/service-areas", "Service Areas"],
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
@@ -299,16 +301,23 @@ const ROUTE_META_OVERRIDES = {
     robots: "noindex,nofollow",
   },
   "/quote": {
+    title: "Request a Quote | Shynli Cleaning",
+    description:
+      "Get an instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning.",
+    ogTitle: "Request a Quote | Shynli Cleaning",
+    ogDescription:
+      "Instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning.",
+    canonical: `${SITE_ORIGIN}/quote`,
     robots: "noindex,nofollow",
   },
   "/quote2": {
-    title: "Instant Cleaning Quote Preview | Shynli Cleaning",
+    title: "Request a Quote | Shynli Cleaning",
     description:
-      "Preview the new Shynli Cleaning quote experience with live pricing, scheduling, and CRM-connected submission.",
-    ogTitle: "Instant Cleaning Quote Preview | Shynli Cleaning",
+      "Get an instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning.",
+    ogTitle: "Request a Quote | Shynli Cleaning",
     ogDescription:
-      "Test the next Shynli Cleaning quote flow with live pricing, scheduling, and CRM-connected submission.",
-    canonical: `${SITE_ORIGIN}/quote2`,
+      "Instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning.",
+    canonical: `${SITE_ORIGIN}/quote`,
     robots: "noindex,nofollow",
   },
 };
@@ -345,6 +354,7 @@ const ALERT_P99_MS = Number(process.env.ALERT_P99_MS || 1000);
 const ALERT_5XX_RATE = Number(process.env.ALERT_5XX_RATE || 0.01);
 const ALERT_EVENT_LOOP_P95_MS = Number(process.env.ALERT_EVENT_LOOP_P95_MS || 100);
 const STRIPE_CHECKOUT_ENDPOINT = "/api/stripe/checkout-session";
+const STRIPE_WEBHOOK_ENDPOINT = "/api/stripe/webhook";
 const QUOTE_REQUEST_ENDPOINT = "/api/quote/request";
 const QUOTE_SUBMIT_ENDPOINT = "/api/quote/submit";
 const MAX_JSON_BODY_BYTES = Number(process.env.MAX_JSON_BODY_BYTES || 64 * 1024);
@@ -515,6 +525,7 @@ const adminSharedRenderers = createAdminSharedRenderers({
 });
 
 const {
+  applyPaymentEntryUpdates,
   applyLeadEntryUpdates,
   applyClientEntryUpdates,
   applyOrderEntryUpdates,
@@ -848,13 +859,14 @@ const handleAccountRequest = createAccountRequestHandler({
   writeHtmlWithTiming,
 });
 
-const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiHandlers({
+const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest, handleStripeWebhookRequest } = createApiHandlers({
   MAX_JSON_BODY_BYTES,
   QUOTE_PUBLIC_PATH,
   QUOTE_PUBLIC_PATHS,
   QUOTE_SUBMIT_ENDPOINT,
   SITE_ORIGIN,
   STRIPE_CHECKOUT_ENDPOINT,
+  STRIPE_WEBHOOK_ENDPOINT,
   STRIPE_MAX_AMOUNT_CENTS,
   STRIPE_MIN_AMOUNT_CENTS,
   QuoteTokenError,
@@ -865,6 +877,7 @@ const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiH
   getStripeClient,
   getStripeReturnOrigin,
   normalizeString,
+  readBufferBody,
   readJsonBody,
   verifyQuoteToken,
   writeHeadWithTiming,
@@ -932,10 +945,12 @@ const handleSiteRequest = createSiteRequestHandler({
   REDIRECT_ROUTES,
   SITE_DIR,
   STRIPE_CHECKOUT_ENDPOINT,
+  STRIPE_WEBHOOK_ENDPOINT,
   handleAccountRequest,
   handleAdminRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
+  handleStripeWebhookRequest,
   normalizeRoute,
   orderPolicyAcceptance,
   siteStaticHelpers,
@@ -978,14 +993,24 @@ async function main() {
     roundNumber,
   });
   const eventLoopStats = createEventLoopStats({ roundNumber });
+  const orderStore = createAdminOrdersStore({
+    collectAdminOrderRecords,
+    normalizeString,
+  });
   const quoteOpsLedger = createQuoteOpsStoreModule({
     QUOTE_OPS_LEDGER_LIMIT,
+    applyPaymentEntryUpdates,
     applyLeadEntryUpdates,
     applyClientEntryUpdates,
     applyOrderEntryUpdates,
     createSupabaseQuoteOpsClient,
     normalizeString,
+    orderStore,
   });
+  await orderStore.replaceEntries(
+    await quoteOpsLedger.listEntries({ limit: QUOTE_OPS_LEDGER_LIMIT }),
+    "startup-sync"
+  );
   const settingsStore = createAdminSettingsStore();
   usersStore = createAdminUsersStore({
     createSupabaseAdminUsersClient,
@@ -1188,6 +1213,7 @@ async function main() {
       usersStore,
       settingsStore,
       staffStore,
+      orderStore,
       orderMediaStorage,
       accountInviteEmail,
     });

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const QUOTE_PAGE_PATH = "/quote2";
+  const QUOTE_PAGE_PATH = "/quote";
   const QUOTE_SUBMISSION_ENDPOINT = "/api/quote/submit";
   const STRIPE_CHECKOUT_ENDPOINT = "/api/stripe/checkout-session";
   const GOOGLE_PLACES_API_KEY =
@@ -832,7 +832,7 @@
     };
 
     return {
-      source: "quote2",
+      source: "quote",
       sourcePagePath: QUOTE_PAGE_PATH,
       returnPath: QUOTE_PAGE_PATH,
       consent: true,
@@ -915,7 +915,7 @@
     return [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Shynli Cleaning//Quote Preview//EN",
+      "PRODID:-//Shynli Cleaning//Quote Request//EN",
       "BEGIN:VEVENT",
       `UID:${Date.now()}@shynlicleaningservice.com`,
       `DTSTAMP:${formatIcsDate(new Date())}`,
@@ -993,7 +993,7 @@
       if (elements.stickyEstimate) {
         elements.stickyEstimate.hidden = true;
       }
-      setNotice("Quote request submitted successfully from /quote2.", "success");
+      setNotice("Quote request submitted successfully.", "success");
       elements.successCard.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       setFormError(error && error.message ? error.message : "We could not send the request right now.");
