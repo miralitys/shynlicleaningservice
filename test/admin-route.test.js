@@ -2628,6 +2628,149 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
   }
 });
 
+test("auto-assigns new quote submissions to managers in round robin order", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-manager-round-robin-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-manager-rr-123",
+        },
+      },
+    },
+  ]);
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createUser = async (payload) => {
+      const response = await fetch(`${started.baseUrl}/admin/settings`, {
+        method: "POST",
+        redirect: "manual",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+        body: new URLSearchParams({
+          action: "create_user",
+          name: payload.name,
+          role: payload.role,
+          status: "active",
+          staffStatus: "active",
+          email: payload.email,
+          phone: payload.phone,
+          address: payload.address,
+          compensationValue: "180",
+          compensationType: "fixed",
+          notes: payload.notes || "",
+          password: "StrongPass123!",
+        }),
+      });
+      assert.equal(response.status, 303);
+      assert.match(response.headers.get("location") || "", /notice=user-created-email-skipped/);
+    };
+
+    await createUser({
+      name: "Mila Rivers",
+      role: "manager",
+      email: "mila.rr@example.com",
+      phone: "3125550301",
+      address: "301 Manager Loop, Naperville, IL 60540",
+      notes: "Round robin manager A",
+    });
+    await createUser({
+      name: "Nora Lane",
+      role: "manager",
+      email: "nora.rr@example.com",
+      phone: "3125550302",
+      address: "302 Manager Loop, Naperville, IL 60540",
+      notes: "Round robin manager B",
+    });
+    await createUser({
+      name: "Zoe Admin",
+      role: "admin",
+      email: "zoe.admin@example.com",
+      phone: "3125550303",
+      address: "303 Admin Loop, Naperville, IL 60540",
+      notes: "Should stay out of lead assignment",
+    });
+
+    for (const request of [
+      {
+        requestId: "rr-request-1",
+        fullName: "Round Robin One",
+        phone: "312-555-0311",
+        email: "rr-one@example.com",
+        fullAddress: "111 Round Robin Ave, Aurora, IL 60502",
+      },
+      {
+        requestId: "rr-request-2",
+        fullName: "Round Robin Two",
+        phone: "312-555-0312",
+        email: "rr-two@example.com",
+        fullAddress: "112 Round Robin Ave, Aurora, IL 60502",
+      },
+      {
+        requestId: "rr-request-3",
+        fullName: "Round Robin Three",
+        phone: "312-555-0313",
+        email: "rr-three@example.com",
+        fullAddress: "113 Round Robin Ave, Aurora, IL 60502",
+      },
+    ]) {
+      const quoteResponse = await submitQuote(started.baseUrl, request);
+      assert.equal(quoteResponse.status, 201);
+    }
+
+    const quoteOpsResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("rr-request-")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const quoteOpsBody = await quoteOpsResponse.text();
+    assert.equal(quoteOpsResponse.status, 200);
+    assert.match(
+      quoteOpsBody,
+      /rr-request-1[\s\S]*?<span class="admin-quote-entry-info-label">Менеджер<\/span>\s*<p class="admin-quote-entry-info-value">Mila Rivers<\/p>/
+    );
+    assert.match(
+      quoteOpsBody,
+      /rr-request-2[\s\S]*?<span class="admin-quote-entry-info-label">Менеджер<\/span>\s*<p class="admin-quote-entry-info-value">Nora Lane<\/p>/
+    );
+    assert.match(
+      quoteOpsBody,
+      /rr-request-3[\s\S]*?<span class="admin-quote-entry-info-label">Менеджер<\/span>\s*<p class="admin-quote-entry-info-value">Mila Rivers<\/p>/
+    );
+    assert.match(quoteOpsBody, />Mila Rivers<\/option>/);
+    assert.match(quoteOpsBody, />Nora Lane<\/option>/);
+    assert.doesNotMatch(quoteOpsBody, />Не назначен<\/option>/);
+    assert.doesNotMatch(quoteOpsBody, />Zoe Admin<\/option>/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("advances no-response lead tasks from same-day retry to next-morning and then refusal", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-task-flow-"));
   const fetchStub = createFetchStub([

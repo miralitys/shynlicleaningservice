@@ -596,6 +596,42 @@ const {
 });
 
 let usersStore = null;
+let staffStore = null;
+
+async function listLeadManagers() {
+  if (!usersStore || typeof usersStore.getSnapshot !== "function") {
+    return [];
+  }
+
+  let staffNameById = new Map();
+  if (staffStore && typeof staffStore.getSnapshot === "function") {
+    const staffSnapshot = await staffStore.getSnapshot();
+    staffNameById = new Map(
+      (Array.isArray(staffSnapshot && staffSnapshot.staff) ? staffSnapshot.staff : [])
+        .map((record) => [
+          normalizeString(record && record.id, 120),
+          normalizeString(record && record.name, 200),
+        ])
+        .filter(([id, name]) => Boolean(id && name))
+    );
+  }
+
+  const usersSnapshot = await usersStore.getSnapshot();
+  return (Array.isArray(usersSnapshot && usersSnapshot.users) ? usersSnapshot.users : [])
+    .filter((user) => {
+      const role = normalizeString(user && user.role, 32).toLowerCase();
+      const status = normalizeString(user && user.status, 32).toLowerCase();
+      return status === "active" && role === "manager";
+    })
+    .map((user) => {
+      const id = normalizeString(user && user.id, 120);
+      const email = normalizeString(user && user.email, 250).toLowerCase();
+      const name = staffNameById.get(normalizeString(user && user.staffId, 120)) || email || "Менеджер";
+      return { id, email, name };
+    })
+    .filter((manager) => Boolean(manager.id && manager.name))
+    .sort((left, right) => left.name.localeCompare(right.name, "ru"));
+}
 
 const orderPolicyAcceptance = createOrderPolicyAcceptanceService({
   env: process.env,
@@ -870,6 +906,7 @@ const { handleQuoteSubmissionRequest, handleStripeCheckoutRequest } = createApiH
   createQuoteToken,
   enforcePostRateLimit,
   getLeadConnectorClient,
+  listLeadManagers,
   getStripeClient,
   getStripeReturnOrigin,
   normalizeString,
@@ -1005,7 +1042,7 @@ async function main() {
     env: process.env,
     fetch: global.fetch,
   });
-  const staffStore = createAdminStaffStore({
+  staffStore = createAdminStaffStore({
     createSupabaseAdminStaffClient,
     env: process.env,
     fetch: global.fetch,
