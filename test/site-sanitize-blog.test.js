@@ -136,13 +136,17 @@ test("renders featured pet hair article links on /blog/pet-hair", () => {
   assert.match(html, /best-vacuum-tips-for-pet-hair/);
 });
 
+test("renders featured move-in move-out article links on /blog/move-in-move-out", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/move-in-move-out");
+
+  assert.match(html, /move-out-cleaning-checklist-for-renters/);
+  assert.match(html, /what-landlords-check-during-move-out-inspection-cleaning/);
+  assert.match(html, /how-clean-should-apartment-be-when-moving-out/);
+  assert.match(html, /Move-In \/ Move-Out <span style="color: rgb\(158, 68, 90\);">Guides<\/span>/);
+});
+
 test("renders an empty-state for categories that do not have published article clusters yet", () => {
-  for (const route of [
-    "/blog/move-in-move-out",
-    "/blog/airbnb",
-    "/blog/seasonal",
-    "/blog/cleaning-hacks",
-  ]) {
+  for (const route of ["/blog/airbnb", "/blog/seasonal", "/blog/cleaning-hacks"]) {
     const html = sanitizeHtml(sourceHtml, route);
 
     assert.match(html, /Fresh guides for this section are being added\./);
@@ -346,6 +350,28 @@ test("renders all pet hair articles with live route structure and long-form cont
   const petHairArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/pet-hair");
 
   for (const article of petHairArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1400,
+      `Expected ${article.path} to exceed 1400 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all move-in move-out articles with live route structure and long-form content", () => {
+  const moveArticles = BLOG_ARTICLES.filter(
+    (article) => article.categoryPath === "/blog/move-in-move-out"
+  );
+
+  for (const article of moveArticles) {
     const html = sanitizeHtml(sourceHtml, article.path);
 
     assert.match(
