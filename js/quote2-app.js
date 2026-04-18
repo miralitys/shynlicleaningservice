@@ -104,8 +104,7 @@
     form: document.getElementById("quote2Form"),
     formError: document.getElementById("quote2FormError"),
     submitButton: document.getElementById("quote2SubmitButton"),
-    firstName: document.getElementById("quote2FirstName"),
-    lastName: document.getElementById("quote2LastName"),
+    fullName: document.getElementById("quote2FullName"),
     phone: document.getElementById("quote2Phone"),
     serviceType: document.getElementById("quote2ServiceType"),
     serviceButtons: Array.from(document.querySelectorAll("#quote2ServiceButtons [data-service]")),
@@ -185,19 +184,6 @@
     }
     const parsed = Number.parseFloat(rawValue);
     return Number.isFinite(parsed) ? parsed : fallback;
-  }
-
-  function splitFullName(fullName) {
-    const parts = String(fullName || "")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    if (parts.length === 0) return { firstName: "", lastName: "" };
-    if (parts.length === 1) return { firstName: parts[0], lastName: "" };
-    return {
-      firstName: parts[0],
-      lastName: parts.slice(1).join(" "),
-    };
   }
 
   function getSelectedServiceType() {
@@ -456,8 +442,7 @@
 
   function isContactStepComplete() {
     return (
-      elements.firstName.value.trim().length > 0 &&
-      elements.lastName.value.trim().length > 0 &&
+      elements.fullName.value.trim().length > 0 &&
       Boolean(normalizeUsPhoneDigits(elements.phone.value))
     );
   }
@@ -578,10 +563,8 @@
     const prefilledName = queryName || storedName;
     const prefilledPhone = queryPhone || storedPhone;
 
-    if (prefilledName) {
-      const parts = splitFullName(prefilledName);
-      if (!elements.firstName.value.trim()) elements.firstName.value = parts.firstName;
-      if (!elements.lastName.value.trim()) elements.lastName.value = parts.lastName;
+    if (prefilledName && !elements.fullName.value.trim()) {
+      elements.fullName.value = prefilledName;
     }
 
     if (prefilledPhone && !elements.phone.value.trim()) {
@@ -597,7 +580,7 @@
   }
 
   function initContactInputs() {
-    [elements.firstName, elements.lastName].forEach(function (field) {
+    [elements.fullName].forEach(function (field) {
       field.addEventListener("input", function () {
         refreshStepVisibility();
       });
@@ -740,17 +723,11 @@
   }
 
   function validateForm() {
-    const firstName = elements.firstName.value.trim();
-    const lastName = elements.lastName.value.trim();
+    const fullName = elements.fullName.value.trim();
     const phoneDigits = normalizeUsPhoneDigits(elements.phone.value);
 
-    if (!lastName) {
-      setFormError("Please enter the customer's last name.");
-      return false;
-    }
-
-    if (!firstName) {
-      setFormError("Please enter the customer's first name.");
+    if (!fullName) {
+      setFormError("Please enter the customer's name.");
       return false;
     }
 
@@ -775,14 +752,10 @@
 
   function buildQuotePayload() {
     const pricing = calculateCurrentPricing();
-    const firstName = elements.firstName.value.trim();
-    const lastName = elements.lastName.value.trim();
-    const fullName = `${firstName} ${lastName}`.trim();
+    const fullName = elements.fullName.value.trim();
     const fullAddress = getFullAddress();
     const completeAddress = getCompleteAddress() || fullAddress;
     const contactData = {
-      firstName: firstName,
-      lastName: lastName,
       fullName: fullName,
       phone: normalizeUsPhoneDigits(elements.phone.value),
       email: "",

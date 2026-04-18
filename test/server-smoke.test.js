@@ -38,7 +38,7 @@ test("serves the quote preview page through the static route layer", async () =>
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /Contact details/i);
-  assert.match(body, /Last name/i);
+  assert.match(body, /Name/i);
 });
 
 test("redirects the /%D0%B4%D0%B5%D0%B9%D1%81%D1%82%D0%B2%D1%83%D0%B9 smoke path into the quote flow", async () => {
