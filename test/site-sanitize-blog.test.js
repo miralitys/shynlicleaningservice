@@ -113,6 +113,17 @@ test("renders featured what's included article links on /blog/whats-included", (
   assert.match(html, /What’s <span style="color: rgb\(158, 68, 90\);">Included<\/span>/);
 });
 
+test("renders featured services article links on /blog/services", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/services");
+
+  assert.match(html, /what-affects-house-cleaning-price/);
+  assert.match(html, /how-much-does-deep-cleaning-cost-for-a-house/);
+  assert.match(html, /how-much-does-move-out-cleaning-cost/);
+  assert.match(html, /house-cleaning-cost-per-hour-vs-flat-rate/);
+  assert.match(html, /is-it-cheaper-to-do-biweekly-cleaning/);
+  assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Services<\/span>/);
+});
+
 test("renders long-form checklist article route with more than 3000 words", () => {
   const html = sanitizeHtml(
     sourceHtml,
@@ -195,6 +206,26 @@ test("renders all what's included articles with live route structure and long-fo
   );
 
   for (const article of whatsIncludedArticles) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+
+    assert.match(
+      html,
+      new RegExp(`<h1 class="shynli-blog-article__title">${escapeRegex(article.title)}<\\/h1>`)
+    );
+    assert.match(html, /Quick navigation/);
+    assert.match(html, /class="shynli-blog-article__toc-link"/);
+    assert.match(html, /shynli-blog-quote-panel/);
+    assert.ok(
+      getWordCount(html) > 1700,
+      `Expected ${article.path} to exceed 1700 words, got ${getWordCount(html)}`
+    );
+  }
+});
+
+test("renders all services articles with live route structure and long-form content", () => {
+  const servicesArticles = BLOG_ARTICLES.filter((article) => article.categoryPath === "/blog/services");
+
+  for (const article of servicesArticles) {
     const html = sanitizeHtml(sourceHtml, article.path);
 
     assert.match(
