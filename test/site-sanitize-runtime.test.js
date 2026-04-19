@@ -249,7 +249,12 @@ test("preserves menu CTA wiring and submenu content after the menu shell replace
   assert.doesNotMatch(html, /js\/tilda-blocks-page108488156\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-events-1\.0\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-popup-1\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/);
+  assert.doesNotMatch(html, /data-original=/);
   assert.match(html, /id="shynli-home-page-runtime"/);
+  assert.match(html, /id="shynli-zero-runtime-stub"/);
   assert.match(html, /href="\/quote"/);
   assert.match(html, /href="#city"/);
   assert.match(html, /href="#clean"/);
@@ -264,6 +269,27 @@ test("preserves menu CTA wiring and submenu content after the menu shell replace
   assert.match(html, /href="\/services\/airbnb-cleaning"/);
   assert.match(html, /href="\/services\/commercial-cleaning"/);
   assert.match(html, /aria-expanded="false"/);
+});
+
+test("replaces heavy zero runtimes across home-like routes", () => {
+  const fixtures = [
+    { route: "/", file: "page108488156.html" },
+    { route: "/home-calculator", file: "page110230356.html" },
+    { route: "/home-simple", file: "page108488156.html" },
+  ];
+
+  for (const fixture of fixtures) {
+    const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
+    assert.doesNotMatch(html, /data-original=/, fixture.route);
+    assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
+    assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
+    assert.match(html, /href="#city"/, fixture.route);
+    assert.match(html, /href="#clean"/, fixture.route);
+    assert.match(html, /Shynli Cleaning/i, fixture.route);
+  }
 });
 
 test("replaces the romeoville page runtime with the shared popup and menu runtime", () => {

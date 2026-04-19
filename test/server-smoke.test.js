@@ -48,7 +48,12 @@ test("serves the home page through the custom route layer", async () => {
   assert.doesNotMatch(body, /js\/tilda-blocks-page108488156\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-events-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-popup-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-zero-scale-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
+  assert.doesNotMatch(body, /data-original=/);
   assert.match(body, /id="shynli-home-page-runtime"/);
+  assert.match(body, /id="shynli-zero-runtime-stub"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
@@ -56,6 +61,30 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /data-shynli-form-kind="cleaner-application"/);
   assert.match(body, /id="shynli-cleaner-application-form-runtime"/);
   assert.match(body, /Shynli Cleaning/i);
+});
+
+test("serves home-like routes without zero/lazyload runtimes", async () => {
+  const homeLikeRoutes = [
+    ["/home-calculator", /Instant House Cleaning Cost Calculator/i],
+    ["/home-simple", /House Cleaning Services in Chicago Suburbs/i],
+  ];
+
+  for (const [route, expectedTitle] of homeLikeRoutes) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
+
+    assert.equal(response.status, 200, route);
+    assert.match(response.headers.get("content-type") || "", /text\/html/, route);
+    assert.match(body, expectedTitle, route);
+    assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/, route);
+    assert.doesNotMatch(body, /js\/tilda-zero-scale-1\.0\.min\.js/, route);
+    assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/, route);
+    assert.doesNotMatch(body, /data-original=/, route);
+    assert.match(body, /id="shynli-home-page-runtime"/, route);
+    assert.match(body, /id="shynli-zero-runtime-stub"/, route);
+    assert.match(body, /href="#city"/, route);
+    assert.match(body, /href="#clean"/, route);
+  }
 });
 
 test("serves the quote page through the static route layer", async () => {
