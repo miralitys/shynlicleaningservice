@@ -90,6 +90,7 @@ const runtimeScriptIds = new Set([
   "shynli-menusub-runtime",
   "shynli-cleaner-application-form-runtime",
   "shynli-zero-form-runtime-stub",
+  "shynli-zero-runtime-stub",
   "shynli-zero-form-phone-sync",
 ]);
 
@@ -287,7 +288,9 @@ test("replaces the regular-cleaning page runtime with the shared popup and menu 
   assert.doesNotMatch(html, /js\/tilda-blocks-page109653016\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-popup-1\.0\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/);
   assert.match(html, /id="shynli-home-page-runtime"/);
+  assert.match(html, /id="shynli-zero-runtime-stub"/);
   assert.match(html, /href="\/services\/regular-cleaning"/);
   assert.match(html, /href="#clean"/);
   assert.match(html, /href="#city"/);

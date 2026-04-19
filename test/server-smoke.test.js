@@ -176,7 +176,9 @@ test("serves service pages with the shared popup and menu runtime", async () => 
   assert.doesNotMatch(body, /js\/tilda-blocks-page109653016\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-popup-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
+  assert.match(body, /id="shynli-zero-runtime-stub"/);
   assert.match(body, /href="#city"/);
   assert.match(body, /href="#clean"/);
 });
