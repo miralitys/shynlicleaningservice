@@ -273,7 +273,13 @@ test("replaces the romeoville page runtime with the shared popup and menu runtim
   assert.doesNotMatch(html, /js\/tilda-blocks-page111640886\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-popup-1\.0\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/);
+  assert.doesNotMatch(html, /data-original=/);
   assert.match(html, /id="shynli-home-page-runtime"/);
+  assert.match(html, /id="shynli-zero-runtime-stub"/);
+  assert.match(html, /src="images\/tild3666-3333-4430-b664-383666616530__logo_2\.png"/);
   assert.match(html, /href="#city"/);
   assert.match(html, /href="#clean"/);
   assert.match(html, /data-tooltip-hook="#city"/);
