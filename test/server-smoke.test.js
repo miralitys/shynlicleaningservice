@@ -41,6 +41,9 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
   assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
   assert.match(body, /id="shynli-menusub-runtime"/);
+  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menu-shell-runtime"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
@@ -86,6 +89,9 @@ test("serves the blog page without legacy feed asset hints", async () => {
   assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
   assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
   assert.match(body, /id="shynli-menusub-runtime"/);
+  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menu-shell-runtime"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
@@ -111,6 +117,9 @@ test("serves blog category pages without legacy feed assets", async () => {
   assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
   assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
   assert.match(body, /id="shynli-menusub-runtime"/);
+  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menu-shell-runtime"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /t_feed_init\(/);
   assert.doesNotMatch(body, /feeduid:/);
@@ -129,7 +138,27 @@ test("serves blog article pages without unused widgeticon assets", async () => {
   assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
   assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
   assert.match(body, /id="shynli-menusub-runtime"/);
+  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menu-shell-runtime"/);
   assert.match(body, /Airbnb Turnover Cleaning Checklist/i);
+});
+
+test("serves city landing pages with the shared menu shell runtime", async () => {
+  const response = await fetch(`${BASE_URL}/romeoville`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(body, /Romeoville/i);
+  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menu-shell-runtime"/);
+  assert.match(body, /id="shynli-menusub-runtime"/);
+  assert.match(body, /href="\/quote"/);
+  assert.match(body, /href="#city"/);
+  assert.match(body, /href="#clean"/);
 });
 
 test("serves a minimal oauth callback shell", async () => {
