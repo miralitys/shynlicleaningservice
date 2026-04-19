@@ -280,6 +280,19 @@ test("replaces the romeoville page runtime with the shared popup and menu runtim
   assert.match(html, /Romeoville ▾/);
 });
 
+test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
+  const html = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning");
+
+  assert.doesNotMatch(html, /js\/tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-blocks-page109653016\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-popup-1\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-events-1\.0\.min\.js/);
+  assert.match(html, /id="shynli-home-page-runtime"/);
+  assert.match(html, /href="\/services\/regular-cleaning"/);
+  assert.match(html, /href="#clean"/);
+  assert.match(html, /href="#city"/);
+});
+
 test("server-renders cleaner popup forms and strips the heavy Tilda form runtimes", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
 

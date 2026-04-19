@@ -165,6 +165,22 @@ test("serves city landing pages with the shared menu shell runtime", async () =>
   assert.match(body, /href="#clean"/);
 });
 
+test("serves service pages with the shared popup and menu runtime", async () => {
+  const response = await fetch(`${BASE_URL}/services/regular-cleaning`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(body, /Recurring House Cleaning Services/i);
+  assert.doesNotMatch(body, /js\/tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-blocks-page109653016\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-popup-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-events-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-home-page-runtime"/);
+  assert.match(body, /href="#city"/);
+  assert.match(body, /href="#clean"/);
+});
+
 test("serves a minimal oauth callback shell", async () => {
   const response = await fetch(`${BASE_URL}/oauth/callback?code=abc123`);
   const body = await response.text();
