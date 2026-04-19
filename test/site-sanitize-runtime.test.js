@@ -80,6 +80,7 @@ const siteSeoHelpers = {
 const runtimeScriptIds = new Set([
   "deep-cleaning-addons-rebuild",
   "full-card-click-handler",
+  "shynli-blog-topic-hub-script",
   "shynli-menu-shell-runtime",
   "mobile-contact-details-fix",
   "mobile-sticky-cta",
@@ -159,26 +160,32 @@ test("strips unused menu widgeticon assets when no widgeticon nodes remain", () 
     assert.doesNotMatch(html, /tilda-menu-widgeticons-1\.0\.min\.js/);
     assert.doesNotMatch(html, /tilda-menu-widgeticons-1\.0\.min\.css/);
     assert.doesNotMatch(html, /class="[^"]*\bt-menuwidgeticons(?:__|\b)[^"]*"/i);
-    assert.match(html, /id="shynli-menu-widgeticons-runtime-stub"/);
   }
+
+  assert.match(homeHtml, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(blogHtml, /id="shynli-menu-widgeticons-runtime-stub"/);
 });
 
-test("replaces the legacy menusub runtime with the lightweight shared runtime", () => {
+test("replaces the legacy menusub runtime on remaining Tilda pages", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const cityHtml = sanitizeHtml(readFixture("page111640886.html"), "/romeoville");
   const blogHtml = sanitizeHtml(readFixture("page108872586.html"), "/blog");
 
-  for (const html of [homeHtml, blogHtml]) {
+  for (const html of [homeHtml, cityHtml]) {
     assert.doesNotMatch(html, /js\/tilda-menusub-1\.0\.min\.js/);
     assert.match(html, /id="shynli-menusub-runtime"/);
     assert.match(html, /class="t-menusub"/);
     assert.match(html, /data-menu-submenu-hook="/);
   }
+
+  assert.doesNotMatch(blogHtml, /js\/tilda-menusub-1\.0\.min\.js/);
+  assert.doesNotMatch(blogHtml, /id="shynli-menusub-runtime"/);
+  assert.doesNotMatch(blogHtml, /class="t-menusub"/);
 });
 
 test("replaces legacy tilda menu runtimes with the shared menu shell runtime", () => {
   const fixtures = [
     { route: "/", file: "page108488156.html" },
-    { route: "/blog", file: "page108872586.html" },
     { route: "/romeoville", file: "page111640886.html" },
   ];
 
@@ -189,6 +196,33 @@ test("replaces legacy tilda menu runtimes with the shared menu shell runtime", (
     assert.match(html, /id="shynli-menu-shell-runtime"/);
     assert.match(html, /class="t-menu-burger\b/);
     assert.match(html, /class="t-menu-base\b/);
+  }
+});
+
+test("renders managed blog routes through the standalone blog shell", () => {
+  const fixtures = [
+    { route: "/blog", expected: /Shynli Cleaning <span>Blog<\/span>/ },
+    { route: "/blog/checklists", expected: /Cleaning <span>Checklists<\/span>/ },
+    {
+      route: "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos",
+      expected: /Airbnb Turnover Cleaning Checklist/i,
+    },
+  ];
+
+  for (const fixture of fixtures) {
+    const html = sanitizeHtml(readFixture("page108872586.html"), fixture.route);
+    assert.doesNotMatch(html, /data-tilda-project-id=/);
+    assert.doesNotMatch(html, /tilda-grid-3\.0\.min\.css/);
+    assert.doesNotMatch(html, /tilda-blocks-page108872586/);
+    assert.doesNotMatch(html, /tilda-zero-1\.1\.min\.js/);
+    assert.doesNotMatch(html, /tilda-scripts-3\.0\.min\.js/);
+    assert.doesNotMatch(html, /tilda-events-1\.0\.min\.js/);
+    assert.doesNotMatch(html, /tilda-popup-1\.0\.min\.js/);
+    assert.doesNotMatch(html, /tilda-menu-1\.1\.min\.js/);
+    assert.doesNotMatch(html, /tilda-menu-burger-1\.0\.min\.js/);
+    assert.match(html, /class="shynli-blog-shell"/);
+    assert.match(html, /id="shynli-blog-topic-hub-script"/);
+    assert.match(html, fixture.expected);
   }
 });
 

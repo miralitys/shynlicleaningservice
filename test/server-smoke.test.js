@@ -75,31 +75,27 @@ test("serves the blog page without legacy feed asset hints", async () => {
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
-  assert.match(linkHeader, /<\/css\/tilda-grid-3\.0\.min\.css>; rel=preload; as=style/);
-  assert.match(
-    linkHeader,
-    /<\/css\/tilda-blocks-page108872586\.min\.css\?t=\d+>; rel=preload; as=style/
-  );
+  assert.doesNotMatch(linkHeader, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(linkHeader, /tilda-blocks-page108872586/);
   assert.doesNotMatch(linkHeader, /tilda-feed-1\.1\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
   assert.doesNotMatch(linkHeader, /quote2\.css/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
-  assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
-  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
-  assert.match(body, /id="shynli-menusub-runtime"/);
-  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
-  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
-  assert.match(body, /id="shynli-menu-shell-runtime"/);
+  assert.doesNotMatch(body, /data-tilda-project-id=/);
+  assert.doesNotMatch(body, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(body, /tilda-blocks-page108872586/);
+  assert.doesNotMatch(body, /tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-zero-scale-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-popup-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-burger-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
-  assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /t_feed_init\(/);
-  assert.doesNotMatch(body, /feeduid:/);
-  assert.doesNotMatch(body, /data-feed-recid=/);
-  assert.match(body, /Shynli Cleaning <span style="color: rgb\(158, 68, 90\);">Blog<\/span>/i);
+  assert.match(body, /class="shynli-blog-shell"/);
+  assert.match(body, /Shynli Cleaning <span>Blog<\/span>/i);
   assert.match(body, /href="\/blog\/checklists"/);
+  assert.match(body, /href="\/quote"/);
 });
 
 test("serves blog category pages without legacy feed assets", async () => {
@@ -109,20 +105,18 @@ test("serves blog category pages without legacy feed assets", async () => {
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.doesNotMatch(linkHeader, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(linkHeader, /tilda-blocks-page108872586/);
   assert.doesNotMatch(linkHeader, /tilda-feed-1\.1\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
-  assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
-  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
-  assert.match(body, /id="shynli-menusub-runtime"/);
-  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
-  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
-  assert.match(body, /id="shynli-menu-shell-runtime"/);
-  assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
-  assert.doesNotMatch(body, /t_feed_init\(/);
-  assert.doesNotMatch(body, /feeduid:/);
+  assert.doesNotMatch(body, /data-tilda-project-id=/);
+  assert.doesNotMatch(body, /tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-popup-1\.0\.min\.js/);
+  assert.match(body, /class="shynli-blog-shell"/);
+  assert.match(body, /Cleaning <span>Checklists<\/span>/);
   assert.match(body, /Featured articles|Featured article/);
   assert.match(body, /href="\/blog\/checklists\//);
 });
@@ -133,15 +127,15 @@ test("serves blog article pages without unused widgeticon assets", async () => {
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
-  assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
-  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
-  assert.match(body, /id="shynli-menusub-runtime"/);
-  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
-  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
-  assert.match(body, /id="shynli-menu-shell-runtime"/);
+  assert.doesNotMatch(body, /data-tilda-project-id=/);
+  assert.doesNotMatch(body, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(body, /tilda-blocks-page108872586/);
+  assert.doesNotMatch(body, /tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-popup-1\.0\.min\.js/);
+  assert.match(body, /class="shynli-blog-shell"/);
   assert.match(body, /Airbnb Turnover Cleaning Checklist/i);
+  assert.match(body, /data-blog-print/);
 });
 
 test("serves city landing pages with the shared menu shell runtime", async () => {
