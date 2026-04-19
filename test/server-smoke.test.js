@@ -177,6 +177,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/bartlett", /Bartlett/i],
     ["/batavia", /Batavia/i],
     ["/bolingbrook", /Bolingbrook/i],
+    ["/burrridge", /Burr Ridge/i],
     ["/carolstream", /Carol Stream/i],
     ["/clarendonhills", /Clarendon Hills/i],
     ["/darien", /Darien/i],
@@ -208,6 +209,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/willowbrook", /Willowbrook/i],
     ["/winfield", /Winfield/i],
     ["/wooddale", /Wood Dale/i],
+    ["/woodridge", /Woodridge/i],
   ];
 
   for (const [route, expectedTitle] of cityRoutes) {

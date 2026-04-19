@@ -294,6 +294,7 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
     { route: "/bartlett", file: "page111297646.html", cityLabel: /Bartlett ▾/ },
     { route: "/batavia", file: "page111301556.html", cityLabel: /Batavia ▾/ },
     { route: "/bolingbrook", file: "page111302756.html", cityLabel: /Bolingbrook ▾/ },
+    { route: "/burrridge", file: "page111303116.html", cityLabel: /Burr Ridge ▾/ },
     { route: "/carolstream", file: "page111303466.html", cityLabel: /Carol Stream ▾/ },
     { route: "/clarendonhills", file: "page111303756.html", cityLabel: /Clarendon Hills ▾/ },
     { route: "/darien", file: "page111304216.html", cityLabel: /Darien ▾/ },
@@ -325,6 +326,7 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
     { route: "/willowbrook", file: "page111641546.html", cityLabel: /Willowbrook ▾/ },
     { route: "/winfield", file: "page111641576.html", cityLabel: /Winfield ▾/ },
     { route: "/wooddale", file: "page111641666.html", cityLabel: /Wood Dale ▾/ },
+    { route: "/woodridge", file: "page111641796.html", cityLabel: /Woodridge ▾/ },
   ];
 
   for (const fixture of cityFixtures) {
