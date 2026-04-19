@@ -226,15 +226,19 @@ test("renders managed blog routes through the standalone blog shell", () => {
   }
 });
 
-test("keeps separate desktop behaviors for blog Services hover and City click popover", () => {
+test("keeps separate desktop behaviors for blog Services hover and City modal", () => {
   const html = sanitizeHtml(readFixture("page108872586.html"), "/blog");
 
   assert.match(html, /shynli-blog-shell__details shynli-blog-shell__details--hoverable/);
-  assert.match(html, /shynli-blog-shell__details shynli-blog-shell__details--align-right shynli-blog-shell__details--city/);
-  assert.match(html, /Popular Cities/);
-  assert.match(html, /See all service areas/);
+  assert.match(html, /data-city-modal-open/);
+  assert.match(html, /data-city-modal/);
+  assert.match(html, /Service areas by city/);
+  assert.match(html, /A-D:/);
+  assert.match(html, /V-W:/);
+  assert.match(html, /Addison/);
   assert.match(html, /Naperville/);
   assert.match(html, /Downers Grove/);
+  assert.match(html, /Woodridge/);
 });
 
 test("preserves menu CTA wiring and submenu content after the menu shell replacement", () => {
