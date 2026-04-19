@@ -55,6 +55,7 @@ const {
   getMemoryUsageSnapshot,
   getPerfAlertReasons,
 } = require("./lib/runtime/perf");
+const { evaluateStartupEnvIntegrity } = require("./lib/runtime/env-integrity");
 const { createAdminOrderMediaStorage } = require("./lib/admin-order-media-storage");
 let createSupabaseQuoteOpsClient;
 let loadSupabaseQuoteOpsConfig;
@@ -614,7 +615,8 @@ const PERF_ENDPOINT_TOKEN = String(process.env.PERF_ENDPOINT_TOKEN || "").trim()
 const GOOGLE_ANALYTICS_MEASUREMENT_ID = String(process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID || "G-0MXV4JBP67").trim();
 const GOOGLE_PLACES_API_KEY = String(process.env.GOOGLE_PLACES_API_KEY || "").trim();
 const PUBLIC_ASSET_DIRECTORIES = new Set(["css", "images", "js"]);
-const PUBLIC_ASSET_FILES = new Set(["robots.txt", "site.webmanifest", "sitemap.xml"]);
+const PUBLIC_ASSET_FILES = new Set(["apple-touch-icon.png", "robots.txt", "site.webmanifest", "sitemap.xml"]);
+const STARTUP_ENV_INTEGRITY = evaluateStartupEnvIntegrity(process.env);
 const BASE_SECURITY_HEADERS = Object.freeze({
   "Content-Security-Policy":
     "base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self' https://checkout.stripe.com https://api.stripe.com;",
@@ -1232,6 +1234,7 @@ const handleSiteRequest = createSiteRequestHandler({
   PUBLIC_ASSET_DIRECTORIES,
   PUBLIC_ASSET_FILES,
   SITE_ORIGIN,
+  STARTUP_ENV_INTEGRITY,
   SITEMAP_EXCLUDED_ROUTES,
   SITEMAP_LASTMOD_OVERRIDES,
   GHL_INBOUND_SMS_WEBHOOK_ENDPOINT,
@@ -1261,6 +1264,20 @@ async function main() {
     bufferLimit: REQUEST_LOG_BUFFER_LIMIT,
     flushIntervalMs: REQUEST_LOG_FLUSH_INTERVAL_MS,
   });
+  requestLogger.log({
+    ts: new Date().toISOString(),
+    type: "startup_env_integrity",
+    mode: STARTUP_ENV_INTEGRITY.mode,
+    ready: STARTUP_ENV_INTEGRITY.readinessOk,
+    blocking_issue_codes: STARTUP_ENV_INTEGRITY.blockingIssueCodes,
+    warning_issue_codes: STARTUP_ENV_INTEGRITY.warningIssueCodes,
+  });
+  if (STARTUP_ENV_INTEGRITY.mode === "fail" && STARTUP_ENV_INTEGRITY.blockingIssueCodes.length > 0) {
+    requestLogger.close();
+    throw new Error(
+      `Startup blocked by environment integrity checks: ${STARTUP_ENV_INTEGRITY.blockingIssueCodes.join(", ")}`
+    );
+  }
   const routes = await loadSiteRoutes({
     ROUTES_PATH,
     fsp,
@@ -1667,6 +1684,9 @@ async function main() {
       indexed_image_variant_sets: runtimeIndex.imageVariantsByOriginal.size,
       warm_mode: HTML_CACHE_WARM_MODE,
       warmed_html_cache_entries: warmedCount,
+      env_mode: STARTUP_ENV_INTEGRITY.mode,
+      env_ready: STARTUP_ENV_INTEGRITY.readinessOk,
+      env_blocking_issue_codes: STARTUP_ENV_INTEGRITY.blockingIssueCodes,
       memory: getMemoryUsageSnapshot(roundNumber),
     });
   });

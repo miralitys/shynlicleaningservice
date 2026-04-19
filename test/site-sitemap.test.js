@@ -31,7 +31,7 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
     ]),
   });
 
-  assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com<\/loc>/);
+  assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/<\/loc>/);
   assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/blog<\/loc>/);
   assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/blog\/seasonal<\/loc>/);
   assert.match(

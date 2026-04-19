@@ -212,6 +212,54 @@ test("requires an explicit token when /__perf is enabled", async () => {
   }
 });
 
+test("exposes startup readiness status", async () => {
+  const response = await fetch(`${BASE_URL}/__ready`);
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.mode, "warn");
+  assert.equal("issueCodes" in payload, false);
+  assert.equal("blockingIssueCodes" in payload, false);
+  assert.equal("warningIssueCodes" in payload, false);
+});
+
+test("gates readiness when blocking startup integrity issues are present", async () => {
+  const started = await startServer({
+    env: {
+      STARTUP_ENV_MODE: "gate",
+      QUOTE_SIGNING_SECRET: "quote-secret",
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/__ready`);
+    const payload = await response.json();
+
+    assert.equal(response.status, 503);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.mode, "gate");
+    assert.equal("issueCodes" in payload, false);
+    assert.equal("blockingIssueCodes" in payload, false);
+    assert.equal("warningIssueCodes" in payload, false);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
+test("fails startup when fail mode sees blocking integrity issues", async () => {
+  await assert.rejects(
+    () =>
+      startServer({
+        env: {
+          STARTUP_ENV_MODE: "fail",
+          QUOTE_SIGNING_SECRET: "quote-secret",
+        },
+      }),
+    /Server (wrote to stderr before ready|exited before ready)/
+  );
+});
+
 test("returns a graceful 503 when Stripe is not configured", async () => {
   const response = await fetch(`${BASE_URL}/api/stripe/checkout-session`, {
     method: "POST",
@@ -247,6 +295,18 @@ test("injects quote metadata, shared icons, and GA4 snippet into the quote page"
   assert.match(body, /<link rel="manifest" href="\/site\.webmanifest" \/>/);
   assert.match(body, /googletagmanager\.com\/gtag\/js\?id=G-0MXV4JBP67/);
   assert.doesNotMatch(body, /google-analytics\.com\/analytics\.js/);
+});
+
+test("serves root fallback icon assets", async () => {
+  const [faviconResponse, appleTouchResponse] = await Promise.all([
+    fetch(`${BASE_URL}/favicon.ico`),
+    fetch(`${BASE_URL}/apple-touch-icon.png`),
+  ]);
+
+  assert.equal(faviconResponse.status, 200);
+  assert.match(faviconResponse.headers.get("content-type") || "", /image\/x-icon|image\/png/);
+  assert.equal(appleTouchResponse.status, 200);
+  assert.match(appleTouchResponse.headers.get("content-type") || "", /image\/png/);
 });
 
 test("serves the shared web manifest", async () => {
