@@ -230,6 +230,33 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
   }
 });
 
+test("serves static marketing pilots without zero/lazyload runtimes", async () => {
+  const staticRoutes = [
+    ["/about-us", /About/i],
+    ["/contacts", /Contact/i],
+    ["/faq", /FAQ|pricing calculated/i],
+    ["/pricing", /Pricing|Instant Quote/i],
+    ["/service-areas", /Service Areas/i],
+  ];
+
+  for (const [route, expectedTitle] of staticRoutes) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
+
+    assert.equal(response.status, 200, route);
+    assert.match(response.headers.get("content-type") || "", /text\/html/, route);
+    assert.match(body, expectedTitle, route);
+    assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/, route);
+    assert.doesNotMatch(body, /js\/tilda-zero-scale-1\.0\.min\.js/, route);
+    assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/, route);
+    assert.doesNotMatch(body, /data-original=/, route);
+    assert.match(body, /id="shynli-home-page-runtime"/, route);
+    assert.match(body, /id="shynli-zero-runtime-stub"/, route);
+    assert.match(body, /href="#city"/, route);
+    assert.match(body, /href="#clean"/, route);
+  }
+});
+
 test("serves service pages with the shared popup and menu runtime", async () => {
   const response = await fetch(`${BASE_URL}/services/regular-cleaning`);
   const body = await response.text();

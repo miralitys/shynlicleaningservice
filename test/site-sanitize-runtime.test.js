@@ -344,6 +344,29 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
   }
 });
 
+test("replaces heavy zero runtimes across static marketing page pilots", () => {
+  const staticFixtures = [
+    { route: "/about-us", file: "page109184776.html", expected: /About/i },
+    { route: "/contacts", file: "page109085526.html", expected: /Contact/i },
+    { route: "/faq", file: "page109088646.html", expected: /FAQ|pricing calculated/i },
+    { route: "/pricing", file: "page110278596.html", expected: /Pricing|Instant Quote/i },
+    { route: "/service-areas", file: "page108912616.html", expected: /Service Areas/i },
+  ];
+
+  for (const fixture of staticFixtures) {
+    const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
+    assert.doesNotMatch(html, /data-original=/, fixture.route);
+    assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
+    assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
+    assert.match(html, /href="#city"/, fixture.route);
+    assert.match(html, /href="#clean"/, fixture.route);
+    assert.match(html, fixture.expected, fixture.route);
+  }
+});
+
 test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
   const html = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning");
 
