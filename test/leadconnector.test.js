@@ -6,6 +6,7 @@ const assert = require("node:assert/strict");
 const {
   createLeadConnectorClient,
   loadLeadConnectorConfig,
+  normalizeCleanerApplicationSubmission,
   normalizeQuoteSubmission,
 } = require("../lib/leadconnector");
 
@@ -65,6 +66,29 @@ test("normalizes the existing quote payload into a safe CRM submission", () => {
   assert.equal(submission.quote.totalPrice, 150);
   assert.equal(submission.quote.consent, true);
   assert.equal(submission.meta.source, "Website Quote");
+});
+
+test("normalizes cleaner application payloads into a safe CRM submission", () => {
+  const submission = normalizeCleanerApplicationSubmission({
+    application: {
+      fullName: "  Jane   Doe ",
+      phone: "(312) 555-0100",
+      email: "JANE@example.com",
+      zipCode: "60446-1234",
+      experience: " Yes, professional experience ",
+      details: " 10+ years cleaning homes. \n Reliable and detail-oriented. ",
+    },
+    source: "Website Careers Form",
+  });
+
+  assert.equal(submission.contact.fullName, "Jane Doe");
+  assert.equal(submission.contact.phone, "3125550100");
+  assert.equal(submission.contact.phoneE164, "+13125550100");
+  assert.equal(submission.contact.email, "jane@example.com");
+  assert.equal(submission.application.zipCode, "60446");
+  assert.equal(submission.application.experience, "Yes, professional experience");
+  assert.equal(submission.application.details, "10+ years cleaning homes. \n Reliable and detail-oriented.");
+  assert.equal(submission.meta.source, "Website Careers Form");
 });
 
 test("loads LeadConnector config and rejects unsafe base URLs", () => {
@@ -157,6 +181,62 @@ test("submits a quote, creates the contact, and writes a note", async () => {
   assert.match(calls[1].body, /cf-rooms/);
   assert.equal(calls[2].method, "POST");
   assert.match(calls[2].body, /WEBSITE QUOTE SUBMISSION/);
+});
+
+test("submits a cleaner application, creates the contact, and writes a note", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+      redirect: options.redirect,
+    });
+
+    if (String(url).includes("/contacts/") && options.method === "POST") {
+      return createResponse(200, { contact: { id: "cleaner-contact-1" } });
+    }
+
+    if (String(url).includes("/notes")) {
+      return createResponse(200, { id: "note-cleaner-1" });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_CREATE_OPPORTUNITY: "0",
+    },
+    fetch,
+  });
+
+  const result = await client.submitCleanerApplication({
+    application: {
+      fullName: "Jane Doe",
+      phone: "312-555-0100",
+      email: "jane@example.com",
+      zipCode: "60446",
+      experience: "Yes, professional experience",
+      details: "Can work weekends.",
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "cleaner-contact-1");
+  assert.equal(result.noteCreated, true);
+  assert.equal(result.usedExistingContact, false);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[0].redirect, "error");
+  assert.match(calls[0].body, /"postalCode":"60446"/);
+  assert.equal(calls[1].method, "POST");
+  assert.match(calls[1].body, /WEBSITE CLEANER APPLICATION/);
+  assert.match(calls[1].body, /Can work weekends/);
 });
 
 test("falls back to updating an existing contact after a duplicate response", async () => {

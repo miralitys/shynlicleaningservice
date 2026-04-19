@@ -581,6 +581,7 @@ const ALERT_EVENT_LOOP_P95_MS = Number(process.env.ALERT_EVENT_LOOP_P95_MS || 10
 const STRIPE_CHECKOUT_ENDPOINT = "/api/stripe/checkout-session";
 const STRIPE_WEBHOOK_ENDPOINT = "/api/stripe/webhook";
 const GHL_INBOUND_SMS_WEBHOOK_ENDPOINT = "/api/ghl/inbound-sms";
+const CLEANER_APPLICATION_SUBMIT_ENDPOINT = "/api/cleaner-application/submit";
 const QUOTE_REQUEST_ENDPOINT = "/api/quote/request";
 const QUOTE_SUBMIT_ENDPOINT = "/api/quote/submit";
 const MAX_JSON_BODY_BYTES = Number(process.env.MAX_JSON_BODY_BYTES || 64 * 1024);
@@ -1138,11 +1139,13 @@ const handleAccountRequest = createAccountRequestHandler({
 });
 
 const {
+  handleCleanerApplicationSubmissionRequest,
   handleGhlInboundSmsWebhookRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
   handleStripeWebhookRequest,
 } = createApiHandlers({
+  CLEANER_APPLICATION_SUBMIT_ENDPOINT,
   MAX_JSON_BODY_BYTES,
   GHL_INBOUND_SMS_WEBHOOK_ENDPOINT,
   QUOTE_PUBLIC_PATH,
@@ -1232,12 +1235,14 @@ const handleSiteRequest = createSiteRequestHandler({
   SITEMAP_EXCLUDED_ROUTES,
   SITEMAP_LASTMOD_OVERRIDES,
   GHL_INBOUND_SMS_WEBHOOK_ENDPOINT,
+  CLEANER_APPLICATION_SUBMIT_ENDPOINT,
   QUOTE_REQUEST_ENDPOINT,
   QUOTE_SUBMIT_ENDPOINT,
   REDIRECT_ROUTES,
   SITE_DIR,
   STRIPE_CHECKOUT_ENDPOINT,
   STRIPE_WEBHOOK_ENDPOINT,
+  handleCleanerApplicationSubmissionRequest,
   handleGhlInboundSmsWebhookRequest,
   handleAccountRequest,
   handleAdminRequest,

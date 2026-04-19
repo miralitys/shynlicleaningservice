@@ -39,8 +39,11 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
+  assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
   assert.match(body, /class="t-form t-form_inputs-total_6 js-form-proccess"/);
+  assert.match(body, /data-shynli-form-kind="cleaner-application"/);
+  assert.match(body, /id="shynli-cleaner-application-form-runtime"/);
   assert.match(body, /Shynli Cleaning/i);
 });
 
@@ -78,6 +81,7 @@ test("serves the blog page without legacy feed asset hints", async () => {
   assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
+  assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /t_feed_init\(/);
   assert.doesNotMatch(body, /feeduid:/);
