@@ -287,6 +287,31 @@ test("replaces the romeoville page runtime with the shared popup and menu runtim
   assert.match(html, /Romeoville ▾/);
 });
 
+test("replaces heavy zero runtimes across all city page pilots", () => {
+  const cityFixtures = [
+    { route: "/aurora", file: "page110920356.html", cityLabel: /Aurora ▾/ },
+    { route: "/bolingbrook", file: "page111302756.html", cityLabel: /Bolingbrook ▾/ },
+    { route: "/naperville", file: "page111640686.html", cityLabel: /Naperville ▾/ },
+    { route: "/plainfield", file: "page111640836.html", cityLabel: /Plainfield ▾/ },
+    { route: "/romeoville", file: "page111640886.html", cityLabel: /Romeoville ▾/ },
+    { route: "/wheaton", file: "page111641466.html", cityLabel: /Wheaton ▾/ },
+  ];
+
+  for (const fixture of cityFixtures) {
+    const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
+    assert.doesNotMatch(html, /data-original=/, fixture.route);
+    assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
+    assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
+    assert.match(html, /src="images\/tild3666-3333-4430-b664-383666616530__logo_2\.png"/, fixture.route);
+    assert.match(html, /href="#city"/, fixture.route);
+    assert.match(html, /href="#clean"/, fixture.route);
+    assert.match(html, fixture.cityLabel, fixture.route);
+  }
+});
+
 test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
   const html = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning");
 
