@@ -244,6 +244,11 @@ test("keeps separate desktop behaviors for blog Services hover and City modal", 
 test("preserves menu CTA wiring and submenu content after the menu shell replacement", () => {
   const html = sanitizeHtml(readFixture("page108488156.html"), "/");
 
+  assert.doesNotMatch(html, /js\/tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-blocks-page108488156\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-popup-1\.0\.min\.js/);
+  assert.match(html, /id="shynli-home-page-runtime"/);
   assert.match(html, /href="\/quote"/);
   assert.match(html, /href="#city"/);
   assert.match(html, /href="#clean"/);

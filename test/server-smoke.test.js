@@ -44,6 +44,11 @@ test("serves the home page through the custom route layer", async () => {
   assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
   assert.match(body, /id="shynli-menu-shell-runtime"/);
+  assert.doesNotMatch(body, /js\/tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-blocks-page108488156\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-popup-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
@@ -150,6 +155,7 @@ test("serves city landing pages with the shared menu shell runtime", async () =>
   assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
   assert.match(body, /id="shynli-menu-shell-runtime"/);
   assert.match(body, /id="shynli-menusub-runtime"/);
+  assert.doesNotMatch(body, /js\/tilda-events-1\.0\.min\.js/);
   assert.match(body, /href="\/quote"/);
   assert.match(body, /href="#city"/);
   assert.match(body, /href="#clean"/);
