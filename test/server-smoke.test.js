@@ -187,6 +187,34 @@ test("serves service pages with the shared popup and menu runtime", async () => 
   assert.match(body, /href="#clean"/);
 });
 
+test("serves all service page pilots without zero/lazyload runtimes", async () => {
+  const serviceRoutes = [
+    ["/services/regular-cleaning", /Recurring House Cleaning Services/i],
+    ["/services/deep-cleaning", /Deep Cleaning/i],
+    ["/services/move-in-move-out-cleaning", /Move In|Move Out/i],
+    ["/services/airbnb-cleaning", /Airbnb Cleaning/i],
+    ["/services/commercial-cleaning", /Commercial Cleaning/i],
+    ["/services/post-construction-cleaning", /Post-Construction Cleaning|Post Construction Cleaning/i],
+  ];
+
+  for (const [route, expectedTitle] of serviceRoutes) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
+
+    assert.equal(response.status, 200, route);
+    assert.match(response.headers.get("content-type") || "", /text\/html/, route);
+    assert.match(body, expectedTitle, route);
+    assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/, route);
+    assert.doesNotMatch(body, /js\/tilda-zero-scale-1\.0\.min\.js/, route);
+    assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/, route);
+    assert.doesNotMatch(body, /data-original=/, route);
+    assert.match(body, /id="shynli-home-page-runtime"/, route);
+    assert.match(body, /id="shynli-zero-runtime-stub"/, route);
+    assert.match(body, /href="#city"/, route);
+    assert.match(body, /href="#clean"/, route);
+  }
+});
+
 test("serves a minimal oauth callback shell", async () => {
   const response = await fetch(`${BASE_URL}/oauth/callback?code=abc123`);
   const body = await response.text();

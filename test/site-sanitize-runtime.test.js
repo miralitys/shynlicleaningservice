@@ -301,6 +301,31 @@ test("replaces the regular-cleaning page runtime with the shared popup and menu 
   assert.match(html, /href="#city"/);
 });
 
+test("replaces heavy zero runtimes across all service page pilots", () => {
+  const serviceFixtures = [
+    { route: "/services/regular-cleaning", file: "page109653016.html" },
+    { route: "/services/deep-cleaning", file: "page109721366.html" },
+    { route: "/services/move-in-move-out-cleaning", file: "page109993436.html" },
+    { route: "/services/airbnb-cleaning", file: "page110326416.html" },
+    { route: "/services/commercial-cleaning", file: "page110512356.html" },
+    { route: "/services/post-construction-cleaning", file: "page113041806.html" },
+  ];
+
+  for (const fixture of serviceFixtures) {
+    const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
+    assert.doesNotMatch(html, /data-original=/, fixture.route);
+    assert.doesNotMatch(html, /__resize__20x__/, fixture.route);
+    assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
+    assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
+    assert.match(html, /src="images\/[^"]+"/, fixture.route);
+    assert.match(html, /href="#city"/, fixture.route);
+    assert.match(html, /href="#clean"/, fixture.route);
+  }
+});
+
 test("server-renders cleaner popup forms and strips the heavy Tilda form runtimes", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
 
