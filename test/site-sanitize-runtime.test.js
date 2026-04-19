@@ -84,6 +84,7 @@ const runtimeScriptIds = new Set([
   "mobile-sticky-cta",
   "pricing-calculator-scroll",
   "safari-home-layout-fix",
+  "shynli-zero-form-phone-sync",
 ]);
 
 const sanitizeHtml = createSiteSanitizer({
@@ -152,4 +153,15 @@ test("keeps menu widgeticon runtime JS while pruning unused widgeticon CSS", () 
     assert.doesNotMatch(html, /tilda-menu-widgeticons-1\.0\.min\.css/);
     assert.doesNotMatch(html, /class="[^"]*\bt-menuwidgeticons(?:__|\b)[^"]*"/i);
   }
+});
+
+test("server-renders cleaner popup forms and strips the zero-forms runtime", () => {
+  const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
+
+  assert.doesNotMatch(homeHtml, /js\/tilda-zero-forms-1\.0\.min\.js/);
+  assert.doesNotMatch(homeHtml, /tn-atom__form/);
+  assert.doesNotMatch(homeHtml, /tn-atom__inputs-textarea/);
+  assert.match(homeHtml, /class="t-form t-form_inputs-total_6 js-form-proccess"/);
+  assert.match(homeHtml, /class="t-input shynli-zero-phone-display"/);
+  assert.match(homeHtml, /id="shynli-zero-form-phone-sync"/);
 });
