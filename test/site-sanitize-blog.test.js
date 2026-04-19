@@ -25,6 +25,12 @@ const siteSeoHelpers = {
       canonical: "",
     };
   },
+  buildContactSchema() {
+    return null;
+  },
+  buildFaqSchema() {
+    return null;
+  },
   setTitleTag(html) {
     return html;
   },
@@ -39,6 +45,9 @@ const siteSeoHelpers = {
   },
   buildHomeSchemas() {
     return "";
+  },
+  buildServiceSchema() {
+    return null;
   },
   buildBreadcrumbSchema() {
     return null;

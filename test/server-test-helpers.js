@@ -11,6 +11,7 @@ const PROJECT_ROOT = path.resolve(__dirname, "..");
 const HOST = "127.0.0.1";
 const BOOTSTRAP_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "shynli-test-bootstrap-"));
 const BOOTSTRAP_PATH = path.join(BOOTSTRAP_ROOT, "register-runtime-shims.js");
+const childTempDataRoots = new WeakMap();
 
 fs.writeFileSync(
   BOOTSTRAP_PATH,
@@ -126,8 +127,47 @@ function buildNodePath(entries) {
   return [...current, ...entries.filter(Boolean)].join(path.delimiter);
 }
 
+function applyDefaultEnvValue(target, key, value) {
+  if (!Object.prototype.hasOwnProperty.call(target, key)) {
+    target[key] = value;
+  }
+}
+
+function buildIsolatedServerEnv(env = {}) {
+  const tempDataRoot = fs.mkdtempSync(path.join(os.tmpdir(), "shynli-test-data-"));
+  const nextEnv = { ...env };
+  const staffDocumentsDir = path.join(tempDataRoot, "staff-documents");
+
+  applyDefaultEnvValue(nextEnv, "ADMIN_USERS_STORE_PATH", path.join(tempDataRoot, "admin-users-store.json"));
+  applyDefaultEnvValue(nextEnv, "ADMIN_STAFF_STORE_PATH", path.join(tempDataRoot, "admin-staff-store.json"));
+  applyDefaultEnvValue(nextEnv, "ADMIN_MAIL_STORE_PATH", path.join(tempDataRoot, "admin-mail-store.json"));
+  applyDefaultEnvValue(nextEnv, "ADMIN_SETTINGS_STORE_PATH", path.join(tempDataRoot, "admin-settings-store.json"));
+  applyDefaultEnvValue(nextEnv, "ADMIN_ORDER_MEDIA_STORAGE_DIR", path.join(tempDataRoot, "order-media"));
+  applyDefaultEnvValue(nextEnv, "STAFF_W9_DOCUMENTS_DIR", staffDocumentsDir);
+  applyDefaultEnvValue(nextEnv, "STAFF_CONTRACT_DOCUMENTS_DIR", staffDocumentsDir);
+  applyDefaultEnvValue(
+    nextEnv,
+    "POLICY_ACCEPTANCE_DOCUMENTS_DIR",
+    path.join(tempDataRoot, "policy-acceptance")
+  );
+
+  return {
+    env: nextEnv,
+    tempDataRoot,
+  };
+}
+
+async function cleanupTempDataRoot(child) {
+  if (!child || typeof child !== "object") return;
+  const tempDataRoot = childTempDataRoots.get(child);
+  if (!tempDataRoot) return;
+  childTempDataRoots.delete(child);
+  await fsp.rm(tempDataRoot, { recursive: true, force: true });
+}
+
 async function startServer({ env = {}, nodePathEntries = [], nodeArgs = [] } = {}) {
   const port = await getFreePort();
+  const isolated = buildIsolatedServerEnv(env);
   const child = spawn("node", ["--require", BOOTSTRAP_PATH, ...nodeArgs, "server.js"], {
     cwd: PROJECT_ROOT,
     env: {
@@ -140,12 +180,23 @@ async function startServer({ env = {}, nodePathEntries = [], nodeArgs = [] } = {
       GHL_AUTO_DISCOVER_OPPORTUNITY_PIPELINE: "0",
       GHL_AUTO_DISCOVER_CUSTOM_FIELDS: "0",
       ...(nodePathEntries.length > 0 ? { NODE_PATH: buildNodePath(nodePathEntries) } : {}),
-      ...env,
+      ...isolated.env,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  await waitForServer(child);
+  childTempDataRoots.set(child, isolated.tempDataRoot);
+  child.once("exit", () => {
+    void cleanupTempDataRoot(child);
+  });
+
+  try {
+    await waitForServer(child);
+  } catch (error) {
+    child.kill("SIGTERM");
+    await cleanupTempDataRoot(child);
+    throw error;
+  }
 
   return {
     child,
@@ -160,6 +211,7 @@ async function stopServer(child) {
     child.once("exit", () => resolve());
     setTimeout(resolve, 3000);
   });
+  await cleanupTempDataRoot(child);
 }
 
 function createStripeStub() {

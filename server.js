@@ -444,9 +444,13 @@ const BREADCRUMB_LABELS = new Map([
 ]);
 const ROUTE_META_OVERRIDES = {
   "/": {
-    ogTitle: "Professional Home Cleaning Services | Shynli Cleaning",
+    title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
     ogDescription:
       "Trusted local house cleaning in Chicago suburbs with upfront pricing, flexible scheduling, and insured cleaners.",
+  },
+  "/contacts": {
+    title: "Contact Shynli Cleaning | Chicago Suburbs",
   },
   "/home-calculator": {
     title: "Instant House Cleaning Cost Calculator | Shynli Cleaning",
@@ -459,15 +463,33 @@ const ROUTE_META_OVERRIDES = {
     robots: "noindex,follow",
   },
   "/services/post-construction-cleaning": {
-    title: "Post-Construction Cleaning Services | Shynli Cleaning | Chicago Suburbs",
+    title: "Post-Construction Cleaning Services | Shynli Cleaning",
     description:
       "Professional post-construction cleaning for renovated homes and newly finished spaces across Chicago suburbs. Remove dust, debris, and residue with a final detailed clean.",
     ogTitle: "Post-Construction Cleaning Services | Shynli Cleaning",
     ogDescription:
       "Detailed post-construction cleaning for remodels, renovations, and newly completed spaces across Chicago suburbs.",
   },
+  "/services/airbnb-cleaning": {
+    title: "Airbnb Cleaning Services | Shynli Cleaning",
+  },
+  "/services/commercial-cleaning": {
+    title: "Commercial Cleaning Services | Shynli Cleaning",
+  },
+  "/services/deep-cleaning": {
+    title: "Deep Cleaning Services | Shynli Cleaning",
+  },
+  "/services/move-in-move-out-cleaning": {
+    title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
+  },
+  "/services/regular-cleaning": {
+    title: "Recurring House Cleaning Services | Shynli Cleaning",
+  },
   "/oauth/callback": {
     robots: "noindex,nofollow",
+  },
+  "/pricing": {
+    title: "House Cleaning Prices | Shynli Cleaning",
   },
   "/quote": {
     title: "Request a Quote | Shynli Cleaning",
@@ -529,6 +551,7 @@ const CONTENT_TYPES = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".txt": "text/plain; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
   ".webp": "image/webp",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
@@ -578,9 +601,10 @@ const TRUSTED_PROXY_IPS = new Set(
 );
 const PERF_ENDPOINT_ENABLED = /^(1|true|yes)$/i.test(String(process.env.ENABLE_PERF_ENDPOINT || ""));
 const PERF_ENDPOINT_TOKEN = String(process.env.PERF_ENDPOINT_TOKEN || "").trim();
+const GOOGLE_ANALYTICS_MEASUREMENT_ID = String(process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID || "G-0MXV4JBP67").trim();
 const GOOGLE_PLACES_API_KEY = String(process.env.GOOGLE_PLACES_API_KEY || "").trim();
 const PUBLIC_ASSET_DIRECTORIES = new Set(["css", "images", "js"]);
-const PUBLIC_ASSET_FILES = new Set(["robots.txt", "sitemap.xml"]);
+const PUBLIC_ASSET_FILES = new Set(["robots.txt", "site.webmanifest", "sitemap.xml"]);
 const BASE_SECURITY_HEADERS = Object.freeze({
   "Content-Security-Policy":
     "base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self' https://checkout.stripe.com https://api.stripe.com;",
@@ -1162,6 +1186,7 @@ const siteSeoHelpers = createSiteSeoHelpers({
 });
 
 const { sanitizeHtml } = createSiteSanitizer({
+  GOOGLE_ANALYTICS_MEASUREMENT_ID,
   GOOGLE_PLACES_API_KEY,
   normalizeRoute,
   siteSeoHelpers,

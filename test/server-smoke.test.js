@@ -84,6 +84,15 @@ test("redirects /quote2 into the main quote flow", async () => {
   assert.equal(response.headers.get("location"), "/quote");
 });
 
+test("redirects trailing-slash public routes to the canonical URL", async () => {
+  const response = await fetch(`${BASE_URL}/services/deep-cleaning/?utm_source=test`, {
+    redirect: "manual",
+  });
+
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.get("location"), "/services/deep-cleaning?utm_source=test");
+});
+
 test("redirects the /%D0%B4%D0%B5%D0%B9%D1%81%D1%82%D0%B2%D1%83%D0%B9 smoke path into the quote flow", async () => {
   const response = await fetch(`${BASE_URL}/%D0%B4%D0%B5%D0%B9%D1%81%D1%82%D0%B2%D1%83%D0%B9`, {
     redirect: "manual",
@@ -147,4 +156,44 @@ test("serves the configured 404 page for an unknown route", async () => {
   assert.equal(response.status, 404);
   assert.match(response.headers.get("content-type") || "", /text\/html|text\/plain/);
   assert.ok(body.length > 0);
+});
+
+test("injects quote metadata, shared icons, and GA4 snippet into the quote page", async () => {
+  const response = await fetch(`${BASE_URL}/quote`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(
+    body,
+    /<meta name="description" content="Get an instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning\." \/>/
+  );
+  assert.match(body, /<link rel="icon" href="\/images\/tild3636-3965-4134-a432-323337623835__insta_32\.png" type="image\/png" \/>/);
+  assert.match(body, /<link rel="apple-touch-icon" href="\/images\/tild3636-3965-4134-a432-323337623835__insta_32\.png" \/>/);
+  assert.match(body, /<link rel="manifest" href="\/site\.webmanifest" \/>/);
+  assert.match(body, /googletagmanager\.com\/gtag\/js\?id=G-0MXV4JBP67/);
+  assert.doesNotMatch(body, /google-analytics\.com\/analytics\.js/);
+});
+
+test("serves the shared web manifest", async () => {
+  const response = await fetch(`${BASE_URL}/site.webmanifest`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /application\/manifest\+json/);
+  assert.equal(body.name, "Shynli Cleaning");
+  assert.equal(body.icons[0].src, "/images/tild3636-3965-4134-a432-323337623835__insta_32.png");
+});
+
+test("emits FAQ and Service structured data on matching page types", async () => {
+  const faqResponse = await fetch(`${BASE_URL}/faq`);
+  const faqBody = await faqResponse.text();
+  assert.equal(faqResponse.status, 200);
+  assert.match(faqBody, /"@type":"FAQPage"/);
+  assert.match(faqBody, /"How is pricing calculated\?"/);
+
+  const serviceResponse = await fetch(`${BASE_URL}/services/deep-cleaning`);
+  const serviceBody = await serviceResponse.text();
+  assert.equal(serviceResponse.status, 200);
+  assert.match(serviceBody, /"@type":"Service"/);
+  assert.match(serviceBody, /"name":"Deep Cleaning"/);
 });

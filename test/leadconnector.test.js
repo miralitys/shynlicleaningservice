@@ -610,6 +610,58 @@ test("creates a contact on the fly when lookup fails before sending an SMS", asy
   assert.equal(smsPayload.toNumber, "+13125550199");
 });
 
+test("can send SMS directly to a number without creating a CRM contact", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+    });
+
+    if (String(url).includes("/conversations/messages") && options.method === "POST") {
+      return createResponse(200, {
+        message: { id: "message-direct-199" },
+        conversation: { id: "conversation-direct-199" },
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch,
+  });
+
+  const result = await client.sendSmsMessage({
+    phone: "312-555-0199",
+    customerName: "Internal Team Member",
+    customerEmail: "team.member@example.com",
+    message: "Shift starts in 30 minutes.",
+    allowDirectToNumber: true,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.contactId, "");
+  assert.equal(result.createdContact, false);
+  assert.equal(result.usedExistingContact, false);
+  assert.equal(result.updatedExistingContact, false);
+  assert.equal(result.phoneE164, "+13125550199");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "POST");
+
+  const smsPayload = JSON.parse(calls[0].body);
+  assert.ok(!Object.prototype.hasOwnProperty.call(smsPayload, "contactId"));
+  assert.equal(smsPayload.toNumber, "+13125550199");
+  assert.equal(smsPayload.message, "Shift starts in 30 minutes.");
+});
+
 test("falls back to scanning contacts by phone digits when query search misses the existing contact", async () => {
   const calls = [];
   const fetch = async (url, options = {}) => {
