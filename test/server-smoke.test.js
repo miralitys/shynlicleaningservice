@@ -202,7 +202,12 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/villapark", /Villa Park/i],
     ["/warrenville", /Warrenville/i],
     ["/wayne", /Wayne/i],
+    ["/westchicago", /West Chicago/i],
+    ["/westmont", /Westmont/i],
     ["/wheaton", /Wheaton/i],
+    ["/willowbrook", /Willowbrook/i],
+    ["/winfield", /Winfield/i],
+    ["/wooddale", /Wood Dale/i],
   ];
 
   for (const [route, expectedTitle] of cityRoutes) {

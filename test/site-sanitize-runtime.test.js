@@ -319,7 +319,12 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
     { route: "/villapark", file: "page111641126.html", cityLabel: /Villa Park ▾/ },
     { route: "/warrenville", file: "page111641216.html", cityLabel: /Warrenville ▾/ },
     { route: "/wayne", file: "page111641256.html", cityLabel: /Wayne ▾/ },
+    { route: "/westchicago", file: "page111641356.html", cityLabel: /West Chicago ▾/ },
+    { route: "/westmont", file: "page111641416.html", cityLabel: /Westmont ▾/ },
     { route: "/wheaton", file: "page111641466.html", cityLabel: /Wheaton ▾/ },
+    { route: "/willowbrook", file: "page111641546.html", cityLabel: /Willowbrook ▾/ },
+    { route: "/winfield", file: "page111641576.html", cityLabel: /Winfield ▾/ },
+    { route: "/wooddale", file: "page111641666.html", cityLabel: /Wood Dale ▾/ },
   ];
 
   for (const fixture of cityFixtures) {
