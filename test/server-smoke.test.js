@@ -36,11 +36,20 @@ test("serves the home page through the custom route layer", async () => {
     linkHeader,
     /<\/css\/tilda-blocks-page108488156\.min\.css\?t=\d+>; rel=preload; as=style/
   );
-  assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
+  assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menusub-runtime"/);
+  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menu-shell-runtime"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
+  assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
   assert.match(body, /class="t-form t-form_inputs-total_6 js-form-proccess"/);
+  assert.match(body, /data-shynli-form-kind="cleaner-application"/);
+  assert.match(body, /id="shynli-cleaner-application-form-runtime"/);
   assert.match(body, /Shynli Cleaning/i);
 });
 
@@ -66,24 +75,27 @@ test("serves the blog page without legacy feed asset hints", async () => {
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
-  assert.match(linkHeader, /<\/css\/tilda-grid-3\.0\.min\.css>; rel=preload; as=style/);
-  assert.match(
-    linkHeader,
-    /<\/css\/tilda-blocks-page108872586\.min\.css\?t=\d+>; rel=preload; as=style/
-  );
+  assert.doesNotMatch(linkHeader, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(linkHeader, /tilda-blocks-page108872586/);
   assert.doesNotMatch(linkHeader, /tilda-feed-1\.1\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
   assert.doesNotMatch(linkHeader, /quote2\.css/);
-  assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
+  assert.doesNotMatch(body, /data-tilda-project-id=/);
+  assert.doesNotMatch(body, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(body, /tilda-blocks-page108872586/);
+  assert.doesNotMatch(body, /tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-zero-scale-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-popup-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-burger-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
-  assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /t_feed_init\(/);
-  assert.doesNotMatch(body, /feeduid:/);
-  assert.doesNotMatch(body, /data-feed-recid=/);
-  assert.match(body, /Shynli Cleaning <span style="color: rgb\(158, 68, 90\);">Blog<\/span>/i);
+  assert.match(body, /class="shynli-blog-shell"/);
+  assert.match(body, /Shynli Cleaning <span>Blog<\/span>/i);
   assert.match(body, /href="\/blog\/checklists"/);
+  assert.match(body, /href="\/quote"/);
 });
 
 test("serves blog category pages without legacy feed assets", async () => {
@@ -93,27 +105,54 @@ test("serves blog category pages without legacy feed assets", async () => {
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.doesNotMatch(linkHeader, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(linkHeader, /tilda-blocks-page108872586/);
   assert.doesNotMatch(linkHeader, /tilda-feed-1\.1\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
-  assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
-  assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
-  assert.doesNotMatch(body, /t_feed_init\(/);
-  assert.doesNotMatch(body, /feeduid:/);
+  assert.doesNotMatch(body, /data-tilda-project-id=/);
+  assert.doesNotMatch(body, /tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-popup-1\.0\.min\.js/);
+  assert.match(body, /class="shynli-blog-shell"/);
+  assert.match(body, /Cleaning <span>Checklists<\/span>/);
   assert.match(body, /Featured articles|Featured article/);
   assert.match(body, /href="\/blog\/checklists\//);
 });
 
-test("serves blog article pages with widgeticon runtime JS but without unused widgeticon CSS", async () => {
+test("serves blog article pages without unused widgeticon assets", async () => {
   const response = await fetch(`${BASE_URL}/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
-  assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
-  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
+  assert.doesNotMatch(body, /data-tilda-project-id=/);
+  assert.doesNotMatch(body, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(body, /tilda-blocks-page108872586/);
+  assert.doesNotMatch(body, /tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-popup-1\.0\.min\.js/);
+  assert.match(body, /class="shynli-blog-shell"/);
   assert.match(body, /Airbnb Turnover Cleaning Checklist/i);
+  assert.match(body, /data-blog-print/);
+});
+
+test("serves city landing pages with the shared menu shell runtime", async () => {
+  const response = await fetch(`${BASE_URL}/romeoville`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(body, /Romeoville/i);
+  assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menu-shell-runtime"/);
+  assert.match(body, /id="shynli-menusub-runtime"/);
+  assert.match(body, /href="\/quote"/);
+  assert.match(body, /href="#city"/);
+  assert.match(body, /href="#clean"/);
 });
 
 test("serves a minimal oauth callback shell", async () => {
@@ -208,6 +247,54 @@ test("requires an explicit token when /__perf is enabled", async () => {
   }
 });
 
+test("exposes startup readiness status", async () => {
+  const response = await fetch(`${BASE_URL}/__ready`);
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.mode, "warn");
+  assert.equal("issueCodes" in payload, false);
+  assert.equal("blockingIssueCodes" in payload, false);
+  assert.equal("warningIssueCodes" in payload, false);
+});
+
+test("gates readiness when blocking startup integrity issues are present", async () => {
+  const started = await startServer({
+    env: {
+      STARTUP_ENV_MODE: "gate",
+      QUOTE_SIGNING_SECRET: "quote-secret",
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/__ready`);
+    const payload = await response.json();
+
+    assert.equal(response.status, 503);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.mode, "gate");
+    assert.equal("issueCodes" in payload, false);
+    assert.equal("blockingIssueCodes" in payload, false);
+    assert.equal("warningIssueCodes" in payload, false);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
+test("fails startup when fail mode sees blocking integrity issues", async () => {
+  await assert.rejects(
+    () =>
+      startServer({
+        env: {
+          STARTUP_ENV_MODE: "fail",
+          QUOTE_SIGNING_SECRET: "quote-secret",
+        },
+      }),
+    /Server (wrote to stderr before ready|exited before ready)/
+  );
+});
+
 test("returns a graceful 503 when Stripe is not configured", async () => {
   const response = await fetch(`${BASE_URL}/api/stripe/checkout-session`, {
     method: "POST",
@@ -243,6 +330,18 @@ test("injects quote metadata, shared icons, and GA4 snippet into the quote page"
   assert.match(body, /<link rel="manifest" href="\/site\.webmanifest" \/>/);
   assert.match(body, /googletagmanager\.com\/gtag\/js\?id=G-0MXV4JBP67/);
   assert.doesNotMatch(body, /google-analytics\.com\/analytics\.js/);
+});
+
+test("serves root fallback icon assets", async () => {
+  const [faviconResponse, appleTouchResponse] = await Promise.all([
+    fetch(`${BASE_URL}/favicon.ico`),
+    fetch(`${BASE_URL}/apple-touch-icon.png`),
+  ]);
+
+  assert.equal(faviconResponse.status, 200);
+  assert.match(faviconResponse.headers.get("content-type") || "", /image\/x-icon|image\/png/);
+  assert.equal(appleTouchResponse.status, 200);
+  assert.match(appleTouchResponse.headers.get("content-type") || "", /image\/png/);
 });
 
 test("serves the shared web manifest", async () => {

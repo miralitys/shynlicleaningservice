@@ -1,9 +1,13 @@
 node_modules/
+node_modules
 .env
 .env.local
 .DS_Store
 coverage/
 *.log
+.playwright-cli/
+docs/obsidian/.obsidian/
+data/staff-documents/
 data/admin-settings-store.json
 data/admin-staff-store.json
 data/admin-users-store.json
