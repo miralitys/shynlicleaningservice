@@ -265,6 +265,21 @@ test("preserves menu CTA wiring and submenu content after the menu shell replace
   assert.match(html, /aria-expanded="false"/);
 });
 
+test("replaces the romeoville page runtime with the shared popup and menu runtime", () => {
+  const html = sanitizeHtml(readFixture("page111640886.html"), "/romeoville");
+
+  assert.doesNotMatch(html, /js\/tilda-scripts-3\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-blocks-page111640886\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-popup-1\.0\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-events-1\.0\.min\.js/);
+  assert.match(html, /id="shynli-home-page-runtime"/);
+  assert.match(html, /href="#city"/);
+  assert.match(html, /href="#clean"/);
+  assert.match(html, /data-tooltip-hook="#city"/);
+  assert.match(html, /data-tooltip-hook="#clean"/);
+  assert.match(html, /Romeoville ▾/);
+});
+
 test("server-renders cleaner popup forms and strips the heavy Tilda form runtimes", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
 
