@@ -314,6 +314,11 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
     { route: "/oswego", file: "page111640796.html", cityLabel: /Oswego ▾/ },
     { route: "/plainfield", file: "page111640836.html", cityLabel: /Plainfield ▾/ },
     { route: "/romeoville", file: "page111640886.html", cityLabel: /Romeoville ▾/ },
+    { route: "/stcharles", file: "page111640956.html", cityLabel: /St\. Charles ▾/ },
+    { route: "/streamwood", file: "page111641016.html", cityLabel: /Streamwood ▾/ },
+    { route: "/villapark", file: "page111641126.html", cityLabel: /Villa Park ▾/ },
+    { route: "/warrenville", file: "page111641216.html", cityLabel: /Warrenville ▾/ },
+    { route: "/wayne", file: "page111641256.html", cityLabel: /Wayne ▾/ },
     { route: "/wheaton", file: "page111641466.html", cityLabel: /Wheaton ▾/ },
   ];
 

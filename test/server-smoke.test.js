@@ -197,6 +197,11 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/oswego", /Oswego/i],
     ["/plainfield", /Plainfield/i],
     ["/romeoville", /Romeoville/i],
+    ["/stcharles", /St\.? Charles/i],
+    ["/streamwood", /Streamwood/i],
+    ["/villapark", /Villa Park/i],
+    ["/warrenville", /Warrenville/i],
+    ["/wayne", /Wayne/i],
     ["/wheaton", /Wheaton/i],
   ];
 
