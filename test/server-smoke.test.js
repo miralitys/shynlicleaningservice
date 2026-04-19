@@ -96,6 +96,24 @@ test("serves blog category pages without legacy feed assets", async () => {
   assert.match(body, /href="\/blog\/checklists\//);
 });
 
+test("serves a minimal oauth callback shell", async () => {
+  const response = await fetch(`${BASE_URL}/oauth/callback?code=abc123`);
+  const body = await response.text();
+  const linkHeader = response.headers.get("link") || "";
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.equal(linkHeader, "");
+  assert.match(body, /<title>Connecting to Shynli Cleaner<\/title>/);
+  assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /shynlicleaning:\/\/oauth\/callback\?code=/);
+  assert.doesNotMatch(body, /tilda-grid-3\.0\.min\.css/);
+  assert.doesNotMatch(body, /tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /tilda-zero-scale-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-events-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /Clean Home\. Clear Mind\./);
+});
+
 test("redirects /quote2 into the main quote flow", async () => {
   const response = await fetch(`${BASE_URL}/quote2`, {
     redirect: "manual",
