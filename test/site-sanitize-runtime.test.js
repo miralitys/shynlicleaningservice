@@ -226,6 +226,17 @@ test("renders managed blog routes through the standalone blog shell", () => {
   }
 });
 
+test("keeps separate desktop behaviors for blog Services hover and City click popover", () => {
+  const html = sanitizeHtml(readFixture("page108872586.html"), "/blog");
+
+  assert.match(html, /shynli-blog-shell__details shynli-blog-shell__details--hoverable/);
+  assert.match(html, /shynli-blog-shell__details shynli-blog-shell__details--align-right shynli-blog-shell__details--city/);
+  assert.match(html, /Popular Cities/);
+  assert.match(html, /See all service areas/);
+  assert.match(html, /Naperville/);
+  assert.match(html, /Downers Grove/);
+});
+
 test("preserves menu CTA wiring and submenu content after the menu shell replacement", () => {
   const html = sanitizeHtml(readFixture("page108488156.html"), "/");
 
