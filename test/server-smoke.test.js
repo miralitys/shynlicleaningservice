@@ -36,8 +36,11 @@ test("serves the home page through the custom route layer", async () => {
     linkHeader,
     /<\/css\/tilda-blocks-page108488156\.min\.css\?t=\d+>; rel=preload; as=style/
   );
-  assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
+  assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menusub-runtime"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
@@ -78,8 +81,11 @@ test("serves the blog page without legacy feed asset hints", async () => {
   assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
   assert.doesNotMatch(linkHeader, /quote2\.css/);
-  assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
+  assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menusub-runtime"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-zero-forms-1\.0\.min\.js/);
@@ -100,8 +106,11 @@ test("serves blog category pages without legacy feed assets", async () => {
   assert.doesNotMatch(linkHeader, /tilda-feed-1\.1\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
-  assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
+  assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menusub-runtime"/);
   assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /t_feed_init\(/);
   assert.doesNotMatch(body, /feeduid:/);
@@ -109,14 +118,17 @@ test("serves blog category pages without legacy feed assets", async () => {
   assert.match(body, /href="\/blog\/checklists\//);
 });
 
-test("serves blog article pages with widgeticon runtime JS but without unused widgeticon CSS", async () => {
+test("serves blog article pages without unused widgeticon assets", async () => {
   const response = await fetch(`${BASE_URL}/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
-  assert.match(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
+  assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.js/);
   assert.doesNotMatch(body, /tilda-menu-widgeticons-1\.0\.min\.css/);
+  assert.match(body, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
+  assert.match(body, /id="shynli-menusub-runtime"/);
   assert.match(body, /Airbnb Turnover Cleaning Checklist/i);
 });
 

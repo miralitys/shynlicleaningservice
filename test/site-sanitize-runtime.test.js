@@ -84,6 +84,8 @@ const runtimeScriptIds = new Set([
   "mobile-sticky-cta",
   "pricing-calculator-scroll",
   "safari-home-layout-fix",
+  "shynli-menu-widgeticons-runtime-stub",
+  "shynli-menusub-runtime",
   "shynli-cleaner-application-form-runtime",
   "shynli-zero-form-runtime-stub",
   "shynli-zero-form-phone-sync",
@@ -146,14 +148,27 @@ test("replaces legacy analytics with a shared GA4 snippet and shared head assets
   }
 });
 
-test("keeps menu widgeticon runtime JS while pruning unused widgeticon CSS", () => {
+test("strips unused menu widgeticon assets when no widgeticon nodes remain", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
   const blogHtml = sanitizeHtml(readFixture("page108872586.html"), "/blog");
 
   for (const html of [homeHtml, blogHtml]) {
-    assert.match(html, /tilda-menu-widgeticons-1\.0\.min\.js/);
+    assert.doesNotMatch(html, /tilda-menu-widgeticons-1\.0\.min\.js/);
     assert.doesNotMatch(html, /tilda-menu-widgeticons-1\.0\.min\.css/);
     assert.doesNotMatch(html, /class="[^"]*\bt-menuwidgeticons(?:__|\b)[^"]*"/i);
+    assert.match(html, /id="shynli-menu-widgeticons-runtime-stub"/);
+  }
+});
+
+test("replaces the legacy menusub runtime with the lightweight shared runtime", () => {
+  const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const blogHtml = sanitizeHtml(readFixture("page108872586.html"), "/blog");
+
+  for (const html of [homeHtml, blogHtml]) {
+    assert.doesNotMatch(html, /js\/tilda-menusub-1\.0\.min\.js/);
+    assert.match(html, /id="shynli-menusub-runtime"/);
+    assert.match(html, /class="t-menusub"/);
+    assert.match(html, /data-menu-submenu-hook="/);
   }
 });
 
