@@ -172,8 +172,13 @@ test("serves city landing pages with the shared menu shell runtime", async () =>
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
   const cityRoutes = [
+    ["/addison", /Addison/i],
     ["/aurora", /Aurora/i],
+    ["/bartlett", /Bartlett/i],
+    ["/batavia", /Batavia/i],
     ["/bolingbrook", /Bolingbrook/i],
+    ["/carolstream", /Carol Stream/i],
+    ["/clarendonhills", /Clarendon Hills/i],
     ["/naperville", /Naperville/i],
     ["/plainfield", /Plainfield/i],
     ["/romeoville", /Romeoville/i],

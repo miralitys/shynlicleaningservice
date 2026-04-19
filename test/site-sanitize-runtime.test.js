@@ -289,8 +289,13 @@ test("replaces the romeoville page runtime with the shared popup and menu runtim
 
 test("replaces heavy zero runtimes across all city page pilots", () => {
   const cityFixtures = [
+    { route: "/addison", file: "page110524796.html", cityLabel: /Addison ▾/ },
     { route: "/aurora", file: "page110920356.html", cityLabel: /Aurora ▾/ },
+    { route: "/bartlett", file: "page111297646.html", cityLabel: /Bartlett ▾/ },
+    { route: "/batavia", file: "page111301556.html", cityLabel: /Batavia ▾/ },
     { route: "/bolingbrook", file: "page111302756.html", cityLabel: /Bolingbrook ▾/ },
+    { route: "/carolstream", file: "page111303466.html", cityLabel: /Carol Stream ▾/ },
+    { route: "/clarendonhills", file: "page111303756.html", cityLabel: /Clarendon Hills ▾/ },
     { route: "/naperville", file: "page111640686.html", cityLabel: /Naperville ▾/ },
     { route: "/plainfield", file: "page111640836.html", cityLabel: /Plainfield ▾/ },
     { route: "/romeoville", file: "page111640886.html", cityLabel: /Romeoville ▾/ },
