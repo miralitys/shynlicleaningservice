@@ -557,6 +557,10 @@ const STRIPE_MAX_AMOUNT_CENTS = Number(process.env.STRIPE_MAX_AMOUNT_CENTS || 20
 const POST_RATE_LIMIT_WINDOW_MS = Number(process.env.POST_RATE_LIMIT_WINDOW_MS || 60_000);
 const POST_RATE_LIMIT_MAX_REQUESTS = Number(process.env.POST_RATE_LIMIT_MAX_REQUESTS || 10);
 const QUOTE_OPS_LEDGER_LIMIT = Number(process.env.QUOTE_OPS_LEDGER_LIMIT || 250);
+const CLIENT_REMINDER_SCAN_LIMIT = Number(process.env.CLIENT_REMINDER_SCAN_LIMIT || 120);
+const CLIENT_REMINDER_BOOTSTRAP_DELAY_MS = Number(
+  process.env.CLIENT_REMINDER_BOOTSTRAP_DELAY_MS || 20_000
+);
 const ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS = Number(process.env.ADMIN_LOGIN_RATE_LIMIT_WINDOW_MS || 10 * 60_000);
 const ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS = Number(process.env.ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS || 5);
 const ADMIN_2FA_RATE_LIMIT_WINDOW_MS = Number(process.env.ADMIN_2FA_RATE_LIMIT_WINDOW_MS || 10 * 60_000);
@@ -1452,32 +1456,43 @@ async function main() {
         : {},
     listLeadManagers,
     quoteOpsLedger,
+    reminderScanLimit: CLIENT_REMINDER_SCAN_LIMIT,
     siteOrigin: SITE_ORIGIN,
     reviewUrl: process.env.CUSTOMER_REVIEW_URL || "https://maps.app.goo.gl/4u9s7onykNrJEEn99",
     staffStore,
     log: (entry) => requestLogger.log(entry),
   });
 
-  const autoNotificationSweepTimer = setInterval(() => {
+  function triggerClientReminderSweep(trigger = "interval") {
     if (!autoNotificationService || typeof autoNotificationService.runClientReminderSweep !== "function") {
       return;
     }
     autoNotificationService.runClientReminderSweep().catch((error) => {
       requestLogger.log({
         ts: new Date().toISOString(),
-        type: "auto_notification_sweep_error",
+        type:
+          trigger === "startup"
+            ? "auto_notification_bootstrap_error"
+            : "auto_notification_sweep_error",
         message: normalizeString(error && error.message ? error.message : "Auto notification sweep failed.", 300),
       });
     });
+  }
+
+  const autoNotificationSweepTimer = setInterval(() => {
+    triggerClientReminderSweep("interval");
   }, 5 * 60 * 1000);
   autoNotificationSweepTimer.unref();
-  autoNotificationService.runClientReminderSweep().catch((error) => {
-    requestLogger.log({
-      ts: new Date().toISOString(),
-      type: "auto_notification_bootstrap_error",
-      message: normalizeString(error && error.message ? error.message : "Initial auto notification sweep failed.", 300),
-    });
-  });
+
+  const bootstrapReminderDelayMs = Math.max(0, CLIENT_REMINDER_BOOTSTRAP_DELAY_MS);
+  if (bootstrapReminderDelayMs === 0) {
+    triggerClientReminderSweep("startup");
+  } else {
+    const bootstrapReminderTimer = setTimeout(() => {
+      triggerClientReminderSweep("startup");
+    }, bootstrapReminderDelayMs);
+    bootstrapReminderTimer.unref();
+  }
 
   const perfSummaryTimer = setInterval(() => {
     const requestSnapshot = requestPerfWindow.snapshot();

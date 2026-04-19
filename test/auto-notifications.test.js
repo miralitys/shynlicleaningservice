@@ -334,3 +334,28 @@ test("sends review request email and SMS once when an order enters awaiting-revi
   assert.equal(emailCalls.length, 1);
   assert.equal(leadConnectorClient.calls.length, 1);
 });
+
+test("uses the configured reminder scan limit during reminder sweeps", async () => {
+  const scannedLimits = [];
+  const ledger = {
+    async listEntries(filters = {}) {
+      scannedLimits.push(filters.limit);
+      return [];
+    },
+  };
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+    leadConnectorClient: () => leadConnectorClient,
+    reminderScanLimit: 37,
+  });
+
+  const result = await service.runClientReminderSweep({
+    now: new Date("2026-04-20T10:00:00.000Z"),
+    leadConnectorClient,
+  });
+
+  assert.deepEqual(scannedLimits, [37]);
+  assert.equal(result.inspected, 0);
+  assert.equal(result.sent, 0);
+});

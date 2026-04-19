@@ -10,3 +10,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: HTML_CACHE_WARM_MODE
+        value: off
+      - key: CLIENT_REMINDER_SCAN_LIMIT
+        value: 120
+      - key: CLIENT_REMINDER_BOOTSTRAP_DELAY_MS
+        value: 20000
