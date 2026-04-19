@@ -289,6 +289,7 @@ test("replaces the regular-cleaning page runtime with the shared popup and menu 
   assert.doesNotMatch(html, /js\/tilda-popup-1\.0\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-events-1\.0\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/);
   assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.doesNotMatch(html, /data-original=/);
   assert.match(html, /id="shynli-home-page-runtime"/);
