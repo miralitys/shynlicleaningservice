@@ -202,6 +202,15 @@ test("serves the shared web manifest", async () => {
   assert.equal(body.icons[0].src, "/images/tild3636-3965-4134-a432-323337623835__insta_32.png");
 });
 
+test("serves the Tilda phone mask asset for public form pages", async () => {
+  const response = await fetch(`${BASE_URL}/js/tilda-phone-mask-1.1.min.js`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /javascript|text\/plain/);
+  assert.match(body, /t_form_phonemask_load/);
+});
+
 test("emits FAQ and Service structured data on matching page types", async () => {
   const faqResponse = await fetch(`${BASE_URL}/faq`);
   const faqBody = await faqResponse.text();
