@@ -166,8 +166,8 @@ RewriteRule ^wooddale/$ page111641666.html [NC]
 RewriteRule ^woodridge$ page111641796.html [NC]
 RewriteRule ^woodridge/$ page111641796.html [NC]
 
-RewriteRule ^quote$ page111975906.html [NC]
-RewriteRule ^quote/$ page111975906.html [NC]
+RewriteRule ^quote$ quote2.html [NC]
+RewriteRule ^quote/$ quote2.html [NC]
 
 RewriteRule ^services/post-construction-cleaning$ page113041806.html [NC]
 RewriteRule ^services/post-construction-cleaning/$ page113041806.html [NC]
@@ -177,4 +177,3 @@ RewriteRule ^oauth/callback/$ page113305246.html [NC]
 
 RewriteRule ^terms-of-service$ page122965736.html [NC]
 RewriteRule ^terms-of-service/$ page122965736.html [NC]
-
