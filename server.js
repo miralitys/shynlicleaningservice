@@ -384,6 +384,15 @@ const BLOG_ARTICLE_PAGES = Object.freeze(
     ogDescription: article.ogDescription || article.description || article.excerpt || "",
   }))
 );
+const BLOG_ARTICLE_LEGACY_REDIRECTS = new Map(
+  BLOG_ARTICLES.map((article) => {
+    const segments = String(article.path || "")
+      .split("/")
+      .filter(Boolean);
+    const slug = segments[segments.length - 1] || "";
+    return [`/blog/${slug}`, article.path];
+  })
+);
 function toSitemapDateOnlyIso(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
@@ -1214,6 +1223,7 @@ const handleSiteRequest = createSiteRequestHandler({
   ALERT_EVENT_LOOP_P95_MS,
   ALERT_P95_MS,
   ALERT_P99_MS,
+  BLOG_ARTICLE_LEGACY_REDIRECTS,
   PERF_ENDPOINT_ENABLED,
   PERF_ENDPOINT_TOKEN,
   PUBLIC_ASSET_DIRECTORIES,

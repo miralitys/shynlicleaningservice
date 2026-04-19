@@ -152,6 +152,18 @@ test("redirects trailing-slash public routes to the canonical URL", async () => 
   assert.equal(response.headers.get("location"), "/services/deep-cleaning?utm_source=test");
 });
 
+test("redirects legacy flat blog article URLs to category-prefixed canonicals", async () => {
+  const response = await fetch(`${BASE_URL}/blog/how-to-remove-hard-water-stains-from-shower-glass?utm_source=test`, {
+    redirect: "manual",
+  });
+
+  assert.equal(response.status, 301);
+  assert.equal(
+    response.headers.get("location"),
+    "/blog/bathroom/how-to-remove-hard-water-stains-from-shower-glass?utm_source=test"
+  );
+});
+
 test("redirects the /%D0%B4%D0%B5%D0%B9%D1%81%D1%82%D0%B2%D1%83%D0%B9 smoke path into the quote flow", async () => {
   const response = await fetch(`${BASE_URL}/%D0%B4%D0%B5%D0%B9%D1%81%D1%82%D0%B2%D1%83%D0%B9`, {
     redirect: "manual",
