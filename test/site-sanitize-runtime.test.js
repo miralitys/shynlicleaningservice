@@ -142,3 +142,13 @@ test("replaces legacy analytics with a shared GA4 snippet and shared head assets
     assert.match(html, /rel="manifest" href="\/site\.webmanifest"/);
   }
 });
+
+test("removes unused menu widgeticon assets when no widgeticon elements exist", () => {
+  const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const blogHtml = sanitizeHtml(readFixture("page108872586.html"), "/blog");
+
+  for (const html of [homeHtml, blogHtml]) {
+    assert.doesNotMatch(html, /tilda-menu-widgeticons-1\.0\.min\.(css|js)/);
+    assert.doesNotMatch(html, /class="[^"]*\bt-menuwidgeticons(?:__|\b)[^"]*"/i);
+  }
+});
