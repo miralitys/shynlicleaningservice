@@ -36,6 +36,7 @@ test("serves the home page through the custom route layer", async () => {
     linkHeader,
     /<\/css\/tilda-blocks-page108488156\.min\.css\?t=\d+>; rel=preload; as=style/
   );
+  assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.match(body, /Shynli Cleaning/i);
 });
 
@@ -70,6 +71,7 @@ test("serves the blog page without legacy feed asset hints", async () => {
   assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
   assert.doesNotMatch(linkHeader, /quote2\.css/);
+  assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /t_feed_init\(/);
   assert.doesNotMatch(body, /feeduid:/);
   assert.doesNotMatch(body, /data-feed-recid=/);
@@ -87,6 +89,7 @@ test("serves blog category pages without legacy feed assets", async () => {
   assert.doesNotMatch(linkHeader, /tilda-feed-1\.1\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
   assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
+  assert.doesNotMatch(body, /tilda-animation-2\.0\.min\.(css|js)/);
   assert.doesNotMatch(body, /t_feed_init\(/);
   assert.doesNotMatch(body, /feeduid:/);
   assert.match(body, /Featured articles|Featured article/);
