@@ -54,7 +54,7 @@ test("serves the quote page through the static route layer", async () => {
   assert.match(body, /Name/i);
 });
 
-test("serves the blog page with blog-specific stylesheet hints", async () => {
+test("serves the blog page without legacy feed asset hints", async () => {
   const response = await fetch(`${BASE_URL}/blog`);
   const body = await response.text();
   const linkHeader = response.headers.get("link") || "";
@@ -66,13 +66,31 @@ test("serves the blog page with blog-specific stylesheet hints", async () => {
     linkHeader,
     /<\/css\/tilda-blocks-page108872586\.min\.css\?t=\d+>; rel=preload; as=style/
   );
-  assert.match(linkHeader, /<\/css\/tilda-feed-1\.1\.min\.css>; rel=preload; as=style/);
-  assert.match(linkHeader, /<\/css\/tilda-slds-1\.4\.min\.css>; rel=preload; as=style/);
-  assert.match(linkHeader, /<\/js\/tilda-feed-1\.1\.min\.js>; rel=preload; as=script/);
-  assert.match(linkHeader, /<\/js\/tilda-slds-1\.4\.min\.js>; rel=preload; as=script/);
-  assert.match(linkHeader, /<\/js\/hammer\.min\.js>; rel=preload; as=script/);
+  assert.doesNotMatch(linkHeader, /tilda-feed-1\.1\.min\.(css|js)/);
+  assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
+  assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
   assert.doesNotMatch(linkHeader, /quote2\.css/);
+  assert.doesNotMatch(body, /t_feed_init\(/);
+  assert.doesNotMatch(body, /feeduid:/);
+  assert.doesNotMatch(body, /data-feed-recid=/);
   assert.match(body, /Shynli Cleaning <span style="color: rgb\(158, 68, 90\);">Blog<\/span>/i);
+  assert.match(body, /href="\/blog\/checklists"/);
+});
+
+test("serves blog category pages without legacy feed assets", async () => {
+  const response = await fetch(`${BASE_URL}/blog/checklists`);
+  const body = await response.text();
+  const linkHeader = response.headers.get("link") || "";
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.doesNotMatch(linkHeader, /tilda-feed-1\.1\.min\.(css|js)/);
+  assert.doesNotMatch(linkHeader, /tilda-slds-1\.4\.min\.(css|js)/);
+  assert.doesNotMatch(linkHeader, /hammer\.min\.js/);
+  assert.doesNotMatch(body, /t_feed_init\(/);
+  assert.doesNotMatch(body, /feeduid:/);
+  assert.match(body, /Featured articles|Featured article/);
+  assert.match(body, /href="\/blog\/checklists\//);
 });
 
 test("redirects /quote2 into the main quote flow", async () => {
