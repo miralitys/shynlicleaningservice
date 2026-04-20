@@ -372,6 +372,24 @@ test("redirects trailing-slash public routes to the canonical URL", async () => 
   assert.equal(response.headers.get("location"), "/services/deep-cleaning?utm_source=test");
 });
 
+test("redirects mixed-case city URLs to lowercase canonicals", async () => {
+  const response = await fetch(`${BASE_URL}/Naperville?utm_source=test`, {
+    redirect: "manual",
+  });
+
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.get("location"), "/naperville?utm_source=test");
+});
+
+test("redirects legacy flat post-construction URLs to the service canonical", async () => {
+  const response = await fetch(`${BASE_URL}/post-construction-cleaning?utm_source=test`, {
+    redirect: "manual",
+  });
+
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.get("location"), "/services/post-construction-cleaning?utm_source=test");
+});
+
 test("redirects legacy flat blog article URLs to category-prefixed canonicals", async () => {
   const response = await fetch(`${BASE_URL}/blog/how-to-remove-hard-water-stains-from-shower-glass?utm_source=test`, {
     redirect: "manual",
@@ -391,6 +409,17 @@ test("redirects the /%D0%B4%D0%B5%D0%B9%D1%81%D1%82%D0%B2%D1%83%D0%B9 smoke path
 
   assert.equal(response.status, 301);
   assert.equal(response.headers.get("location"), "/quote");
+});
+
+test("serves the 404 page without uppercase city links", async () => {
+  const response = await fetch(`${BASE_URL}/definitely-missing-page`);
+  const body = await response.text();
+
+  assert.equal(response.status, 404);
+  assert.doesNotMatch(body, /href="\/Naperville"/);
+  assert.doesNotMatch(body, /href="\/Addison"/);
+  assert.match(body, /href="\/naperville"/);
+  assert.match(body, /href="\/addison"/);
 });
 
 test("keeps runtime diagnostics private at /__perf", async () => {
