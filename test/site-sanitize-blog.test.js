@@ -251,6 +251,25 @@ test("renders article-level related guides that strengthen same-category links",
   assert.doesNotMatch(relatedSection, /airbnb-turnover-cleaning-checklist-with-photos/);
 });
 
+test("renders a compact inline quote panel right after the quick answer section", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos");
+
+  const quickAnswerIndex = html.indexOf('id="quick-answer"');
+  const inlineQuoteIndex = html.indexOf('shynli-blog-quote-panel shynli-blog-quote-panel--inline');
+  const nextSectionIndex = html.indexOf("Why This Airbnb Cleaning Issue Matters");
+
+  assert.ok(quickAnswerIndex >= 0, "expected quick answer section");
+  assert.ok(inlineQuoteIndex > quickAnswerIndex, "expected inline quote panel after quick answer");
+  assert.ok(nextSectionIndex > inlineQuoteIndex, "expected inline quote panel before the next section");
+  assert.match(html, /Get a quick quote while this is fresh/);
+  assert.match(html, /class="shynli-blog-quote-form shynli-blog-quote-form--inline" data-blog-quote-form/);
+  assert.match(
+    html,
+    /id="quick-answer"[\s\S]*?<\/section><div class="shynli-blog-quote-panel shynli-blog-quote-panel--inline">[\s\S]*?<section class="shynli-blog-article__section" id="why-it-happens"/
+  );
+  assert.match(html, /\.shynli-blog-featured--related \.shynli-blog-featured__grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\);gap:12px;\}/);
+});
+
 test("renders featured checklist article link on /blog/checklists", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/checklists");
 
