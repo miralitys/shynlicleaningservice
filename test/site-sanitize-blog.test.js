@@ -235,6 +235,22 @@ test("renders featured cleaning hacks article links on /blog/cleaning-hacks", ()
   assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Hacks<\/span>/);
 });
 
+test("renders article-level related guides that strengthen same-category links", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos");
+  const relatedSectionMatch = html.match(
+    /<section class="shynli-blog-featured shynli-blog-featured--related">([\s\S]*?)<\/section>/
+  );
+
+  assert.ok(relatedSectionMatch, "expected a related guides section on blog articles");
+  const relatedSection = relatedSectionMatch[1];
+
+  assert.match(relatedSection, /Related guides from this topic/);
+  assert.match(relatedSection, /how-to-clean-after-parties-in-airbnb/);
+  assert.match(relatedSection, /how-to-clean-and-stage-airbnb-fast/);
+  assert.match(relatedSection, /how-to-create-a-cleaning-checklist-for-co-hosts/);
+  assert.doesNotMatch(relatedSection, /airbnb-turnover-cleaning-checklist-with-photos/);
+});
+
 test("renders featured checklist article link on /blog/checklists", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/checklists");
 
