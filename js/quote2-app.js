@@ -701,6 +701,24 @@
     elements.selectedDate.min = now.toISOString().split("T")[0];
     elements.selectedDate.addEventListener("input", syncSelectedDateDisplay);
     elements.selectedDate.addEventListener("change", syncSelectedDateDisplay);
+
+    const dateShell = elements.selectedDate.closest(".quote2-date-shell");
+    if (dateShell) {
+      dateShell.addEventListener("click", function (event) {
+        if (event.target === elements.selectedDate) return;
+        if (typeof elements.selectedDate.showPicker === "function") {
+          try {
+            elements.selectedDate.showPicker();
+            return;
+          } catch (error) {
+            // Fall through to focus/click for browsers that reject showPicker here.
+          }
+        }
+        elements.selectedDate.focus({ preventScroll: true });
+        elements.selectedDate.click();
+      });
+    }
+
     syncSelectedDateDisplay();
   }
 
