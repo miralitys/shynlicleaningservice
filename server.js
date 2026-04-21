@@ -244,6 +244,7 @@ const QUOTE_PUBLIC_PATHS = new Set([QUOTE_PUBLIC_PATH, QUOTE_V2_PUBLIC_PATH]);
 const REDIRECT_ROUTES = new Map([
   ["/home-simple", "/"],
   ["/действуй", "/quote"],
+  ["/post-construction-cleaning", "/services/post-construction-cleaning"],
   [QUOTE_V2_PUBLIC_PATH, QUOTE_PUBLIC_PATH],
   ["/admin/setup", ADMIN_ROOT_PATH],
   ["/admin/users", ADMIN_ROOT_PATH],
