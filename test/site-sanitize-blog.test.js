@@ -146,33 +146,30 @@ test("renders blog hub topic links and stable CTA button styles on /blog", () =>
   );
 });
 
-test("renders category-specific heading and filter runtime on /blog/bathroom", () => {
+test("renders category-specific heading and hub copy on /blog/bathroom", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/bathroom");
 
-  assert.match(html, /Bathroom <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
+  assert.match(html, /Bathroom <span>Cleaning Guides<\/span>/);
   assert.match(html, /Bathroom cleaning advice people actually search when the room stops feeling clean\./);
-  assert.match(
-    html,
-    /var CURRENT_CATEGORY = \{"label":"Bathroom","aliases":\["bathroom","bathrooms"\]\};/
-  );
+  assert.match(html, /class="shynli-blog-hub__eyebrow">Blog category<\/p>/);
 });
 
 test("renders featured bathroom article links on /blog/bathroom", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/bathroom");
 
-  assert.match(html, /how-to-remove-hard-water-stains-from-shower-glass/);
-  assert.match(html, /how-to-remove-soap-scum-from-shower-doors/);
-  assert.match(html, /best-way-to-clean-grout-in-shower/);
-  assert.match(html, /Bathroom <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
+  assert.match(html, /how-to-clean-bathroom-cabinets-sticky-residue/);
+  assert.match(html, /how-to-clean-bathroom-exhaust-fan-dust/);
+  assert.match(html, /how-to-clean-behind-toilet-base/);
+  assert.match(html, /Bathroom <span>Cleaning Guides<\/span>/);
 });
 
 test("renders featured floors article links on /blog/floors", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/floors");
 
-  assert.match(html, /how-to-clean-hardwood-floors-without-streaks/);
-  assert.match(html, /best-way-to-clean-laminate-floors/);
-  assert.match(html, /how-to-clean-vinyl-plank-floors/);
-  assert.match(html, /Floor <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
+  assert.match(html, /best-mop-for-laminate-floors-no-streaks/);
+  assert.match(html, /how-often-should-you-mop-floors/);
+  assert.match(html, /how-to-clean-area-rugs-at-home/);
+  assert.match(html, /Floor <span>Cleaning Guides<\/span>/);
 });
 
 test("renders featured dust article links on /blog/dust", () => {
@@ -202,37 +199,75 @@ test("renders featured pet hair article links on /blog/pet-hair", () => {
 test("renders featured move-in move-out article links on /blog/move-in-move-out", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/move-in-move-out");
 
-  assert.match(html, /move-out-cleaning-checklist-for-renters/);
-  assert.match(html, /what-landlords-check-during-move-out-inspection-cleaning/);
+  assert.match(html, /apartment-move-out-cleaning-vs-house-move-out-cleaning/);
+  assert.match(html, /is-professional-move-out-cleaning-worth-it/);
+  assert.match(html, /what-to-do-if-you-need-last-minute-move-out-cleaning/);
   assert.match(html, /how-clean-should-apartment-be-when-moving-out/);
-  assert.match(html, /Move-In \/ Move-Out <span style="color: rgb\(158, 68, 90\);">Guides<\/span>/);
+  assert.match(html, /Move-In \/ Move-Out <span>Guides<\/span>/);
 });
 
 test("renders featured airbnb article links on /blog/airbnb", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/airbnb");
 
-  assert.match(html, /airbnb-turnover-cleaning-checklist-with-photos/);
-  assert.match(html, /how-to-schedule-airbnb-cleanings-between-guests/);
-  assert.match(html, /how-to-set-cleaning-fees-for-airbnb/);
-  assert.match(html, /Airbnb <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
+  assert.match(html, /how-to-clean-after-parties-in-airbnb/);
+  assert.match(html, /how-to-clean-and-stage-airbnb-fast/);
+  assert.match(html, /how-to-create-a-cleaning-checklist-for-co-hosts/);
+  assert.match(html, /Airbnb <span>Cleaning Guides<\/span>/);
 });
 
 test("renders featured seasonal article links on /blog/seasonal", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/seasonal");
 
+  assert.match(html, /cleaning-before-selling-house-checklist/);
+  assert.match(html, /cleaning-routine-during-back-to-school-season/);
+  assert.match(html, /how-to-clean-after-new-baby-at-home/);
   assert.match(html, /cleaning-checklist-before-thanksgiving-hosting/);
-  assert.match(html, /post-holiday-deep-cleaning-checklist/);
-  assert.match(html, /spring-deep-cleaning-for-families/);
-  assert.match(html, /Seasonal <span style="color: rgb\(158, 68, 90\);">Cleaning Guides<\/span>/);
+  assert.match(html, /Seasonal <span>Cleaning Guides<\/span>/);
 });
 
 test("renders featured cleaning hacks article links on /blog/cleaning-hacks", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/cleaning-hacks");
 
-  assert.match(html, /fastest-way-to-clean-a-bathroom-in-20-minutes/);
-  assert.match(html, /fastest-way-to-clean-kitchen-in-30-minutes/);
+  assert.match(html, /best-order-to-clean-a-room-step-by-step/);
+  assert.match(html, /how-to-declutter-before-deep-cleaning/);
+  assert.match(html, /how-to-make-house-smell-clean-without-heavy-fragrance/);
   assert.match(html, /15-minute-daily-cleaning-routine/);
-  assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Hacks<\/span>/);
+  assert.match(html, /Cleaning <span>Hacks<\/span>/);
+});
+
+test("renders article-level related guides that strengthen same-category links", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos");
+  const relatedSectionMatch = html.match(
+    /<section class="shynli-blog-featured shynli-blog-featured--related">([\s\S]*?)<\/section>/
+  );
+
+  assert.ok(relatedSectionMatch, "expected a related guides section on blog articles");
+  const relatedSection = relatedSectionMatch[1];
+
+  assert.match(relatedSection, /Related guides from this topic/);
+  assert.match(relatedSection, /how-to-clean-after-parties-in-airbnb/);
+  assert.match(relatedSection, /how-to-clean-and-stage-airbnb-fast/);
+  assert.match(relatedSection, /how-to-create-a-cleaning-checklist-for-co-hosts/);
+  assert.doesNotMatch(relatedSection, /airbnb-turnover-cleaning-checklist-with-photos/);
+});
+
+test("renders a compact inline quote panel right after the quick answer section", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos");
+
+  const quickAnswerIndex = html.indexOf('id="quick-answer"');
+  const inlineQuoteIndex = html.indexOf('shynli-blog-quote-panel shynli-blog-quote-panel--inline');
+  const nextSectionIndex = html.indexOf("Why This Airbnb Cleaning Issue Matters");
+
+  assert.ok(quickAnswerIndex >= 0, "expected quick answer section");
+  assert.ok(inlineQuoteIndex > quickAnswerIndex, "expected inline quote panel after quick answer");
+  assert.ok(nextSectionIndex > inlineQuoteIndex, "expected inline quote panel before the next section");
+  assert.match(html, /Get a quick quote while this is fresh/);
+  assert.match(html, /class="shynli-blog-quote-form shynli-blog-quote-form--inline" data-blog-quote-form/);
+  assert.match(
+    html,
+    /id="quick-answer"[\s\S]*?<\/section><div class="shynli-blog-quote-panel shynli-blog-quote-panel--inline">[\s\S]*?<section class="shynli-blog-article__section" id="why-it-happens"/
+  );
+  assert.match(html, /\.shynli-blog-featured--related \.shynli-blog-featured__grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\);gap:12px;\}/);
 });
 
 test("renders article-level related guides that strengthen same-category links", () => {
@@ -281,23 +316,23 @@ test("renders featured checklist article link on /blog/checklists", () => {
 test("renders featured what's included article links on /blog/whats-included", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/whats-included");
 
-  assert.match(html, /what-is-included-in-regular-house-cleaning/);
-  assert.match(html, /what-is-included-in-a-deep-cleaning-service/);
+  assert.match(html, /do-cleaners-clean-inside-fridge/);
   assert.match(html, /deep-cleaning-vs-regular-cleaning-difference/);
-  assert.match(html, /move-out-cleaning-vs-deep-cleaning/);
-  assert.match(html, /how-long-does-a-deep-cleaning-take/);
-  assert.match(html, /What’s <span style="color: rgb\(158, 68, 90\);">Included<\/span>/);
+  assert.match(html, /do-cleaners-bring-supplies-and-vacuum/);
+  assert.match(html, /do-cleaners-change-bed-sheets/);
+  assert.match(html, /do-cleaners-clean-inside-oven/);
+  assert.match(html, /What’s <span>Included<\/span>/);
 });
 
 test("renders featured services article links on /blog/services", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/services");
 
-  assert.match(html, /what-affects-house-cleaning-price/);
-  assert.match(html, /how-much-does-deep-cleaning-cost-for-a-house/);
-  assert.match(html, /how-much-does-move-out-cleaning-cost/);
+  assert.match(html, /cleaning-cost-for-2-bathrooms-vs-3-bathrooms/);
   assert.match(html, /house-cleaning-cost-per-hour-vs-flat-rate/);
-  assert.match(html, /is-it-cheaper-to-do-biweekly-cleaning/);
-  assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Services<\/span>/);
+  assert.match(html, /recurring-cleaning-discount-how-it-works/);
+  assert.match(html, /tip-guide-for-house-cleaners-how-much-to-tip/);
+  assert.match(html, /why-prices-vary-between-cleaning-companies/);
+  assert.match(html, /Cleaning <span>Services<\/span>/);
 });
 
 test("renders long-form checklist article route with more than 3000 words", () => {
@@ -306,7 +341,7 @@ test("renders long-form checklist article route with more than 3000 words", () =
     "/blog/checklists/house-cleaning-checklist-for-busy-homeowners"
   );
 
-  assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Checklists<\/span>/);
+  assert.match(html, /class="shynli-blog-article__crumb" href="\/blog\/checklists">Back to Checklists<\/a>/);
   assert.match(html, /<h1 class="shynli-blog-article__title">House Cleaning Checklist for Busy Homeowners<\/h1>/);
   assert.match(html, /Quick navigation/);
   assert.match(html, /Quick Answer: House Cleaning Checklist for Busy Homeowners/);
@@ -336,7 +371,7 @@ test("renders second checklist article route with printable weekly plan", () => 
     "/blog/checklists/weekly-cleaning-checklist-for-a-3-bedroom-house"
   );
 
-  assert.match(html, /Cleaning <span style="color: rgb\(158, 68, 90\);">Checklists<\/span>/);
+  assert.match(html, /class="shynli-blog-article__crumb" href="\/blog\/checklists">Back to Checklists<\/a>/);
   assert.match(html, /<h1 class="shynli-blog-article__title">Weekly Cleaning Checklist for a 3 Bedroom House<\/h1>/);
   assert.match(html, /Quick Answer: Weekly Cleaning Checklist for a 3 Bedroom House/);
   assert.match(html, /Printable Weekly Cleaning Checklist/);
@@ -363,7 +398,7 @@ test("keeps summary cards and following sections structurally separate in articl
 
   assert.match(
     html,
-    /<div class="shynli-blog-article__summary-grid">[\s\S]*<\/div>\s*<div class="shynli-blog-article__action-row">[\s\S]*<\/div>\s*<\/section>\s*<section class="shynli-blog-article__section" id="what-makes-it-deep">/
+    /<div class="shynli-blog-article__summary-grid">[\s\S]*<\/div>\s*<div class="shynli-blog-article__action-row">[\s\S]*<\/div>\s*<\/section>\s*<div class="shynli-blog-quote-panel shynli-blog-quote-panel--inline">[\s\S]*?<\/div>\s*<section class="shynli-blog-article__section" id="what-makes-it-deep">/
   );
 });
 

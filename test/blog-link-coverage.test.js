@@ -116,7 +116,7 @@ test("blog rendering leaves no managed article with only one internal blog refer
 
   for (const route of pages) {
     const html = sanitizeHtml(sourceHtml, route);
-    const blogHrefs = [...html.matchAll(/href=\"(\/blog\/[^\"]+)\"/g)].map((match) => normalizeRoute(match[1]));
+    const blogHrefs = [...html.matchAll(/href="(\/blog\/[^"]+)"/g)].map((match) => normalizeRoute(match[1]));
 
     for (const href of blogHrefs) {
       if (!inboundByPath.has(href) || href === route) continue;
