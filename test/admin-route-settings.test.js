@@ -386,8 +386,13 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /Maria Assigned/);
     assert.match(accountDashboardBody, /Bring supplies/);
     assert.doesNotMatch(accountDashboardBody, /Nina Hidden/);
+    assert.match(accountDashboardBody, /account-desktop-metrics/i);
+    assert.match(accountDashboardBody, /admin-orders-metrics/i);
     assert.match(accountDashboardBody, /data-account-mobile-dashboard/i);
     assert.match(accountDashboardBody, /Cleaning app/i);
+    assert.match(accountDashboardBody, /Назначенные на вас заказы\./i);
+    assert.match(accountDashboardBody, /account-mobile-logout-button/i);
+    assert.match(accountDashboardBody, /aria-label="Выйти"/i);
     assert.match(accountDashboardBody, /Следующий заказ/i);
     assert.match(accountDashboardBody, /data-account-mobile-order-card/i);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
@@ -398,6 +403,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /<summary>Обновить пароль<\/summary>/i);
     assert.doesNotMatch(accountDashboardBody, /<details class="admin-details" data-account-password-details" open>/i);
     assert.match(accountDashboardBody, /Заполните документы сотрудника/i);
+    assert.match(accountDashboardBody, /data-account-w9-details/i);
+    assert.match(accountDashboardBody, /<summary>Открыть форму документов<\/summary>/i);
+    assert.doesNotMatch(accountDashboardBody, /data-account-w9-details[^>]* open/i);
     assert.match(accountDashboardBody, /Подпишите форму мышкой, пальцем или стилусом/i);
     assert.match(accountDashboardBody, /data-account-w9-form/i);
     assert.match(accountDashboardBody, /data-account-w9-submit[^>]*disabled/i);
@@ -441,6 +449,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const invalidSaveW9Body = await invalidSaveW9Response.text();
     assert.equal(invalidSaveW9Response.status, 422);
     assert.match(invalidSaveW9Body, /Не удалось собрать документы сотрудника/i);
+    assert.match(invalidSaveW9Body, /<details class="admin-details" data-account-w9-details[^>]* open>/i);
     assert.match(invalidSaveW9Body, /name="w9LegalName"[^>]*value="Alina Draft"/i);
     assert.match(invalidSaveW9Body, /name="w9BusinessName"[^>]*value="Alina Draft LLC"/i);
     assert.match(invalidSaveW9Body, /name="w9AddressLine1"[^>]*value="987 Draft Street"/i);
@@ -505,9 +514,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountW9PageBody, /Скачать W-9/i);
     assert.match(accountW9PageBody, /Tax classification/i);
     assert.match(accountW9PageBody, /\*\*\*-\*\*-6789/);
-    assert.match(accountW9PageBody, /<details class="admin-details" data-account-w9-details>/i);
+    assert.match(accountW9PageBody, /data-account-w9-details/i);
     assert.match(accountW9PageBody, /<summary>Обновить документы<\/summary>/i);
-    assert.doesNotMatch(accountW9PageBody, /<details class="admin-details" data-account-w9-details" open>/i);
+    assert.doesNotMatch(accountW9PageBody, /data-account-w9-details[^>]* open/i);
 
     const accountContractDownloadResponse = await fetch(`${started.baseUrl}/account/contract`, {
       headers: {

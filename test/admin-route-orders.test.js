@@ -36,6 +36,7 @@ const {
 test("allows admins to add a manual order from the orders page", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
+    GOOGLE_PLACES_API_KEY: "places_test_key",
   };
   const started = await startServer({ env });
   const config = loadAdminConfig(env);
@@ -53,6 +54,12 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(ordersBody, /Добавить заказ/);
     assert.match(ordersBody, /Добавить заказ вручную/);
     assert.match(ordersBody, /create-manual-order/);
+    assert.match(ordersBody, /id="admin-manual-order-address"/);
+    assert.match(ordersBody, /data-admin-address-autocomplete="true"/);
+    assert.match(ordersBody, /data-admin-address-suggestions/);
+    assert.match(ordersBody, /places_test_key/);
+    assert.match(ordersBody, /__adminGooglePlacesReady/);
+    assert.match(ordersBody, /v=beta/);
 
     const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -863,6 +870,7 @@ test("allows managers to create manual orders from the orders page", async () =>
 
   try {
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const scheduledDate = getChicagoDateValue(3);
 
     const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
       method: "POST",
@@ -1163,6 +1171,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
 
   try {
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const scheduledDate = getChicagoDateValue(3);
 
     const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
       method: "POST",
@@ -1198,7 +1207,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
       phone: "312-555-1188",
       email: "cleaner.confirm.customer@example.com",
       serviceType: "deep",
-      selectedDate: "2026-04-26",
+      selectedDate: scheduledDate,
       selectedTime: "09:00",
       fullAddress: "215 North Elm Street, Naperville, IL 60563",
     });
@@ -1224,7 +1233,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
         assignedStaff: "Ariana Cleaner",
         paymentStatus: "unpaid",
         paymentMethod: "invoice",
-        selectedDate: "2026-04-26",
+        selectedDate: scheduledDate,
         selectedTime: "09:00",
         frequency: "",
       }),
@@ -1314,8 +1323,8 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
       "en-route"
     );
     assert.match(scheduledLaneBeforeCleanerResponse, /Cleaner Confirmation Customer/);
-    assert.match(scheduledLaneBeforeCleanerResponse, /Не подтверждено клинером/);
-    assert.match(scheduledLaneBeforeCleanerResponse, /admin-badge admin-badge-outline">Не подтверждено клинером</);
+    assert.match(scheduledLaneBeforeCleanerResponse, /Ждёт подтверждения/);
+    assert.match(scheduledLaneBeforeCleanerResponse, /admin-badge admin-badge-outline">Ждёт подтверждения</);
 
     const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
       method: "POST",
@@ -1346,8 +1355,23 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(accountDashboardBody, /Cleaner Confirmation Customer/);
     assert.match(accountDashboardBody, /Ждёт подтверждения/);
     assert.match(accountDashboardBody, /name="action" value="confirm-assignment"/);
-    assert.match(accountDashboardBody, /name="action" value="mark-assignment-en-route"/);
     assert.match(accountDashboardBody, /name="action" value="decline-assignment"/);
+    assert.doesNotMatch(accountDashboardBody, /name="action" value="mark-assignment-en-route"/);
+
+    const prematureEnRouteResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-en-route",
+        entryId,
+      }),
+    });
+    assert.equal(prematureEnRouteResponse.status, 303);
+    assert.match(prematureEnRouteResponse.headers.get("location") || "", /notice=assignment-error/);
 
     const declineAssignmentResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
@@ -1375,7 +1399,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     const declinedDashboardBody = await declinedDashboardResponse.text();
     assert.equal(declinedDashboardResponse.status, 200);
     assert.match(declinedDashboardBody, /Вы отметили, что не подтверждаете этот заказ\./);
-    assert.match(declinedDashboardBody, /Вы не подтвердили/);
+    assert.match(declinedDashboardBody, /Не подтвердил/);
 
     const declinedOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
@@ -1392,10 +1416,10 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
       "scheduled",
       "en-route"
     );
-    assert.match(scheduledLaneAfterCleanerDecline, /Не подтверждено клинером/);
+    assert.match(scheduledLaneAfterCleanerDecline, /Не подтвердил/);
     assert.match(
       scheduledLaneAfterCleanerDecline,
-      /admin-badge admin-badge-danger">Не подтверждено клинером</
+      /admin-badge admin-badge-danger">Не подтвердил</
     );
 
     const confirmAssignmentResponse = await fetch(`${started.baseUrl}/account`, {
@@ -1424,7 +1448,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     const confirmedDashboardBody = await confirmedDashboardResponse.text();
     assert.equal(confirmedDashboardResponse.status, 200);
     assert.match(confirmedDashboardBody, /Вы подтвердили заказ\./);
-    assert.match(confirmedDashboardBody, /Подтверждено вами/);
+    assert.match(confirmedDashboardBody, /Подтверждено/);
     assert.match(confirmedDashboardBody, /name="action" value="mark-assignment-en-route"/);
 
     const confirmedOrdersResponse = await fetch(
@@ -1442,8 +1466,8 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
       "scheduled",
       "en-route"
     );
-    assert.match(scheduledLaneAfterCleanerConfirm, /Подтверждено клинером/);
-    assert.match(scheduledLaneAfterCleanerConfirm, /admin-badge admin-badge-success">Подтверждено клинером</);
+    assert.match(scheduledLaneAfterCleanerConfirm, /Подтверждено/);
+    assert.match(scheduledLaneAfterCleanerConfirm, /admin-badge admin-badge-success">Подтверждено</);
 
     const enRouteResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
