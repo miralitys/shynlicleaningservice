@@ -64,7 +64,7 @@ a {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 24px;
   max-width: 1180px;
   margin: 0 auto 26px;
@@ -85,20 +85,18 @@ a {
   height: auto;
 }
 
-.quote2-site-nav,
-.quote2-site-actions {
+.quote2-site-nav {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: clamp(24px, 3vw, 48px);
 }
 
 .quote2-site-nav {
   flex: 1 1 auto;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
-.quote2-site-nav a,
-.quote2-site-text-link {
+.quote2-site-nav a {
   color: var(--quote2-text);
   text-decoration: none;
   font-size: 0.98rem;
@@ -106,63 +104,8 @@ a {
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
-.quote2-site-nav a:hover,
-.quote2-site-text-link:hover {
+.quote2-site-nav a:hover {
   color: var(--quote2-accent);
-}
-
-.quote2-site-phone {
-  position: relative;
-  padding-left: 18px;
-}
-
-.quote2-site-phone::before {
-  content: "📞";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.95rem;
-}
-
-.quote2-site-actions {
-  flex: 0 0 auto;
-  gap: 12px;
-}
-
-.quote2-site-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 50px;
-  padding: 0 28px;
-  border-radius: 999px;
-  text-decoration: none;
-  font-size: 0.98rem;
-  font-weight: 500;
-  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.quote2-site-button-primary {
-  background: var(--quote2-accent);
-  color: #faf9f6;
-  box-shadow: 0 14px 28px rgba(158, 67, 90, 0.18);
-}
-
-.quote2-site-button-primary:hover {
-  transform: translateY(-1px);
-  background: var(--quote2-accent-strong);
-}
-
-.quote2-site-button-secondary {
-  color: var(--quote2-text);
-  border: 1px solid var(--quote2-accent);
-  background: rgba(255, 255, 255, 0.68);
-}
-
-.quote2-site-button-secondary:hover {
-  color: #faf9f6;
-  background: var(--quote2-accent);
 }
 
 .quote2-kicker {
@@ -840,16 +783,6 @@ a {
     display: none;
   }
 
-  .quote2-site-actions {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .quote2-site-button,
-  .quote2-site-text-link {
-    width: auto;
-  }
-
   .quote2-field-grid-two,
   .quote2-field-grid-three,
   .quote2-field-grid-four,
@@ -903,20 +836,6 @@ a {
     width: 132px;
   }
 
-  .quote2-site-actions {
-    gap: 10px;
-  }
-
-  .quote2-site-button {
-    min-height: 46px;
-    padding: 0 20px;
-    font-size: 0.92rem;
-  }
-
-  .quote2-site-text-link {
-    font-size: 0.92rem;
-  }
-
   .quote2-section-title {
     font-size: 2rem;
   }
@@ -936,8 +855,7 @@ a {
     height: calc(100% - 32px);
   }
 
-  .quote2-button,
-  .quote2-site-button {
+  .quote2-button {
     width: 100%;
   }
 
