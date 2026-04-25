@@ -316,6 +316,10 @@ test("creates staff members and assigns them to orders through the staff workspa
 
     const entryId = getStaffAssignmentEntryIdByCustomerName(staffBody, "Jane Doe");
     assert.ok(entryId);
+    assert.match(
+      staffBody,
+      /Jane Doe[\s\S]*?name="scheduleDate" value="2026-03-25"[\s\S]*?name="scheduleTime" value="12:00"/
+    );
 
     const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -328,6 +332,8 @@ test("creates staff members and assigns them to orders through the staff workspa
         ["action", "save-assignment"],
         ["entryId", entryId],
         ["staffIds", staffId],
+        ["scheduleDate", "2026-03-25"],
+        ["scheduleTime", "12:00"],
         ["status", "confirmed"],
         ["notes", "Bring ladder"],
       ]),
@@ -347,6 +353,8 @@ test("creates staff members and assigns them to orders through the staff workspa
         ["action", "save-assignment"],
         ["entryId", entryId],
         ["staffIds", staffId],
+        ["scheduleDate", "2026-03-25"],
+        ["scheduleTime", "12:00"],
         ["status", "confirmed"],
         ["notes", "Bring tall ladder"],
       ]),
@@ -419,6 +427,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(storePayload.staff[0].address, "742 Cedar Avenue, Aurora, IL 60506");
     assert.equal(storePayload.assignments[0].entryId, entryId);
     assert.deepEqual(storePayload.assignments[0].staffIds, [staffId]);
+    assert.equal(storePayload.assignments[0].scheduleDate, "");
+    assert.equal(storePayload.assignments[0].scheduleTime, "");
 
     const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       headers: {
