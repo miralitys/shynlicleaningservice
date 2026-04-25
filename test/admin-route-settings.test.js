@@ -64,6 +64,8 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.match(settingsBody, /Регулярная уборка/i);
     assert.match(settingsBody, /Генеральная уборка/i);
     assert.match(settingsBody, /Уборка перед переездом/i);
+    assert.match(settingsBody, /Пылесосить полы/i);
+    assert.match(settingsBody, /Все комнаты/i);
     assert.doesNotMatch(settingsBody, /Сохранить отметки/i);
     assert.doesNotMatch(settingsBody, /<th>Открыть<\/th>/i);
     assert.doesNotMatch(settingsBody, /Все типы уборки в одном месте\./i);
@@ -77,16 +79,19 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.ok(secondItemId);
 
     const renamedLabel = "Проверить выключатели и зеркала";
+    const renamedHint = "Прихожая и санузлы";
     const customLabel = "Осмотреть входную дверь";
-    const removedLabel = "Пропылесосить полы и ковры";
+    const customHint = "Ручка, наличник, стекло";
 
     const saveParams = new URLSearchParams();
     saveParams.append("action", "save_checklist_template");
     saveParams.append("serviceType", "regular");
     saveParams.append("itemId", firstItemId);
     saveParams.append("itemLabel", renamedLabel);
+    saveParams.append("itemHint", renamedHint);
     saveParams.append("itemId", "");
     saveParams.append("itemLabel", customLabel);
+    saveParams.append("itemHint", customHint);
 
     const saveResponse = await fetch(`${started.baseUrl}/admin/settings`, {
       method: "POST",
@@ -110,8 +115,9 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.equal(savedResponse.status, 200);
     assert.match(savedBody, /Шаблон чек-листа обновлён/i);
     assert.match(savedBody, new RegExp(renamedLabel, "i"));
+    assert.match(savedBody, new RegExp(renamedHint, "i"));
     assert.match(savedBody, new RegExp(customLabel, "i"));
-    assert.doesNotMatch(savedBody, new RegExp(removedLabel, "i"));
+    assert.match(savedBody, new RegExp(customHint, "i"));
     assert.doesNotMatch(savedBody, new RegExp(secondItemId, "i"));
   } finally {
     await stopServer(started.child);
