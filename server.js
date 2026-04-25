@@ -503,22 +503,22 @@ const ROUTE_META_OVERRIDES = {
     title: "House Cleaning Prices | Shynli Cleaning",
   },
   "/quote": {
-    title: "Request a Quote | Shynli Cleaning",
+    title: "Get a Free Quote | Shynli Cleaning",
     description:
-      "Get an instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning.",
-    ogTitle: "Request a Quote | Shynli Cleaning",
+      "Request a flat-rate cleaning quote from Shynli Cleaning in Chicagoland.",
+    ogTitle: "Get a Free Quote | Shynli Cleaning",
     ogDescription:
-      "Instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning.",
+      "Request a flat-rate cleaning quote from Shynli Cleaning in Chicagoland.",
     canonical: `${SITE_ORIGIN}/quote`,
     robots: "noindex,nofollow",
   },
   "/quote2": {
-    title: "Request a Quote | Shynli Cleaning",
+    title: "Get a Free Quote | Shynli Cleaning",
     description:
-      "Get an instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning.",
-    ogTitle: "Request a Quote | Shynli Cleaning",
+      "Request a flat-rate cleaning quote from Shynli Cleaning in Chicagoland.",
+    ogTitle: "Get a Free Quote | Shynli Cleaning",
     ogDescription:
-      "Instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning.",
+      "Request a flat-rate cleaning quote from Shynli Cleaning in Chicagoland.",
     canonical: `${SITE_ORIGIN}/quote`,
     robots: "noindex,nofollow",
   },

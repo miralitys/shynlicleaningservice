@@ -533,7 +533,7 @@ test("injects quote metadata, shared icons, and GA4 snippet into the quote page"
   assert.equal(response.status, 200);
   assert.match(
     body,
-    /<meta name="description" content="Get an instant cleaning quote with live pricing, scheduling, and secure checkout from Shynli Cleaning\." \/>/
+    /<meta name="description" content="Request a flat-rate cleaning quote from Shynli Cleaning in Chicagoland\." \/>/
   );
   assert.match(body, /<link rel="icon" href="\/images\/tild3636-3965-4134-a432-323337623835__insta_32\.png" type="image\/png" \/>/);
   assert.match(body, /<link rel="apple-touch-icon" href="\/images\/tild3636-3965-4134-a432-323337623835__insta_32\.png" \/>/);
