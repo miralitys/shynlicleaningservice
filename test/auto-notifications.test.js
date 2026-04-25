@@ -197,6 +197,7 @@ test("sends assignment SMS once per schedule signature for scheduled orders", as
   const service = createAutoNotificationService({
     quoteOpsLedger: ledger,
     staffStore,
+    siteOrigin: "https://shynlicleaningservice.com",
   });
 
   const firstResult = await service.notifyScheduledAssignment({
@@ -214,6 +215,8 @@ test("sends assignment SMS once per schedule signature for scheduled orders", as
   assert.equal(firstResult.sent, 1);
   assert.equal(leadConnectorClient.calls.length, 1);
   assert.equal(staffUpdateCalls.length, 1);
+  assert.match(leadConnectorClient.calls[0].message, /confirm or decline/i);
+  assert.match(leadConnectorClient.calls[0].message, /shynlicleaningservice\.com\/account/i);
   const notificationState = getOrderNotificationState(firstResult.entry);
   assert.equal(
     notificationState.assignmentSmsByStaffId["staff-1"].signature,
