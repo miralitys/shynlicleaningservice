@@ -377,7 +377,7 @@ test("updates linked user access role from the staff edit dialog", async () => {
       }),
     });
     assert.equal(accountLoginResponse.status, 303);
-    assert.equal(accountLoginResponse.headers.get("location"), "/admin");
+    assert.equal(accountLoginResponse.headers.get("location"), "/account");
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });

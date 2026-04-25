@@ -64,6 +64,8 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.match(settingsBody, /Регулярная уборка/i);
     assert.match(settingsBody, /Генеральная уборка/i);
     assert.match(settingsBody, /Уборка перед переездом/i);
+    assert.match(settingsBody, /Пылесосить полы/i);
+    assert.match(settingsBody, /Все комнаты/i);
     assert.doesNotMatch(settingsBody, /Сохранить отметки/i);
     assert.doesNotMatch(settingsBody, /<th>Открыть<\/th>/i);
     assert.doesNotMatch(settingsBody, /Все типы уборки в одном месте\./i);
@@ -77,16 +79,19 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.ok(secondItemId);
 
     const renamedLabel = "Проверить выключатели и зеркала";
+    const renamedHint = "Прихожая и санузлы";
     const customLabel = "Осмотреть входную дверь";
-    const removedLabel = "Пропылесосить полы и ковры";
+    const customHint = "Ручка, наличник, стекло";
 
     const saveParams = new URLSearchParams();
     saveParams.append("action", "save_checklist_template");
     saveParams.append("serviceType", "regular");
     saveParams.append("itemId", firstItemId);
     saveParams.append("itemLabel", renamedLabel);
+    saveParams.append("itemHint", renamedHint);
     saveParams.append("itemId", "");
     saveParams.append("itemLabel", customLabel);
+    saveParams.append("itemHint", customHint);
 
     const saveResponse = await fetch(`${started.baseUrl}/admin/settings`, {
       method: "POST",
@@ -110,8 +115,9 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.equal(savedResponse.status, 200);
     assert.match(savedBody, /Шаблон чек-листа обновлён/i);
     assert.match(savedBody, new RegExp(renamedLabel, "i"));
+    assert.match(savedBody, new RegExp(renamedHint, "i"));
     assert.match(savedBody, new RegExp(customLabel, "i"));
-    assert.doesNotMatch(savedBody, new RegExp(removedLabel, "i"));
+    assert.match(savedBody, new RegExp(customHint, "i"));
     assert.doesNotMatch(savedBody, new RegExp(secondItemId, "i"));
   } finally {
     await stopServer(started.child);
@@ -345,6 +351,21 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const userSessionCookieValue = getCookieValue(getSetCookies(accountLoginResponse), "shynli_user_session");
     assert.ok(userSessionCookieValue);
 
+    const cleanerAdminLoginResponse = await fetch(`${started.baseUrl}/admin/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "alina.staff@example.com",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(cleanerAdminLoginResponse.status, 303);
+    assert.equal(cleanerAdminLoginResponse.headers.get("location"), "/account");
+    assert.ok(getCookieValue(getSetCookies(cleanerAdminLoginResponse), "shynli_user_session"));
+
     const cleanerAdminResponse = await fetch(`${started.baseUrl}/admin`, {
       redirect: "manual",
       headers: {
@@ -365,6 +386,10 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /Maria Assigned/);
     assert.match(accountDashboardBody, /Bring supplies/);
     assert.doesNotMatch(accountDashboardBody, /Nina Hidden/);
+    assert.match(accountDashboardBody, /data-account-mobile-dashboard/i);
+    assert.match(accountDashboardBody, /Cleaning app/i);
+    assert.match(accountDashboardBody, /Следующий заказ/i);
+    assert.match(accountDashboardBody, /data-account-mobile-order-card/i);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /<details class="admin-details" data-account-profile-details>/i);
     assert.match(accountDashboardBody, /<summary>Изменить контакты<\/summary>/i);

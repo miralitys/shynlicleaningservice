@@ -297,13 +297,14 @@ test("gives managers the same admin workspace access as admins", async () => {
     assert.ok(userSessionCookieValue);
 
     const accountDashboardResponse = await fetch(`${started.baseUrl}/account?focus=w9`, {
-      redirect: "manual",
       headers: {
         cookie: `shynli_user_session=${userSessionCookieValue}`,
       },
     });
-    assert.equal(accountDashboardResponse.status, 303);
-    assert.equal(accountDashboardResponse.headers.get("location"), "/admin");
+    const accountDashboardBody = await accountDashboardResponse.text();
+    assert.equal(accountDashboardResponse.status, 200);
+    assert.match(accountDashboardBody, /Мой кабинет/i);
+    assert.match(accountDashboardBody, /id="account-w9"/i);
 
     const dashboardResponse = await fetch(`${started.baseUrl}/admin`, {
       headers: {
