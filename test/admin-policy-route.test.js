@@ -678,7 +678,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       }),
     });
     assert.equal(managerSetupPasswordResponse.status, 303);
-    assert.equal(managerSetupPasswordResponse.headers.get("location"), "/admin");
+    assert.equal(managerSetupPasswordResponse.headers.get("location"), "/account");
     const managerSessionCookieValue = getCookieValue(
       getSetCookies(managerSetupPasswordResponse),
       "shynli_user_session"

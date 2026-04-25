@@ -351,6 +351,21 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const userSessionCookieValue = getCookieValue(getSetCookies(accountLoginResponse), "shynli_user_session");
     assert.ok(userSessionCookieValue);
 
+    const cleanerAdminLoginResponse = await fetch(`${started.baseUrl}/admin/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "alina.staff@example.com",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(cleanerAdminLoginResponse.status, 303);
+    assert.equal(cleanerAdminLoginResponse.headers.get("location"), "/account");
+    assert.ok(getCookieValue(getSetCookies(cleanerAdminLoginResponse), "shynli_user_session"));
+
     const cleanerAdminResponse = await fetch(`${started.baseUrl}/admin`, {
       redirect: "manual",
       headers: {
@@ -371,6 +386,10 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /Maria Assigned/);
     assert.match(accountDashboardBody, /Bring supplies/);
     assert.doesNotMatch(accountDashboardBody, /Nina Hidden/);
+    assert.match(accountDashboardBody, /data-account-mobile-dashboard/i);
+    assert.match(accountDashboardBody, /Cleaning app/i);
+    assert.match(accountDashboardBody, /Следующий заказ/i);
+    assert.match(accountDashboardBody, /data-account-mobile-order-card/i);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /<details class="admin-details" data-account-profile-details>/i);
     assert.match(accountDashboardBody, /<summary>Изменить контакты<\/summary>/i);

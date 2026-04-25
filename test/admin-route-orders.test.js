@@ -899,7 +899,7 @@ test("allows managers to create manual orders from the orders page", async () =>
       }),
     });
     assert.equal(accountLoginResponse.status, 303);
-    assert.equal(accountLoginResponse.headers.get("location"), "/admin");
+    assert.equal(accountLoginResponse.headers.get("location"), "/account");
 
     const userSessionCookieValue = getCookieValue(getSetCookies(accountLoginResponse), "shynli_user_session");
     assert.ok(userSessionCookieValue);
