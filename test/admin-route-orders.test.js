@@ -1135,6 +1135,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-cleaner-confirmation-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const orderMediaStorageDir = path.join(tempDir, "order-media");
   const fetchStub = await createFetchStub([
     {
       method: "POST",
@@ -1160,6 +1161,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     ADMIN_MASTER_SECRET: "admin_secret_test",
     ADMIN_STAFF_STORE_PATH: staffStorePath,
     ADMIN_USERS_STORE_PATH: usersStorePath,
+    ADMIN_ORDER_MEDIA_STORAGE_DIR: orderMediaStorageDir,
     GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
     GHL_ENABLE_NOTES: "0",
@@ -1553,7 +1555,9 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(cleaningStartedDashboardResponse.status, 200);
     assert.match(cleaningStartedDashboardBody, /начинаете уборку/i);
     assert.match(cleaningStartedDashboardBody, />Начать уборку</);
-    assert.match(cleaningStartedDashboardBody, /name="action" value="mark-assignment-checklist"/);
+    assert.match(cleaningStartedDashboardBody, /data-account-checklist-editor/);
+    assert.match(cleaningStartedDashboardBody, /name="action" value="save-assignment-checklist"/);
+    assert.match(cleaningStartedDashboardBody, /Выбрать все/);
 
     const cleaningStartedOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
@@ -1573,6 +1577,12 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(cleaningStartedLane, /Cleaner Confirmation Customer/);
     assert.match(cleaningStartedLane, /Начать уборку/);
 
+    const checklistParams = new URLSearchParams();
+    checklistParams.append("action", "save-assignment-checklist");
+    checklistParams.append("entryId", entryId);
+    checklistParams.append("checklistItemId", "deep-default-1");
+    checklistParams.append("checklistItemId", "deep-default-2");
+
     const checklistResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
       redirect: "manual",
@@ -1580,10 +1590,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
         "content-type": "application/x-www-form-urlencoded",
         cookie: `shynli_user_session=${userSessionCookieValue}`,
       },
-      body: new URLSearchParams({
-        action: "mark-assignment-checklist",
-        entryId,
-      }),
+      body: checklistParams,
     });
     assert.equal(checklistResponse.status, 303);
     assert.match(checklistResponse.headers.get("location") || "", /notice=assignment-checklist/);
@@ -1598,9 +1605,12 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     );
     const checklistDashboardBody = await checklistDashboardResponse.text();
     assert.equal(checklistDashboardResponse.status, 200);
-    assert.match(checklistDashboardBody, /этапу чеклиста/i);
+    assert.match(checklistDashboardBody, /Чеклист сохранён: 2 из/i);
     assert.match(checklistDashboardBody, />Чеклист</);
-    assert.match(checklistDashboardBody, /name="action" value="mark-assignment-photos"/);
+    assert.match(checklistDashboardBody, /data-account-photo-editor/);
+    assert.match(checklistDashboardBody, /name="action" value="save-assignment-photos"/);
+    assert.match(checklistDashboardBody, /Фото до/);
+    assert.match(checklistDashboardBody, /Фото после/);
 
     const checklistOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
@@ -1620,17 +1630,25 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(checklistLane, /Cleaner Confirmation Customer/);
     assert.match(checklistLane, /Чеклист/);
 
+    const photoFormData = new FormData();
+    photoFormData.append("action", "save-assignment-photos");
+    photoFormData.append("entryId", entryId);
+    photoFormData.append(
+      "beforePhotos",
+      new File([Buffer.from("before-image-1")], "before-one.jpg", { type: "image/jpeg" })
+    );
+    photoFormData.append(
+      "afterPhotos",
+      new File([Buffer.from("after-image-1")], "after-one.jpg", { type: "image/jpeg" })
+    );
+
     const photosResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
       redirect: "manual",
       headers: {
-        "content-type": "application/x-www-form-urlencoded",
         cookie: `shynli_user_session=${userSessionCookieValue}`,
       },
-      body: new URLSearchParams({
-        action: "mark-assignment-photos",
-        entryId,
-      }),
+      body: photoFormData,
     });
     assert.equal(photosResponse.status, 303);
     assert.match(photosResponse.headers.get("location") || "", /notice=assignment-photos/);
@@ -1645,7 +1663,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     );
     const photosDashboardBody = await photosDashboardResponse.text();
     assert.equal(photosDashboardResponse.status, 200);
-    assert.match(photosDashboardBody, /этапу фото/i);
+    assert.match(photosDashboardBody, /Фото сохранены: до — 1, после — 1/i);
     assert.match(photosDashboardBody, />Фото</);
     assert.match(photosDashboardBody, /name="action" value="mark-assignment-cleaning-complete"/);
 
