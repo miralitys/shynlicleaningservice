@@ -279,7 +279,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     const scheduledLaneBeforeAcceptance = getOrderFunnelLaneSlice(
       ordersAwaitingPolicyBody,
       "scheduled",
-      "in-progress"
+      "en-route"
     );
     assert.match(policyLaneBeforeAcceptance, /Policy Customer/);
     assert.match(policyLaneBeforeAcceptance, /Политика/);
@@ -768,7 +768,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     const scheduledLaneAfterAcceptance = getOrderFunnelLaneSlice(
       updatedOrdersBody,
       "scheduled",
-      "in-progress"
+      "en-route"
     );
     assert.doesNotMatch(policyLaneAfterAcceptance, /Policy Customer/);
     assert.match(scheduledLaneAfterAcceptance, /Policy Customer/);

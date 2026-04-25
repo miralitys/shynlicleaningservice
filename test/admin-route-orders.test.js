@@ -1122,3 +1122,579 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
+
+test("tracks cleaner confirmation for scheduled orders through the staff account", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-cleaner-confirmation-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const fetchStub = await createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "cleaner-confirm-contact-1",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 201,
+      body: {
+        conversationId: "cleaner-confirm-conversation-1",
+        messageId: "cleaner-confirm-message-1",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_USERS_STORE_PATH: usersStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Ariana Cleaner",
+        role: "cleaner",
+        status: "active",
+        staffStatus: "active",
+        email: "ariana.cleaner@example.com",
+        phone: "3125550888",
+        address: "742 Cedar Avenue, Aurora, IL 60506",
+        notes: "Cleaner confirmation coverage",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(createUserResponse.status, 303);
+    assert.match(createUserResponse.headers.get("location") || "", /notice=user-created-email-skipped/);
+
+    const staffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(staffStorePayload.staff.length, 1);
+    const staffId = staffStorePayload.staff[0].id;
+    assert.ok(staffId);
+
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "cleaner-confirmation-order-1",
+      fullName: "Cleaner Confirmation Customer",
+      phone: "312-555-1188",
+      email: "cleaner.confirm.customer@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-04-26",
+      selectedTime: "09:00",
+      fullAddress: "215 North Elm Street, Naperville, IL 60563",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "cleaner-confirmation-order-1"
+    );
+
+    const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+        orderStatus: "policy",
+        assignedStaff: "Ariana Cleaner",
+        paymentStatus: "unpaid",
+        paymentMethod: "invoice",
+        selectedDate: "2026-04-26",
+        selectedTime: "09:00",
+        frequency: "",
+      }),
+    });
+    assert.equal(saveOrderResponse.status, 303);
+    assert.match(
+      saveOrderResponse.headers.get("location") || "",
+      /notice=order-saved-policy-email-unavailable/
+    );
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsRequests = captureLines.filter((record) =>
+      String(record.url).includes("/conversations/messages")
+    );
+    const policySmsRequests = smsRequests.filter((record) => {
+      try {
+        return /please review and accept our service policies here:/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(policySmsRequests.length, 1);
+    const policySmsPayload = JSON.parse(policySmsRequests[0].body);
+    const confirmationUrlMatch = String(policySmsPayload.message || "").match(
+      /https?:\/\/[^\s]+\/booking\/confirm\?token=[^\s"<]+/
+    );
+    assert.ok(confirmationUrlMatch);
+    const confirmationToken = new URL(confirmationUrlMatch[0]).searchParams.get("token");
+    assert.ok(confirmationToken);
+
+    const cleanerSmsRequests = smsRequests.filter((record) => {
+      try {
+        return /confirm or decline this job in your staff account:/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(cleanerSmsRequests.length, 1);
+    const cleanerSmsPayload = JSON.parse(cleanerSmsRequests[0].body);
+    assert.equal(cleanerSmsPayload.toNumber, "+13125550888");
+    assert.match(
+      cleanerSmsPayload.message,
+      /Please confirm or decline this job in your staff account: https:\/\/shynlicleaningservice\.com\/account/i
+    );
+    assert.match(cleanerSmsPayload.message, /Cleaner Confirmation Customer/);
+
+    const submitPolicyResponse = await fetch(
+      `${started.baseUrl}/api/policy-acceptance/${encodeURIComponent(confirmationToken)}/submit`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          acceptedTerms: true,
+          acceptedPaymentCancellation: true,
+          typedSignature: "Cleaner Confirmation Customer",
+        }),
+      }
+    );
+    const submitPolicyBody = await submitPolicyResponse.json();
+    assert.equal(submitPolicyResponse.status, 200);
+    assert.equal(submitPolicyBody.ok, true);
+    assert.equal(submitPolicyBody.acceptance.policyAccepted, true);
+
+    const scheduledOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const scheduledOrdersBody = await scheduledOrdersResponse.text();
+    assert.equal(scheduledOrdersResponse.status, 200);
+    const scheduledLaneBeforeCleanerResponse = getOrderFunnelLaneSlice(
+      scheduledOrdersBody,
+      "scheduled",
+      "en-route"
+    );
+    assert.match(scheduledLaneBeforeCleanerResponse, /Cleaner Confirmation Customer/);
+    assert.match(scheduledLaneBeforeCleanerResponse, /Не подтверждено клинером/);
+    assert.match(scheduledLaneBeforeCleanerResponse, /admin-badge admin-badge-outline">Не подтверждено клинером</);
+
+    const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "ariana.cleaner@example.com",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(accountLoginResponse.status, 303);
+    assert.equal(accountLoginResponse.headers.get("location"), "/account");
+    const userSessionCookieValue = getCookieValue(
+      getSetCookies(accountLoginResponse),
+      "shynli_user_session"
+    );
+    assert.ok(userSessionCookieValue);
+
+    const accountDashboardResponse = await fetch(`${started.baseUrl}/account`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const accountDashboardBody = await accountDashboardResponse.text();
+    assert.equal(accountDashboardResponse.status, 200);
+    assert.match(accountDashboardBody, /Cleaner Confirmation Customer/);
+    assert.match(accountDashboardBody, /Ждёт подтверждения/);
+    assert.match(accountDashboardBody, /name="action" value="confirm-assignment"/);
+    assert.match(accountDashboardBody, /name="action" value="mark-assignment-en-route"/);
+    assert.match(accountDashboardBody, /name="action" value="decline-assignment"/);
+
+    const declineAssignmentResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "decline-assignment",
+        entryId,
+      }),
+    });
+    assert.equal(declineAssignmentResponse.status, 303);
+    assert.match(declineAssignmentResponse.headers.get("location") || "", /notice=assignment-declined/);
+
+    const declinedDashboardResponse = await fetch(
+      `${started.baseUrl}${declineAssignmentResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const declinedDashboardBody = await declinedDashboardResponse.text();
+    assert.equal(declinedDashboardResponse.status, 200);
+    assert.match(declinedDashboardBody, /Вы отметили, что не подтверждаете этот заказ\./);
+    assert.match(declinedDashboardBody, /Вы не подтвердили/);
+
+    const declinedOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const declinedOrdersBody = await declinedOrdersResponse.text();
+    assert.equal(declinedOrdersResponse.status, 200);
+    const scheduledLaneAfterCleanerDecline = getOrderFunnelLaneSlice(
+      declinedOrdersBody,
+      "scheduled",
+      "en-route"
+    );
+    assert.match(scheduledLaneAfterCleanerDecline, /Не подтверждено клинером/);
+    assert.match(
+      scheduledLaneAfterCleanerDecline,
+      /admin-badge admin-badge-danger">Не подтверждено клинером</
+    );
+
+    const confirmAssignmentResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "confirm-assignment",
+        entryId,
+      }),
+    });
+    assert.equal(confirmAssignmentResponse.status, 303);
+    assert.match(confirmAssignmentResponse.headers.get("location") || "", /notice=assignment-confirmed/);
+
+    const confirmedDashboardResponse = await fetch(
+      `${started.baseUrl}${confirmAssignmentResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const confirmedDashboardBody = await confirmedDashboardResponse.text();
+    assert.equal(confirmedDashboardResponse.status, 200);
+    assert.match(confirmedDashboardBody, /Вы подтвердили заказ\./);
+    assert.match(confirmedDashboardBody, /Подтверждено вами/);
+    assert.match(confirmedDashboardBody, /name="action" value="mark-assignment-en-route"/);
+
+    const confirmedOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const confirmedOrdersBody = await confirmedOrdersResponse.text();
+    assert.equal(confirmedOrdersResponse.status, 200);
+    const scheduledLaneAfterCleanerConfirm = getOrderFunnelLaneSlice(
+      confirmedOrdersBody,
+      "scheduled",
+      "en-route"
+    );
+    assert.match(scheduledLaneAfterCleanerConfirm, /Подтверждено клинером/);
+    assert.match(scheduledLaneAfterCleanerConfirm, /admin-badge admin-badge-success">Подтверждено клинером</);
+
+    const enRouteResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-en-route",
+        entryId,
+      }),
+    });
+    assert.equal(enRouteResponse.status, 303);
+    assert.match(enRouteResponse.headers.get("location") || "", /notice=assignment-en-route/);
+
+    const enRouteDashboardResponse = await fetch(
+      `${started.baseUrl}${enRouteResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const enRouteDashboardBody = await enRouteDashboardResponse.text();
+    assert.equal(enRouteDashboardResponse.status, 200);
+    assert.match(enRouteDashboardBody, /уже выехали на заказ/i);
+    assert.match(enRouteDashboardBody, />В пути</);
+    assert.doesNotMatch(enRouteDashboardBody, /name="action" value="mark-assignment-en-route"/);
+    assert.match(enRouteDashboardBody, /name="action" value="mark-assignment-cleaning-started"/);
+
+    const enRouteOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const enRouteOrdersBody = await enRouteOrdersResponse.text();
+    assert.equal(enRouteOrdersResponse.status, 200);
+    const scheduledLaneAfterEnRoute = getOrderFunnelLaneSlice(
+      enRouteOrdersBody,
+      "scheduled",
+      "en-route"
+    );
+    const enRouteLaneAfterUpdate = getOrderFunnelLaneSlice(
+      enRouteOrdersBody,
+      "en-route",
+      "rescheduled"
+    );
+    assert.doesNotMatch(scheduledLaneAfterEnRoute, /Cleaner Confirmation Customer/);
+    assert.match(enRouteLaneAfterUpdate, /Cleaner Confirmation Customer/);
+    assert.match(enRouteLaneAfterUpdate, /В пути/);
+
+    const cleaningStartedResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-cleaning-started",
+        entryId,
+      }),
+    });
+    assert.equal(cleaningStartedResponse.status, 303);
+    assert.match(
+      cleaningStartedResponse.headers.get("location") || "",
+      /notice=assignment-cleaning-started/
+    );
+
+    const cleaningStartedDashboardResponse = await fetch(
+      `${started.baseUrl}${cleaningStartedResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const cleaningStartedDashboardBody = await cleaningStartedDashboardResponse.text();
+    assert.equal(cleaningStartedDashboardResponse.status, 200);
+    assert.match(cleaningStartedDashboardBody, /начинаете уборку/i);
+    assert.match(cleaningStartedDashboardBody, />Начать уборку</);
+    assert.match(cleaningStartedDashboardBody, /name="action" value="mark-assignment-checklist"/);
+
+    const cleaningStartedOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const cleaningStartedOrdersBody = await cleaningStartedOrdersResponse.text();
+    assert.equal(cleaningStartedOrdersResponse.status, 200);
+    const cleaningStartedLane = getOrderFunnelLaneSlice(
+      cleaningStartedOrdersBody,
+      "cleaning-started",
+      "checklist"
+    );
+    assert.match(cleaningStartedLane, /Cleaner Confirmation Customer/);
+    assert.match(cleaningStartedLane, /Начать уборку/);
+
+    const checklistResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-checklist",
+        entryId,
+      }),
+    });
+    assert.equal(checklistResponse.status, 303);
+    assert.match(checklistResponse.headers.get("location") || "", /notice=assignment-checklist/);
+
+    const checklistDashboardResponse = await fetch(
+      `${started.baseUrl}${checklistResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const checklistDashboardBody = await checklistDashboardResponse.text();
+    assert.equal(checklistDashboardResponse.status, 200);
+    assert.match(checklistDashboardBody, /этапу чеклиста/i);
+    assert.match(checklistDashboardBody, />Чеклист</);
+    assert.match(checklistDashboardBody, /name="action" value="mark-assignment-photos"/);
+
+    const checklistOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const checklistOrdersBody = await checklistOrdersResponse.text();
+    assert.equal(checklistOrdersResponse.status, 200);
+    const checklistLane = getOrderFunnelLaneSlice(
+      checklistOrdersBody,
+      "checklist",
+      "photos"
+    );
+    assert.match(checklistLane, /Cleaner Confirmation Customer/);
+    assert.match(checklistLane, /Чеклист/);
+
+    const photosResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-photos",
+        entryId,
+      }),
+    });
+    assert.equal(photosResponse.status, 303);
+    assert.match(photosResponse.headers.get("location") || "", /notice=assignment-photos/);
+
+    const photosDashboardResponse = await fetch(
+      `${started.baseUrl}${photosResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const photosDashboardBody = await photosDashboardResponse.text();
+    assert.equal(photosDashboardResponse.status, 200);
+    assert.match(photosDashboardBody, /этапу фото/i);
+    assert.match(photosDashboardBody, />Фото</);
+    assert.match(photosDashboardBody, /name="action" value="mark-assignment-cleaning-complete"/);
+
+    const photosOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const photosOrdersBody = await photosOrdersResponse.text();
+    assert.equal(photosOrdersResponse.status, 200);
+    const photosLane = getOrderFunnelLaneSlice(
+      photosOrdersBody,
+      "photos",
+      "cleaning-complete"
+    );
+    assert.match(photosLane, /Cleaner Confirmation Customer/);
+    assert.match(photosLane, /Фото/);
+
+    const cleaningCompleteResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-cleaning-complete",
+        entryId,
+      }),
+    });
+    assert.equal(cleaningCompleteResponse.status, 303);
+    assert.match(
+      cleaningCompleteResponse.headers.get("location") || "",
+      /notice=assignment-cleaning-complete/
+    );
+
+    const cleaningCompleteDashboardResponse = await fetch(
+      `${started.baseUrl}${cleaningCompleteResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const cleaningCompleteDashboardBody = await cleaningCompleteDashboardResponse.text();
+    assert.equal(cleaningCompleteDashboardResponse.status, 200);
+    assert.match(cleaningCompleteDashboardBody, /уборка завершена/i);
+    assert.match(cleaningCompleteDashboardBody, />Уборка завершена</);
+    assert.doesNotMatch(cleaningCompleteDashboardBody, /name="action" value="mark-assignment-cleaning-complete"/);
+
+    const cleaningCompleteOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const cleaningCompleteOrdersBody = await cleaningCompleteOrdersResponse.text();
+    assert.equal(cleaningCompleteOrdersResponse.status, 200);
+    const cleaningCompleteLane = getOrderFunnelLaneSlice(
+      cleaningCompleteOrdersBody,
+      "cleaning-complete",
+      "invoice-sent"
+    );
+    assert.match(cleaningCompleteLane, /Cleaner Confirmation Customer/);
+    assert.match(cleaningCompleteLane, /Уборка завершена/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
