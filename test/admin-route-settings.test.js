@@ -394,6 +394,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /account-mobile-logout-button/i);
     assert.match(accountDashboardBody, /aria-label="Выйти"/i);
     assert.match(accountDashboardBody, /Следующий заказ/i);
+    assert.match(accountDashboardBody, /account-mobile-focus-travel/i);
+    assert.match(accountDashboardBody, /data-account-travel-estimate="true"/i);
+    assert.match(accountDashboardBody, /Дорога: считаем маршрут/i);
     assert.match(accountDashboardBody, /data-account-mobile-order-card/i);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /<details class="admin-details" data-account-profile-details>/i);
