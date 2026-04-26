@@ -126,6 +126,29 @@ function createLeadConnectorStub() {
   };
 }
 
+function createLeadConnectorSequenceStub(results = []) {
+  const calls = [];
+  return {
+    calls,
+    isConfigured() {
+      return true;
+    },
+    async sendSmsMessage(input = {}) {
+      calls.push(input);
+      const next = results[calls.length - 1] || { ok: true };
+      return {
+        ok: next.ok !== false,
+        code: next.code || (next.ok === false ? "SMS_SEND_FAILED" : "OK"),
+        message: next.message || "",
+        details: next.details || null,
+        contactId: next.contactId || input.contactId || "",
+        conversationId: next.ok === false ? "" : `conversation-${calls.length}`,
+        messageId: next.ok === false ? "" : `message-${calls.length}`,
+      };
+    },
+  };
+}
+
 test("sends customer and manager notifications after a successful quote submission", async () => {
   const entry = createLeadEntry();
   const ledger = createMutableLedger(entry);
@@ -219,6 +242,56 @@ test("sends new lead SMS alerts to active managers and admins", async () => {
   assert.match(leadConnectorClient.calls[1].message, /assigned to you/i);
   assert.match(leadConnectorClient.calls[2].message, /was submitted|needs attention/i);
   assert.equal((result.entry.payloadForRetry.adminSms.history || []).length, 3);
+});
+
+test("records failed internal lead alert SMS attempts with recipient diagnostics", async () => {
+  const entry = createLeadEntry({
+    customerPhone: "3125550101",
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorSequenceStub([
+    { ok: true },
+    { ok: true },
+    { ok: false, code: "SMS_SEND_FAILED", message: "Recipient has opted out." },
+  ]);
+  const service = createAutoNotificationService({
+    listLeadAlertRecipients: async () => [
+      {
+        id: "manager-1",
+        name: "Mila Rivers",
+        email: "mila@example.com",
+        phone: "3125550199",
+        role: "manager",
+      },
+      {
+        id: "admin-1",
+        name: "Anastasiia Iaparova",
+        email: "anastasiia@example.com",
+        phone: "3125550177",
+        role: "admin",
+      },
+    ],
+    quoteOpsLedger: ledger,
+    siteOrigin: "https://shynlicleaningservice.com",
+  });
+
+  const result = await service.notifyQuoteSubmissionSuccess({
+    entry,
+    pricing: { serviceName: "Deep Cleaning" },
+    leadConnectorClient,
+  });
+
+  assert.equal(result.customerSmsSent, true);
+  assert.equal(result.managerSmsSent, true);
+  assert.equal(result.managerSmsSentCount, 1);
+  const history = result.entry.payloadForRetry.adminSms.history || [];
+  assert.equal(history.length, 3);
+  const failedRecord = history.find((item) => item && item.status === "failed");
+  assert.ok(failedRecord);
+  assert.equal(failedRecord.targetType, "admin");
+  assert.equal(failedRecord.recipientName, "Anastasiia Iaparova");
+  assert.equal(failedRecord.recipientRole, "admin");
+  assert.match(failedRecord.errorMessage, /opted out/i);
 });
 
 test("sends assignment SMS once per schedule signature for scheduled orders", async () => {
