@@ -103,6 +103,10 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(createdOrderBody, /215 North Elm Street, Naperville, IL 60563/);
     assert.match(createdOrderBody, /\$240\.00/);
     assert.match(createdOrderBody, new RegExp(`name="entryId" value="${escapeRegex(createdOrderId)}"`));
+    const newLane = getOrderFunnelLaneSlice(createdOrderBody, "new", "policy");
+    const scheduledLane = getOrderFunnelLaneSlice(createdOrderBody, "scheduled", "en-route");
+    assert.match(newLane, /Manual Customer/);
+    assert.doesNotMatch(scheduledLane, /Manual Customer/);
   } finally {
     await stopServer(started.child);
   }
