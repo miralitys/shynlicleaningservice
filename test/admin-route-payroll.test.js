@@ -154,6 +154,8 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
     assert.match(payrollBody, /Olga Payroll/i);
     assert.match(payrollBody, /\$180\.00/);
     assert.match(payrollBody, /К выплате/i);
+    assert.match(payrollBody, /name="dateFrom"/);
+    assert.match(payrollBody, /name="dateTo"/);
     assert.match(payrollBody, /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff">Сотрудники<\/a>/);
     assert.match(payrollBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/payroll">Зарплаты<\/a>/);
 
@@ -186,6 +188,39 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
     assert.equal(paidPayrollResponse.status, 200);
     assert.match(paidPayrollBody, /Выплачено/i);
     assert.match(paidPayrollBody, /Строка зарплаты отмечена как выплаченная/i);
+
+    const today = new Date();
+    const todayLabel = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
+      today.getDate()
+    ).padStart(2, "0")}`;
+
+    const filteredPaidPayrollResponse = await fetch(
+      `${started.baseUrl}/admin/payroll?status=paid&staffId=${encodeURIComponent(staffId)}&dateFrom=${encodeURIComponent(todayLabel)}&dateTo=${encodeURIComponent(todayLabel)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const filteredPaidPayrollBody = await filteredPaidPayrollResponse.text();
+    assert.equal(filteredPaidPayrollResponse.status, 200);
+    assert.match(filteredPaidPayrollBody, /Payroll Admin Client/i);
+    assert.match(filteredPaidPayrollBody, /value="paid" selected/);
+    assert.match(filteredPaidPayrollBody, new RegExp(`value="${staffId}" selected`));
+    assert.match(filteredPaidPayrollBody, new RegExp(`name="dateFrom" value="${todayLabel}"`));
+    assert.match(filteredPaidPayrollBody, new RegExp(`name="dateTo" value="${todayLabel}"`));
+
+    const emptyRangePayrollResponse = await fetch(
+      `${started.baseUrl}/admin/payroll?status=paid&staffId=${encodeURIComponent(staffId)}&dateFrom=2099-01-01&dateTo=2099-01-31`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const emptyRangePayrollBody = await emptyRangePayrollResponse.text();
+    assert.equal(emptyRangePayrollResponse.status, 200);
+    assert.match(emptyRangePayrollBody, /По текущему фильтру начислений нет/i);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
