@@ -444,6 +444,73 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.equal(storePayload.assignments[0].scheduleDate, "");
     assert.equal(storePayload.assignments[0].scheduleTime, "");
 
+    const rescheduleResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", entryId],
+        ["staffIds", staffId],
+        ["scheduleDate", "2026-03-27"],
+        ["scheduleTime", "13:30"],
+        ["status", "confirmed"],
+        ["notes", "Bring tall ladder"],
+      ]),
+    });
+    assert.equal(rescheduleResponse.status, 303);
+    assert.match(rescheduleResponse.headers.get("location") || "", /notice=assignment-saved/);
+
+    const rescheduledOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const rescheduledOrdersBody = await rescheduledOrdersResponse.text();
+    assert.equal(rescheduledOrdersResponse.status, 200);
+    assert.match(rescheduledOrdersBody, /name="selectedDate"[\s\S]*?value="2026-03-27"/);
+    assert.match(rescheduledOrdersBody, /name="selectedTime"[\s\S]*?value="13:30"/);
+
+    const rescheduledStorePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
+    assert.equal(rescheduledStorePayload.assignments[0].scheduleDate, "");
+    assert.equal(rescheduledStorePayload.assignments[0].scheduleTime, "");
+
+    const orderRescheduleResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-order",
+        entryId,
+        returnTo: "/admin/staff?section=assignments",
+        selectedDate: "2026-03-28",
+        selectedTime: "14:15",
+      }),
+    });
+    assert.equal(orderRescheduleResponse.status, 303);
+    assert.match(orderRescheduleResponse.headers.get("location") || "", /notice=order-saved/);
+
+    const syncedAssignmentsResponse = await fetch(`${started.baseUrl}/admin/staff?section=assignments`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const syncedAssignmentsBody = await syncedAssignmentsResponse.text();
+    assert.equal(syncedAssignmentsResponse.status, 200);
+    assert.match(
+      syncedAssignmentsBody,
+      /Jane Doe[\s\S]*?name="scheduleDate"[\s\S]*?value="2026-03-28"[\s\S]*?name="scheduleTime"[\s\S]*?value="14:15"/
+    );
+
     const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,

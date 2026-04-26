@@ -1360,6 +1360,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(accountDashboardResponse.status, 200);
     assert.match(accountDashboardBody, /Cleaner Confirmation Customer/);
     assert.match(accountDashboardBody, /Ждёт подтверждения/);
+    assert.doesNotMatch(accountDashboardBody, /Инструкции не добавлены\./);
     assert.match(accountDashboardBody, /name="action" value="confirm-assignment"/);
     assert.match(accountDashboardBody, /name="action" value="decline-assignment"/);
     assert.match(accountDashboardBody, /name="action" value="save-assignment-note"/);
@@ -1796,6 +1797,11 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(photosOpenDashboardBody, /Чеклист выполнен/i);
     assert.match(photosOpenDashboardBody, />Фото</);
     assert.match(photosOpenDashboardBody, /data-account-photo-editor/);
+    assert.ok(
+      Array.from(
+        photosOpenDashboardBody.matchAll(/<details class="account-stage-editor" data-account-photo-editor>/g)
+      ).length >= 2
+    );
     assert.match(photosOpenDashboardBody, /name="action" value="complete-assignment-photos"/);
     assert.match(photosOpenDashboardBody, /Фото до/);
     assert.match(photosOpenDashboardBody, /Фото после/);
