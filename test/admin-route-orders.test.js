@@ -1586,6 +1586,40 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(repeatedEnRouteAsyncPayload.message || "", /Сервер видит другой этап заказа/i);
     assert.match(repeatedEnRouteAsyncPayload.message || "", /В пути/i);
 
+    const repeatedEnRouteRedirectResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-en-route",
+        entryId,
+      }),
+    });
+    assert.equal(repeatedEnRouteRedirectResponse.status, 303);
+    const repeatedEnRouteRedirectLocation = repeatedEnRouteRedirectResponse.headers.get("location") || "";
+    const repeatedEnRouteRedirectLocationDecoded = decodeURIComponent(
+      repeatedEnRouteRedirectLocation.replace(/\+/g, " ")
+    );
+    assert.match(repeatedEnRouteRedirectLocation, /notice=assignment-error/);
+    assert.match(repeatedEnRouteRedirectLocationDecoded, /Сервер видит другой этап заказа/i);
+    assert.match(repeatedEnRouteRedirectLocationDecoded, /В пути/i);
+
+    const repeatedEnRouteNoticeResponse = await fetch(
+      `${started.baseUrl}${repeatedEnRouteRedirectLocation.replace(/#.*$/, "")}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const repeatedEnRouteNoticeBody = await repeatedEnRouteNoticeResponse.text();
+    assert.equal(repeatedEnRouteNoticeResponse.status, 200);
+    assert.match(repeatedEnRouteNoticeBody, /Сервер видит другой этап заказа/i);
+    assert.match(repeatedEnRouteNoticeBody, /В пути/i);
+
     const enRouteDashboardResponse = await fetch(
       `${started.baseUrl}${enRouteResponse.headers.get("location") || "/account"}`,
       {
