@@ -848,8 +848,17 @@ let usersStore = null;
 let leadManagersStaffStore = null;
 let autoNotificationService = null;
 
-async function listLeadManagers() {
+async function listActiveLeadWorkspaceUsers(allowedRoles = []) {
   if (!usersStore || typeof usersStore.getSnapshot !== "function") {
+    return [];
+  }
+
+  const allowedRoleSet = new Set(
+    (Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles])
+      .map((role) => normalizeString(role, 32).toLowerCase())
+      .filter(Boolean)
+  );
+  if (allowedRoleSet.size === 0) {
     return [];
   }
 
@@ -876,21 +885,43 @@ async function listLeadManagers() {
     .filter((user) => {
       const role = normalizeString(user && user.role, 32).toLowerCase();
       const status = normalizeString(user && user.status, 32).toLowerCase();
-      return status === "active" && role === "manager";
+      return status === "active" && allowedRoleSet.has(role);
     })
     .map((user) => {
       const id = normalizeString(user && user.id, 120);
       const email = normalizeString(user && user.email, 250).toLowerCase();
+      const role = normalizeString(user && user.role, 32).toLowerCase();
       const staffMeta = staffMetaById.get(normalizeString(user && user.staffId, 120)) || {};
       return {
         id,
         email,
         phone: normalizeString(staffMeta.phone || user.phone, 80),
         name: normalizeString(staffMeta.name, 200) || email || "Менеджер",
+        role,
       };
     })
     .filter((manager) => Boolean(manager.id))
     .sort((left, right) => left.name.localeCompare(right.name, "ru"));
+}
+
+async function listLeadManagers() {
+  return listActiveLeadWorkspaceUsers(["manager"]);
+}
+
+async function listLeadAlertRecipients() {
+  const recipients = await listActiveLeadWorkspaceUsers(["manager", "admin"]);
+  const seenIds = new Set();
+  const seenPhones = new Set();
+  return recipients.filter((recipient) => {
+    const recipientId = normalizeString(recipient && recipient.id, 120);
+    const recipientPhone = normalizeString(recipient && recipient.phone, 80);
+    if (!recipientId) return false;
+    if (seenIds.has(recipientId)) return false;
+    if (recipientPhone && seenPhones.has(recipientPhone)) return false;
+    seenIds.add(recipientId);
+    if (recipientPhone) seenPhones.add(recipientPhone);
+    return true;
+  });
 }
 
 const orderPolicyAcceptance = createOrderPolicyAcceptanceService({
@@ -1533,6 +1564,7 @@ async function main() {
         ? adminAuth.loadAdminConfig(process.env)
         : {},
     listLeadManagers,
+    listLeadAlertRecipients,
     quoteOpsLedger,
     reminderScanLimit: CLIENT_REMINDER_SCAN_LIMIT,
     siteOrigin: SITE_ORIGIN,

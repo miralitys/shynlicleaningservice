@@ -1,6 +1,8 @@
 "use strict";
 
 const fs = require("node:fs/promises");
+const os = require("node:os");
+const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { calculateQuotePricing } = require("../lib/quote-pricing");
@@ -204,6 +206,151 @@ test("accepts valid quote submissions through the backend CRM helper", async () 
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
+  }
+});
+
+test("sends new lead SMS alerts to active managers and admins after quote submission", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-alerts-"));
+  const usersStorePath = path.join(tempDir, "admin-users-store.json");
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-quote-alert-123",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        conversationId: "conversation-quote-alert",
+        messageId: "message-quote-alert",
+      },
+    },
+  ]);
+
+  await fs.writeFile(
+    usersStorePath,
+    `${JSON.stringify({
+      users: [
+        {
+          id: "manager-user-1",
+          staffId: "staff-manager-1",
+          email: "manager.one@example.com",
+          phone: "3125550199",
+          status: "active",
+          role: "manager",
+        },
+        {
+          id: "admin-user-1",
+          staffId: "staff-admin-1",
+          email: "admin.one@example.com",
+          phone: "3125550177",
+          status: "active",
+          role: "admin",
+        },
+      ],
+    }, null, 2)}\n`,
+    "utf8"
+  );
+  await fs.writeFile(
+    staffStorePath,
+    `${JSON.stringify({
+      staff: [
+        {
+          id: "staff-manager-1",
+          name: "Mila Rivers",
+          phone: "3125550199",
+          status: "active",
+        },
+        {
+          id: "staff-admin-1",
+          name: "Ramis Admin",
+          phone: "3125550177",
+          status: "active",
+        },
+      ],
+      assignments: [],
+    }, null, 2)}\n`,
+    "utf8"
+  );
+
+  const started = await startServer({
+    env: {
+      GHL_API_KEY: "ghl_test_key",
+      GHL_LOCATION_ID: "location-123",
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "0",
+      SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+      ADMIN_USERS_STORE_PATH: usersStorePath,
+      ADMIN_STAFF_STORE_PATH: staffStorePath,
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/api/quote/submit`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-request-id": "req-quote-alert-1",
+      },
+      body: JSON.stringify({
+        contact: {
+          fullName: "Jane Doe",
+          phone: "312-555-0100",
+          email: "jane@example.com",
+        },
+        quote: {
+          serviceType: "deep",
+          totalPrice: 199.99,
+          selectedDate: "2026-03-22",
+          selectedTime: "09:00",
+          fullAddress: "123 Main St, Romeoville, IL 60446",
+          rooms: 4,
+          bathrooms: 2,
+          consent: true,
+        },
+        source: "Website Quote",
+      }),
+    });
+
+    assert.equal(response.status, 201);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+
+    const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
+    const calls = captureRaw
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const smsCalls = calls
+      .filter((call) => /\/conversations\/messages$/.test(call.url))
+      .map((call) => JSON.parse(call.body));
+
+    assert.equal(smsCalls.length, 3);
+    assert.deepEqual(
+      smsCalls.map((call) => call.toNumber).sort(),
+      ["+13125550100", "+13125550177", "+13125550199"].sort()
+    );
+    assert.match(
+      smsCalls.find((call) => call.toNumber === "+13125550199").message,
+      /assigned to you/i
+    );
+    assert.match(
+      smsCalls.find((call) => call.toNumber === "+13125550177").message,
+      /was submitted|needs attention/i
+    );
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 

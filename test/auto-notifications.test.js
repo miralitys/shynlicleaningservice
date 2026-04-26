@@ -162,11 +162,63 @@ test("sends customer and manager notifications after a successful quote submissi
   assert.equal(result.customerEmailSent, true);
   assert.equal(result.customerSmsSent, true);
   assert.equal(result.managerSmsSent, true);
+  assert.equal(result.managerSmsSentCount, 1);
   assert.equal(emailCalls.length, 1);
   assert.equal(leadConnectorClient.calls.length, 2);
   assert.match(leadConnectorClient.calls[0].message, /received your request/i);
   assert.match(leadConnectorClient.calls[1].message, /assigned to you/i);
   assert.equal((result.entry.payloadForRetry.adminSms.history || []).length, 2);
+});
+
+test("sends new lead SMS alerts to active managers and admins", async () => {
+  const entry = createLeadEntry({
+    customerPhone: "3125550101",
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({
+    listLeadManagers: async () => [
+      {
+        id: "manager-1",
+        name: "Mila Rivers",
+        email: "mila@example.com",
+        phone: "3125550199",
+        role: "manager",
+      },
+    ],
+    listLeadAlertRecipients: async () => [
+      {
+        id: "manager-1",
+        name: "Mila Rivers",
+        email: "mila@example.com",
+        phone: "3125550199",
+        role: "manager",
+      },
+      {
+        id: "admin-1",
+        name: "Ramis Admin",
+        email: "ramis@example.com",
+        phone: "3125550177",
+        role: "admin",
+      },
+    ],
+    quoteOpsLedger: ledger,
+    siteOrigin: "https://shynlicleaningservice.com",
+  });
+
+  const result = await service.notifyQuoteSubmissionSuccess({
+    entry,
+    pricing: { serviceName: "Deep Cleaning" },
+    leadConnectorClient,
+  });
+
+  assert.equal(result.customerSmsSent, true);
+  assert.equal(result.managerSmsSent, true);
+  assert.equal(result.managerSmsSentCount, 2);
+  assert.equal(leadConnectorClient.calls.length, 3);
+  assert.match(leadConnectorClient.calls[1].message, /assigned to you/i);
+  assert.match(leadConnectorClient.calls[2].message, /was submitted|needs attention/i);
+  assert.equal((result.entry.payloadForRetry.adminSms.history || []).length, 3);
 });
 
 test("sends assignment SMS once per schedule signature for scheduled orders", async () => {
