@@ -586,6 +586,101 @@ test("surfaces CRM partial-warning states without failing the quote submission",
   }
 });
 
+test("returns the opportunity warning detail when CRM rejects deal creation", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-opp-warn-1",
+        },
+      },
+    },
+    {
+      method: "PUT",
+      match: "/contacts/contact-opp-warn-1",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-opp-warn-1",
+        },
+      },
+    },
+    {
+      method: "GET",
+      match: "/opportunities/pipelines",
+      status: 200,
+      body: {
+        pipelines: [
+          {
+            id: "pipe-1",
+            name: "Main",
+            stages: [{ id: "stage-1", name: "New Lead" }],
+          },
+        ],
+      },
+    },
+    {
+      method: "POST",
+      match: "/opportunities/",
+      status: 403,
+      body: {
+        message: "Missing permission: opportunities.write",
+      },
+    },
+  ]);
+
+  const started = await startServer({
+    env: {
+      GHL_API_KEY: "ghl_test_key",
+      GHL_LOCATION_ID: "location-123",
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "1",
+      GHL_AUTO_DISCOVER_OPPORTUNITY_PIPELINE: "1",
+      GHL_PIPELINE_NAME: "Main",
+      GHL_PIPELINE_STAGE_NAME: "New Lead",
+      SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/api/quote/submit`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-request-id": "req-quote-opportunity-warning",
+      },
+      body: JSON.stringify({
+        contact: {
+          fullName: "Jane Doe",
+          phone: "312-555-0100",
+        },
+        quote: {
+          serviceType: "regular",
+          totalPrice: 120,
+          selectedDate: "2026-03-22",
+          selectedTime: "09:00",
+          consent: true,
+        },
+      }),
+    });
+
+    assert.equal(response.status, 201);
+    const payload = await response.json();
+    assert.equal(payload.success, true);
+    assert.equal(payload.opportunityCreated, false);
+    assert.equal(payload.opportunitySyncReason, "Missing permission: opportunities.write");
+    assert.match(payload.warningMessage, /Сделка в CRM/i);
+    assert.match(payload.warningMessage, /Missing permission: opportunities\.write/);
+    assert.deepEqual(payload.warnings, ["custom_fields_skipped", "opportunity_failed"]);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("persists canonical repriced values to CRM side effects instead of raw client totals", async () => {
   const fetchStub = createFetchStub([
     {

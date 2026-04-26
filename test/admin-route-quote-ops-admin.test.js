@@ -857,3 +857,115 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
+
+test("shows detailed CRM warning text when opportunity sync fails", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-ops-warning-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-warning-123",
+        },
+      },
+    },
+    {
+      method: "PUT",
+      match: "/contacts/contact-warning-123",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-warning-123",
+        },
+      },
+    },
+    {
+      method: "GET",
+      match: "/opportunities/pipelines",
+      status: 200,
+      body: {
+        pipelines: [
+          {
+            id: "pipe-1",
+            name: "Main",
+            stages: [{ id: "stage-1", name: "New Lead" }],
+          },
+        ],
+      },
+    },
+    {
+      method: "POST",
+      match: "/opportunities/",
+      status: 403,
+      body: {
+        message: "Missing permission: opportunities.write",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    ADMIN_ORDER_MEDIA_STORAGE_DIR: path.join(tempDir, "order-media"),
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_CUSTOM_FIELDS_JSON: JSON.stringify({
+      fullAddress: "cf_full_address",
+    }),
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "1",
+    GHL_AUTO_DISCOVER_OPPORTUNITY_PIPELINE: "1",
+    GHL_PIPELINE_NAME: "Main",
+    GHL_PIPELINE_STAGE_NAME: "New Lead",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await fetch(`${started.baseUrl}/api/quote/submit`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-request-id": "warning-request-1",
+      },
+      body: JSON.stringify({
+        contact: {
+          fullName: "Warning Client",
+          phone: "312-555-0111",
+          email: "warning@example.com",
+        },
+        quote: {
+          serviceType: "regular",
+          totalPrice: 140,
+          selectedDate: "2026-03-22",
+          selectedTime: "09:00",
+          fullAddress: "123 Main St, Romeoville, IL 60446",
+          consent: true,
+        },
+      }),
+    });
+
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const quoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops?status=warning`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const quoteOpsBody = await quoteOpsResponse.text();
+
+    assert.equal(quoteOpsResponse.status, 200);
+    assert.match(quoteOpsBody, /Warning Client/);
+    assert.match(quoteOpsBody, /opportunity_failed/);
+    assert.match(quoteOpsBody, /Missing permission: opportunities\.write/);
+    assert.match(quoteOpsBody, /Сделка в CRM:/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});

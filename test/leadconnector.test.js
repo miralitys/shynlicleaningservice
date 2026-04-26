@@ -505,6 +505,75 @@ test("auto-discovers opportunity pipeline and stage by configured names", async 
   assert.match(calls[3].body, /"pipelineStageId":"stage-1"/);
 });
 
+test("captures the CRM reason when opportunity creation fails", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/") && options.method === "POST") {
+      return createResponse(200, { contact: { id: "contact-5" } });
+    }
+
+    if (String(url).includes("/contacts/contact-5") && options.method === "PUT") {
+      return createResponse(200, { id: "contact-5" });
+    }
+
+    if (String(url).includes("/opportunities/pipelines") && options.method === "GET") {
+      return createResponse(200, {
+        pipelines: [
+          {
+            id: "pipe-1",
+            name: "Main",
+            stages: [{ id: "stage-1", name: "New Lead" }],
+          },
+        ],
+      });
+    }
+
+    if (String(url).includes("/opportunities/") && options.method === "POST") {
+      return createResponse(403, {
+        message: "Missing permission: opportunities.write",
+      });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "1",
+      GHL_PIPELINE_NAME: "Main",
+      GHL_PIPELINE_STAGE_NAME: "New Lead",
+    },
+    fetch,
+  });
+
+  const result = await client.submitQuoteSubmission({
+    contactData: {
+      fullName: "Jane Doe",
+      phone: "3125550100",
+    },
+    calculatorData: {
+      totalPrice: 95,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.opportunityCreated, false);
+  assert.deepEqual(result.warnings, ["custom_fields_skipped", "opportunity_failed"]);
+  assert.equal(result.opportunitySyncReason, "Missing permission: opportunities.write");
+  assert.match(result.warningMessage, /Сделка в CRM/i);
+  assert.match(result.warningMessage, /Missing permission: opportunities\.write/);
+});
+
 test("sends an SMS through conversations API when contactId is provided", async () => {
   const calls = [];
   const fetch = async (url, options = {}) => {
