@@ -1364,6 +1364,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(accountDashboardBody, /name="action" value="decline-assignment"/);
     assert.match(accountDashboardBody, /name="action" value="save-assignment-note"/);
     assert.doesNotMatch(accountDashboardBody, /name="action" value="mark-assignment-en-route"/);
+    assert.match(accountDashboardBody, /form\.getAttribute\("action"\)/);
 
     const noteResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
