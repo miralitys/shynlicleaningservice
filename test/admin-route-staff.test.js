@@ -180,6 +180,18 @@ test("creates staff members and assigns them to orders through the staff workspa
         },
       },
     },
+    {
+      method: "POST",
+      match: "routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix",
+      status: 200,
+      body: [
+        {
+          condition: "ROUTE_EXISTS",
+          distanceMeters: 4989,
+          duration: "900s",
+        },
+      ],
+    },
   ]);
   const storePath = path.join(tempDir, "admin-staff-store.json");
   const env = {
@@ -403,13 +415,14 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(assignmentsSectionBody, /class="admin-table admin-staff-schedule-table"/);
     assert.doesNotMatch(assignmentsSectionBody, /class="admin-table admin-staff-table"/);
     assert.match(assignmentsSectionBody, /<th>Дорога<\/th>/);
-    assert.match(assignmentsSectionBody, /data-admin-travel-estimate="true"/);
-    assert.match(assignmentsSectionBody, /Из дома: считаем маршрут/i);
-    assert.match(assignmentsSectionBody, /importLibrary\("routes"\)/);
-    assert.match(assignmentsSectionBody, /RouteMatrix\.computeRouteMatrix/);
-    assert.match(assignmentsSectionBody, /TRAVEL_TIME_BUFFER_MINUTES = 5/);
+    assert.doesNotMatch(assignmentsSectionBody, /data-admin-travel-estimate="true"/);
+    assert.match(assignmentsSectionBody, /Из дома: 20 min • 3\.1 mi/i);
+    assert.doesNotMatch(assignmentsSectionBody, /Из дома: считаем маршрут/i);
+    assert.doesNotMatch(assignmentsSectionBody, /importLibrary\("routes"\)/);
+    assert.doesNotMatch(assignmentsSectionBody, /RouteMatrix\.computeRouteMatrix/);
+    assert.doesNotMatch(assignmentsSectionBody, /TRAVEL_TIME_BUFFER_MINUTES = 5/);
     assert.doesNotMatch(assignmentsSectionBody, /DistanceMatrixService/);
-    assert.match(assignmentsSectionBody, /Маршрут считается от дома сотрудника или от предыдущего заказа в этот день\./);
+    assert.match(assignmentsSectionBody, /Маршрут считается один раз от домашнего адреса сотрудника до адреса клиента и сохраняется в назначении\./);
     const assignmentsTable = assignmentsSectionBody.match(
       /<table class="admin-table admin-staff-schedule-table">[\s\S]*?<\/table>/
     )?.[0];

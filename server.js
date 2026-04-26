@@ -57,6 +57,7 @@ const {
 } = require("./lib/runtime/perf");
 const { evaluateStartupEnvIntegrity } = require("./lib/runtime/env-integrity");
 const { createAdminOrderMediaStorage } = require("./lib/admin-order-media-storage");
+const { createStaffTravelEstimateService } = require("./lib/staff-travel-estimates");
 let createSupabaseQuoteOpsClient;
 let loadSupabaseQuoteOpsConfig;
 try {
@@ -615,6 +616,10 @@ const PERF_ENDPOINT_ENABLED = /^(1|true|yes)$/i.test(String(process.env.ENABLE_P
 const PERF_ENDPOINT_TOKEN = String(process.env.PERF_ENDPOINT_TOKEN || "").trim();
 const GOOGLE_ANALYTICS_MEASUREMENT_ID = String(process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID || "G-0MXV4JBP67").trim();
 const GOOGLE_PLACES_API_KEY = String(process.env.GOOGLE_PLACES_API_KEY || "").trim();
+const staffTravelEstimateService = createStaffTravelEstimateService({
+  googleMapsApiKey: GOOGLE_PLACES_API_KEY,
+  fetch: global.fetch,
+});
 const PUBLIC_ASSET_DIRECTORIES = new Set(["css", "images", "js"]);
 const PUBLIC_ASSET_FILES = new Set(["apple-touch-icon.png", "robots.txt", "site.webmanifest", "sitemap.xml"]);
 const STARTUP_ENV_INTEGRITY = evaluateStartupEnvIntegrity(process.env);
@@ -1090,6 +1095,7 @@ const handleAdminRequest = createAdminRequestHandler({
   redirectWithTiming,
   serializeCookie,
   shouldUseSecureCookies,
+  staffTravelEstimateService,
   writeHeadWithTiming,
   writeHtmlWithTiming,
   writeJsonWithTiming,

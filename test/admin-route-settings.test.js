@@ -138,6 +138,18 @@ test("creates employee users in settings and serves a personal cabinet with assi
         },
       },
     },
+    {
+      method: "POST",
+      match: "routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix",
+      status: 200,
+      body: [
+        {
+          condition: "ROUTE_EXISTS",
+          distanceMeters: 18507,
+          duration: "1500s",
+        },
+      ],
+    },
   ]);
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const usersStorePath = path.join(tempDir, "admin-users-store.json");
@@ -151,6 +163,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     GHL_LOCATION_ID: "location-123",
     GHL_ENABLE_NOTES: "0",
     GHL_CREATE_OPPORTUNITY: "0",
+    GOOGLE_PLACES_API_KEY: "google_routes_test_key",
     SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
   };
   const started = await startServer({ env });
@@ -321,6 +334,16 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     assert.equal(assignResponse.status, 303);
     assert.match(assignResponse.headers.get("location") || "", /notice=assignment-saved/);
+    const staffStoreAfterAssignment = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const savedAssignment = (staffStoreAfterAssignment.assignments || []).find(
+      (record) => record && record.entryId === assignedEntryId
+    );
+    assert.ok(savedAssignment);
+    assert.equal(savedAssignment.travelEstimates.length, 1);
+    assert.equal(savedAssignment.travelEstimates[0].status, "ok");
+    assert.equal(savedAssignment.travelEstimates[0].durationSeconds, 1500);
+    assert.equal(savedAssignment.travelEstimates[0].distanceMeters, 18507);
+    assert.equal(savedAssignment.travelEstimates[0].label, "30 min • 11 mi");
 
     const anonymousAccountResponse = await fetch(`${started.baseUrl}/account`, {
       redirect: "manual",
@@ -395,8 +418,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /aria-label="Выйти"/i);
     assert.match(accountDashboardBody, /Следующий заказ/i);
     assert.match(accountDashboardBody, /account-mobile-focus-travel/i);
-    assert.match(accountDashboardBody, /data-account-travel-estimate="true"/i);
-    assert.match(accountDashboardBody, /Дорога: считаем маршрут/i);
+    assert.doesNotMatch(accountDashboardBody, /data-account-travel-estimate="true"/i);
+    assert.match(accountDashboardBody, /Дорога: 30 min • 11 mi/i);
+    assert.doesNotMatch(accountDashboardBody, /Дорога: считаем маршрут/i);
     assert.match(accountDashboardBody, /data-account-mobile-order-card/i);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /<details class="admin-details" data-account-profile-details>/i);
