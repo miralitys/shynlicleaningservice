@@ -1799,13 +1799,14 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(photosOpenDashboardBody, /data-account-photo-editor/);
     assert.ok(
       Array.from(
-        photosOpenDashboardBody.matchAll(/<details class="account-stage-editor" data-account-photo-editor>/g)
+        photosOpenDashboardBody.matchAll(/<details class="account-stage-editor account-photo-stage-editor" data-account-photo-editor>/g)
       ).length >= 2
     );
     assert.match(photosOpenDashboardBody, /name="action" value="complete-assignment-photos"/);
-    assert.match(photosOpenDashboardBody, /Фото до/);
-    assert.match(photosOpenDashboardBody, /Фото после/);
-    assert.match(photosOpenDashboardBody, /Клиент не разрешил делать фото/i);
+    assert.match(photosOpenDashboardBody, /До уборки/);
+    assert.match(photosOpenDashboardBody, /После уборки/);
+    assert.match(photosOpenDashboardBody, /Фото нельзя сделать/i);
+    assert.match(photosOpenDashboardBody, /Клиент не разрешил съемку/i);
 
     const photoFormData = new FormData();
     photoFormData.append("action", "complete-assignment-photos");
