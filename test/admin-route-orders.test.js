@@ -1559,9 +1559,9 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(cleaningStartedDashboardResponse.status, 200);
     assert.match(cleaningStartedDashboardBody, /начинаете уборку/i);
     assert.match(cleaningStartedDashboardBody, />Начать уборку</);
-    assert.match(cleaningStartedDashboardBody, /data-account-checklist-editor/);
-    assert.match(cleaningStartedDashboardBody, /name="action" value="save-assignment-checklist"/);
-    assert.match(cleaningStartedDashboardBody, /Выбрать все/);
+    assert.match(cleaningStartedDashboardBody, /Следующий этап.+открыть чеклист/i);
+    assert.match(cleaningStartedDashboardBody, /name="action" value="mark-assignment-checklist"/);
+    assert.doesNotMatch(cleaningStartedDashboardBody, /name="action" value="save-assignment-checklist"/);
 
     const cleaningStartedOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
@@ -1581,26 +1581,23 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(cleaningStartedLane, /Cleaner Confirmation Customer/);
     assert.match(cleaningStartedLane, /Начать уборку/);
 
-    const checklistParams = new URLSearchParams();
-    checklistParams.append("action", "save-assignment-checklist");
-    checklistParams.append("entryId", entryId);
-    checklistParams.append("checklistItemId", "deep-default-1");
-    checklistParams.append("checklistItemId", "deep-default-2");
-
-    const checklistResponse = await fetch(`${started.baseUrl}/account`, {
+    const checklistOpenResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
       redirect: "manual",
       headers: {
         "content-type": "application/x-www-form-urlencoded",
         cookie: `shynli_user_session=${userSessionCookieValue}`,
       },
-      body: checklistParams,
+      body: new URLSearchParams({
+        action: "mark-assignment-checklist",
+        entryId,
+      }),
     });
-    assert.equal(checklistResponse.status, 303);
-    assert.match(checklistResponse.headers.get("location") || "", /notice=assignment-checklist/);
+    assert.equal(checklistOpenResponse.status, 303);
+    assert.match(checklistOpenResponse.headers.get("location") || "", /notice=assignment-checklist-opened/);
 
     const checklistDashboardResponse = await fetch(
-      `${started.baseUrl}${checklistResponse.headers.get("location") || "/account"}`,
+      `${started.baseUrl}${checklistOpenResponse.headers.get("location") || "/account"}`,
       {
         headers: {
           cookie: `shynli_user_session=${userSessionCookieValue}`,
@@ -1609,12 +1606,11 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     );
     const checklistDashboardBody = await checklistDashboardResponse.text();
     assert.equal(checklistDashboardResponse.status, 200);
-    assert.match(checklistDashboardBody, /Чеклист сохранён: 2 из/i);
+    assert.match(checklistDashboardBody, /Открыт этап «Чеклист»/);
     assert.match(checklistDashboardBody, />Чеклист</);
-    assert.match(checklistDashboardBody, /data-account-photo-editor/);
-    assert.match(checklistDashboardBody, /name="action" value="save-assignment-photos"/);
-    assert.match(checklistDashboardBody, /Фото до/);
-    assert.match(checklistDashboardBody, /Фото после/);
+    assert.match(checklistDashboardBody, /data-account-checklist-editor/);
+    assert.match(checklistDashboardBody, /name="action" value="save-assignment-checklist"/);
+    assert.match(checklistDashboardBody, /Выделить все/);
 
     const checklistOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
@@ -1633,6 +1629,68 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     );
     assert.match(checklistLane, /Cleaner Confirmation Customer/);
     assert.match(checklistLane, /Чеклист/);
+
+    const checklistParams = new URLSearchParams();
+    checklistParams.append("action", "save-assignment-checklist");
+    checklistParams.append("entryId", entryId);
+    checklistParams.append("checklistItemId", "deep-default-1");
+    checklistParams.append("checklistItemId", "deep-default-2");
+
+    const checklistResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: checklistParams,
+    });
+    assert.equal(checklistResponse.status, 303);
+    assert.match(checklistResponse.headers.get("location") || "", /notice=assignment-checklist/);
+
+    const photoReadyDashboardResponse = await fetch(
+      `${started.baseUrl}${checklistResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const photoReadyDashboardBody = await photoReadyDashboardResponse.text();
+    assert.equal(photoReadyDashboardResponse.status, 200);
+    assert.match(photoReadyDashboardBody, /Чеклист сохранён: 2 из/i);
+    assert.match(photoReadyDashboardBody, /name="action" value="mark-assignment-photos"/);
+
+    const photosOpenResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-photos",
+        entryId,
+      }),
+    });
+    assert.equal(photosOpenResponse.status, 303);
+    assert.match(photosOpenResponse.headers.get("location") || "", /notice=assignment-photos-opened/);
+
+    const photosOpenDashboardResponse = await fetch(
+      `${started.baseUrl}${photosOpenResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const photosOpenDashboardBody = await photosOpenDashboardResponse.text();
+    assert.equal(photosOpenDashboardResponse.status, 200);
+    assert.match(photosOpenDashboardBody, />Фото</);
+    assert.match(photosOpenDashboardBody, /data-account-photo-editor/);
+    assert.match(photosOpenDashboardBody, /name="action" value="save-assignment-photos"/);
+    assert.match(photosOpenDashboardBody, /Фото до/);
+    assert.match(photosOpenDashboardBody, /Фото после/);
 
     const photoFormData = new FormData();
     photoFormData.append("action", "save-assignment-photos");
