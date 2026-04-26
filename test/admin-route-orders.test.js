@@ -1688,6 +1688,12 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     );
     assert.match(photosLane, /Cleaner Confirmation Customer/);
     assert.match(photosLane, /Фото/);
+    assert.match(photosOrdersBody, /Отчёт клинера/);
+    assert.match(photosOrdersBody, /Фото до/);
+    assert.match(photosOrdersBody, /Фото после/);
+    assert.doesNotMatch(photosOrdersBody, /type="file" name="beforePhotos"/);
+    assert.doesNotMatch(photosOrdersBody, /type="file" name="afterPhotos"/);
+    assert.doesNotMatch(photosOrdersBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);
 
     const cleaningCompleteResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",

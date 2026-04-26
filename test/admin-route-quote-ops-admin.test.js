@@ -214,10 +214,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /Please call on arrival/);
     assert.match(ordersBody, /Gate code 2040/);
     assert.match(ordersBody, /Команда не назначена/);
-    assert.match(ordersBody, /Отчёт клинера/);
-    assert.match(ordersBody, /Фото до/);
-    assert.match(ordersBody, /Фото после/);
-    assert.match(ordersBody, /Комментарий клинера/);
+    assert.doesNotMatch(ordersBody, /Отчёт клинера/);
+    assert.doesNotMatch(ordersBody, /data-admin-order-completion-panel="true"/);
+    assert.doesNotMatch(ordersBody, /data-admin-order-cleaner-comment-panel="true"/);
     assert.match(ordersBody, /name="paymentStatus"/);
     assert.match(ordersBody, /name="paymentMethod"/);
     assert.doesNotMatch(ordersBody, /Команда назначена/);
@@ -321,9 +320,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(focusedOrderBody, /Текущая сумма заказа/);
     assert.match(focusedOrderBody, /Olga Martinez/);
     assert.match(focusedOrderBody, /type="checkbox" name="assignedStaff" value="Olga Martinez" checked/);
-    assert.match(focusedOrderBody, /data-admin-order-completion-panel="true"/);
-    assert.match(focusedOrderBody, /data-admin-order-cleaner-comment-panel="true"/);
-    assert.match(focusedOrderBody, /data-admin-order-cleaner-comment-submit/);
+    assert.doesNotMatch(focusedOrderBody, /Отчёт клинера/);
+    assert.doesNotMatch(focusedOrderBody, /data-admin-order-completion-panel="true"/);
+    assert.doesNotMatch(focusedOrderBody, /data-admin-order-cleaner-comment-panel="true"/);
+    assert.doesNotMatch(focusedOrderBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);
 
     const saveTeamForm = new URLSearchParams();
     saveTeamForm.set("entryId", entryId);
@@ -622,7 +622,14 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /value="245\.50"/);
     assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
+    assert.match(updatedOrdersBody, /Отчёт клинера/);
+    assert.match(updatedOrdersBody, /Фото до/);
+    assert.match(updatedOrdersBody, /Фото после/);
+    assert.match(updatedOrdersBody, /Комментарий клинера/);
     assert.match(updatedOrdersBody, /Comment saved through ajax query fallback\./);
+    assert.doesNotMatch(updatedOrdersBody, /type="file" name="beforePhotos"/);
+    assert.doesNotMatch(updatedOrdersBody, /type="file" name="afterPhotos"/);
+    assert.doesNotMatch(updatedOrdersBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);
 
     const filteredOrdersResponse = await fetch(`${started.baseUrl}/admin/orders?q=ops-request-1`, {
       headers: {
