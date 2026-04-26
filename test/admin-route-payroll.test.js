@@ -388,6 +388,20 @@ test("shows employee-only payroll history inside the account workspace", async (
     assert.match(accountPayrollBody, /Моя зарплата/i);
     assert.ok(accountPayrollBody.indexOf("Моя зарплата") < accountPayrollBody.indexOf("Профиль сотрудника"));
 
+    const accountCalendarResponse = await fetch(`${started.baseUrl}/account?section=calendar&date=2026-05-03`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const accountCalendarBody = await accountCalendarResponse.text();
+    assert.equal(accountCalendarResponse.status, 200);
+    assert.match(accountCalendarBody, /Календарь/i);
+    assert.match(accountCalendarBody, /Сегодня/i);
+    assert.match(accountCalendarBody, /Месяц/i);
+    assert.match(accountCalendarBody, /Payroll Account Client/i);
+    assert.match(accountCalendarBody, /610 Cleaner Route/i);
+    assert.match(accountCalendarBody, /href="\/account\?section=calendar" aria-current="page"[\s\S]*<strong>Календарь<\/strong>/);
+
     const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     const userId = usersStorePayload.users[0].id;
     assert.ok(userId);
