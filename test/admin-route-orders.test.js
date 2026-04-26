@@ -1362,7 +1362,80 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(accountDashboardBody, /Ждёт подтверждения/);
     assert.match(accountDashboardBody, /name="action" value="confirm-assignment"/);
     assert.match(accountDashboardBody, /name="action" value="decline-assignment"/);
+    assert.match(accountDashboardBody, /name="action" value="save-assignment-note"/);
     assert.doesNotMatch(accountDashboardBody, /name="action" value="mark-assignment-en-route"/);
+
+    const noteResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-assignment-note",
+        entryId,
+        cleanerComment: "Cleaner note before confirmation.",
+      }),
+    });
+    assert.equal(noteResponse.status, 303);
+    assert.match(noteResponse.headers.get("location") || "", /notice=assignment-note-saved/);
+
+    const noteDashboardResponse = await fetch(
+      `${started.baseUrl}${noteResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const noteDashboardBody = await noteDashboardResponse.text();
+    assert.equal(noteDashboardResponse.status, 200);
+    assert.match(noteDashboardBody, /Заметка сохранена/);
+    assert.match(noteDashboardBody, /Cleaner note before confirmation\./);
+    assert.match(noteDashboardBody, /name="action" value="save-assignment-note"/);
+
+    const secondNoteResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-assignment-note",
+        entryId,
+        cleanerComment: "Second cleaner note is appended.",
+      }),
+    });
+    assert.equal(secondNoteResponse.status, 303);
+    assert.match(secondNoteResponse.headers.get("location") || "", /notice=assignment-note-saved/);
+
+    const secondNoteDashboardResponse = await fetch(
+      `${started.baseUrl}${secondNoteResponse.headers.get("location") || "/account"}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const secondNoteDashboardBody = await secondNoteDashboardResponse.text();
+    assert.equal(secondNoteDashboardResponse.status, 200);
+    assert.match(secondNoteDashboardBody, /Cleaner note before confirmation\./);
+    assert.match(secondNoteDashboardBody, /Second cleaner note is appended\./);
+
+    const noteClientResponse = await fetch(
+      `${started.baseUrl}/admin/clients?client=3125551188&addressKey=${encodeURIComponent("215 north elm street, naperville, il 60563")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const noteClientBody = await noteClientResponse.text();
+    assert.equal(noteClientResponse.status, 200);
+    assert.match(noteClientBody, /Cleaner note before confirmation\./);
+    assert.match(noteClientBody, /Second cleaner note is appended\./);
 
     const prematureEnRouteResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
@@ -1749,6 +1822,9 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.match(photosOrdersBody, /Отчёт клинера/);
     assert.match(photosOrdersBody, /Фото до/);
     assert.match(photosOrdersBody, /Фото после/);
+    assert.match(photosOrdersBody, /Посмотреть/);
+    assert.match(photosOrdersBody, /Second cleaner note is appended\./);
+    assert.doesNotMatch(photosOrdersBody, /<img class="admin-order-media-thumb"/);
     assert.doesNotMatch(photosOrdersBody, /type="file" name="beforePhotos"/);
     assert.doesNotMatch(photosOrdersBody, /type="file" name="afterPhotos"/);
     assert.doesNotMatch(photosOrdersBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);

@@ -165,6 +165,7 @@ const ADMIN_STAFF_W9_DOWNLOAD_PATH = "/admin/staff/w9";
 const ADMIN_STAFF_GOOGLE_CONNECT_PATH = "/admin/staff/google/connect";
 const ADMIN_GOOGLE_MAIL_CONNECT_PATH = "/admin/google-mail/connect";
 const ADMIN_SETTINGS_PATH = "/admin/settings";
+const ADMIN_PAYROLL_PATH = "/admin/payroll";
 const ADMIN_QUOTE_OPS_PATH = "/admin/quote-ops";
 const ADMIN_QUOTE_OPS_RETRY_PATH = "/admin/quote-ops/retry";
 const ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH = "/admin/google-calendar/callback";
@@ -185,6 +186,7 @@ const ADMIN_APP_ROUTES = new Set([
   ADMIN_ROOT_PATH,
   ADMIN_CLIENTS_PATH,
   ADMIN_ORDERS_PATH,
+  ADMIN_PAYROLL_PATH,
   ADMIN_STAFF_PATH,
   ADMIN_SETTINGS_PATH,
   ADMIN_QUOTE_OPS_PATH,
@@ -222,6 +224,10 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
     path: ADMIN_ORDERS_PATH,
     label: "Заказы",
+  },
+  {
+    path: ADMIN_PAYROLL_PATH,
+    label: "Зарплаты",
   },
   {
     path: ADMIN_CLIENTS_PATH,
@@ -937,6 +943,7 @@ const adminPageRenderers = createAdminPageRenderers({
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CONNECT_PATH,
   ADMIN_ORDERS_PATH,
+  ADMIN_PAYROLL_PATH,
   ADMIN_ROOT_PATH,
   ADMIN_RUNTIME_PATH,
   ADMIN_SETTINGS_PATH,
@@ -1037,6 +1044,7 @@ const handleAdminRequest = createAdminRequestHandler({
   ACCOUNT_LOGOUT_PATH,
   ADMIN_POLICY_ACCEPTANCE_API_BASE_PATH,
   ADMIN_ORDERS_PATH,
+  ADMIN_PAYROLL_PATH,
   ADMIN_QUOTE_OPS_PATH,
   ADMIN_QUOTE_OPS_RETRY_PATH,
   ADMIN_ROOT_PATH,

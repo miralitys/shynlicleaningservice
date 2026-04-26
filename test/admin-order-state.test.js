@@ -39,6 +39,18 @@ test("entry helpers read payloadForRetry admin order data", () => {
   assert.deepEqual(getEntryOrderState(entry), entry.payloadForRetry.adminOrder);
   assert.deepEqual(getEntryOrderCompletionData(entry), {
     cleanerComment: "Done",
+    cleanerComments: [
+      {
+        id: "legacy-cleaner-comment",
+        text: "Done",
+        authorName: "",
+        authorEmail: "",
+        authorId: "",
+        source: "legacy",
+        createdAt: "",
+      },
+    ],
+    checklistItems: [],
     beforePhotos: [
       {
         id: "before.jpg",

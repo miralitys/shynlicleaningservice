@@ -627,6 +627,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /Фото после/);
     assert.match(updatedOrdersBody, /Комментарий клинера/);
     assert.match(updatedOrdersBody, /Comment saved through ajax query fallback\./);
+    assert.match(updatedOrdersBody, /Посмотреть/);
+    assert.doesNotMatch(updatedOrdersBody, /<img class="admin-order-media-thumb"/);
     assert.doesNotMatch(updatedOrdersBody, /type="file" name="beforePhotos"/);
     assert.doesNotMatch(updatedOrdersBody, /type="file" name="afterPhotos"/);
     assert.doesNotMatch(updatedOrdersBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);
@@ -643,7 +645,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const mediaMatches = Array.from(
       updatedOrdersBody.matchAll(new RegExp(`/admin/orders\\?media=1&amp;entryId=${escapeRegex(entryId)}&amp;asset=([^"&]+)`, "g"))
     );
-    assert.equal(mediaMatches.length, 6);
+    assert.equal(mediaMatches.length, 3);
 
     const mediaResponse = await fetch(
       `${started.baseUrl}/admin/orders?media=1&entryId=${encodeURIComponent(entryId)}&asset=${encodeURIComponent(mediaMatches[0][1])}`,
