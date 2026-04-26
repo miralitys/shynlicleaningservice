@@ -1567,6 +1567,25 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(enRouteResponse.status, 303);
     assert.match(enRouteResponse.headers.get("location") || "", /notice=assignment-en-route/);
 
+    const repeatedEnRouteAsyncResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "x-shynli-account-async": "1",
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-en-route",
+        entryId,
+      }),
+    });
+    const repeatedEnRouteAsyncPayload = await repeatedEnRouteAsyncResponse.json();
+    assert.equal(repeatedEnRouteAsyncResponse.status, 400);
+    assert.equal(repeatedEnRouteAsyncPayload.ok, false);
+    assert.match(repeatedEnRouteAsyncPayload.message || "", /Сервер видит другой этап заказа/i);
+    assert.match(repeatedEnRouteAsyncPayload.message || "", /В пути/i);
+
     const enRouteDashboardResponse = await fetch(
       `${started.baseUrl}${enRouteResponse.headers.get("location") || "/account"}`,
       {
