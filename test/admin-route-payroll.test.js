@@ -158,6 +158,9 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
     assert.match(payrollBody, /name="dateTo"/);
     assert.match(payrollBody, /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff">Сотрудники<\/a>/);
     assert.match(payrollBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/payroll">Зарплаты<\/a>/);
+    assert.match(payrollBody, /data-admin-dialog-row="true"/);
+    assert.match(payrollBody, /admin-order-detail-dialog-/);
+    assert.doesNotMatch(payrollBody, /Открыть заказ/);
 
     const markPaidResponse = await fetch(`${started.baseUrl}/admin/payroll`, {
       method: "POST",
