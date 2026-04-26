@@ -271,6 +271,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /class="admin-nav-sublinks"/);
     assert.match(staffBody, /class="admin-nav-sublink" href="\/admin\/staff\?section=calendar">Календарь<\/a>/);
     assert.match(staffBody, /class="admin-nav-sublink" href="\/admin\/staff\?section=assignments">График<\/a>/);
+    assert.match(staffBody, /class="admin-nav-sublink" href="\/admin\/payroll">Зарплаты<\/a>/);
     assert.match(staffBody, /href="\/admin\/staff\?section=team"/);
     assert.match(staffBody, /href="\/admin\/staff\?section=calendar&calendarStart=/);
     assert.match(staffBody, /href="\/admin\/staff\?section=assignments"/);

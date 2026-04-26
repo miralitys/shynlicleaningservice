@@ -154,6 +154,8 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
     assert.match(payrollBody, /Olga Payroll/i);
     assert.match(payrollBody, /\$180\.00/);
     assert.match(payrollBody, /К выплате/i);
+    assert.match(payrollBody, /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff">Сотрудники<\/a>/);
+    assert.match(payrollBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/payroll">Зарплаты<\/a>/);
 
     const markPaidResponse = await fetch(`${started.baseUrl}/admin/payroll`, {
       method: "POST",
@@ -346,6 +348,59 @@ test("shows employee-only payroll history inside the account workspace", async (
     assert.match(accountPayrollBody, /\$60\.00/);
     assert.match(accountPayrollBody, /К выплате/i);
     assert.match(accountPayrollBody, /Моя зарплата/i);
+
+    const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const userId = usersStorePayload.users[0].id;
+    assert.ok(userId);
+
+    const updateUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update_user",
+        userId,
+        staffId,
+        name: "Ramis Iaparov",
+        role: "cleaner",
+        status: "active",
+        staffStatus: "active",
+        email: "alina.payroll@example.com",
+        phone: "3125558899",
+        address: "881 Worker Street, Bolingbrook, IL 60440",
+        compensationValue: "180",
+        compensationType: "fixed",
+        notes: "",
+        password: "",
+      }),
+    });
+    assert.equal(updateUserResponse.status, 303);
+
+    const adminPayrollAfterUpdateResponse = await fetch(`${started.baseUrl}/admin/payroll`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const adminPayrollAfterUpdateBody = await adminPayrollAfterUpdateResponse.text();
+    assert.equal(adminPayrollAfterUpdateResponse.status, 200);
+    assert.match(adminPayrollAfterUpdateBody, /Ramis Iaparov/i);
+    assert.match(adminPayrollAfterUpdateBody, /Фикс:\s*\$180\.00/i);
+    assert.match(adminPayrollAfterUpdateBody, /\$180\.00/);
+    assert.doesNotMatch(adminPayrollAfterUpdateBody, />Не указана</);
+
+    const accountPayrollAfterUpdateResponse = await fetch(`${started.baseUrl}/account?section=payroll`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const accountPayrollAfterUpdateBody = await accountPayrollAfterUpdateResponse.text();
+    assert.equal(accountPayrollAfterUpdateResponse.status, 200);
+    assert.match(accountPayrollAfterUpdateBody, /Фикс:\s*\$180\.00/i);
+    assert.match(accountPayrollAfterUpdateBody, /\$180\.00/);
+    assert.doesNotMatch(accountPayrollAfterUpdateBody, />Не указана</);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
