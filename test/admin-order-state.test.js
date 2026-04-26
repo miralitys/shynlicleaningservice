@@ -73,6 +73,8 @@ test("entry helpers read payloadForRetry admin order data", () => {
         uploadedAt: "",
       },
     ],
+    photosSkipped: false,
+    photosSkippedAt: "",
     updatedAt: "2026-04-18T18:00:00.000Z",
   });
 });
