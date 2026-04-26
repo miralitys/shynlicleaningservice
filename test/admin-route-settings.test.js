@@ -424,7 +424,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /data-account-mobile-order-card/i);
     assert.match(accountDashboardBody, /data-account-mobile-detail-open="account-mobile-order-detail-/i);
     assert.match(accountDashboardBody, /data-account-mobile-detail-view/i);
-    assert.match(accountDashboardBody, /Этапы заказа/i);
+    assert.doesNotMatch(accountDashboardBody, /Этапы заказа/i);
     assert.match(accountDashboardBody, /Позвонить менеджеру/i);
     assert.doesNotMatch(accountDashboardBody, /account-mobile-order-dialog/i);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);

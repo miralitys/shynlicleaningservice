@@ -1158,6 +1158,7 @@ const handleAccountRequest = createAccountRequestHandler({
   shouldUseSecureCookies,
   writeHeadWithTiming,
   writeHtmlWithTiming,
+  writeJsonWithTiming,
 });
 
 const {
