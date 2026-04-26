@@ -848,11 +848,32 @@ let usersStore = null;
 let leadManagersStaffStore = null;
 let autoNotificationService = null;
 
-async function listActiveLeadWorkspaceUsers(allowedRoles = []) {
+function inferWorkspaceLeadRole(value) {
+  const normalized = normalizeString(value, 80).toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "admin" || normalized === "админ" || normalized === "administrator") {
+    return "admin";
+  }
+  if (
+    normalized === "manager" ||
+    normalized === "менеджер" ||
+    normalized.includes("manager") ||
+    normalized.includes("lead")
+  ) {
+    return "manager";
+  }
+  if (normalized === "cleaner" || normalized === "клинер" || normalized.includes("clean")) {
+    return "cleaner";
+  }
+  return "";
+}
+
+async function listActiveLeadWorkspaceUsers(allowedRoles = [], options = {}) {
   if (!usersStore || typeof usersStore.getSnapshot !== "function") {
     return [];
   }
 
+  const includeStaffFallback = Boolean(options && options.includeStaffFallback);
   const allowedRoleSet = new Set(
     (Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles])
       .map((role) => normalizeString(role, 32).toLowerCase())
@@ -876,31 +897,61 @@ async function listActiveLeadWorkspaceUsers(allowedRoles = []) {
         {
           name: normalizeString(record && record.name, 200),
           phone: normalizeString(record && record.phone, 80),
+          email: normalizeString(record && record.email, 250).toLowerCase(),
+          status: normalizeString(record && record.status, 32).toLowerCase(),
+          role: inferWorkspaceLeadRole(record && record.role),
         },
       ])
       .filter(([id]) => Boolean(id))
   );
 
-  return (Array.isArray(usersSnapshot && usersSnapshot.users) ? usersSnapshot.users : [])
-    .filter((user) => {
-      const role = normalizeString(user && user.role, 32).toLowerCase();
-      const status = normalizeString(user && user.status, 32).toLowerCase();
-      return status === "active" && allowedRoleSet.has(role);
-    })
-    .map((user) => {
-      const id = normalizeString(user && user.id, 120);
-      const email = normalizeString(user && user.email, 250).toLowerCase();
-      const role = normalizeString(user && user.role, 32).toLowerCase();
-      const staffMeta = staffMetaById.get(normalizeString(user && user.staffId, 120)) || {};
-      return {
-        id,
-        email,
-        phone: normalizeString(staffMeta.phone || user.phone, 80),
-        name: normalizeString(staffMeta.name, 200) || email || "Менеджер",
-        role,
-      };
-    })
-    .filter((manager) => Boolean(manager.id))
+  const users = Array.isArray(usersSnapshot && usersSnapshot.users) ? usersSnapshot.users : [];
+  const linkedStaffIds = new Set(
+    users
+      .map((user) => normalizeString(user && user.staffId, 120))
+      .filter(Boolean)
+  );
+  const recipients = [];
+
+  users.forEach((user) => {
+    const id = normalizeString(user && user.id, 120);
+    if (!id) return;
+    const staffId = normalizeString(user && user.staffId, 120);
+    const email = normalizeString(user && user.email, 250).toLowerCase();
+    const userRole = normalizeString(user && user.role, 32).toLowerCase();
+    const userStatus = normalizeString(user && user.status, 32).toLowerCase();
+    const staffMeta = staffMetaById.get(staffId) || {};
+    const effectiveRole = allowedRoleSet.has(userRole) ? userRole : staffMeta.role;
+    if (userStatus !== "active" || !allowedRoleSet.has(effectiveRole)) {
+      return;
+    }
+    recipients.push({
+      id,
+      email: email || staffMeta.email || "",
+      phone: normalizeString(staffMeta.phone || user.phone, 80),
+      name: normalizeString(staffMeta.name, 200) || email || "Менеджер",
+      role: effectiveRole,
+    });
+  });
+
+  if (includeStaffFallback) {
+    for (const [staffId, staffMeta] of staffMetaById.entries()) {
+      if (linkedStaffIds.has(staffId)) continue;
+      if (staffMeta.status !== "active" || !allowedRoleSet.has(staffMeta.role)) {
+        continue;
+      }
+      recipients.push({
+        id: `staff:${staffId}`,
+        email: staffMeta.email || "",
+        phone: staffMeta.phone,
+        name: staffMeta.name || "Менеджер",
+        role: staffMeta.role,
+      });
+    }
+  }
+
+  return recipients
+    .filter((recipient) => Boolean(recipient && recipient.id))
     .sort((left, right) => left.name.localeCompare(right.name, "ru"));
 }
 
@@ -909,7 +960,9 @@ async function listLeadManagers() {
 }
 
 async function listLeadAlertRecipients() {
-  const recipients = await listActiveLeadWorkspaceUsers(["manager", "admin"]);
+  const recipients = await listActiveLeadWorkspaceUsers(["manager", "admin"], {
+    includeStaffFallback: true,
+  });
   const seenIds = new Set();
   const seenPhones = new Set();
   return recipients.filter((recipient) => {

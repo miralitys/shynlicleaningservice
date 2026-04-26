@@ -253,7 +253,7 @@ test("sends new lead SMS alerts to active managers and admins after quote submis
           email: "admin.one@example.com",
           phone: "3125550177",
           status: "active",
-          role: "admin",
+          role: "cleaner",
         },
       ],
     }, null, 2)}\n`,
@@ -271,9 +271,17 @@ test("sends new lead SMS alerts to active managers and admins after quote submis
         },
         {
           id: "staff-admin-1",
-          name: "Ramis Admin",
+          name: "Anastasiia Iaparova",
           phone: "3125550177",
           status: "active",
+          role: "Админ",
+        },
+        {
+          id: "staff-admin-2",
+          name: "Staff Only Admin",
+          phone: "3125550166",
+          status: "active",
+          role: "Админ",
         },
       ],
       assignments: [],
@@ -334,10 +342,10 @@ test("sends new lead SMS alerts to active managers and admins after quote submis
       .filter((call) => /\/conversations\/messages$/.test(call.url))
       .map((call) => JSON.parse(call.body));
 
-    assert.equal(smsCalls.length, 3);
+    assert.equal(smsCalls.length, 4);
     assert.deepEqual(
       smsCalls.map((call) => call.toNumber).sort(),
-      ["+13125550100", "+13125550177", "+13125550199"].sort()
+      ["+13125550100", "+13125550166", "+13125550177", "+13125550199"].sort()
     );
     assert.match(
       smsCalls.find((call) => call.toNumber === "+13125550199").message,
@@ -345,6 +353,10 @@ test("sends new lead SMS alerts to active managers and admins after quote submis
     );
     assert.match(
       smsCalls.find((call) => call.toNumber === "+13125550177").message,
+      /was submitted|needs attention/i
+    );
+    assert.match(
+      smsCalls.find((call) => call.toNumber === "+13125550166").message,
       /was submitted|needs attention/i
     );
   } finally {
