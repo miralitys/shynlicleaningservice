@@ -1123,6 +1123,7 @@ const accountRenderers = createAccountRenderers({
   formatAdminServiceLabel,
   formatCurrencyAmount,
   formatOrderCountLabel,
+  normalizeString,
   renderAssignmentStatusBadge,
   renderStaffStatusBadge,
   shared: adminSharedRenderers,
