@@ -386,6 +386,7 @@ test("shows employee-only payroll history inside the account workspace", async (
     assert.match(accountPayrollBody, /\$60\.00/);
     assert.match(accountPayrollBody, /К выплате/i);
     assert.match(accountPayrollBody, /Моя зарплата/i);
+    assert.ok(accountPayrollBody.indexOf("Моя зарплата") < accountPayrollBody.indexOf("Профиль сотрудника"));
 
     const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     const userId = usersStorePayload.users[0].id;
