@@ -422,6 +422,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /Дорога: 30 min • 11 mi/i);
     assert.doesNotMatch(accountDashboardBody, /Дорога: считаем маршрут/i);
     assert.match(accountDashboardBody, /data-account-mobile-order-card/i);
+    assert.match(accountDashboardBody, /data-account-mobile-card-open="account-mobile-order-dialog-/i);
+    assert.match(accountDashboardBody, /class="admin-dialog admin-dialog-wide account-mobile-order-dialog"/i);
+    assert.match(accountDashboardBody, /Карточка заказа/i);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /<details class="admin-details" data-account-profile-details>/i);
     assert.match(accountDashboardBody, /<summary>Изменить контакты<\/summary>/i);
