@@ -96,7 +96,6 @@ const runtimeScriptIds = new Set([
 ]);
 
 const sanitizeHtml = createSiteSanitizer({
-  GOOGLE_ANALYTICS_MEASUREMENT_ID: "G-0MXV4JBP67",
   GOOGLE_TAG_MANAGER_CONTAINER_ID: "GTM-5P88N7LD",
   GOOGLE_PLACES_API_KEY: "",
   normalizeRoute,
@@ -142,14 +141,14 @@ test("keeps injected runtime scripts syntactically valid on home, blog, city, an
   }
 });
 
-test("replaces legacy analytics with a shared GA4 snippet and shared head assets", () => {
+test("removes legacy analytics and keeps only shared head assets", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
   const quoteHtml = sanitizeHtml(readFixture("quote2.html"), "/quote");
 
   for (const html of [homeHtml, quoteHtml]) {
     assert.doesNotMatch(html, /google-analytics\.com\/analytics\.js/);
-    assert.match(html, /googletagmanager\.com\/gtag\/js\?id=G-0MXV4JBP67/);
-    assert.match(html, /id="shynli-analytics"/);
+    assert.doesNotMatch(html, /googletagmanager\.com\/gtag\/js\?id=/);
+    assert.doesNotMatch(html, /id="shynli-analytics"/);
     assert.match(html, /rel="apple-touch-icon"/);
     assert.match(html, /rel="manifest" href="\/site\.webmanifest"/);
   }

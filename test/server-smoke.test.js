@@ -526,7 +526,7 @@ test("serves the configured 404 page for an unknown route", async () => {
   assert.ok(body.length > 0);
 });
 
-test("injects quote metadata, shared icons, and GA4 snippet into the quote page", async () => {
+test("injects quote metadata, shared icons, and GTM into the quote page", async () => {
   const response = await fetch(`${BASE_URL}/quote`);
   const body = await response.text();
 
@@ -538,7 +538,10 @@ test("injects quote metadata, shared icons, and GA4 snippet into the quote page"
   assert.match(body, /<link rel="icon" href="\/images\/tild3636-3965-4134-a432-323337623835__insta_32\.png" type="image\/png" \/>/);
   assert.match(body, /<link rel="apple-touch-icon" href="\/images\/tild3636-3965-4134-a432-323337623835__insta_32\.png" \/>/);
   assert.match(body, /<link rel="manifest" href="\/site\.webmanifest" \/>/);
-  assert.match(body, /googletagmanager\.com\/gtag\/js\?id=G-0MXV4JBP67/);
+  assert.match(body, /id="shynli-tracking-script"/);
+  assert.match(body, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
+  assert.match(body, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/);
+  assert.doesNotMatch(body, /googletagmanager\.com\/gtag\/js\?id=/);
   assert.doesNotMatch(body, /google-analytics\.com\/analytics\.js/);
 });
 

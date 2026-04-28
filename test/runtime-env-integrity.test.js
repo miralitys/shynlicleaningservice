@@ -37,5 +37,4 @@ test("warn mode keeps the site ready when only fallback warnings are present", (
   assert.equal(result.ok, true);
   assert.equal(result.readinessOk, true);
   assert.ok(result.warningIssueCodes.includes("PUBLIC_SITE_ORIGIN_FALLBACK"));
-  assert.ok(result.warningIssueCodes.includes("GOOGLE_ANALYTICS_MEASUREMENT_ID_FALLBACK"));
 });

@@ -621,7 +621,6 @@ const TRUSTED_PROXY_IPS = new Set(
 );
 const PERF_ENDPOINT_ENABLED = /^(1|true|yes)$/i.test(String(process.env.ENABLE_PERF_ENDPOINT || ""));
 const PERF_ENDPOINT_TOKEN = String(process.env.PERF_ENDPOINT_TOKEN || "").trim();
-const GOOGLE_ANALYTICS_MEASUREMENT_ID = String(process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID || "G-0MXV4JBP67").trim();
 const GOOGLE_TAG_MANAGER_CONTAINER_ID = String(
   process.env.GOOGLE_TAG_MANAGER_CONTAINER_ID || DEFAULT_GOOGLE_TAG_MANAGER_CONTAINER_ID
 ).trim();
@@ -1310,7 +1309,6 @@ const siteSeoHelpers = createSiteSeoHelpers({
 });
 
 const { sanitizeHtml } = createSiteSanitizer({
-  GOOGLE_ANALYTICS_MEASUREMENT_ID,
   GOOGLE_TAG_MANAGER_CONTAINER_ID,
   GOOGLE_PLACES_API_KEY,
   normalizeRoute,
