@@ -37,6 +37,7 @@ const { createRequestHelpers } = require("./lib/http/request");
 const { createTimingHelpers } = require("./lib/http/timing");
 const { createSiteStaticHelpers } = require("./lib/site/assets");
 const { BLOG_ARTICLES } = require("./lib/site/blog-articles");
+const { DEFAULT_GOOGLE_TAG_MANAGER_CONTAINER_ID } = require("./lib/site/google-tag-manager");
 const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request-handler");
 const { createSiteSanitizer } = require("./lib/site/sanitize");
 const { createSiteSeoHelpers } = require("./lib/site/seo");
@@ -621,6 +622,9 @@ const TRUSTED_PROXY_IPS = new Set(
 const PERF_ENDPOINT_ENABLED = /^(1|true|yes)$/i.test(String(process.env.ENABLE_PERF_ENDPOINT || ""));
 const PERF_ENDPOINT_TOKEN = String(process.env.PERF_ENDPOINT_TOKEN || "").trim();
 const GOOGLE_ANALYTICS_MEASUREMENT_ID = String(process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID || "G-0MXV4JBP67").trim();
+const GOOGLE_TAG_MANAGER_CONTAINER_ID = String(
+  process.env.GOOGLE_TAG_MANAGER_CONTAINER_ID || DEFAULT_GOOGLE_TAG_MANAGER_CONTAINER_ID
+).trim();
 const GOOGLE_PLACES_API_KEY = String(process.env.GOOGLE_PLACES_API_KEY || "").trim();
 const staffTravelEstimateService = createStaffTravelEstimateService({
   googleMapsApiKey: GOOGLE_PLACES_API_KEY,
@@ -1199,6 +1203,7 @@ const accountRenderers = createAccountRenderers({
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_ROOT_PATH,
+  GOOGLE_TAG_MANAGER_CONTAINER_ID,
   GOOGLE_PLACES_API_KEY,
   escapeHtml,
   escapeHtmlAttribute,
@@ -1306,6 +1311,7 @@ const siteSeoHelpers = createSiteSeoHelpers({
 
 const { sanitizeHtml } = createSiteSanitizer({
   GOOGLE_ANALYTICS_MEASUREMENT_ID,
+  GOOGLE_TAG_MANAGER_CONTAINER_ID,
   GOOGLE_PLACES_API_KEY,
   normalizeRoute,
   siteSeoHelpers,

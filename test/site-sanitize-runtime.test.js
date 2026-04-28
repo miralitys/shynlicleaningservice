@@ -96,6 +96,7 @@ const runtimeScriptIds = new Set([
 
 const sanitizeHtml = createSiteSanitizer({
   GOOGLE_ANALYTICS_MEASUREMENT_ID: "G-0MXV4JBP67",
+  GOOGLE_TAG_MANAGER_CONTAINER_ID: "GTM-5P88N7LD",
   GOOGLE_PLACES_API_KEY: "",
   normalizeRoute,
   siteSeoHelpers,
@@ -150,6 +151,22 @@ test("replaces legacy analytics with a shared GA4 snippet and shared head assets
     assert.match(html, /id="shynli-analytics"/);
     assert.match(html, /rel="apple-touch-icon"/);
     assert.match(html, /rel="manifest" href="\/site\.webmanifest"/);
+  }
+});
+
+test("injects Google Tag Manager at the top of public page head and body", () => {
+  const fixtures = [
+    { route: "/", html: readFixture("page108488156.html") },
+    { route: "/blog", html: readFixture("page108872586.html") },
+    { route: "/quote", html: readFixture("quote2.html") },
+  ];
+
+  for (const fixture of fixtures) {
+    const sanitized = sanitizeHtml(fixture.html, fixture.route);
+    assert.match(sanitized, /<head><!-- Google Tag Manager -->/);
+    assert.match(sanitized, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
+    assert.match(sanitized, /<body[^>]*><!-- Google Tag Manager \(noscript\) -->/);
+    assert.match(sanitized, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/);
   }
 });
 
