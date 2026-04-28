@@ -89,6 +89,7 @@ const runtimeScriptIds = new Set([
   "shynli-menu-widgeticons-runtime-stub",
   "shynli-menusub-runtime",
   "shynli-cleaner-application-form-runtime",
+  "shynli-quote-start-widget-runtime",
   "shynli-zero-form-runtime-stub",
   "shynli-zero-runtime-stub",
   "shynli-zero-form-phone-sync",
@@ -163,11 +164,45 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
 
   for (const fixture of fixtures) {
     const sanitized = sanitizeHtml(fixture.html, fixture.route);
-    assert.match(sanitized, /<head><!-- Google Tag Manager -->/);
+    assert.match(
+      sanitized,
+      /<head><script id="shynli-tracking-script" src="\/js\/shynli-tracking\.js"><\/script><!-- Google Tag Manager -->/
+    );
     assert.match(sanitized, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
     assert.match(sanitized, /<body[^>]*><!-- Google Tag Manager \(noscript\) -->/);
     assert.match(sanitized, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/);
   }
+});
+
+test("injects quote-start widget runtime wherever quick quote widgets exist", () => {
+  const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const cityHtml = sanitizeHtml(readFixture("page111640886.html"), "/romeoville");
+  const blogArticleHtml = sanitizeHtml(
+    readFixture("page108872586.html"),
+    "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos"
+  );
+  const quoteHtml = sanitizeHtml(readFixture("quote2.html"), "/quote");
+
+  for (const html of [homeHtml, cityHtml]) {
+    assert.match(html, /id="shynli-quote-start-widget-runtime"/);
+    assert.match(html, /quote_start_widget/);
+    assert.match(html, /window\.setTimeout\(function\(\) \{\s*window\.location\.href = redirectTarget;\s*\}, 200\)/);
+  }
+
+  assert.match(blogArticleHtml, /id="shynli-blog-topic-hub-script"/);
+  assert.match(blogArticleHtml, /quote_start_widget/);
+  assert.match(blogArticleHtml, /form_name: 'Blog Quote Widget'/);
+  assert.match(blogArticleHtml, /window\.setTimeout\(function\(\)\{\s*window\.location\.href = redirectTarget;\s*\}, 200\)/);
+  assert.doesNotMatch(quoteHtml, /id="shynli-quote-start-widget-runtime"/);
+});
+
+test("injects cleaner application tracking without enhanced conversion data", () => {
+  const html = sanitizeHtml(readFixture("page108488156.html"), "/");
+
+  assert.match(html, /id="shynli-cleaner-application-form-runtime"/);
+  assert.match(html, /cleaner_application_submit/);
+  assert.match(html, /form_name: "Cleaner Job Application"/);
+  assert.doesNotMatch(html, /sha256_email_address|sha256_phone_number|user_data/);
 });
 
 test("strips unused menu widgeticon assets when no widgeticon nodes remain", () => {

@@ -75,10 +75,29 @@
     moving: "Move In/Move Out Clean",
   };
 
+  const TRACKING_SERVICE_LABELS = {
+    regular: "Regular Cleaning",
+    deep: "Deep Cleaning",
+    moving: "Move In/Out",
+  };
+
   const FREQUENCY_LABELS = {
     weekly: "Weekly",
     biweekly: "Biweekly",
     monthly: "Monthly",
+  };
+
+  const TRACKING_ADDON_LABELS = {
+    ovenCleaning: "Inside oven",
+    refrigeratorCleaning: "Inside fridge",
+    baseboardCleaning: "Wet baseboards",
+    doorsCleaning: "Doors",
+    insideCabinets: "Inside cabinets",
+    rangeHood: "Range hood",
+    furniturePolishing: "Wood furniture polishing",
+    interiorWindowsCleaning: "Interior windows",
+    blindsCleaning: "Blinds",
+    bedLinenChange: "Bed linen change",
   };
 
   const state = {
@@ -181,6 +200,22 @@
       minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
       maximumFractionDigits: 2,
     });
+  }
+
+  function getSelectedOptionLabel(selectElement) {
+    if (!selectElement || !selectElement.options) return "";
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    return selectedOption ? String(selectedOption.textContent || "").trim() : "";
+  }
+
+  function getSelectedTimeLabel() {
+    const activeButton = elements.timeSlots.find(function (button) {
+      return button.classList.contains("is-active");
+    });
+    if (activeButton) {
+      return String(activeButton.textContent || "").trim();
+    }
+    return "";
   }
 
   function parseBathroomCount(value, fallback) {
@@ -334,6 +369,28 @@
     }).map(function (checkbox) {
       return checkbox.value;
     });
+  }
+
+  function buildTrackingAddonSummary(serviceType, selectedServices, quantityServices) {
+    const typePricing = PRICING[serviceType] || PRICING.regular;
+    const includedServices = typePricing.includedServices || [];
+    const summary = [];
+
+    selectedServices
+      .filter(function (serviceKey) {
+        return includedServices.indexOf(serviceKey) === -1;
+      })
+      .forEach(function (serviceKey) {
+        summary.push(TRACKING_ADDON_LABELS[serviceKey] || serviceKey);
+      });
+
+    Object.keys(quantityServices || {}).forEach(function (serviceKey) {
+      const quantity = Number(quantityServices[serviceKey] || 0);
+      if (!Number.isFinite(quantity) || quantity <= 0) return;
+      summary.push(`${TRACKING_ADDON_LABELS[serviceKey] || serviceKey} x${quantity}`);
+    });
+
+    return summary.join(", ");
   }
 
   function calculateCurrentPricing() {
@@ -935,6 +992,52 @@
     };
   }
 
+  async function trackQuoteLeadSubmission(payload, totalValue) {
+    if (!window.shynliTracking || typeof window.shynliTracking.pushEvent !== "function") {
+      return null;
+    }
+
+    const serviceType = payload && payload.quote && payload.quote.serviceType ? payload.quote.serviceType : "regular";
+    const frequency =
+      serviceType === "regular"
+        ? FREQUENCY_LABELS[payload.quote.frequency] || "Biweekly"
+        : "One-time";
+
+    return window.shynliTracking.pushEvent(
+      {
+        event: "lead_quote_submit",
+        value: Number(totalValue) || 50,
+        currency: "USD",
+        form_id: "quote2-form",
+        form_name: "Quote Form (Multi-step)",
+        form_type: "multi-step-quote",
+        service_type: TRACKING_SERVICE_LABELS[serviceType] || TRACKING_SERVICE_LABELS.regular,
+        frequency: frequency,
+        bedrooms: Number.parseInt(payload.quote.rooms || "0", 10) || null,
+        bathrooms: parseBathroomCount(payload.quote.bathrooms, null),
+        square_footage: getSelectedOptionLabel(elements.squareFeet),
+        basement: payload.quote.basementCleaning === "yes",
+        pets: getSelectedOptionLabel(elements.hasPets),
+        addons: buildTrackingAddonSummary(serviceType, payload.quote.services, payload.quote.quantityServices),
+        preferred_date: payload.quote.selectedDate || "",
+        preferred_time: getSelectedTimeLabel(),
+        apartment: payload.quote.addressLine2 || "",
+        service_city: payload.quote.city || "",
+        service_zip: payload.quote.zipCode || "",
+        sms_consent: Boolean(elements.consentCheckbox.checked),
+      },
+      {
+        fullName: payload.contactData.fullName,
+        phone: payload.contactData.phone,
+        street: payload.quote.fullAddress || "",
+        city: payload.quote.city || "",
+        region: payload.quote.state || "IL",
+        postalCode: payload.quote.zipCode || "",
+        country: "US",
+      }
+    );
+  }
+
   async function submitQuoteToBackend(payload) {
     const response = await fetch(QUOTE_SUBMISSION_ENDPOINT, {
       method: "POST",
@@ -1060,6 +1163,10 @@
         typeof submissionResult.pricing.totalPrice === "number"
           ? submissionResult.pricing.totalPrice
           : payload.quote.totalPrice;
+
+      try {
+        await trackQuoteLeadSubmission(payload, canonicalTotal);
+      } catch (trackingError) {}
 
       state.latestCheckoutData = {
         contactData: payload.contactData,
