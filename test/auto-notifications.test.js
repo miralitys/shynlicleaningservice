@@ -408,6 +408,53 @@ test("sends client reminder SMS at 48h, 24h and 1h without duplicates", async ()
   assert.equal(leadConnectorClient.calls.length, 3);
 });
 
+test("does not resend client reminders already present in SMS history", async () => {
+  const entry = createOrderEntry({
+    id: "order-reminder-history-1",
+    selectedDate: "2026-04-20",
+    selectedTime: "10:00",
+    payloadForRetry: {
+      orderState: {
+        status: "scheduled",
+      },
+      adminOrder: {
+        status: "scheduled",
+      },
+      adminSms: {
+        history: [
+          {
+            id: "sms-existing-24h-reminder",
+            sentAt: "2026-04-19T10:30:00.000Z",
+            message: "Existing 24h reminder.",
+            phone: "3125550100",
+            channel: "ghl",
+            direction: "outbound",
+            source: "automatic",
+            targetType: "visit-reminder",
+            targetRef: "order-reminder-history-1:sent24hAt",
+            status: "sent",
+          },
+        ],
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+  });
+
+  const schedule = localDateTimeToInstant("2026-04-20", "10:00");
+  const twentyThreeHoursBefore = new Date(schedule.date.getTime() - 23 * 60 * 60 * 1000);
+  const sweep = await service.runClientReminderSweep({
+    now: twentyThreeHoursBefore,
+    leadConnectorClient,
+  });
+
+  assert.equal(sweep.sent, 0);
+  assert.equal(leadConnectorClient.calls.length, 0);
+});
+
 test("sends review request email and SMS once when an order enters awaiting-review", async () => {
   const entry = createOrderEntry({
     id: "order-review-1",
