@@ -330,6 +330,9 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /Таски по заявкам/);
     assert.doesNotMatch(tasksBody, /Весь поток заявок с сайта\./);
     assert.doesNotMatch(tasksBody, /За 24 часа/);
+    assert.match(tasksBody, /Создать таск вручную/);
+    assert.match(tasksBody, /name="action" value="create-lead-task"/);
+    assert.match(tasksBody, /Не менять менеджера заявки/);
     assert.match(tasksBody, /admin-orders-filter-toggle/);
     assert.match(tasksBody, /admin-clients-search-form/);
     assert.match(tasksBody, /admin-quote-task-table/);
@@ -345,6 +348,39 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /data-quote-task-contacted-toggle=/);
     const taskId = getLeadTaskIdByEntryId(tasksBody, entryId);
     assert.ok(taskId);
+
+    const createManualTaskResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-lead-task",
+        entryId,
+        taskTitle: "Проверить ручную заметку менеджера",
+        taskDueAt: "2030-05-01T10:30",
+        managerId: managerUserId,
+        returnTo: `/admin/quote-ops?section=tasks&managerId=${encodeURIComponent(managerUserId)}&q=${encodeURIComponent("funnel-request-1")}`,
+      }),
+    });
+    assert.equal(createManualTaskResponse.status, 303);
+    assert.match(createManualTaskResponse.headers.get("location") || "", /notice=task-created/);
+
+    const manualTasksResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=tasks&managerId=${encodeURIComponent(managerUserId)}&q=${encodeURIComponent("funnel-request-1")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const manualTasksBody = await manualTasksResponse.text();
+    assert.equal(manualTasksResponse.status, 200);
+    assert.match(manualTasksBody, /Проверить ручную заметку менеджера/);
+    assert.match(manualTasksBody, /Закрыть ручной таск/);
+    assert.match(manualTasksBody, /Отметить выполнено/);
 
     const confirmResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       method: "POST",
