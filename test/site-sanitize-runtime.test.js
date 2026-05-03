@@ -302,6 +302,10 @@ test("rebuilds shared marketing city popups and removes the temporary extra city
 
   assert.match(homeHtml, /data-tooltip-hook="#city"/);
   assert.match(homeHtml, /shynli-city-popup-list__grid/);
+  assert.match(homeHtml, /\.t396__carrier\{background-position:center center;background-attachment:scroll;background-size:cover;background-repeat:no-repeat;pointer-events:none;\}/);
+  assert.match(homeHtml, /\.t396__filter\{pointer-events:none;\}/);
+  assert.match(homeHtml, /shynli-city-popup-list,\#rec\d+ \.shynli-city-popup-list \*\{pointer-events:auto;\}/);
+  assert.match(homeHtml, /t396__artboard t396__artboard_pointer-events-auto/);
   assert.match(homeHtml, /A-D:/);
   assert.match(homeHtml, /V-Y:/);
   assert.match(homeHtml, /North Aurora/);
