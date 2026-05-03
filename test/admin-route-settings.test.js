@@ -444,6 +444,24 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /data-account-w9-field="legalName"/i);
     assert.match(accountDashboardBody, /data-account-w9-field="signature"/i);
 
+    const accountCalendarResponse = await fetch(`${started.baseUrl}/account?section=calendar&date=2026-03-27`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const accountCalendarBody = await accountCalendarResponse.text();
+    assert.equal(accountCalendarResponse.status, 200);
+    assert.match(accountCalendarBody, /data-account-calendar-root/i);
+    assert.match(accountCalendarBody, /data-account-mobile-calendar/i);
+    assert.match(accountCalendarBody, /Maria Assigned/);
+    const mobileCalendarStart = accountCalendarBody.indexOf('class="account-mobile-calendar"');
+    const mobileCalendarDetail = accountCalendarBody.indexOf("data-account-mobile-detail-view", mobileCalendarStart);
+    const desktopStatsStart = accountCalendarBody.indexOf('<div class="account-desktop-stats">', mobileCalendarStart);
+    assert.ok(mobileCalendarStart >= 0);
+    assert.ok(mobileCalendarDetail > mobileCalendarStart);
+    assert.ok(desktopStatsStart > mobileCalendarDetail);
+    assert.match(accountCalendarBody.slice(mobileCalendarStart, desktopStatsStart), /account-mobile-detail-bottom-nav/i);
+
     const adminStaffBeforeW9Response = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
