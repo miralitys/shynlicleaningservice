@@ -672,7 +672,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /Быстро найти нужную заявку/);
     assert.match(quoteOpsBody, /Все заявки/);
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
-    assert.match(quoteOpsBody, /\.admin-quote-success-table\s*\{[\s\S]*min-width: 1380px;/);
+    assert.match(quoteOpsBody, /<th>Клиент<\/th>\s*<th>Статус<\/th>/);
+    assert.match(quoteOpsBody, /\.admin-quote-success-table\s*\{[\s\S]*min-width: 1520px;/);
     assert.match(quoteOpsBody, /\.admin-quote-lane\s*\{[\s\S]*min-width: 0;[\s\S]*max-width: 100%;/);
     assert.match(quoteOpsBody, /\.admin-quote-table-wrap\s*\{[\s\S]*width: 100%;[\s\S]*max-width: 100%;/);
     assert.match(quoteOpsBody, /data-admin-auto-submit="true"/);
@@ -960,6 +961,10 @@ test("keeps quote requests in success lane when Go High Level opportunity sync i
 
     assert.equal(quoteOpsResponse.status, 200);
     assert.match(quoteOpsBody, /Warning Client/);
+    assert.match(quoteOpsBody, /Новые заявки/);
+    assert.match(quoteOpsBody, /Все заявки/);
+    assert.ok(quoteOpsBody.indexOf("Новые заявки") < quoteOpsBody.indexOf("Все заявки"));
+    assert.match(quoteOpsBody, /<th>Клиент<\/th>\s*<th>Статус<\/th>/);
     assert.doesNotMatch(quoteOpsBody, /opportunity_failed/);
     assert.doesNotMatch(quoteOpsBody, /Missing permission: opportunities\.write/);
     assert.doesNotMatch(quoteOpsBody, /Сделка в CRM:/);
