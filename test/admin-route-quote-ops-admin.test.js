@@ -849,7 +849,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const autoSmsCalls = calls.filter((record) =>
       String(record.url).includes("/conversations/messages")
     );
-    assert.equal(crmSyncCalls.length, 4);
+    assert.equal(crmSyncCalls.length, 2);
     assert.equal(autoSmsCalls.length, 1);
   } finally {
     await stopServer(started.child);
@@ -858,7 +858,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
   }
 });
 
-test("shows detailed CRM warning text when opportunity sync fails", async () => {
+test("keeps quote requests in success lane when Go High Level opportunity sync is disabled", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-ops-warning-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const fetchStub = createFetchStub([
@@ -951,7 +951,7 @@ test("shows detailed CRM warning text when opportunity sync fails", async () => 
     assert.equal(quoteResponse.status, 201);
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
-    const quoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops?status=warning`, {
+    const quoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops?status=success`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -960,9 +960,9 @@ test("shows detailed CRM warning text when opportunity sync fails", async () => 
 
     assert.equal(quoteOpsResponse.status, 200);
     assert.match(quoteOpsBody, /Warning Client/);
-    assert.match(quoteOpsBody, /opportunity_failed/);
-    assert.match(quoteOpsBody, /Missing permission: opportunities\.write/);
-    assert.match(quoteOpsBody, /Сделка в CRM:/);
+    assert.doesNotMatch(quoteOpsBody, /opportunity_failed/);
+    assert.doesNotMatch(quoteOpsBody, /Missing permission: opportunities\.write/);
+    assert.doesNotMatch(quoteOpsBody, /Сделка в CRM:/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

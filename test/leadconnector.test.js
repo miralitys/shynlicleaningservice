@@ -112,7 +112,7 @@ test("loads LeadConnector config and rejects unsafe base URLs", () => {
   );
 });
 
-test("submits a quote, creates the contact, and writes a note", async () => {
+test("submits a quote, creates the contact, and can write a note when requested", async () => {
   const calls = [];
   const fetch = async (url, options = {}) => {
     calls.push({
@@ -153,19 +153,22 @@ test("submits a quote, creates the contact, and writes a note", async () => {
     fetch,
   });
 
-  const result = await client.submitQuoteSubmission({
-    contactData: {
-      fullName: "Jane Doe",
-      phone: "312-555-0100",
+  const result = await client.submitQuoteSubmission(
+    {
+      contactData: {
+        fullName: "Jane Doe",
+        phone: "312-555-0100",
+      },
+      calculatorData: {
+        serviceType: "regular",
+        rooms: 3,
+        totalPrice: 120,
+        selectedDate: "2026-03-22",
+        selectedTime: "09:00",
+      },
     },
-    calculatorData: {
-      serviceType: "regular",
-      rooms: 3,
-      totalPrice: 120,
-      selectedDate: "2026-03-22",
-      selectedTime: "09:00",
-    },
-  });
+    { syncQuoteCustomFields: true, syncQuoteNotes: true }
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.contactId, "contact-1");
@@ -282,16 +285,19 @@ test("falls back to updating an existing contact after a duplicate response", as
     fetch,
   });
 
-  const result = await client.submitQuoteSubmission({
-    contactData: {
-      fullName: "Jane Doe",
-      phone: "3125550100",
+  const result = await client.submitQuoteSubmission(
+    {
+      contactData: {
+        fullName: "Jane Doe",
+        phone: "3125550100",
+      },
+      calculatorData: {
+        rooms: 2,
+        totalPrice: 95,
+      },
     },
-    calculatorData: {
-      rooms: 2,
-      totalPrice: 95,
-    },
-  });
+    { syncQuoteCustomFields: true }
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.usedExistingContact, true);
@@ -342,16 +348,19 @@ test("falls back to updating an existing contact after any client-side create fa
     fetch,
   });
 
-  const result = await client.submitQuoteSubmission({
-    contactData: {
-      fullName: "Jane Doe",
-      phone: "3125550101",
+  const result = await client.submitQuoteSubmission(
+    {
+      contactData: {
+        fullName: "Jane Doe",
+        phone: "3125550101",
+      },
+      calculatorData: {
+        rooms: 2,
+        totalPrice: 95,
+      },
     },
-    calculatorData: {
-      rooms: 2,
-      totalPrice: 95,
-    },
-  });
+    { syncQuoteCustomFields: true }
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.usedExistingContact, true);
@@ -403,20 +412,23 @@ test("auto-discovers custom fields when env mapping is not configured", async ()
     fetch,
   });
 
-  const result = await client.submitQuoteSubmission({
-    contactData: {
-      fullName: "Jane Doe",
-      phone: "3125550100",
-    },
-    calculatorData: {
-      serviceType: "regular",
-      rooms: 3,
-      quantityServices: {
-        interiorWindowsCleaning: 2,
+  const result = await client.submitQuoteSubmission(
+    {
+      contactData: {
+        fullName: "Jane Doe",
+        phone: "3125550100",
       },
-      totalPrice: 120,
+      calculatorData: {
+        serviceType: "regular",
+        rooms: 3,
+        quantityServices: {
+          interiorWindowsCleaning: 2,
+        },
+        totalPrice: 120,
+      },
     },
-  });
+    { syncQuoteCustomFields: true }
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.contactId, "contact-3");
@@ -480,16 +492,19 @@ test("auto-discovers opportunity pipeline and stage by configured names", async 
     fetch,
   });
 
-  const result = await client.submitQuoteSubmission({
-    contactData: {
-      fullName: "Jane Doe",
-      phone: "3125550100",
+  const result = await client.submitQuoteSubmission(
+    {
+      contactData: {
+        fullName: "Jane Doe",
+        phone: "3125550100",
+      },
+      calculatorData: {
+        rooms: 2,
+        totalPrice: 95,
+      },
     },
-    calculatorData: {
-      rooms: 2,
-      totalPrice: 95,
-    },
-  });
+    { syncQuoteCustomFields: true, syncQuoteOpportunity: true }
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.contactId, "contact-4");
@@ -556,19 +571,22 @@ test("captures the CRM reason when opportunity creation fails", async () => {
     fetch,
   });
 
-  const result = await client.submitQuoteSubmission({
-    contactData: {
-      fullName: "Jane Doe",
-      phone: "3125550100",
+  const result = await client.submitQuoteSubmission(
+    {
+      contactData: {
+        fullName: "Jane Doe",
+        phone: "3125550100",
+      },
+      calculatorData: {
+        totalPrice: 95,
+      },
     },
-    calculatorData: {
-      totalPrice: 95,
-    },
-  });
+    { syncQuoteOpportunity: true }
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.opportunityCreated, false);
-  assert.deepEqual(result.warnings, ["custom_fields_skipped", "opportunity_failed"]);
+  assert.deepEqual(result.warnings, ["opportunity_failed"]);
   assert.equal(result.opportunitySyncReason, "Missing permission: opportunities.write");
   assert.match(result.warningMessage, /Сделка в CRM/i);
   assert.match(result.warningMessage, /Missing permission: opportunities\.write/);

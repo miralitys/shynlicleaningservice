@@ -519,7 +519,7 @@ test("surfaces a sanitized 502 when the CRM upstream fails", async () => {
   }
 });
 
-test("surfaces CRM partial-warning states without failing the quote submission", async () => {
+test("keeps quote requests local when optional CRM side effects are disabled", async () => {
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -577,16 +577,28 @@ test("surfaces CRM partial-warning states without failing the quote submission",
     const payload = await response.json();
     assert.equal(payload.success, true);
     assert.equal(payload.customFieldsUpdated, false);
-    assert.equal(payload.customFieldSyncReason, "no_custom_field_map");
+    assert.equal(payload.customFieldSyncReason, "quote_custom_fields_local_only");
     assert.equal(payload.noteCreated, false);
-    assert.deepEqual(payload.warnings, ["custom_fields_skipped", "note_failed"]);
+    assert.equal(payload.opportunityCreated, false);
+    assert.equal(payload.opportunitySyncReason, "quote_opportunity_local_only");
+    assert.deepEqual(payload.warnings, []);
+
+    const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
+    const calls = captureRaw
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    assert.equal(calls.some((call) => call.url.endsWith("/notes")), false);
+    assert.equal(calls.some((call) => call.url.includes("/opportunities")), false);
+    assert.equal(calls.some((call) => call.method === "PUT" && call.url.includes("/contacts/")), false);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
   }
 });
 
-test("returns the opportunity warning detail when CRM rejects deal creation", async () => {
+test("does not create Go High Level opportunities for quote requests", async () => {
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -671,17 +683,24 @@ test("returns the opportunity warning detail when CRM rejects deal creation", as
     const payload = await response.json();
     assert.equal(payload.success, true);
     assert.equal(payload.opportunityCreated, false);
-    assert.equal(payload.opportunitySyncReason, "Missing permission: opportunities.write");
-    assert.match(payload.warningMessage, /Сделка в CRM/i);
-    assert.match(payload.warningMessage, /Missing permission: opportunities\.write/);
-    assert.deepEqual(payload.warnings, ["custom_fields_skipped", "opportunity_failed"]);
+    assert.equal(payload.opportunitySyncReason, "quote_opportunity_local_only");
+    assert.equal(payload.warningMessage, "");
+    assert.deepEqual(payload.warnings, []);
+
+    const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
+    const calls = captureRaw
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    assert.equal(calls.some((call) => call.url.includes("/opportunities")), false);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
   }
 });
 
-test("persists canonical repriced values to CRM side effects instead of raw client totals", async () => {
+test("returns canonical repriced values while keeping quote history local", async () => {
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -758,16 +777,9 @@ test("persists canonical repriced values to CRM side effects instead of raw clie
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    const noteCall = calls.find((call) => call.url.endsWith("/notes"));
-
-    assert.ok(noteCall, "expected note call to be captured");
-    assert.match(noteCall.body, /Page: https:\/\/shynlicleaningservice\.com\/quote/);
-    assert.doesNotMatch(noteCall.body, /Page: https:\/\/shynlicleaningservice\.com\/api\/quote\/submit/);
-    assert.match(noteCall.body, new RegExp(`Rooms: ${expectedPricing.rooms}`));
-    assert.match(noteCall.body, new RegExp(`Bathrooms: ${expectedPricing.bathrooms}`));
-    assert.match(noteCall.body, new RegExp(`Square meters: ${expectedPricing.squareMeters}`));
-    assert.match(noteCall.body, new RegExp(`Total price: \\$${expectedPricing.totalPrice}`));
-    assert.doesNotMatch(noteCall.body, /Total price: \$1(?:\.0+)?(?:\\n|")/);
+    assert.equal(calls.some((call) => call.url.endsWith("/notes")), false);
+    assert.equal(calls.some((call) => call.url.includes("/opportunities")), false);
+    assert.equal(calls.some((call) => call.method === "PUT" && call.url.includes("/contacts/")), false);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

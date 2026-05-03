@@ -515,17 +515,27 @@ test("auto-assigns new quote submissions to managers in round robin order", asyn
     );
     const quoteOpsBody = await quoteOpsResponse.text();
     assert.equal(quoteOpsResponse.status, 200);
+
+    const fetchQuoteBody = async (query) => {
+      const response = await fetch(`${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent(query)}`, {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      });
+      assert.equal(response.status, 200);
+      return response.text();
+    };
     assert.match(
-      quoteOpsBody,
-      /rr-request-1[\s\S]*?<span class="admin-quote-entry-info-label">Менеджер<\/span>\s*<p class="admin-quote-entry-info-value">Mila Rivers<\/p>/
+      await fetchQuoteBody("rr-request-1"),
+      /<option value="[^"]+" selected>\s*Mila Rivers\s*<\/option>/
     );
     assert.match(
-      quoteOpsBody,
-      /rr-request-2[\s\S]*?<span class="admin-quote-entry-info-label">Менеджер<\/span>\s*<p class="admin-quote-entry-info-value">Nora Lane<\/p>/
+      await fetchQuoteBody("rr-request-2"),
+      /<option value="[^"]+" selected>\s*Nora Lane\s*<\/option>/
     );
     assert.match(
-      quoteOpsBody,
-      /rr-request-3[\s\S]*?<span class="admin-quote-entry-info-label">Менеджер<\/span>\s*<p class="admin-quote-entry-info-value">Mila Rivers<\/p>/
+      await fetchQuoteBody("rr-request-3"),
+      /<option value="[^"]+" selected>\s*Mila Rivers\s*<\/option>/
     );
     assert.match(quoteOpsBody, />Mila Rivers<\/option>/);
     assert.match(quoteOpsBody, />Nora Lane<\/option>/);
