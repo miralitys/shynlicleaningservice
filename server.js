@@ -58,6 +58,7 @@ const {
 } = require("./lib/runtime/perf");
 const { evaluateStartupEnvIntegrity } = require("./lib/runtime/env-integrity");
 const { createAdminOrderMediaStorage } = require("./lib/admin-order-media-storage");
+const { getEntryOrderState } = require("./lib/admin-order-state");
 const { createStaffTravelEstimateService } = require("./lib/staff-travel-estimates");
 let createSupabaseQuoteOpsClient;
 let loadSupabaseQuoteOpsConfig;
@@ -179,6 +180,7 @@ const ADMIN_CHALLENGE_COOKIE = "shynli_admin_challenge";
 const ACCOUNT_ROOT_PATH = "/account";
 const ACCOUNT_CONTRACT_DOWNLOAD_PATH = "/account/contract";
 const ACCOUNT_W9_DOWNLOAD_PATH = "/account/w9";
+const ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH = "/account/google-calendar/connect";
 const ACCOUNT_LOGIN_PATH = "/account/login";
 const ACCOUNT_LOGOUT_PATH = "/account/logout";
 const ACCOUNT_VERIFY_EMAIL_PATH = "/account/verify-email";
@@ -211,6 +213,7 @@ const ACCOUNT_ALL_ROUTES = new Set([
   ACCOUNT_ROOT_PATH,
   ACCOUNT_CONTRACT_DOWNLOAD_PATH,
   ACCOUNT_W9_DOWNLOAD_PATH,
+  ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_VERIFY_EMAIL_PATH,
@@ -437,6 +440,7 @@ const NOINDEX_ROUTES = new Set([
   "/oauth/callback",
   "/quote",
   "/quote2",
+  ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
 ]);
@@ -732,6 +736,112 @@ function enforcePostRateLimit(req, res, requestStartNs, requestContext, routeKey
 
 function normalizeString(value, maxLength = 500) {
   return String(value || "").trim().slice(0, maxLength);
+}
+
+function resolveOrderAmountCents(entry = {}) {
+  const orderState = getEntryOrderState(entry);
+  const candidates = [
+    entry && entry.totalPriceCents,
+    orderState && orderState.totalPriceCents,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed) && parsed >= STRIPE_MIN_AMOUNT_CENTS && parsed <= STRIPE_MAX_AMOUNT_CENTS) {
+      return Math.round(parsed);
+    }
+  }
+
+  const fallbackPrice = normalizeString(
+    (entry && entry.totalPrice) || (orderState && orderState.totalPrice),
+    64
+  ).replace(/[^0-9.]+/g, "");
+  if (!fallbackPrice) return 0;
+  const parsedDollars = Number.parseFloat(fallbackPrice);
+  if (!Number.isFinite(parsedDollars)) return 0;
+  const cents = Math.round(parsedDollars * 100);
+  return cents >= STRIPE_MIN_AMOUNT_CENTS && cents <= STRIPE_MAX_AMOUNT_CENTS ? cents : 0;
+}
+
+async function createOrderInvoicePaymentLink(entry = {}) {
+  const stripe = getStripeClient();
+  if (!stripe) {
+    return {
+      ok: false,
+      code: "STRIPE_NOT_CONFIGURED",
+      message: "Stripe is not configured.",
+    };
+  }
+
+  const requestId = normalizeString(entry && entry.requestId, 120);
+  if (!requestId) {
+    return {
+      ok: false,
+      code: "ORDER_REQUEST_ID_MISSING",
+      message: "Order is missing request ID.",
+    };
+  }
+
+  const amountCents = resolveOrderAmountCents(entry);
+  if (!amountCents) {
+    return {
+      ok: false,
+      code: "ORDER_AMOUNT_INVALID",
+      message: "Order amount is invalid for Stripe checkout.",
+    };
+  }
+
+  const serviceName = normalizeString(entry && entry.serviceName, 120) || "Cleaning Service";
+  const customerEmail = normalizeString(entry && entry.customerEmail, 320);
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail);
+  const successUrl = process.env.STRIPE_SUCCESS_URL || `${getStripeReturnOrigin()}${QUOTE_PUBLIC_PATH}?payment=success`;
+  const cancelUrl = process.env.STRIPE_CANCEL_URL || `${getStripeReturnOrigin()}${QUOTE_PUBLIC_PATH}?payment=cancelled`;
+  const metadata = {
+    request_id: requestId,
+    entry_id: normalizeString(entry && entry.id, 120),
+    service_type: normalizeString(entry && entry.serviceType, 100),
+    selected_date: normalizeString(entry && entry.selectedDate, 100),
+    selected_time: normalizeString(entry && entry.selectedTime, 100),
+    customer_name: normalizeString(entry && entry.customerName, 250),
+    customer_phone: normalizeString(entry && entry.customerPhone, 80),
+    full_address: normalizeString((entry && entry.fullAddress) || "", 500),
+  };
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      client_reference_id: requestId,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: amountCents,
+            product_data: {
+              name: serviceName,
+              description: "Cleaning service invoice",
+            },
+          },
+        },
+      ],
+      phone_number_collection: { enabled: true },
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata,
+      ...(isValidEmail ? { customer_email: customerEmail } : {}),
+    });
+    return {
+      ok: true,
+      id: normalizeString(session && session.id, 120),
+      url: normalizeString(session && session.url, 4000),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      code: "STRIPE_CHECKOUT_CREATE_FAILED",
+      message: normalizeString(error && error.message, 300) || "Failed to create Stripe checkout session.",
+    };
+  }
 }
 
 function escapeHtml(value) {
@@ -1248,6 +1358,7 @@ const handleAdminRequest = createAdminRequestHandler({
 const accountRenderers = createAccountRenderers({
   ACCOUNT_CONTRACT_DOWNLOAD_PATH,
   ACCOUNT_W9_DOWNLOAD_PATH,
+  ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_ROOT_PATH,
@@ -1269,6 +1380,7 @@ const accountRenderers = createAccountRenderers({
 const handleAccountRequest = createAccountRequestHandler({
   ACCOUNT_CONTRACT_DOWNLOAD_PATH,
   ACCOUNT_W9_DOWNLOAD_PATH,
+  ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ACCOUNT_LOGIN_PATH,
   ACCOUNT_LOGOUT_PATH,
   ACCOUNT_ROOT_PATH,
@@ -1664,6 +1776,7 @@ async function main() {
 
   autoNotificationService = createAutoNotificationService({
     accountInviteEmail,
+    createOrderInvoicePaymentLink,
     getLeadConnectorClient,
     getMailConfig: () =>
       adminAuth && typeof adminAuth.loadAdminConfig === "function"

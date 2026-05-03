@@ -32,6 +32,7 @@ const {
   createOrderFromQuoteRequest,
   getQuoteOpsEntryId,
 } = require("./admin-route-helpers");
+const { createStripeStub } = require("./server-test-helpers");
 
 test("allows admins to add a manual order from the orders page", async () => {
   const env = {
@@ -1192,6 +1193,161 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
     smtpServer.close();
     fetchStub.cleanup();
     await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('sends a Stripe payment link SMS when an order moves to "invoice-sent"', async () => {
+  const fetchStub = await createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "invoice-contact-1",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 201,
+      body: {
+        conversationId: "invoice-conversation-1",
+        messageId: "invoice-message-1",
+      },
+    },
+  ]);
+  const stripeStub = createStripeStub();
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    STRIPE_SECRET_KEY: "sk_test_invoice_sms",
+    STRIPE_STUB_ENTRY: stripeStub.stubEntry,
+    STRIPE_CAPTURE_FILE: stripeStub.captureFile,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const requestId = `invoice-sms-order-${Date.now()}`;
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId,
+      fullName: "Invoice SMS Customer",
+      phone: "312-555-8844",
+      email: "invoice.customer@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-04-28",
+      selectedTime: "14:30",
+      fullAddress: "1289 Rickert Dr, Naperville, IL 60563",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      requestId
+    );
+
+    const moveToInvoiceSentResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+        orderStatus: "invoice-sent",
+        paymentStatus: "unpaid",
+        paymentMethod: "invoice",
+        selectedDate: "2026-04-28",
+        selectedTime: "14:30",
+        frequency: "",
+      }),
+    });
+    assert.equal(moveToInvoiceSentResponse.status, 303);
+    assert.match(
+      moveToInvoiceSentResponse.headers.get("location") || "",
+      /notice=order-saved-invoice-sms-sent/
+    );
+
+    const stripeCapture = JSON.parse(await fs.readFile(stripeStub.captureFile, "utf8"));
+    assert.equal(stripeCapture.options.client_reference_id, requestId);
+    assert.equal(stripeCapture.options.metadata.request_id, requestId);
+    assert.equal(stripeCapture.options.metadata.entry_id, entryId);
+    assert.equal(stripeCapture.options.customer_email, "invoice.customer@example.com");
+    assert.equal(stripeCapture.options.success_url, "https://shynlicleaningservice.com/quote?payment=success");
+    assert.equal(stripeCapture.options.cancel_url, "https://shynlicleaningservice.com/quote?payment=cancelled");
+
+    const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const invoiceSmsRequests = captureLines.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return /Pay securely here: https:\/\/stripe\.example\/session/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(invoiceSmsRequests.length, 1);
+    const invoiceSmsPayload = JSON.parse(invoiceSmsRequests[0].body);
+    assert.equal(invoiceSmsPayload.contactId, "invoice-contact-1");
+    assert.equal(invoiceSmsPayload.toNumber, "+13125558844");
+    assert.match(invoiceSmsPayload.message, /Hi Invoice,/i);
+    assert.match(invoiceSmsPayload.message, /Pay securely here: https:\/\/stripe\.example\/session/i);
+
+    const repeatSaveResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+        orderStatus: "invoice-sent",
+        paymentStatus: "unpaid",
+        paymentMethod: "invoice",
+        selectedDate: "2026-04-28",
+        selectedTime: "14:30",
+        frequency: "",
+      }),
+    });
+    assert.equal(repeatSaveResponse.status, 303);
+
+    const captureLinesAfterRepeat = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const invoiceSmsRequestsAfterRepeat = captureLinesAfterRepeat.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return /Pay securely here: https:\/\/stripe\.example\/session/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(invoiceSmsRequestsAfterRepeat.length, 1);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    stripeStub.cleanup();
   }
 });
 

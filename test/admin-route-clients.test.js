@@ -713,16 +713,116 @@ test("renders the clients table with filters and request history", async () => {
       .filter(Boolean)
       .map((line) => JSON.parse(line));
     const contactCalls = calls.filter((record) =>
+      record.method === "POST" &&
       String(record.url).includes("/contacts/")
     );
     const autoSmsCalls = calls.filter((record) =>
+      record.method === "POST" &&
       String(record.url).includes("/conversations/messages")
     );
     assert.equal(contactCalls.length, 3);
-    assert.equal(autoSmsCalls.length, 3);
+    assert.equal(autoSmsCalls.length, 4);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
+    fetchStub.cleanup();
+  }
+});
+
+test("loads inbound SMS replies into the client dialog history", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-client-sms-123",
+        },
+      },
+    },
+    {
+      method: "GET",
+      match: "/conversations/search",
+      status: 200,
+      body: {
+        conversations: [
+          {
+            id: "conversation-client-sms-123",
+          },
+        ],
+      },
+    },
+    {
+      method: "GET",
+      match: "/conversations/conversation-client-sms-123/messages",
+      status: 200,
+      body: {
+        messages: [
+          {
+            id: "message-client-sms-reply-123",
+            type: "TYPE_SMS",
+            direction: "inbound",
+            body: "Client replied from the same phone.",
+            dateAdded: "2026-05-03T18:00:00.000Z",
+            conversationId: "conversation-client-sms-123",
+            phone: "+13125550123",
+          },
+        ],
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "client-sms-history-request-1",
+      fullName: "Client SMS History Lead",
+      phone: "(312) 555-0123",
+      email: "client.sms@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-05-04",
+      selectedTime: "09:30",
+      fullAddress: "123 Reply Lane, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const historyResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "load-client-sms-history",
+        clientKey: "3125550123",
+        returnTo: "/admin/clients?client=3125550123",
+      }),
+    });
+
+    assert.equal(historyResponse.status, 200);
+    const historyPayload = await historyResponse.json();
+    assert.equal(historyPayload.ok, true);
+    assert.equal(historyPayload.sms.historyCountLabel, "2 SMS");
+    assert.equal(historyPayload.sms.history.length, 2);
+    const inboundEntry = historyPayload.sms.history.find((entry) => entry.direction === "inbound");
+    assert.ok(inboundEntry);
+    assert.equal(inboundEntry.directionLabel, "Входящее");
+    assert.equal(inboundEntry.message, "Client replied from the same phone.");
+  } finally {
+    await stopServer(started.child);
     fetchStub.cleanup();
   }
 });
