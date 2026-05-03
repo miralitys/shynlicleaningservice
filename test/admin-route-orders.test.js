@@ -1630,6 +1630,24 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(enRouteResponse.status, 303);
     assert.match(enRouteResponse.headers.get("location") || "", /notice=assignment-en-route/);
 
+    const enRouteCaptureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const enRouteCustomerSmsRequests = enRouteCaptureLines.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return JSON.parse(record.body).message === "Ваш клинер в пути.";
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(enRouteCustomerSmsRequests.length, 1);
+    const enRouteCustomerSmsPayload = JSON.parse(enRouteCustomerSmsRequests[0].body);
+    assert.equal(enRouteCustomerSmsPayload.toNumber, "+13125551188");
+    assert.equal(enRouteCustomerSmsPayload.message, "Ваш клинер в пути.");
+
     const repeatedEnRouteAsyncResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
       headers: {

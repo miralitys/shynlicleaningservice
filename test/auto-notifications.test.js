@@ -536,6 +536,50 @@ test("logs assignment SMS failures when both assignment send attempts are reject
   assert.match(loggedEvents[0].message, /Recipient not reachable/i);
 });
 
+test("sends client en-route SMS once when an order moves to en-route", async () => {
+  const entry = createOrderEntry({
+    id: "order-en-route-1",
+    payloadForRetry: {
+      orderState: {
+        status: "en-route",
+      },
+      adminOrder: {
+        status: "en-route",
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+  });
+
+  const firstResult = await service.notifyClientEnRoute({
+    entry,
+    leadConnectorClient,
+  });
+
+  assert.equal(firstResult.sent, true);
+  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.equal(leadConnectorClient.calls[0].message, "Ваш клинер в пути.");
+  assert.equal((firstResult.entry.payloadForRetry.adminSms.history || []).length, 1);
+  assert.equal(firstResult.entry.payloadForRetry.adminSms.history[0].targetType, "client-en-route");
+  const notificationState = getOrderNotificationState(firstResult.entry);
+  assert.equal(
+    notificationState.enRouteSms.signature,
+    "2026-04-20|10:00|123 Main St, Chicago, IL 60601|Standard Cleaning"
+  );
+  assert.ok(notificationState.enRouteSms.sentAt);
+
+  const secondResult = await service.notifyClientEnRoute({
+    entry: firstResult.entry,
+    leadConnectorClient,
+  });
+
+  assert.equal(secondResult.sent, false);
+  assert.equal(leadConnectorClient.calls.length, 1);
+});
+
 test("sends client reminder SMS at 48h, 24h and 1h without duplicates", async () => {
   const entry = createOrderEntry({
     id: "order-reminder-1",
