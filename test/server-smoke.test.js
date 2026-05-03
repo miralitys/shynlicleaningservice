@@ -2,10 +2,119 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const vm = require("node:vm");
 const { startServer, stopServer } = require("./server-test-helpers");
 
 let serverProcess = null;
 let BASE_URL = null;
+
+function zipTargets(...entries) {
+  return entries.map(([city, url]) => ({ city, url }));
+}
+
+const EXPECTED_SERVICE_ZIP_LOOKUP = {
+  "60101": zipTargets(["Addison", "/addison"]),
+  "60103": zipTargets(["Bartlett", "/bartlett"]),
+  "60107": zipTargets(["Streamwood", "/streamwood"]),
+  "60126": zipTargets(["Elmhurst", "/elmhurst"]),
+  "60134": zipTargets(["Geneva", "/geneva"]),
+  "60137": zipTargets(["Glen Ellyn", "/glenellyn"]),
+  "60143": zipTargets(["Itasca", "/itasca"]),
+  "60148": zipTargets(["Lombard", "/lombard"]),
+  "60174": zipTargets(["St. Charles", "/stcharles"]),
+  "60175": zipTargets(["St. Charles", "/stcharles"]),
+  "60181": zipTargets(["Villa Park", "/villapark"]),
+  "60184": zipTargets(["Wayne", "/wayne"]),
+  "60185": zipTargets(["West Chicago", "/westchicago"]),
+  "60187": zipTargets(["Wheaton", "/wheaton"]),
+  "60188": zipTargets(["Carol Stream", "/carolstream"]),
+  "60189": zipTargets(["Wheaton", "/wheaton"]),
+  "60190": zipTargets(["Winfield", "/winfield"]),
+  "60191": zipTargets(["Wood Dale", "/wooddale"]),
+  "60439": zipTargets(["Lemont", "/lemont"]),
+  "60440": zipTargets(["Bolingbrook", "/bolingbrook"]),
+  "60441": zipTargets(["Homer Glen", "/homerglen"], ["Lockport", "/lockport"]),
+  "60446": zipTargets(["Lockport", "/lockport"], ["Romeoville", "/romeoville"]),
+  "60490": zipTargets(["Bolingbrook", "/bolingbrook"]),
+  "60491": zipTargets(["Homer Glen", "/homerglen"], ["Lockport", "/lockport"]),
+  "60502": zipTargets(["Aurora", "/aurora"]),
+  "60503": zipTargets(["Aurora", "/aurora"]),
+  "60504": zipTargets(["Aurora", "/aurora"]),
+  "60505": zipTargets(["Aurora", "/aurora"]),
+  "60506": zipTargets(["Aurora", "/aurora"]),
+  "60510": zipTargets(["Batavia", "/batavia"]),
+  "60512": zipTargets(["Bristol", "/bristol"]),
+  "60514": zipTargets(["Clarendon Hills", "/clarendonhills"]),
+  "60515": zipTargets(["Downers Grove", "/downersgrove"]),
+  "60516": zipTargets(["Downers Grove", "/downersgrove"]),
+  "60517": zipTargets(["Downers Grove", "/downersgrove"], ["Woodridge", "/woodridge"]),
+  "60521": zipTargets(["Hinsdale", "/hinsdale"], ["Oak Brook", "/oakbrook"]),
+  "60523": zipTargets(["Hinsdale", "/hinsdale"], ["Oak Brook", "/oakbrook"]),
+  "60527": zipTargets(["Burr Ridge", "/burrridge"], ["Willowbrook", "/willowbrook"]),
+  "60532": zipTargets(["Lisle", "/lisle"]),
+  "60538": zipTargets(["Montgomery", "/montgomery"]),
+  "60540": zipTargets(["Naperville", "/naperville"]),
+  "60542": zipTargets(["North Aurora", "/northaurora"]),
+  "60543": zipTargets(["Oswego", "/oswego"]),
+  "60544": zipTargets(["Plainfield", "/plainfield"]),
+  "60554": zipTargets(["Sugar Grove", "/sugargrove"]),
+  "60555": zipTargets(["Warrenville", "/warrenville"]),
+  "60559": zipTargets(["Westmont", "/westmont"]),
+  "60560": zipTargets(["Yorkville", "/yorkville"]),
+  "60561": zipTargets(["Darien", "/darien"]),
+  "60563": zipTargets(["Naperville", "/naperville"], ["Warrenville", "/warrenville"]),
+  "60564": zipTargets(["Naperville", "/naperville"]),
+  "60565": zipTargets(["Naperville", "/naperville"]),
+  "60585": zipTargets(["Plainfield", "/plainfield"]),
+  "60586": zipTargets(["Plainfield", "/plainfield"]),
+};
+
+function extractServiceZipLookupScript(html) {
+  const start = html.indexOf("const serviceZips=");
+  assert.notEqual(start, -1, "ZIP lookup script should be present");
+  const end = html.indexOf("</script>", start);
+  assert.notEqual(end, -1, "ZIP lookup script should close before </script>");
+  return html.slice(start, end);
+}
+
+function extractServiceZipLookupData(html) {
+  const script = extractServiceZipLookupScript(html);
+  const match = script.match(/const serviceZips=(\{[\s\S]*\});function renderZipResultLinks/);
+  assert.ok(match, "ZIP lookup data should be embedded before renderZipResultLinks");
+  return JSON.parse(match[1]);
+}
+
+function createZipLookupRuntimeContext(initialZip = "") {
+  const elements = {
+    zipCode: {
+      value: initialZip,
+      dataset: {},
+      style: {},
+      addEventListener() {},
+      closest() {
+        return null;
+      },
+      focus() {},
+      setSelectionRange() {},
+    },
+    zipResult: {
+      className: "",
+      style: {},
+      innerHTML: "",
+    },
+  };
+
+  return {
+    context: {
+      document: {
+        getElementById(id) {
+          return elements[id];
+        },
+      },
+    },
+    elements,
+  };
+}
 
 test.before(async () => {
   const started = await startServer();
@@ -304,10 +413,41 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
   assert.match(body, /Bristol/);
   assert.doesNotMatch(body, /shynli-extra-service-areas/);
   assert.doesNotMatch(body, /Now serving these cities too/);
-  assert.match(body, /"60512":\{"city":"Bristol","url":"\/bristol"\}/);
-  assert.match(body, /"60542":\{"city":"North Aurora","url":"\/northaurora"\}/);
-  assert.match(body, /"60554":\{"city":"Sugar Grove","url":"\/sugargrove"\}/);
-  assert.match(body, /"60560":\{"city":"Yorkville","url":"\/yorkville"\}/);
+  assert.match(body, /const serviceZips=/);
+  assert.match(body, /function renderZipResultLinks/);
+  assert.match(body, /Choose your city page to continue booking/);
+});
+
+test("uses the exact ZIP lookup map and supports shared ZIP matches", async () => {
+  const response = await fetch(`${BASE_URL}/service-areas`);
+  const body = await response.text();
+  const script = extractServiceZipLookupScript(body);
+  const zipLookupData = extractServiceZipLookupData(body);
+  const runtime = createZipLookupRuntimeContext();
+
+  assert.deepEqual(zipLookupData, EXPECTED_SERVICE_ZIP_LOOKUP);
+
+  vm.runInNewContext(script, runtime.context);
+
+  runtime.elements.zipCode.value = "60521";
+  runtime.context.checkZipArea();
+  assert.equal(runtime.elements.zipResult.className, "zip-result success");
+  assert.equal(runtime.elements.zipResult.style.display, "block");
+  assert.match(runtime.elements.zipResult.innerHTML, /Hinsdale/);
+  assert.match(runtime.elements.zipResult.innerHTML, /Oak Brook/);
+  assert.match(runtime.elements.zipResult.innerHTML, /Choose your city page to continue booking/);
+
+  runtime.elements.zipCode.value = "60512";
+  runtime.context.checkZipArea();
+  assert.equal(runtime.elements.zipResult.className, "zip-result success");
+  assert.match(runtime.elements.zipResult.innerHTML, /Bristol/);
+  assert.match(runtime.elements.zipResult.innerHTML, /ZIP 60512/);
+  assert.doesNotMatch(runtime.elements.zipResult.innerHTML, /Choose your city page to continue booking/);
+
+  runtime.elements.zipCode.value = "60116";
+  runtime.context.checkZipArea();
+  assert.equal(runtime.elements.zipResult.className, "zip-result error");
+  assert.match(runtime.elements.zipResult.innerHTML, /outside our service area/);
 });
 
 test("serves service pages with the shared popup and menu runtime", async () => {
