@@ -167,6 +167,7 @@ const ADMIN_STAFF_GOOGLE_CONNECT_PATH = "/admin/staff/google/connect";
 const ADMIN_GOOGLE_MAIL_CONNECT_PATH = "/admin/google-mail/connect";
 const ADMIN_SETTINGS_PATH = "/admin/settings";
 const ADMIN_PAYROLL_PATH = "/admin/payroll";
+const ADMIN_MESSAGES_PATH = "/admin/messages";
 const ADMIN_QUOTE_OPS_PATH = "/admin/quote-ops";
 const ADMIN_QUOTE_OPS_RETRY_PATH = "/admin/quote-ops/retry";
 const ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH = "/admin/google-calendar/callback";
@@ -186,6 +187,7 @@ const USER_SESSION_COOKIE = "shynli_user_session";
 const ADMIN_APP_ROUTES = new Set([
   ADMIN_ROOT_PATH,
   ADMIN_CLIENTS_PATH,
+  ADMIN_MESSAGES_PATH,
   ADMIN_ORDERS_PATH,
   ADMIN_PAYROLL_PATH,
   ADMIN_STAFF_PATH,
@@ -217,6 +219,10 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
     path: ADMIN_ROOT_PATH,
     label: "Дашборд",
+  },
+  {
+    path: ADMIN_MESSAGES_PATH,
+    label: "Сообщения",
   },
   {
     path: ADMIN_QUOTE_OPS_PATH,
@@ -1029,6 +1035,7 @@ const adminPageRenderers = createAdminPageRenderers({
   ADMIN_INTEGRATIONS_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CONNECT_PATH,
+  ADMIN_MESSAGES_PATH,
   ADMIN_ORDERS_PATH,
   ADMIN_PAYROLL_PATH,
   ADMIN_ROOT_PATH,
@@ -1130,6 +1137,7 @@ const handleAdminRequest = createAdminRequestHandler({
   ADMIN_LOGOUT_PATH,
   ACCOUNT_LOGOUT_PATH,
   ADMIN_POLICY_ACCEPTANCE_API_BASE_PATH,
+  ADMIN_MESSAGES_PATH,
   ADMIN_ORDERS_PATH,
   ADMIN_PAYROLL_PATH,
   ADMIN_QUOTE_OPS_PATH,
