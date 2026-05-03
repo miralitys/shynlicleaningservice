@@ -295,6 +295,7 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
 
   assert.equal(response.status, 200);
   assert.match(body, /shynli-city-popup-list__grid/);
+  assert.match(body, /shynli-service-areas-overview__grid/);
   assert.match(body, /V-Y:/);
   assert.match(body, /North Aurora/);
   assert.match(body, /Sugar Grove/);

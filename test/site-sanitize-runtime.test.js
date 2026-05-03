@@ -312,6 +312,8 @@ test("rebuilds shared marketing city popups and removes the temporary extra city
   assert.doesNotMatch(serviceAreasHtml, /Now serving these cities too/);
   assert.doesNotMatch(serviceAreasHtml, /New service areas/i);
   assert.match(serviceAreasHtml, /shynli-city-popup-list__grid/);
+  assert.match(serviceAreasHtml, /shynli-service-areas-overview__grid/);
+  assert.match(serviceAreasHtml, /V-Y:/);
 });
 
 test("preserves menu CTA wiring and submenu content after the menu shell replacement", () => {
