@@ -231,6 +231,169 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
   }
 });
 
+test("splits percent payroll across a two-person team on the admin payroll screen", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-payroll-team-split-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-payroll-team-split",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix",
+      status: 200,
+      body: [
+        {
+          condition: "ROUTE_EXISTS",
+          distanceMeters: 6400,
+          duration: "1200s",
+        },
+      ],
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "payroll-team-order",
+      fullName: "Payroll Team Client",
+      phone: "312-555-2299",
+      email: "payroll.team.client@example.com",
+      serviceType: "deep",
+      selectedDate: "2026-05-01",
+      selectedTime: "10:00",
+      fullAddress: "500 Payroll Ave, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "payroll-team-order"
+    );
+
+    const createAnnaResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-staff",
+        name: "Anna Split",
+        role: "cleaner",
+        phone: "3125557701",
+        email: "anna.split@example.com",
+        address: "101 First Ave, Aurora, IL 60506",
+        compensationValue: "50",
+        compensationType: "percent",
+        status: "active",
+        notes: "",
+      }),
+    });
+    assert.equal(createAnnaResponse.status, 303);
+
+    const createOlgaResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-staff",
+        name: "Olga Split",
+        role: "cleaner",
+        phone: "3125557702",
+        email: "olga.split@example.com",
+        address: "102 First Ave, Aurora, IL 60506",
+        compensationValue: "50",
+        compensationType: "percent",
+        status: "active",
+        notes: "",
+      }),
+    });
+    assert.equal(createOlgaResponse.status, 303);
+
+    const staffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.equal(staffStorePayload.staff.length, 2);
+    const [staffA, staffB] = staffStorePayload.staff;
+
+    const assignParams = new URLSearchParams();
+    assignParams.set("action", "save-assignment");
+    assignParams.set("entryId", entryId);
+    assignParams.append("staffIds", staffA.id);
+    assignParams.append("staffIds", staffB.id);
+    assignParams.set("scheduleDate", "");
+    assignParams.set("scheduleTime", "");
+    assignParams.set("status", "planned");
+    assignParams.set("notes", "");
+
+    const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: assignParams,
+    });
+    assert.equal(assignResponse.status, 303);
+
+    const completeResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: "/admin/orders",
+        orderStatus: "cleaning-complete",
+        totalPrice: "240",
+      }),
+    });
+    assert.equal(completeResponse.status, 303);
+
+    const payrollResponse = await fetch(`${started.baseUrl}/admin/payroll`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const payrollBody = await payrollResponse.text();
+    assert.equal(payrollResponse.status, 200);
+    assert.match(payrollBody, /Anna Split/);
+    assert.match(payrollBody, /Olga Split/);
+    assert.match(payrollBody, /50% база/);
+    assert.match(payrollBody, /25% на человека • команда 2/);
+    assert.ok((payrollBody.match(/\$60\.00/g) || []).length >= 2);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("shows employee-only payroll history inside the account workspace", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-payroll-account-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
