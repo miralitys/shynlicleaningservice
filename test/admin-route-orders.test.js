@@ -77,6 +77,8 @@ test("allows admins to add a manual order from the orders page", async () => {
         serviceType: "deep",
         selectedDate: "2026-04-22",
         selectedTime: "13:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
         frequency: "biweekly",
         totalPrice: "240.00",
         fullAddress: "215 North Elm Street, Naperville, IL 60563",
@@ -100,6 +102,7 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(createdOrderBody, /Manual Customer/);
     assert.match(createdOrderBody, /Deep/);
     assert.match(createdOrderBody, /Bi-weekly/);
+    assert.match(createdOrderBody, /2 ч 30 мин/);
     assert.match(createdOrderBody, /215 North Elm Street, Naperville, IL 60563/);
     assert.match(createdOrderBody, /\$240\.00/);
     assert.match(createdOrderBody, new RegExp(`name="entryId" value="${escapeRegex(createdOrderId)}"`));
@@ -107,6 +110,54 @@ test("allows admins to add a manual order from the orders page", async () => {
     const scheduledLane = getOrderFunnelLaneSlice(createdOrderBody, "scheduled", "en-route");
     assert.match(newLane, /Manual Customer/);
     assert.doesNotMatch(scheduledLane, /Manual Customer/);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
+test("requires service duration when admins add a manual order", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Duration Missing Customer",
+        customerPhone: "3125557712",
+        serviceType: "deep",
+        selectedDate: "2026-04-22",
+        selectedTime: "13:30",
+        totalPrice: "240.00",
+        fullAddress: "215 North Elm Street, Naperville, IL 60563",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    assert.match(createOrderResponse.headers.get("location") || "", /notice=manual-order-duration-invalid/);
+
+    const ordersResponse = await fetch(
+      `${started.baseUrl}${(createOrderResponse.headers.get("location") || "").replace(/#.*$/, "")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /укажите длительность уборки в часах и минутах/i);
   } finally {
     await stopServer(started.child);
   }
@@ -426,6 +477,10 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
     assert.equal(beforeResponse.status, 200);
     assert.match(beforeBody, /data-admin-ghl-sms="true"/);
     assert.match(beforeBody, /История SMS/);
+    assert.match(beforeBody, /Входящие/);
+    assert.match(beforeBody, /Исходящие/);
+    assert.match(beforeBody, /Автоматические/);
+    assert.match(beforeBody, /Ручные/);
 
     const sendSmsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -943,6 +998,8 @@ test("allows managers to create manual orders from the orders page", async () =>
         serviceType: "standard",
         selectedDate: "2026-04-24",
         selectedTime: "09:30",
+        serviceDurationHours: "3",
+        serviceDurationMinutes: "15",
         frequency: "",
         totalPrice: "180.00",
         fullAddress: "901 Aurora Avenue, Naperville, IL 60540",
@@ -964,6 +1021,7 @@ test("allows managers to create manual orders from the orders page", async () =>
     assert.equal(createdOrderResponse.status, 200);
     assert.match(createdOrderBody, /Заказ добавлен вручную/);
     assert.match(createdOrderBody, /Manager Created Customer/);
+    assert.match(createdOrderBody, /3 ч 15 мин/);
     assert.match(createdOrderBody, /901 Aurora Avenue, Naperville, IL 60540/);
     assert.match(createdOrderBody, /\$180\.00/);
     assert.match(createdOrderBody, new RegExp(`name="entryId" value="${escapeRegex(createdOrderId)}"`));
