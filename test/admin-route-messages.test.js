@@ -9,7 +9,7 @@ const {
   createAdminSession,
 } = require("./admin-route-helpers");
 
-test("renders messages rows as clickable popup triggers with read actions", async () => {
+test("renders messages rows as clickable popup triggers without an action column", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     GHL_LOCATION_ID: "location-123",
@@ -77,8 +77,7 @@ test("renders messages rows as clickable popup triggers with read actions", asyn
     assert.match(messagesBody, /Новые сообщения/);
     assert.match(messagesBody, /Все сообщения/);
     assert.doesNotMatch(messagesBody, />Открыть карточку</);
-    assert.match(messagesBody, /<th>\s*Действие\s*<\/th>/);
-    assert.match(messagesBody, />Прочитано</);
+    assert.doesNotMatch(messagesBody, /<th>\s*Действие\s*<\/th>/);
     assert.match(messagesBody, /class="admin-message-row-new admin-table-row-clickable"/);
     assert.match(messagesBody, /data-admin-dialog-row="true"/);
     assert.match(messagesBody, new RegExp(`data-admin-dialog-open="admin-order-detail-dialog-${orderEntryId}"`));
