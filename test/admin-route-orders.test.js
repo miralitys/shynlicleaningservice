@@ -1278,7 +1278,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
 
     const cleanerSmsRequests = smsRequests.filter((record) => {
       try {
-        return /confirm or decline this job in your staff account:/i.test(
+        return /Подтвердите или отклоните заказ в кабинете сотрудника:/i.test(
           JSON.parse(record.body).message || ""
         );
       } catch {
@@ -1290,8 +1290,9 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(cleanerSmsPayload.toNumber, "+13125550888");
     assert.match(
       cleanerSmsPayload.message,
-      /Please confirm or decline this job in your staff account: https:\/\/shynlicleaningservice\.com\/account/i
+      /Подтвердите или отклоните заказ в кабинете сотрудника: https:\/\/shynlicleaningservice\.com\/account/i
     );
+    assert.match(cleanerSmsPayload.message, /На вас назначена уборка SHYNLI/i);
     assert.match(cleanerSmsPayload.message, /Cleaner Confirmation Customer/);
 
     const submitPolicyResponse = await fetch(

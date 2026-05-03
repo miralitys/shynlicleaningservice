@@ -340,7 +340,8 @@ test("sends assignment SMS once per schedule signature for scheduled orders", as
   assert.equal(firstResult.sent, 1);
   assert.equal(leadConnectorClient.calls.length, 1);
   assert.equal(staffUpdateCalls.length, 1);
-  assert.match(leadConnectorClient.calls[0].message, /confirm or decline/i);
+  assert.match(leadConnectorClient.calls[0].message, /На вас назначена уборка SHYNLI/i);
+  assert.match(leadConnectorClient.calls[0].message, /Подтвердите или отклоните заказ/i);
   assert.match(leadConnectorClient.calls[0].message, /shynlicleaningservice\.com\/account/i);
   const notificationState = getOrderNotificationState(firstResult.entry);
   assert.equal(
@@ -362,6 +363,63 @@ test("sends assignment SMS once per schedule signature for scheduled orders", as
 
   assert.equal(secondResult.sent, 0);
   assert.equal(leadConnectorClient.calls.length, 1);
+});
+
+test("sends assignment SMS for rescheduled orders when staff is assigned", async () => {
+  const entry = createOrderEntry({
+    id: "order-rescheduled-1",
+    payloadForRetry: {
+      orderState: {
+        status: "rescheduled",
+      },
+      adminOrder: {
+        status: "rescheduled",
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const staffStore = {
+    async getSnapshot() {
+      return {
+        staff: [
+          {
+            id: "staff-1",
+            name: "Olga Stone",
+            phone: "3125550222",
+            email: "olga@example.com",
+            smsHistory: [],
+          },
+        ],
+      };
+    },
+    async updateStaff() {
+      return null;
+    },
+  };
+
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+    staffStore,
+    siteOrigin: "https://shynlicleaningservice.com",
+  });
+
+  const result = await service.notifyScheduledAssignment({
+    entry,
+    assignment: {
+      staffIds: ["staff-1"],
+      scheduleDate: "2026-04-21",
+      scheduleTime: "12:30",
+      status: "planned",
+      notes: "",
+    },
+    leadConnectorClient,
+  });
+
+  assert.equal(result.sent, 1);
+  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.match(leadConnectorClient.calls[0].message, /На вас назначена уборка SHYNLI/i);
+  assert.match(leadConnectorClient.calls[0].message, /Дата и время: 2026-04-21 в 12:30/i);
 });
 
 test("sends client reminder SMS at 48h, 24h and 1h without duplicates", async () => {
