@@ -968,6 +968,47 @@ async function listLeadManagers() {
   return listActiveLeadWorkspaceUsers(["manager"]);
 }
 
+async function resolveLeadManagerById(managerId) {
+  const normalizedManagerId = normalizeString(managerId, 120);
+  if (!normalizedManagerId || !usersStore || typeof usersStore.getSnapshot !== "function") {
+    return null;
+  }
+
+  const [usersSnapshot, staffSnapshot] = await Promise.all([
+    usersStore.getSnapshot(),
+    leadManagersStaffStore && typeof leadManagersStaffStore.getSnapshot === "function"
+      ? leadManagersStaffStore.getSnapshot()
+      : Promise.resolve({ staff: [] }),
+  ]);
+
+  const users = Array.isArray(usersSnapshot && usersSnapshot.users) ? usersSnapshot.users : [];
+  const userRecord = users.find((user) => {
+    if (!user || normalizeString(user.id, 120) !== normalizedManagerId) return false;
+    if (normalizeString(user.status, 32).toLowerCase() !== "active") return false;
+    return normalizeString(user.role, 32).toLowerCase() === "manager";
+  });
+  if (!userRecord) {
+    return null;
+  }
+
+  const staffRecords = Array.isArray(staffSnapshot && staffSnapshot.staff) ? staffSnapshot.staff : [];
+  const staffRecord = staffRecords.find(
+    (record) => normalizeString(record && record.id, 120) === normalizeString(userRecord.staffId, 120)
+  ) || null;
+
+  return {
+    id: normalizedManagerId,
+    email: normalizeString(userRecord.email, 250).toLowerCase(),
+    phone: normalizeString((staffRecord && staffRecord.phone) || userRecord.phone, 80),
+    name:
+      normalizeString(staffRecord && staffRecord.name, 200) ||
+      normalizeString(userRecord.name, 200) ||
+      normalizeString(userRecord.email, 200) ||
+      "Менеджер",
+    role: "manager",
+  };
+}
+
 async function listLeadAlertRecipients() {
   const recipients = await listActiveLeadWorkspaceUsers(["manager", "admin"], {
     includeStaffFallback: true,
@@ -1630,6 +1671,7 @@ async function main() {
         : {},
     listLeadManagers,
     listLeadAlertRecipients,
+    resolveLeadManagerById,
     quoteOpsLedger,
     reminderScanLimit: CLIENT_REMINDER_SCAN_LIMIT,
     siteOrigin: SITE_ORIGIN,

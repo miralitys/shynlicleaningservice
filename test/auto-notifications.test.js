@@ -583,6 +583,71 @@ test("sends client en-route SMS once when an order moves to en-route", async () 
   assert.equal(leadConnectorClient.calls.length, 1);
 });
 
+test("sends manager cleaning-complete SMS once to the assigned manager", async () => {
+  const entry = createOrderEntry({
+    id: "order-cleaning-complete-1",
+    customerName: "Ramis",
+    payloadForRetry: {
+      orderState: {
+        status: "cleaning-complete",
+      },
+      adminOrder: {
+        status: "cleaning-complete",
+      },
+      adminLead: {
+        managerId: "manager-1",
+        managerName: "Mila Rivers",
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+    listLeadManagers: async () => [
+      {
+        id: "manager-1",
+        name: "Mila Rivers",
+        email: "mila@example.com",
+        phone: "3125550199",
+        role: "manager",
+      },
+    ],
+  });
+
+  const firstResult = await service.notifyManagerCleaningComplete({
+    entry,
+    leadConnectorClient,
+  });
+
+  assert.equal(firstResult.sent, true);
+  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.equal(
+    leadConnectorClient.calls[0].message,
+    "Уборка завершена у клиента Ramis. Свяжитесь с клиентом для подтверждения и получения оплаты."
+  );
+  assert.equal(leadConnectorClient.calls[0].phone, "3125550199");
+  assert.equal((firstResult.entry.payloadForRetry.adminSms.history || []).length, 1);
+  assert.equal(
+    firstResult.entry.payloadForRetry.adminSms.history[0].targetType,
+    "manager-cleaning-complete"
+  );
+  const notificationState = getOrderNotificationState(firstResult.entry);
+  assert.equal(
+    notificationState.cleaningCompleteSmsByManagerId["manager-1"].signature,
+    "2026-04-20|10:00|123 Main St, Chicago, IL 60601|Standard Cleaning"
+  );
+  assert.ok(notificationState.cleaningCompleteSmsByManagerId["manager-1"].sentAt);
+
+  const secondResult = await service.notifyManagerCleaningComplete({
+    entry: firstResult.entry,
+    leadConnectorClient,
+  });
+
+  assert.equal(secondResult.sent, false);
+  assert.equal(leadConnectorClient.calls.length, 1);
+});
+
 test("sends client reminder SMS at 48h, 24h and 1h without duplicates", async () => {
   const entry = createOrderEntry({
     id: "order-reminder-1",

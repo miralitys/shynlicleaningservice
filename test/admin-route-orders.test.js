@@ -1267,6 +1267,29 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     const staffId = staffStorePayload.staff[0].id;
     assert.ok(staffId);
 
+    const createManagerResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Marta Greene",
+        role: "manager",
+        status: "active",
+        staffStatus: "active",
+        email: "marta.manager@example.com",
+        phone: "3125550198",
+        address: "500 Executive Dr, Naperville, IL 60563",
+        notes: "Receives order completion SMS",
+        password: "ManagerPass123!",
+      }),
+    });
+    assert.equal(createManagerResponse.status, 303);
+    assert.match(createManagerResponse.headers.get("location") || "", /notice=user-created/);
+
     const quoteResponse = await submitQuote(started.baseUrl, {
       requestId: "cleaner-confirmation-order-1",
       fullName: "Cleaner Confirmation Customer",
@@ -1278,6 +1301,35 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
       fullAddress: "215 North Elm Street, Naperville, IL 60563",
     });
     assert.equal(quoteResponse.status, 201);
+
+    const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    const managerUserId = usersStorePayload.users.find(
+      (user) => user.email === "marta.manager@example.com"
+    ).id;
+    assert.ok(managerUserId);
+
+    const quoteEntryId = await getQuoteOpsEntryId(
+      started.baseUrl,
+      sessionCookieValue,
+      "cleaner-confirmation-order-1"
+    );
+
+    const assignManagerResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update-lead-manager",
+        entryId: quoteEntryId,
+        managerId: managerUserId,
+        returnTo: "/admin/quote-ops",
+      }),
+    });
+    assert.equal(assignManagerResponse.status, 303);
+    assert.match(assignManagerResponse.headers.get("location") || "", /notice=manager-saved/);
 
     const entryId = await createOrderFromQuoteRequest(
       started.baseUrl,
@@ -1974,6 +2026,30 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     );
     assert.match(cleaningCompleteLane, /Cleaner Confirmation Customer/);
     assert.match(cleaningCompleteLane, /Уборка завершена/);
+
+    const cleaningCompleteCaptureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const managerCleaningCompleteSmsRequests = cleaningCompleteCaptureLines.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return (
+          JSON.parse(record.body).message ===
+          "Уборка завершена у клиента Cleaner Confirmation Customer. Свяжитесь с клиентом для подтверждения и получения оплаты."
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(managerCleaningCompleteSmsRequests.length, 1);
+    const managerCleaningCompleteSmsPayload = JSON.parse(managerCleaningCompleteSmsRequests[0].body);
+    assert.equal(managerCleaningCompleteSmsPayload.toNumber, "+13125550198");
+    assert.equal(
+      managerCleaningCompleteSmsPayload.message,
+      "Уборка завершена у клиента Cleaner Confirmation Customer. Свяжитесь с клиентом для подтверждения и получения оплаты."
+    );
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
