@@ -294,9 +294,13 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
   const body = await response.text();
 
   assert.equal(response.status, 200);
+  assert.match(body, /shynli-city-popup-list__grid/);
+  assert.match(body, /V-Y:/);
   assert.match(body, /North Aurora/);
   assert.match(body, /Sugar Grove/);
   assert.match(body, /Yorkville/);
+  assert.doesNotMatch(body, /shynli-extra-service-areas/);
+  assert.doesNotMatch(body, /Now serving these cities too/);
   assert.match(body, /"60542":\{"city":"North Aurora","url":"\/northaurora"\}/);
   assert.match(body, /"60554":\{"city":"Sugar Grove","url":"\/sugargrove"\}/);
   assert.match(body, /"60560":\{"city":"Yorkville","url":"\/yorkville"\}/);

@@ -296,6 +296,24 @@ test("keeps separate desktop behaviors for blog Services hover and City modal", 
   assert.match(html, /Woodridge/);
 });
 
+test("rebuilds shared marketing city popups and removes the temporary extra city promo", () => {
+  const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const serviceAreasHtml = sanitizeHtml(readFixture("page108912616.html"), "/service-areas");
+
+  assert.match(homeHtml, /data-tooltip-hook="#city"/);
+  assert.match(homeHtml, /shynli-city-popup-list__grid/);
+  assert.match(homeHtml, /A-D:/);
+  assert.match(homeHtml, /V-Y:/);
+  assert.match(homeHtml, /North Aurora/);
+  assert.match(homeHtml, /Sugar Grove/);
+  assert.match(homeHtml, /Yorkville/);
+
+  assert.doesNotMatch(serviceAreasHtml, /shynli-extra-service-areas/);
+  assert.doesNotMatch(serviceAreasHtml, /Now serving these cities too/);
+  assert.doesNotMatch(serviceAreasHtml, /New service areas/i);
+  assert.match(serviceAreasHtml, /shynli-city-popup-list__grid/);
+});
+
 test("preserves menu CTA wiring and submenu content after the menu shell replacement", () => {
   const html = sanitizeHtml(readFixture("page108488156.html"), "/");
 
