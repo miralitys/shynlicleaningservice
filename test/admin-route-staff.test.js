@@ -403,7 +403,10 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(calendarSectionBody, /data-admin-dialog-open="admin-staff-assignment-dialog-/);
     assert.match(calendarSectionBody, /aria-label="Открыть заказ Jane Doe"/);
     assert.match(calendarSectionBody, /class="admin-dialog admin-dialog-wide" id="admin-staff-assignment-dialog-/);
-    assert.match(calendarSectionBody, /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff">Сотрудники<\/a>/);
+    assert.match(
+      calendarSectionBody,
+      /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff">[\s\S]*?<span>Сотрудники<\/span>[\s\S]*?<\/a>/
+    );
     assert.match(calendarSectionBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/staff\?section=calendar">Календарь<\/a>/);
 
     const assignmentsSectionResponse = await fetch(`${started.baseUrl}/admin/staff?section=assignments`, {

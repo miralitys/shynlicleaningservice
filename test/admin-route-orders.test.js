@@ -312,7 +312,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         frequency: "weekly",
         selectedDate: "2026-04-14",
         selectedTime: "09:00",
-        fullAddress: "101 Weekly Lane, Aurora, IL",
+        fullAddress: "101 Weekly Lane, Aurora, IL 60505",
         expectedNextSchedule: "04/21/2026, 09:00 AM",
       },
       {
@@ -323,7 +323,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         frequency: "biweekly",
         selectedDate: "2026-04-14",
         selectedTime: "11:30",
-        fullAddress: "202 Biweekly Drive, Naperville, IL",
+        fullAddress: "202 Biweekly Drive, Naperville, IL 60540",
         expectedNextSchedule: "04/28/2026, 11:30 AM",
       },
       {
@@ -334,7 +334,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         frequency: "monthly",
         selectedDate: "2026-04-14",
         selectedTime: "15:15",
-        fullAddress: "303 Monthly Court, Elgin, IL",
+        fullAddress: "303 Monthly Court, Aurora, IL 60505",
         expectedNextSchedule: "06/14/2026, 03:15 PM",
       },
     ];
@@ -761,6 +761,8 @@ test("records inbound SMS replies from the GHL webhook into the order dialog his
         serviceType: "regular",
         selectedDate: "2026-04-20",
         selectedTime: "10:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "0",
         totalPrice: "155.00",
         fullAddress: "901 Follow Up Drive, Bolingbrook, IL 60440",
       }),

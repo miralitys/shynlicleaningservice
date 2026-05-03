@@ -62,6 +62,9 @@ function createMutationDomain() {
     getOrderServiceType(entry = {}) {
       return normalizeString(entry.serviceType, 40);
     },
+    getOrderServiceDurationMinutes(entry = {}) {
+      return Number(getEntryOrderState(entry).serviceDurationMinutes || entry.serviceDurationMinutes || 0);
+    },
     getOrderStatus(entry = {}) {
       return normalizeString(getEntryOrderState(entry).status, 40) || "new";
     },
@@ -162,4 +165,62 @@ test("persists automatic notification state on order updates", () => {
       sent24hAt: "2026-04-19T10:00:00.000Z",
     },
   });
+});
+
+test("persists service duration and carries it into recurring orders", () => {
+  const { applyOrderEntryUpdates, buildRecurringOrderSubmission } = createMutationDomain();
+  const entry = {
+    id: "order-duration-1",
+    requestId: "duration-order-1",
+    customerName: "Duration Customer",
+    customerPhone: "3125550101",
+    customerEmail: "duration@example.com",
+    serviceType: "standard",
+    serviceName: "Standard",
+    fullAddress: "1289 Rickert Dr, Naperville, IL 60563",
+    selectedDate: "2026-04-20",
+    selectedTime: "10:00",
+    totalPrice: 240,
+    totalPriceCents: 24000,
+    payloadForRetry: {
+      calculatorData: {
+        selectedDate: "2026-04-20",
+        selectedTime: "10:00",
+        frequency: "weekly",
+        totalPrice: 240,
+      },
+      orderState: {
+        isCreated: true,
+        status: "scheduled",
+        frequency: "weekly",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:00",
+        paymentStatus: "unpaid",
+        totalPrice: 240,
+      },
+      adminOrder: {
+        isCreated: true,
+        status: "scheduled",
+        frequency: "weekly",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:00",
+        paymentStatus: "unpaid",
+        totalPrice: 240,
+      },
+    },
+  };
+
+  applyOrderEntryUpdates(entry, {
+    serviceDurationMinutes: 150,
+  });
+
+  assert.equal(entry.serviceDurationMinutes, 150);
+  assert.equal(getEntryOrderState(entry).serviceDurationMinutes, 150);
+  assert.equal(getEntryPayload(entry).calculatorData.serviceDurationMinutes, 150);
+
+  const recurringSubmission = buildRecurringOrderSubmission(entry);
+  assert.ok(recurringSubmission);
+  assert.equal(recurringSubmission.payloadForRetry.calculatorData.serviceDurationMinutes, 150);
+  assert.equal(recurringSubmission.payloadForRetry.orderState.serviceDurationMinutes, 150);
+  assert.equal(recurringSubmission.payloadForRetry.adminOrder.serviceDurationMinutes, 150);
 });
