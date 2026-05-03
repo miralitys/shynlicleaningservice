@@ -93,7 +93,7 @@ test("completes the admin login flow without a second factor", async () => {
     const refreshedSessionCookie =
       getSetCookies(dashboardResponse).find((cookie) => cookie.startsWith("shynli_admin_session=")) || "";
     assert.match(refreshedSessionCookie, /Path=\//);
-    assert.match(dashboardBody, /Обзор/i);
+    assert.match(dashboardBody, /Дашборд/i);
     assert.match(dashboardBody, /Выйти/i);
     assert.match(dashboardBody, /admin-sidebar-workspace-card/);
     assert.match(dashboardBody, /admin-sidebar-logout-button/);

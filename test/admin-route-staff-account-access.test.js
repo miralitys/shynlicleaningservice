@@ -136,7 +136,7 @@ test("keeps admin users out of the staff workspace and skips W-9 flow", async ()
     });
     const adminWorkspaceBody = await adminWorkspaceResponse.text();
     assert.equal(adminWorkspaceResponse.status, 200);
-    assert.match(adminWorkspaceBody, /Обзор/i);
+    assert.match(adminWorkspaceBody, /Дашборд/i);
     assert.doesNotMatch(adminWorkspaceBody, /id="account-w9"/i);
 
     const saveW9Response = await fetch(`${started.baseUrl}/account`, {
@@ -313,7 +313,7 @@ test("gives managers the same admin workspace access as admins", async () => {
     });
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
-    assert.match(dashboardBody, /Обзор/i);
+    assert.match(dashboardBody, /Дашборд/i);
     assert.match(dashboardBody, /Менеджер/i);
 
     const managerWorkspacePages = [

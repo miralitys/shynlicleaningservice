@@ -216,7 +216,7 @@ const ACCOUNT_ALL_ROUTES = new Set([
 const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
     path: ADMIN_ROOT_PATH,
-    label: "Обзор",
+    label: "Дашборд",
   },
   {
     path: ADMIN_QUOTE_OPS_PATH,
