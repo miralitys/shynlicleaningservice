@@ -80,6 +80,7 @@ test("renders messages rows as clickable popup triggers without an action column
     assert.doesNotMatch(messagesBody, /<th>\s*Действие\s*<\/th>/);
     assert.match(messagesBody, /class="admin-message-row-new admin-table-row-clickable"/);
     assert.match(messagesBody, /data-admin-dialog-row="true"/);
+    assert.match(messagesBody, /data-admin-dialog-focus="\.admin-ghl-sms-card"/);
     assert.match(messagesBody, new RegExp(`data-admin-dialog-open="admin-order-detail-dialog-${orderEntryId}"`));
     assert.match(messagesBody, new RegExp(`id="admin-order-detail-dialog-${orderEntryId}"`));
     assert.match(messagesBody, /Reply from order workflow\./);
