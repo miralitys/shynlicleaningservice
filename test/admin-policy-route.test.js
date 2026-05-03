@@ -460,6 +460,15 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(confirmationPageBody, /Confirm and Sign/);
     assert.match(confirmationPageBody, /Terms of Service/);
     assert.match(confirmationPageBody, /Payment and Cancellation Policy/);
+    assert.match(
+      confirmationPageBody,
+      /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/terms-of-service" target="_blank" rel="noopener noreferrer" data-policy-doc-link/
+    );
+    assert.match(
+      confirmationPageBody,
+      /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/cancellation-policy" target="_blank" rel="noopener noreferrer" data-policy-doc-link/
+    );
+    assert.match(confirmationPageBody, /window\.open\(href, "_blank", "noopener,noreferrer"\)/);
     assert.doesNotMatch(confirmationPageBody, /id="confirm-button"[^>]*disabled/);
     assert.match(
       confirmationPageBody,
