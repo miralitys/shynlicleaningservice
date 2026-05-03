@@ -196,10 +196,37 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.equal(createUserResponse.status, 303);
     assert.match(createUserResponse.headers.get("location") || "", /notice=user-created-email-skipped/);
 
+    const createAdminUserResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Zoe Admin",
+        role: "admin",
+        status: "active",
+        staffStatus: "active",
+        email: "zoe.admin@example.com",
+        phone: "3125550181",
+        address: "521 Admin Lane, Naperville, IL 60540",
+        compensationValue: "180",
+        compensationType: "fixed",
+        notes: "Quote admin",
+        password: "StrongPass123!",
+      }),
+    });
+    assert.equal(createAdminUserResponse.status, 303);
+    assert.match(createAdminUserResponse.headers.get("location") || "", /notice=user-created-email-skipped/);
+
     const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
-    assert.equal(usersStorePayload.users.length, 1);
-    const managerUserId = usersStorePayload.users[0].id;
+    assert.equal(usersStorePayload.users.length, 2);
+    const managerUserId = usersStorePayload.users.find((user) => user.email === "mila.manager@example.com").id;
+    const adminUserId = usersStorePayload.users.find((user) => user.email === "zoe.admin@example.com").id;
     assert.ok(managerUserId);
+    assert.ok(adminUserId);
 
     const funnelResponse = await fetch(`${started.baseUrl}/admin/quote-ops?section=funnel`, {
       headers: {
@@ -330,13 +357,16 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /Таски по заявкам/);
     assert.doesNotMatch(tasksBody, /Весь поток заявок с сайта\./);
     assert.doesNotMatch(tasksBody, /За 24 часа/);
-    assert.match(tasksBody, /Создать таск вручную/);
+    assert.doesNotMatch(tasksBody, /admin-quote-manual-task-card/);
+    assert.match(tasksBody, /id="admin-quote-create-task-dialog"/);
+    assert.match(tasksBody, /admin-nav-sublink-danger/);
+    assert.match(tasksBody, /Выберите админа или менеджера/);
+    assert.match(tasksBody, /Zoe Admin — админ/);
     assert.match(tasksBody, /name="action" value="create-lead-task"/);
-    assert.match(tasksBody, /Не менять менеджера заявки/);
     assert.match(tasksBody, /admin-orders-filter-toggle/);
     assert.match(tasksBody, /admin-clients-search-form/);
     assert.match(tasksBody, /admin-quote-task-table/);
-    assert.match(tasksBody, /<th>Таск<\/th>\s*<th>Дедлайн<\/th>\s*<th>Этап<\/th>\s*<th>Менеджер<\/th>\s*<th>Заявка<\/th>/);
+    assert.match(tasksBody, /<th>Таск<\/th>\s*<th>Дедлайн<\/th>\s*<th>Этап<\/th>\s*<th>Исполнитель<\/th>\s*<th>Заявка<\/th>/);
     assert.doesNotMatch(tasksBody, /<th>Действия<\/th>/);
     assert.match(tasksBody, /data-admin-dialog-row="true"/);
     assert.match(tasksBody, /admin-quote-task-row-overdue td/);
@@ -361,7 +391,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
         entryId,
         taskTitle: "Проверить ручную заметку менеджера",
         taskDueAt: "2030-05-01T10:30",
-        managerId: managerUserId,
+        assigneeId: adminUserId,
         returnTo: `/admin/quote-ops?section=tasks&managerId=${encodeURIComponent(managerUserId)}&q=${encodeURIComponent("funnel-request-1")}`,
       }),
     });
@@ -379,6 +409,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     const manualTasksBody = await manualTasksResponse.text();
     assert.equal(manualTasksResponse.status, 200);
     assert.match(manualTasksBody, /Проверить ручную заметку менеджера/);
+    assert.match(manualTasksBody, /Zoe Admin/);
     assert.match(manualTasksBody, /Закрыть ручной таск/);
     assert.match(manualTasksBody, /Отметить выполнено/);
 
