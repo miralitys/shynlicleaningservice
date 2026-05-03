@@ -173,6 +173,16 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
   }
 });
 
+test("injects quote runtime config with supported service ZIP codes", () => {
+  const quoteHtml = sanitizeHtml(readFixture("quote2.html"), "/quote");
+
+  assert.match(quoteHtml, /id="runtime-config"/);
+  assert.match(quoteHtml, /serviceAreaZipCodes/);
+  assert.match(quoteHtml, /"60563"/);
+  assert.match(quoteHtml, /"60512"/);
+  assert.match(quoteHtml, /googlePlacesApiKey:\s*""/);
+});
+
 test("injects quote-start widget runtime wherever quick quote widgets exist", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
   const cityHtml = sanitizeHtml(readFixture("page111640886.html"), "/romeoville");

@@ -4,8 +4,19 @@
   const QUOTE_PAGE_PATH = "/quote";
   const QUOTE_SUBMISSION_ENDPOINT = "/api/quote/submit";
   const STRIPE_CHECKOUT_ENDPOINT = "/api/stripe/checkout-session";
+  const RUNTIME_CONFIG = window.__shynliRuntimeConfig || {};
   const GOOGLE_PLACES_API_KEY =
-    (window.__shynliRuntimeConfig && window.__shynliRuntimeConfig.googlePlacesApiKey) || "";
+    RUNTIME_CONFIG.googlePlacesApiKey || "";
+  const SERVICE_AREA_ZIP_CODES = new Set(
+    Array.isArray(RUNTIME_CONFIG.serviceAreaZipCodes)
+      ? RUNTIME_CONFIG.serviceAreaZipCodes
+          .map(function (zipCode) {
+            return String(zipCode || "").trim();
+          })
+          .filter(Boolean)
+      : []
+  );
+  const SERVICE_AREA_ZIP_VALIDATION_ENABLED = SERVICE_AREA_ZIP_CODES.size > 0;
 
   const PRICING = {
     regular: {
@@ -146,6 +157,7 @@
     city: document.getElementById("quote2City"),
     state: document.getElementById("quote2State"),
     zipCode: document.getElementById("quote2ZipCode"),
+    addressError: document.getElementById("quote2AddressError"),
     selectedDate: document.getElementById("quote2SelectedDate"),
     selectedDateDisplay: document.getElementById("quote2SelectedDateDisplay"),
     selectedTime: document.getElementById("quote2SelectedTime"),
@@ -190,6 +202,46 @@
     if (digits.length >= 4) formatted += `) ${digits.slice(4, 7)}`;
     if (digits.length >= 7) formatted += `-${digits.slice(7, 11)}`;
     return formatted;
+  }
+
+  function normalizeZipCodeValue(value) {
+    const digits = String(value || "").replace(/\D/g, "").slice(0, 5);
+    return digits.length === 5 ? digits : "";
+  }
+
+  function extractZipCodeFromText(value) {
+    const match = String(value || "").match(/\b(\d{5})(?:-\d{4})?\b/);
+    return match ? normalizeZipCodeValue(match[1]) : "";
+  }
+
+  function resolveServiceAreaZipCode() {
+    const explicitZipCode = normalizeZipCodeValue(elements.zipCode.value);
+    if (explicitZipCode) return explicitZipCode;
+
+    const fallbackSources = [
+      getFullAddress(),
+      getCompleteAddress(),
+      elements.addressLine2.value,
+    ];
+
+    for (const source of fallbackSources) {
+      const extractedZipCode = extractZipCodeFromText(source);
+      if (extractedZipCode) return extractedZipCode;
+    }
+
+    return "";
+  }
+
+  function isSupportedServiceAreaZip(zipCode) {
+    if (!SERVICE_AREA_ZIP_VALIDATION_ENABLED) return true;
+    return Boolean(zipCode) && SERVICE_AREA_ZIP_CODES.has(String(zipCode));
+  }
+
+  function getUnsupportedServiceAreaMessage(zipCode) {
+    if (zipCode) {
+      return `Sorry, we do not currently service ZIP code ${zipCode}.`;
+    }
+    return "Please enter a valid 5-digit ZIP code within our service area.";
   }
 
   function formatCurrency(value) {
@@ -574,6 +626,46 @@
     elements.formError.textContent = message;
   }
 
+  function setAddressError(message) {
+    if (!elements.addressError) return;
+    if (!message) {
+      elements.addressError.hidden = true;
+      elements.addressError.textContent = "";
+      return;
+    }
+    elements.addressError.hidden = false;
+    elements.addressError.textContent = message;
+  }
+
+  function syncAddressZipValidation() {
+    const explicitZipCode = String(elements.zipCode.value || "").replace(/\D/g, "").slice(0, 5);
+    if (explicitZipCode !== elements.zipCode.value) {
+      elements.zipCode.value = explicitZipCode;
+    }
+
+    let serviceAreaZipCode = resolveServiceAreaZipCode();
+    if (
+      serviceAreaZipCode &&
+      !elements.zipCode.value &&
+      getFullAddress()
+    ) {
+      elements.zipCode.value = serviceAreaZipCode;
+      serviceAreaZipCode = resolveServiceAreaZipCode();
+    }
+
+    if (!SERVICE_AREA_ZIP_VALIDATION_ENABLED) {
+      setAddressError("");
+      return;
+    }
+
+    if (serviceAreaZipCode && !isSupportedServiceAreaZip(serviceAreaZipCode)) {
+      setAddressError(getUnsupportedServiceAreaMessage(serviceAreaZipCode));
+      return;
+    }
+
+    setAddressError("");
+  }
+
   function isContactStepComplete() {
     return (
       elements.fullName.value.trim().length > 0 &&
@@ -582,10 +674,39 @@
   }
 
   function isAddressStepComplete() {
-    return Boolean(getFullAddress() && elements.selectedDate.value && elements.selectedTime.value);
+    const serviceAreaZipCode = resolveServiceAreaZipCode();
+    return Boolean(
+      getFullAddress() &&
+      elements.selectedDate.value &&
+      elements.selectedTime.value &&
+      serviceAreaZipCode &&
+      isSupportedServiceAreaZip(serviceAreaZipCode)
+    );
+  }
+
+  function getAddressStepValidationMessage() {
+    if (!getFullAddress()) {
+      return "Please enter the service address.";
+    }
+
+    const serviceAreaZipCode = resolveServiceAreaZipCode();
+    if (!serviceAreaZipCode) {
+      return "Please enter a valid 5-digit ZIP code within our service area.";
+    }
+
+    if (!isSupportedServiceAreaZip(serviceAreaZipCode)) {
+      return getUnsupportedServiceAreaMessage(serviceAreaZipCode);
+    }
+
+    if (!elements.selectedDate.value || !elements.selectedTime.value) {
+      return "Please complete the service address, date, and preferred arrival time.";
+    }
+
+    return "";
   }
 
   function updateEstimateTargets() {
+    syncAddressZipValidation();
     const pricing = calculateCurrentPricing();
     elements.estimateTargets.forEach(function (target) {
       target.textContent = formatCurrency(pricing.totalPrice);
@@ -898,10 +1019,13 @@
   }
 
   function openNotesStep() {
-    if (!isAddressStepComplete()) {
-      setFormError("Please complete the address, date, and preferred arrival time first.");
+    const addressStepMessage = getAddressStepValidationMessage();
+    if (addressStepMessage) {
+      setAddressError(addressStepMessage);
+      setFormError(addressStepMessage);
       return;
     }
+    setAddressError("");
     setFormError("");
     state.addressConfirmed = true;
     refreshStepVisibility({ skipScroll: true });
@@ -923,8 +1047,10 @@
       return false;
     }
 
-    if (!isAddressStepComplete()) {
-      setFormError("Please complete the service address, date, and preferred arrival time.");
+    const addressStepMessage = getAddressStepValidationMessage();
+    if (addressStepMessage) {
+      setAddressError(addressStepMessage);
+      setFormError(addressStepMessage);
       return false;
     }
 
@@ -933,6 +1059,7 @@
       return false;
     }
 
+    setAddressError("");
     setFormError("");
     return true;
   }
@@ -942,6 +1069,10 @@
     const fullName = elements.fullName.value.trim();
     const fullAddress = getFullAddress();
     const completeAddress = getCompleteAddress() || fullAddress;
+    const serviceAreaZipCode = resolveServiceAreaZipCode();
+    if (serviceAreaZipCode) {
+      elements.zipCode.value = serviceAreaZipCode;
+    }
     const contactData = {
       fullName: fullName,
       phone: normalizeUsPhoneDigits(elements.phone.value),
@@ -968,7 +1099,7 @@
       addressLine2: elements.addressLine2.value.trim(),
       city: elements.city.value.trim(),
       state: elements.state.value.trim(),
-      zipCode: elements.zipCode.value.trim(),
+      zipCode: serviceAreaZipCode,
     };
 
     return {

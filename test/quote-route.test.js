@@ -22,6 +22,19 @@ async function waitFor(predicate, options = {}) {
   return predicate();
 }
 
+function buildSupportedQuote(overrides = {}) {
+  return {
+    serviceType: "regular",
+    totalPrice: 120,
+    selectedDate: "2026-03-22",
+    selectedTime: "09:00",
+    fullAddress: "123 Main St, Romeoville, IL 60446",
+    zipCode: "60446",
+    consent: true,
+    ...overrides,
+  };
+}
+
 test("rejects non-POST quote submission requests", async () => {
   const started = await startServer();
 
@@ -55,7 +68,7 @@ test("rejects malformed quote submission JSON", async () => {
   }
 });
 
-test("returns a graceful 503 when LeadConnector is not configured", async () => {
+test("rejects quote submissions outside the service area ZIP coverage", async () => {
   const started = await startServer();
 
   try {
@@ -72,8 +85,34 @@ test("returns a graceful 503 when LeadConnector is not configured", async () => 
           totalPrice: 120,
           selectedDate: "2026-03-22",
           selectedTime: "09:00",
+          fullAddress: "123 Main St, Chicago, IL 60601",
           consent: true,
         },
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    const payload = await response.json();
+    assert.equal(payload.code, "UNSUPPORTED_SERVICE_AREA_ZIP");
+    assert.match(payload.error, /do not currently service ZIP code 60601/i);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
+test("returns a graceful 503 when LeadConnector is not configured", async () => {
+  const started = await startServer();
+
+  try {
+    const response = await fetch(`${started.baseUrl}/api/quote/submit`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        contact: {
+          fullName: "Jane Doe",
+          phone: "312-555-0100",
+        },
+        quote: buildSupportedQuote(),
       }),
     });
 
@@ -97,13 +136,7 @@ test("keeps the legacy /api/quote/request alias wired to the same backend flow",
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
 
@@ -127,13 +160,7 @@ test("keeps the legacy /api/quote/request alias wired to the same handler", asyn
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
 
@@ -499,13 +526,7 @@ test("surfaces a sanitized 502 when the CRM upstream fails", async () => {
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
 
@@ -563,13 +584,7 @@ test("keeps quote requests local when optional CRM side effects are disabled", a
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
 
@@ -669,13 +684,7 @@ test("does not create Go High Level opportunities for quote requests", async () 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
 
@@ -743,17 +752,13 @@ test("returns canonical repriced values while keeping quote history local", asyn
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
+        quote: buildSupportedQuote({
           frequency: "biweekly",
           rooms: 0,
           bathrooms: 0,
           squareMeters: 1,
           totalPrice: 1,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        }),
       }),
     });
 
@@ -803,13 +808,7 @@ test("rate limits repeated quote submissions", async () => {
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     };
 
@@ -844,13 +843,7 @@ test("ignores X-Forwarded-For unless proxy trust is enabled and the proxy IP is 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
     assert.equal(firstResponse.status, 503);
@@ -866,13 +859,7 @@ test("ignores X-Forwarded-For unless proxy trust is enabled and the proxy IP is 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
     assert.equal(secondResponse.status, 429);
@@ -899,13 +886,7 @@ test("ignores X-Forwarded-For unless proxy trust is enabled and the proxy IP is 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
     assert.equal(firstFlagOnlyResponse.status, 503);
@@ -921,13 +902,7 @@ test("ignores X-Forwarded-For unless proxy trust is enabled and the proxy IP is 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
     assert.equal(secondFlagOnlyResponse.status, 429);
@@ -955,13 +930,7 @@ test("ignores X-Forwarded-For unless proxy trust is enabled and the proxy IP is 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
     assert.equal(firstTrustedResponse.status, 503);
@@ -977,13 +946,7 @@ test("ignores X-Forwarded-For unless proxy trust is enabled and the proxy IP is 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
     assert.equal(secondTrustedResponse.status, 503);
@@ -999,13 +962,7 @@ test("ignores X-Forwarded-For unless proxy trust is enabled and the proxy IP is 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
     assert.equal(firstSpoofedChainResponse.status, 503);
@@ -1021,13 +978,7 @@ test("ignores X-Forwarded-For unless proxy trust is enabled and the proxy IP is 
           fullName: "Jane Doe",
           phone: "312-555-0100",
         },
-        quote: {
-          serviceType: "regular",
-          totalPrice: 120,
-          selectedDate: "2026-03-22",
-          selectedTime: "09:00",
-          consent: true,
-        },
+        quote: buildSupportedQuote(),
       }),
     });
     assert.equal(secondSpoofedChainResponse.status, 429);

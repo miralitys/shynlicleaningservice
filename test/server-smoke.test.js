@@ -703,6 +703,9 @@ test("injects quote metadata, shared icons, and GTM into the quote page", async 
   assert.match(body, /<link rel="apple-touch-icon" href="\/images\/tild3636-3965-4134-a432-323337623835__insta_32\.png" \/>/);
   assert.match(body, /<link rel="manifest" href="\/site\.webmanifest" \/>/);
   assert.match(body, /id="shynli-tracking-script"/);
+  assert.match(body, /id="runtime-config"/);
+  assert.match(body, /serviceAreaZipCodes/);
+  assert.match(body, /"60563"/);
   assert.match(body, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
   assert.match(body, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/);
   assert.doesNotMatch(body, /googletagmanager\.com\/gtag\/js\?id=/);
