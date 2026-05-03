@@ -206,6 +206,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/bartlett", /Bartlett/i],
     ["/batavia", /Batavia/i],
     ["/bolingbrook", /Bolingbrook/i],
+    ["/bristol", /Bristol/i],
     ["/burrridge", /Burr Ridge/i],
     ["/carolstream", /Carol Stream/i],
     ["/clarendonhills", /Clarendon Hills/i],
@@ -300,8 +301,10 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
   assert.match(body, /North Aurora/);
   assert.match(body, /Sugar Grove/);
   assert.match(body, /Yorkville/);
+  assert.match(body, /Bristol/);
   assert.doesNotMatch(body, /shynli-extra-service-areas/);
   assert.doesNotMatch(body, /Now serving these cities too/);
+  assert.match(body, /"60512":\{"city":"Bristol","url":"\/bristol"\}/);
   assert.match(body, /"60542":\{"city":"North Aurora","url":"\/northaurora"\}/);
   assert.match(body, /"60554":\{"city":"Sugar Grove","url":"\/sugargrove"\}/);
   assert.match(body, /"60560":\{"city":"Yorkville","url":"\/yorkville"\}/);

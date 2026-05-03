@@ -289,6 +289,7 @@ test("keeps separate desktop behaviors for blog Services hover and City modal", 
   assert.match(html, /V-Y:/);
   assert.match(html, /Addison/);
   assert.match(html, /Naperville/);
+  assert.match(html, /Bristol/);
   assert.match(html, /North Aurora/);
   assert.match(html, /Sugar Grove/);
   assert.match(html, /Yorkville/);
@@ -308,6 +309,7 @@ test("rebuilds shared marketing city popups and removes the temporary extra city
   assert.match(homeHtml, /t396__artboard t396__artboard_pointer-events-auto/);
   assert.match(homeHtml, /A-D:/);
   assert.match(homeHtml, /V-Y:/);
+  assert.match(homeHtml, /Bristol/);
   assert.match(homeHtml, /North Aurora/);
   assert.match(homeHtml, /Sugar Grove/);
   assert.match(homeHtml, /Yorkville/);
