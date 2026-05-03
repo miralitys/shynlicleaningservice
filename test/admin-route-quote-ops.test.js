@@ -208,7 +208,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     });
     const funnelBody = await funnelResponse.text();
     assert.equal(funnelResponse.status, 200);
-    assert.match(funnelBody, /Воронка заявок/);
+    assert.match(funnelBody, /Статус заявок/);
     assert.match(funnelBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/quote-ops\?section=funnel"/);
     assert.match(funnelBody, /href="\/admin\/quote-ops\?section=tasks"/);
     assert.doesNotMatch(funnelBody, /Весь поток заявок с сайта\./);

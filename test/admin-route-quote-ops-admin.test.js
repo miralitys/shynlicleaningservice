@@ -173,7 +173,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /Оплачено/);
     assert.match(ordersBody, /Ждем отзыв/);
     assert.match(ordersBody, /admin-compact-summary-strip/);
-    assert.match(ordersBody, /Воронка заказов/);
+    assert.match(ordersBody, /Статус заказов/);
     assert.match(ordersBody, /class="admin-order-funnel-board"/);
     assert.match(ordersBody, /\.admin-order-funnel-board\s*\{[\s\S]*display:\s*flex;[\s\S]*flex-wrap:\s*nowrap;[\s\S]*overflow-x:\s*auto;/);
     assert.match(ordersBody, /admin-order-funnel-column-policy/);
