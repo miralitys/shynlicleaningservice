@@ -340,6 +340,7 @@ test("sends assignment SMS once per schedule signature for scheduled orders", as
   assert.equal(firstResult.sent, 1);
   assert.equal(leadConnectorClient.calls.length, 1);
   assert.equal(staffUpdateCalls.length, 1);
+  assert.equal(Boolean(leadConnectorClient.calls[0].allowDirectToNumber), true);
   assert.match(leadConnectorClient.calls[0].message, /На вас назначена уборка SHYNLI/i);
   assert.match(leadConnectorClient.calls[0].message, /Подтвердите или отклоните заказ/i);
   assert.match(leadConnectorClient.calls[0].message, /shynlicleaningservice\.com\/account/i);
@@ -420,6 +421,119 @@ test("sends assignment SMS for rescheduled orders when staff is assigned", async
   assert.equal(leadConnectorClient.calls.length, 1);
   assert.match(leadConnectorClient.calls[0].message, /На вас назначена уборка SHYNLI/i);
   assert.match(leadConnectorClient.calls[0].message, /Дата и время: 2026-04-21 в 12:30/i);
+});
+
+test("falls back to contact-based assignment SMS when direct send is rejected", async () => {
+  const entry = createOrderEntry({
+    id: "order-assignment-fallback-1",
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorSequenceStub([
+    { ok: false, code: "SMS_SEND_FAILED", message: "Direct send blocked." },
+    { ok: true, contactId: "staff-contact-1" },
+  ]);
+  const staffUpdateCalls = [];
+  const staffStore = {
+    async getSnapshot() {
+      return {
+        staff: [
+          {
+            id: "staff-1",
+            name: "Olga Stone",
+            phone: "3125550222",
+            email: "olga@example.com",
+            smsHistory: [],
+          },
+        ],
+      };
+    },
+    async updateStaff(staffId, updates = {}) {
+      staffUpdateCalls.push({ staffId, updates });
+      return { id: staffId, ...updates };
+    },
+  };
+
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+    staffStore,
+    siteOrigin: "https://shynlicleaningservice.com",
+  });
+
+  const result = await service.notifyScheduledAssignment({
+    entry,
+    assignment: {
+      staffIds: ["staff-1"],
+      scheduleDate: "2026-04-20",
+      scheduleTime: "10:00",
+      status: "planned",
+      notes: "",
+    },
+    leadConnectorClient,
+  });
+
+  assert.equal(result.sent, 1);
+  assert.equal(leadConnectorClient.calls.length, 2);
+  assert.equal(Boolean(leadConnectorClient.calls[0].allowDirectToNumber), true);
+  assert.equal(Boolean(leadConnectorClient.calls[1].allowDirectToNumber), false);
+  assert.equal(staffUpdateCalls.length, 1);
+});
+
+test("logs assignment SMS failures when both assignment send attempts are rejected", async () => {
+  const entry = createOrderEntry({
+    id: "order-assignment-failure-1",
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorSequenceStub([
+    { ok: false, code: "SMS_SEND_FAILED", message: "Direct send blocked." },
+    { ok: false, code: "CONTACT_NOT_FOUND", message: "Recipient not reachable." },
+  ]);
+  const loggedEvents = [];
+  const staffStore = {
+    async getSnapshot() {
+      return {
+        staff: [
+          {
+            id: "staff-1",
+            name: "Olga Stone",
+            phone: "3125550222",
+            email: "olga@example.com",
+            smsHistory: [],
+          },
+        ],
+      };
+    },
+    async updateStaff() {
+      return null;
+    },
+  };
+
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+    staffStore,
+    siteOrigin: "https://shynlicleaningservice.com",
+    log(entry) {
+      loggedEvents.push(entry);
+    },
+  });
+
+  const result = await service.notifyScheduledAssignment({
+    entry,
+    assignment: {
+      staffIds: ["staff-1"],
+      scheduleDate: "2026-04-20",
+      scheduleTime: "10:00",
+      status: "planned",
+      notes: "",
+    },
+    leadConnectorClient,
+  });
+
+  assert.equal(result.sent, 0);
+  assert.equal(leadConnectorClient.calls.length, 2);
+  assert.equal(loggedEvents.length, 1);
+  assert.equal(loggedEvents[0].type, "assignment_staff_sms_failed");
+  assert.equal(loggedEvents[0].code, "CONTACT_NOT_FOUND");
+  assert.match(loggedEvents[0].message, /Recipient not reachable/i);
 });
 
 test("sends client reminder SMS at 48h, 24h and 1h without duplicates", async () => {
