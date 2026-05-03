@@ -359,7 +359,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.doesNotMatch(tasksBody, /За 24 часа/);
     assert.doesNotMatch(tasksBody, /admin-quote-manual-task-card/);
     assert.match(tasksBody, /id="admin-quote-create-task-dialog"/);
-    assert.match(tasksBody, /admin-nav-sublink-danger/);
+    assert.doesNotMatch(tasksBody, /admin-nav-sublink-danger/);
+    assert.match(tasksBody, /admin-quote-create-task-trigger/);
     assert.match(tasksBody, /Выберите админа или менеджера/);
     assert.match(tasksBody, /Zoe Admin — админ/);
     assert.match(tasksBody, /name="action" value="create-lead-task"/);
