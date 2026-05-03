@@ -286,9 +286,12 @@ test("keeps separate desktop behaviors for blog Services hover and City modal", 
   assert.match(html, /data-city-modal/);
   assert.match(html, /Service areas by city/);
   assert.match(html, /A-D:/);
-  assert.match(html, /V-W:/);
+  assert.match(html, /V-Y:/);
   assert.match(html, /Addison/);
   assert.match(html, /Naperville/);
+  assert.match(html, /North Aurora/);
+  assert.match(html, /Sugar Grove/);
+  assert.match(html, /Yorkville/);
   assert.match(html, /Downers Grove/);
   assert.match(html, /Woodridge/);
 });

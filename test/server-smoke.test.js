@@ -223,12 +223,14 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/lombard", /Lombard/i],
     ["/montgomery", /Montgomery/i],
     ["/naperville", /Naperville/i],
+    ["/northaurora", /North Aurora/i],
     ["/oakbrook", /Oak Brook/i],
     ["/oswego", /Oswego/i],
     ["/plainfield", /Plainfield/i],
     ["/romeoville", /Romeoville/i],
     ["/stcharles", /St\.? Charles/i],
     ["/streamwood", /Streamwood/i],
+    ["/sugargrove", /Sugar Grove/i],
     ["/villapark", /Villa Park/i],
     ["/warrenville", /Warrenville/i],
     ["/wayne", /Wayne/i],
@@ -239,6 +241,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/winfield", /Winfield/i],
     ["/wooddale", /Wood Dale/i],
     ["/woodridge", /Woodridge/i],
+    ["/yorkville", /Yorkville/i],
   ];
 
   for (const [route, expectedTitle] of cityRoutes) {
@@ -284,6 +287,19 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
     assert.match(body, /href="#city"/, route);
     assert.match(body, /href="#clean"/, route);
   }
+});
+
+test("shows the newly added cities on the service areas page and ZIP lookup", async () => {
+  const response = await fetch(`${BASE_URL}/service-areas`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(body, /North Aurora/);
+  assert.match(body, /Sugar Grove/);
+  assert.match(body, /Yorkville/);
+  assert.match(body, /"60542":\{"city":"North Aurora","url":"\/northaurora"\}/);
+  assert.match(body, /"60554":\{"city":"Sugar Grove","url":"\/sugargrove"\}/);
+  assert.match(body, /"60560":\{"city":"Yorkville","url":"\/yorkville"\}/);
 });
 
 test("serves service pages with the shared popup and menu runtime", async () => {
