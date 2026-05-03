@@ -561,7 +561,10 @@ test("sends client en-route SMS once when an order moves to en-route", async () 
 
   assert.equal(firstResult.sent, true);
   assert.equal(leadConnectorClient.calls.length, 1);
-  assert.equal(leadConnectorClient.calls[0].message, "Ваш клинер в пути.");
+  assert.equal(
+    leadConnectorClient.calls[0].message,
+    "Your SHYNLI cleaner is on the way. They will be there soon. See you soon."
+  );
   assert.equal((firstResult.entry.payloadForRetry.adminSms.history || []).length, 1);
   assert.equal(firstResult.entry.payloadForRetry.adminSms.history[0].targetType, "client-en-route");
   const notificationState = getOrderNotificationState(firstResult.entry);

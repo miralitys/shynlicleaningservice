@@ -1638,7 +1638,10 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     const enRouteCustomerSmsRequests = enRouteCaptureLines.filter((record) => {
       if (!String(record.url).includes("/conversations/messages")) return false;
       try {
-        return JSON.parse(record.body).message === "Ваш клинер в пути.";
+        return (
+          JSON.parse(record.body).message ===
+          "Your SHYNLI cleaner is on the way. They will be there soon. See you soon."
+        );
       } catch {
         return false;
       }
@@ -1646,7 +1649,10 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(enRouteCustomerSmsRequests.length, 1);
     const enRouteCustomerSmsPayload = JSON.parse(enRouteCustomerSmsRequests[0].body);
     assert.equal(enRouteCustomerSmsPayload.toNumber, "+13125551188");
-    assert.equal(enRouteCustomerSmsPayload.message, "Ваш клинер в пути.");
+    assert.equal(
+      enRouteCustomerSmsPayload.message,
+      "Your SHYNLI cleaner is on the way. They will be there soon. See you soon."
+    );
 
     const repeatedEnRouteAsyncResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
