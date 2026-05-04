@@ -419,6 +419,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.equal(updateStatusPayload.notice, "lead-stage-saved");
     assert.equal(updateStatusPayload.entry.leadStatus, "discussion");
     assert.equal(updateStatusPayload.entry.taskLabel, "Связаться с клиентом в назначенное время");
+    assert.equal(updateStatusPayload.entry.dueLabel, "04/17/2026, 09:15 AM");
 
     const dialogAfterStatusResponse = await fetch(
       `${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("funnel-request-1")}&entry=${encodeURIComponent(entryId)}`,
