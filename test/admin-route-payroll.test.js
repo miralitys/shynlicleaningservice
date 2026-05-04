@@ -117,8 +117,8 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
         action: "save-assignment",
         entryId,
         staffIds: staffId,
-        scheduleDate: "",
-        scheduleTime: "",
+        scheduleDate: "2026-05-01",
+        scheduleTime: "10:00",
         status: "planned",
         notes: "",
       }),
@@ -142,7 +142,7 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
     });
     assert.equal(completeResponse.status, 303);
 
-    const payrollResponse = await fetch(`${started.baseUrl}/admin/payroll`, {
+    const payrollResponse = await fetch(`${started.baseUrl}/admin/payroll?clientWeek=2026-W18`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -156,11 +156,19 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
     assert.match(payrollBody, /К выплате/i);
     assert.match(payrollBody, /name="dateFrom"/);
     assert.match(payrollBody, /name="dateTo"/);
-    assert.match(payrollBody, /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff">Сотрудники<\/a>/);
+    assert.match(payrollBody, /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff"[\s\S]*Сотрудники/);
     assert.match(payrollBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/payroll">Зарплаты<\/a>/);
     assert.match(payrollBody, /data-admin-dialog-row="true"/);
     assert.match(payrollBody, /admin-order-detail-dialog-/);
     assert.doesNotMatch(payrollBody, /Открыть заказ/);
+    assert.match(payrollBody, /История клиентов/i);
+    assert.match(payrollBody, /18-я неделя - 04\/27\/2026 - 05\/03\/2026/i);
+    assert.match(payrollBody, /name="clientWeek"/);
+    assert.match(payrollBody, /value="2026-W18" selected/);
+    assert.match(
+      payrollBody,
+      /data-admin-payroll-client-history-row="true"[\s\S]*Payroll Admin Client[\s\S]*\$240\.00[\s\S]*Olga Payroll/
+    );
 
     const markPaidResponse = await fetch(`${started.baseUrl}/admin/payroll`, {
       method: "POST",
@@ -173,7 +181,7 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
         action: "mark-payroll-paid",
         entryId,
         staffId,
-        returnTo: "/admin/payroll",
+        returnTo: "/admin/payroll?clientWeek=2026-W18",
       }),
     });
     assert.equal(markPaidResponse.status, 303);
@@ -343,8 +351,8 @@ test("splits percent payroll across a two-person team on the admin payroll scree
     assignParams.set("entryId", entryId);
     assignParams.append("staffIds", staffA.id);
     assignParams.append("staffIds", staffB.id);
-    assignParams.set("scheduleDate", "");
-    assignParams.set("scheduleTime", "");
+    assignParams.set("scheduleDate", "2026-05-01");
+    assignParams.set("scheduleTime", "10:00");
     assignParams.set("status", "planned");
     assignParams.set("notes", "");
 
@@ -375,7 +383,7 @@ test("splits percent payroll across a two-person team on the admin payroll scree
     });
     assert.equal(completeResponse.status, 303);
 
-    const payrollResponse = await fetch(`${started.baseUrl}/admin/payroll`, {
+    const payrollResponse = await fetch(`${started.baseUrl}/admin/payroll?clientWeek=2026-W18`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -387,6 +395,10 @@ test("splits percent payroll across a two-person team on the admin payroll scree
     assert.match(payrollBody, /50% база/);
     assert.match(payrollBody, /25% на человека • команда 2/);
     assert.ok((payrollBody.match(/\$60\.00/g) || []).length >= 2);
+    assert.match(
+      payrollBody,
+      /data-admin-payroll-client-history-row="true"[\s\S]*Payroll Team Client[\s\S]*\$240\.00[\s\S]*Anna Split[\s\S]*Olga Split/
+    );
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
