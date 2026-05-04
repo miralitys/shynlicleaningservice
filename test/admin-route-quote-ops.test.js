@@ -127,6 +127,96 @@ async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
   return entryIdMatch[1];
 }
 
+test("shows a new quote badge in the sidebar until the lead leaves the new stage", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-sidebar-badge-123",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        conversationId: "conversation-sidebar-badge",
+        messageId: "message-sidebar-badge",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "sidebar-badge-request-1",
+      fullName: "Sidebar Badge Lead",
+      phone: "312-555-0144",
+      email: "sidebar.badge@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-05-14",
+      selectedTime: "09:00",
+      fullAddress: "220 Badge Lane, Romeoville, IL 60446",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const dashboardResponse = await fetch(`${started.baseUrl}/admin`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const dashboardBody = await dashboardResponse.text();
+    assert.equal(dashboardResponse.status, 200);
+    assert.match(dashboardBody, /data-admin-nav-new-quote-count="1"/);
+    assert.match(dashboardBody, />1 новая</);
+
+    const entryId = await getQuoteOpsEntryId(started.baseUrl, sessionCookieValue, "sidebar-badge-request-1");
+    const updateStatusResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+      },
+      body: new URLSearchParams({
+        action: "update-lead-status",
+        entryId,
+        leadStatus: "no-response",
+        returnTo: "/admin/quote-ops",
+      }),
+    });
+    assert.equal(updateStatusResponse.status, 200);
+
+    const updatedDashboardResponse = await fetch(`${started.baseUrl}/admin`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const updatedDashboardBody = await updatedDashboardResponse.text();
+    assert.equal(updatedDashboardResponse.status, 200);
+    assert.doesNotMatch(updatedDashboardBody, /data-admin-nav-new-quote-count=/);
+    assert.doesNotMatch(updatedDashboardBody, />1 новая</);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("renders quote ops funnel and tasks with manager ownership and creates an order after confirmation", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-funnel-route-"));
   const fetchStub = createFetchStub([
