@@ -5,7 +5,7 @@ const assert = require("node:assert/strict");
 
 const { renderPolicyAcceptancePage } = require("../lib/order-policy/public-page");
 
-test("renders policy documents as new-tab links on the public signature page", () => {
+test("opens policy documents inside the public signature page", () => {
   const html = renderPolicyAcceptancePage({
     token: "policy-token-123",
     payload: {
@@ -45,11 +45,15 @@ test("renders policy documents as new-tab links on the public signature page", (
 
   assert.match(
     html,
-    /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/terms-of-service" target="_blank" rel="noopener noreferrer" data-policy-doc-link/
+    /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/terms-of-service" data-policy-doc-link data-policy-doc-title="Terms of Service"/
   );
   assert.match(
     html,
-    /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/cancellation-policy" target="_blank" rel="noopener noreferrer" data-policy-doc-link/
+    /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/cancellation-policy" data-policy-doc-link data-policy-doc-title="Payment and Cancellation Policy"/
   );
-  assert.match(html, /window\.open\(href, "_blank", "noopener,noreferrer"\)/);
+  assert.match(html, /id="policy-doc-overlay"/);
+  assert.match(html, /function openPolicyDocument\(event\)/);
+  assert.match(html, /docList\.addEventListener\("click", openPolicyDocument\)/);
+  assert.doesNotMatch(html, /window\.open\(href, "_blank", "noopener,noreferrer"\)/);
+  assert.doesNotMatch(html, /target="_blank" rel="noopener noreferrer" data-policy-doc-link/);
 });

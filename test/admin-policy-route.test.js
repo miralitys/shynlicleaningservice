@@ -462,13 +462,17 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(confirmationPageBody, /Payment and Cancellation Policy/);
     assert.match(
       confirmationPageBody,
-      /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/terms-of-service" target="_blank" rel="noopener noreferrer" data-policy-doc-link/
+      /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/terms-of-service" data-policy-doc-link data-policy-doc-title="Terms of Service"/
     );
     assert.match(
       confirmationPageBody,
-      /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/cancellation-policy" target="_blank" rel="noopener noreferrer" data-policy-doc-link/
+      /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/cancellation-policy" data-policy-doc-link data-policy-doc-title="Payment and Cancellation Policy"/
     );
-    assert.match(confirmationPageBody, /window\.open\(href, "_blank", "noopener,noreferrer"\)/);
+    assert.match(confirmationPageBody, /id="policy-doc-overlay"/);
+    assert.match(confirmationPageBody, /function openPolicyDocument\(event\)/);
+    assert.match(confirmationPageBody, /docList\.addEventListener\("click", openPolicyDocument\)/);
+    assert.doesNotMatch(confirmationPageBody, /window\.open\(href, "_blank", "noopener,noreferrer"\)/);
+    assert.doesNotMatch(confirmationPageBody, /target="_blank" rel="noopener noreferrer" data-policy-doc-link/);
     assert.doesNotMatch(confirmationPageBody, /id="confirm-button"[^>]*disabled/);
     assert.match(
       confirmationPageBody,
