@@ -342,6 +342,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /name="addressPropertyTypes"/i);
     assert.match(selectedClientDialog, /name="addressSquareFootages"/i);
     assert.match(selectedClientDialog, /name="addressRoomCounts"/i);
+    assert.match(selectedClientDialog, /name="addressBathroomCounts"/i);
     assert.match(selectedClientDialog, /name="addressPets"/i);
     assert.match(selectedClientDialog, /name="addressNotes"/i);
     assert.match(selectedClientDialog, /data-admin-client-address-remove="true"/i);
@@ -441,6 +442,7 @@ test("renders the clients table with filters and request history", async () => {
         propertyType: "house",
         squareFootage: "2400 sq ft",
         roomCount: "4 комнаты",
+        bathroomCount: "2 туалета",
         pets: "dog",
         notes: "Gate code 1942. Use hypoallergenic products.",
       },
@@ -448,7 +450,8 @@ test("renders the clients table with filters and request history", async () => {
         address: "789 Cedar Ln, Plainfield, IL 60544",
         propertyType: "apartment",
         squareFootage: "2 bedrooms",
-        roomCount: "1 bath",
+        roomCount: "2 rooms",
+        bathroomCount: "1 bath",
         pets: "cat",
         notes: "Do not touch nursery shelves.",
       },
@@ -457,6 +460,7 @@ test("renders the clients table with filters and request history", async () => {
         propertyType: "office",
         squareFootage: "1200 sq ft",
         roomCount: "5 rooms",
+        bathroomCount: "2 bathrooms",
         pets: "none",
         notes: "Key at front desk. Alarm code 4455.",
       },
@@ -465,6 +469,7 @@ test("renders the clients table with filters and request history", async () => {
         propertyType: "airbnb",
         squareFootage: "1800 sq ft",
         roomCount: "3 bedrooms",
+        bathroomCount: "1.5 baths",
         pets: "none",
         notes: "Lockbox on left rail.",
       },
@@ -473,6 +478,7 @@ test("renders the clients table with filters and request history", async () => {
       updateClientForm.append("addressPropertyTypes", addressRecord.propertyType);
       updateClientForm.append("addressSquareFootages", addressRecord.squareFootage);
       updateClientForm.append("addressRoomCounts", addressRecord.roomCount);
+      updateClientForm.append("addressBathroomCounts", addressRecord.bathroomCount);
       updateClientForm.append("addressPets", addressRecord.pets);
       updateClientForm.append("addressNotes", addressRecord.notes);
     });
@@ -533,6 +539,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Тип объекта<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Дом<\/p>/i);
     assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Метраж<\/span>[\s\S]*?<p class="admin-client-address-fact-value">2400 sq ft<\/p>/i);
     assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Комнаты<\/span>[\s\S]*?<p class="admin-client-address-fact-value">4 комнаты<\/p>/i);
+    assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Туалеты<\/span>[\s\S]*?<p class="admin-client-address-fact-value">2 туалета<\/p>/i);
     assert.match(updatedClientDialog, /<span class="admin-client-address-fact-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Собака<\/p>/i);
     assert.match(updatedClientDialog, /Gate code 1942\. Use hypoallergenic products\./i);
     assert.doesNotMatch(updatedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
@@ -567,6 +574,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Тип объекта<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Офис<\/p>/i);
     assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Метраж<\/span>[\s\S]*?<p class="admin-client-address-fact-value">1200 sq ft<\/p>/i);
     assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Комнаты<\/span>[\s\S]*?<p class="admin-client-address-fact-value">5 rooms<\/p>/i);
+    assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Туалеты<\/span>[\s\S]*?<p class="admin-client-address-fact-value">2 bathrooms<\/p>/i);
     assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Нет<\/p>/i);
     assert.match(napervilleClientDialog, /Key at front desk\. Alarm code 4455\./i);
     assert.match(napervilleClientDialog, /По этому адресу пока нет заявок/i);
@@ -586,6 +594,7 @@ test("renders the clients table with filters and request history", async () => {
         propertyType: "house",
         squareFootage: "2400 sq ft",
         roomCount: "4 комнаты",
+        bathroomCount: "2 туалета",
         pets: "dog",
         notes: "Gate code 1942. Use hypoallergenic products.",
       },
@@ -594,6 +603,7 @@ test("renders the clients table with filters and request history", async () => {
         propertyType: "office",
         squareFootage: "1200 sq ft",
         roomCount: "5 rooms",
+        bathroomCount: "2 bathrooms",
         pets: "none",
         notes: "Key at front desk. Alarm code 4455.",
       },
@@ -602,6 +612,7 @@ test("renders the clients table with filters and request history", async () => {
         propertyType: "airbnb",
         squareFootage: "1800 sq ft",
         roomCount: "3 bedrooms",
+        bathroomCount: "1.5 baths",
         pets: "none",
         notes: "Lockbox on left rail.",
       },
@@ -610,6 +621,7 @@ test("renders the clients table with filters and request history", async () => {
       removeAddressForm.append("addressPropertyTypes", addressRecord.propertyType);
       removeAddressForm.append("addressSquareFootages", addressRecord.squareFootage);
       removeAddressForm.append("addressRoomCounts", addressRecord.roomCount);
+      removeAddressForm.append("addressBathroomCounts", addressRecord.bathroomCount);
       removeAddressForm.append("addressPets", addressRecord.pets);
       removeAddressForm.append("addressNotes", addressRecord.notes);
     });
