@@ -150,6 +150,7 @@ test("renders messages as dialog rows with unread counts", async () => {
     assert.match(messagesBody, /data-admin-message-dialog-key="name:order message customer"/);
     assert.match(messagesBody, new RegExp(`data-admin-message-entry-id="(${orderEntryId}|${secondOrderEntryId})"`));
     assert.match(messagesBody, /data-admin-message-unread-count="3"/);
+    assert.match(messagesBody, /data-admin-nav-unread-message-count="3"/);
     assert.match(messagesBody, /data-admin-message-refs="[^"]*message-messages-order-1/);
     assert.match(messagesBody, /data-admin-message-refs="[^"]*message-messages-order-2/);
     assert.match(messagesBody, /data-admin-message-refs="[^"]*message-messages-order-3/);

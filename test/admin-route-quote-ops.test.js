@@ -127,7 +127,7 @@ async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
   return entryIdMatch[1];
 }
 
-test("shows a new quote badge in the sidebar until the lead leaves the new stage", async () => {
+test("shows new quote and task badges in the sidebar until the lead leaves the new stage", async () => {
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -182,7 +182,9 @@ test("shows a new quote badge in the sidebar until the lead leaves the new stage
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
     assert.match(dashboardBody, /data-admin-nav-new-quote-count="1"/);
-    assert.match(dashboardBody, />1 новая</);
+    assert.match(dashboardBody, />1 заявка</);
+    assert.match(dashboardBody, /data-admin-nav-new-task-count="1"/);
+    assert.match(dashboardBody, />1 задача</);
 
     const entryId = await getQuoteOpsEntryId(started.baseUrl, sessionCookieValue, "sidebar-badge-request-1");
     const updateStatusResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
@@ -210,7 +212,9 @@ test("shows a new quote badge in the sidebar until the lead leaves the new stage
     const updatedDashboardBody = await updatedDashboardResponse.text();
     assert.equal(updatedDashboardResponse.status, 200);
     assert.doesNotMatch(updatedDashboardBody, /data-admin-nav-new-quote-count=/);
-    assert.doesNotMatch(updatedDashboardBody, />1 новая</);
+    assert.doesNotMatch(updatedDashboardBody, /data-admin-nav-new-task-count=/);
+    assert.doesNotMatch(updatedDashboardBody, />1 заявка</);
+    assert.doesNotMatch(updatedDashboardBody, />1 задача</);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
