@@ -550,6 +550,213 @@ test("lets admins manually schedule the next recurring visit", async () => {
   }
 });
 
+test("creates a completed-order follow-up task and records the next cleaning outcome", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-completed-followup-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-completed-followup-123",
+        },
+      },
+    },
+    {
+      method: "PUT",
+      match: "/contacts/contact-completed-followup-123",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-completed-followup-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const agreedQuoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "completed-followup-agreed",
+      serviceType: "regular",
+      fullName: "Completed Followup Agreed",
+      email: "completed.followup.agreed@example.com",
+      phone: "312-555-2191",
+      frequency: "weekly",
+      selectedDate: "2026-04-14",
+      selectedTime: "09:00",
+      fullAddress: "501 Followup Lane, Aurora, IL 60505",
+    });
+    assert.equal(agreedQuoteResponse.status, 201);
+
+    const agreedEntryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "completed-followup-agreed"
+    );
+
+    const completeAgreedResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: agreedEntryId,
+        returnTo: "/admin/orders",
+        orderStatus: "completed",
+      }),
+    });
+    assert.equal(completeAgreedResponse.status, 303);
+
+    const agreedTasksResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("completed-followup-agreed")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const agreedTasksBody = await agreedTasksResponse.text();
+    assert.equal(agreedTasksResponse.status, 200);
+    assert.match(agreedTasksBody, /Договориться о следующей уборке/);
+    assert.match(agreedTasksBody, /Договорились/);
+    assert.match(agreedTasksBody, /Не договорились/);
+    assert.match(agreedTasksBody, /data-quote-task-agreed-toggle=/);
+    const agreedTaskId = getLeadTaskIdByEntryId(agreedTasksBody, agreedEntryId);
+    assert.ok(agreedTaskId);
+
+    const agreedResultResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "complete-lead-task",
+        entryId: agreedEntryId,
+        taskId: agreedTaskId,
+        taskAction: "next-cleaning-agreed",
+        nextCleaningAt: "2026-04-29T14:30",
+        returnTo: "/admin/quote-ops?section=tasks",
+      }),
+    });
+    assert.equal(agreedResultResponse.status, 303);
+    assert.match(agreedResultResponse.headers.get("location") || "", /notice=next-cleaning-scheduled/);
+
+    const agreedOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Completed Followup Agreed")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const agreedOrdersBody = await agreedOrdersResponse.text();
+    assert.equal(agreedOrdersResponse.status, 200);
+    assert.match(agreedOrdersBody, /Найдено 2 из \d+ заказов\./);
+    assert.match(agreedOrdersBody, /04\/29\/2026, 02:30 PM/);
+
+    const declinedQuoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "completed-followup-declined",
+      serviceType: "regular",
+      fullName: "Completed Followup Declined",
+      email: "completed.followup.declined@example.com",
+      phone: "312-555-2192",
+      frequency: "weekly",
+      selectedDate: "2026-04-14",
+      selectedTime: "10:00",
+      fullAddress: "502 Followup Lane, Aurora, IL 60505",
+    });
+    assert.equal(declinedQuoteResponse.status, 201);
+
+    const declinedEntryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "completed-followup-declined"
+    );
+
+    const completeDeclinedResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: declinedEntryId,
+        returnTo: "/admin/orders",
+        orderStatus: "completed",
+      }),
+    });
+    assert.equal(completeDeclinedResponse.status, 303);
+
+    const declinedTasksResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("completed-followup-declined")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const declinedTasksBody = await declinedTasksResponse.text();
+    assert.equal(declinedTasksResponse.status, 200);
+    const declinedTaskId = getLeadTaskIdByEntryId(declinedTasksBody, declinedEntryId);
+    assert.ok(declinedTaskId);
+
+    const declinedResultResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "complete-lead-task",
+        entryId: declinedEntryId,
+        taskId: declinedTaskId,
+        taskAction: "next-cleaning-declined",
+        returnTo: "/admin/quote-ops?section=tasks",
+      }),
+    });
+    assert.equal(declinedResultResponse.status, 303);
+    assert.match(declinedResultResponse.headers.get("location") || "", /notice=client-marked-one-time/);
+
+    const declinedOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Completed Followup Declined")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const declinedOrdersBody = await declinedOrdersResponse.text();
+    assert.equal(declinedOrdersResponse.status, 200);
+    assert.match(declinedOrdersBody, /Найдено 1 из \d+ заказов\./);
+    assert.doesNotMatch(declinedOrdersBody, /04\/21\/2026, 10:00 AM/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("sends order SMS over ajax and keeps SMS history in the order dialog", async () => {
   const fetchStub = createFetchStub([
     {
