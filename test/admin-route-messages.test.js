@@ -9,7 +9,7 @@ const {
   createAdminSession,
 } = require("./admin-route-helpers");
 
-test("renders messages rows as clickable popup triggers without an action column", async () => {
+test("renders messages as dialog rows with unread counts", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     GHL_LOCATION_ID: "location-123",
@@ -66,6 +66,26 @@ test("renders messages rows as clickable popup triggers without an action column
     });
     assert.equal(orderWebhookResponse.status, 200);
 
+    const secondOrderWebhookResponse = await fetch(`${started.baseUrl}/api/ghl/inbound-sms`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType: "InboundMessage",
+        messageType: "SMS",
+        direction: "inbound",
+        from: "+1 (424) 419-9102",
+        body: "Second reply from the same client.",
+        dateAdded: "2026-05-03T15:08:00.000Z",
+        conversationId: "conversation-messages-order-1",
+        messageId: "message-messages-order-2",
+        contactId: "contact-messages-order-1",
+        locationId: "location-123",
+      }),
+    });
+    assert.equal(secondOrderWebhookResponse.status, 200);
+
     const messagesResponse = await fetch(`${started.baseUrl}/admin/messages`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -74,21 +94,27 @@ test("renders messages rows as clickable popup triggers without an action column
     const messagesBody = await messagesResponse.text();
 
     assert.equal(messagesResponse.status, 200);
-    assert.match(messagesBody, /Новые сообщения/);
-    assert.match(messagesBody, /Все сообщения/);
+    assert.match(messagesBody, /Диалоги с новыми сообщениями/);
+    assert.match(messagesBody, /Все диалоги/);
     assert.doesNotMatch(messagesBody, />Открыть карточку</);
     assert.doesNotMatch(messagesBody, /<th>\s*Действие\s*<\/th>/);
     assert.match(messagesBody, /class="admin-message-row-new admin-table-row-clickable"/);
     assert.match(messagesBody, /data-admin-dialog-row="true"/);
     assert.match(messagesBody, /data-admin-dialog-focus="\.admin-ghl-sms-card"/);
+    assert.match(messagesBody, /data-admin-message-dialog-key="conversation:conversation-messages-order-1"/);
     assert.match(messagesBody, new RegExp(`data-admin-message-entry-id="${orderEntryId}"`));
+    assert.match(messagesBody, /data-admin-message-unread-count="2"/);
+    assert.match(messagesBody, /data-admin-message-refs="[^"]*message-messages-order-1/);
+    assert.match(messagesBody, /data-admin-message-refs="[^"]*message-messages-order-2/);
     assert.match(messagesBody, /data-admin-message-status="new"/);
     assert.match(messagesBody, /data-admin-message-list-kind="unread"/);
     assert.match(messagesBody, /data-admin-message-status-cell="true"/);
-    assert.match(messagesBody, /data-admin-message-summary-unread="true">1</);
+    assert.match(messagesBody, /data-admin-message-summary-unread="true">2</);
+    assert.match(messagesBody, />2 новых</);
     assert.match(messagesBody, new RegExp(`data-admin-dialog-open="admin-order-detail-dialog-${orderEntryId}"`));
     assert.match(messagesBody, new RegExp(`id="admin-order-detail-dialog-${orderEntryId}"`));
-    assert.match(messagesBody, /Reply from order workflow\./);
+    assert.match(messagesBody, /Second reply from the same client\./);
+    assert.equal((messagesBody.match(/data-admin-message-dialog-key="conversation:conversation-messages-order-1"/g) || []).length, 2);
   } finally {
     await stopServer(started.child);
   }
@@ -151,6 +177,26 @@ test("marks a message as read via ajax when requested from the messages route", 
     });
     assert.equal(orderWebhookResponse.status, 200);
 
+    const secondOrderWebhookResponse = await fetch(`${started.baseUrl}/api/ghl/inbound-sms`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType: "InboundMessage",
+        messageType: "SMS",
+        direction: "inbound",
+        from: "+1 (424) 419-9102",
+        body: "Second unread message to mark as read.",
+        dateAdded: "2026-05-03T15:06:00.000Z",
+        conversationId: "conversation-messages-order-ajax",
+        messageId: "message-messages-order-ajax-2",
+        contactId: "contact-messages-order-ajax",
+        locationId: "location-123",
+      }),
+    });
+    assert.equal(secondOrderWebhookResponse.status, 200);
+
     const markReadResponse = await fetch(`${started.baseUrl}/admin/messages`, {
       method: "POST",
       headers: {
@@ -163,12 +209,23 @@ test("marks a message as read via ajax when requested from the messages route", 
         action: "mark-message-read",
         entryId: orderEntryId,
         messageKey: `${orderEntryId}:message:message-messages-order-ajax`,
+        messageRefs: JSON.stringify([
+          {
+            entryId: orderEntryId,
+            messageKey: `${orderEntryId}:message:message-messages-order-ajax`,
+          },
+          {
+            entryId: orderEntryId,
+            messageKey: `${orderEntryId}:message:message-messages-order-ajax-2`,
+          },
+        ]),
       }),
     });
     assert.equal(markReadResponse.status, 200);
     const payload = await markReadResponse.json();
     assert.equal(payload.ok, true);
     assert.equal(payload.changed, true);
+    assert.equal(payload.changedCount, 2);
     assert.equal(payload.status, "read");
 
     const messagesResponse = await fetch(`${started.baseUrl}/admin/messages`, {
@@ -178,10 +235,11 @@ test("marks a message as read via ajax when requested from the messages route", 
     });
     const messagesBody = await messagesResponse.text();
     assert.equal(messagesResponse.status, 200);
-    assert.doesNotMatch(messagesBody, new RegExp(`data-admin-message-entry-id="${orderEntryId}"[^>]*data-admin-message-key="${orderEntryId}:message:message-messages-order-ajax"[^>]*data-admin-message-status="new"`));
-    assert.match(messagesBody, new RegExp(`data-admin-message-entry-id="${orderEntryId}"[^>]*data-admin-message-key="${orderEntryId}:message:message-messages-order-ajax"[^>]*data-admin-message-status="read"`));
+    assert.doesNotMatch(messagesBody, new RegExp(`data-admin-message-entry-id="${orderEntryId}"[^>]*data-admin-message-status="new"`));
+    assert.match(messagesBody, new RegExp(`data-admin-message-entry-id="${orderEntryId}"[^>]*data-admin-message-status="read"`));
+    assert.match(messagesBody, /data-admin-message-unread-count="0"/);
     assert.match(messagesBody, /data-admin-message-summary-unread="true">0</);
-    assert.match(messagesBody, /Прочитано/);
+    assert.doesNotMatch(messagesBody, />0 новых</);
   } finally {
     await stopServer(started.child);
   }
