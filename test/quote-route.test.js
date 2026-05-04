@@ -402,9 +402,18 @@ test("sends new lead SMS alerts to active managers and admins after quote submis
       smsCalls.some((call) => call.toNumber === "+13125550100"),
       "customer confirmation SMS should still be sent"
     );
-    assert.match(captureRaw, /query=3125550199/);
-    assert.match(captureRaw, /query=3125550177/);
-    assert.match(captureRaw, /query=3125550166/);
+    assert.ok(
+      smsCalls.some((call) => call.toNumber === "+13125550199"),
+      "active manager should receive a lead alert SMS"
+    );
+    assert.ok(
+      smsCalls.some((call) => call.toNumber === "+13125550177"),
+      "active admin user should receive a lead alert SMS"
+    );
+    assert.ok(
+      smsCalls.some((call) => call.toNumber === "+13125550166"),
+      "active admin staff fallback should receive a lead alert SMS"
+    );
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

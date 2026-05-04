@@ -239,9 +239,50 @@ test("sends new lead SMS alerts to active managers and admins", async () => {
   assert.equal(result.managerSmsSent, true);
   assert.equal(result.managerSmsSentCount, 2);
   assert.equal(leadConnectorClient.calls.length, 3);
+  assert.equal(Boolean(leadConnectorClient.calls[1].allowDirectToNumber), true);
+  assert.equal(Boolean(leadConnectorClient.calls[2].allowDirectToNumber), true);
   assert.match(leadConnectorClient.calls[1].message, /assigned to you/i);
   assert.match(leadConnectorClient.calls[2].message, /was submitted|needs attention/i);
   assert.equal((result.entry.payloadForRetry.adminSms.history || []).length, 3);
+});
+
+test("falls back to contact SMS for internal lead alerts when direct send is blocked", async () => {
+  const entry = createLeadEntry({
+    customerPhone: "3125550101",
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorSequenceStub([
+    { ok: true },
+    { ok: false, code: "SMS_SEND_FAILED", message: "Direct send blocked." },
+    { ok: true },
+  ]);
+  const service = createAutoNotificationService({
+    listLeadAlertRecipients: async () => [
+      {
+        id: "manager-1",
+        name: "Mila Rivers",
+        email: "mila@example.com",
+        phone: "3125550199",
+        role: "manager",
+      },
+    ],
+    quoteOpsLedger: ledger,
+    siteOrigin: "https://shynlicleaningservice.com",
+  });
+
+  const result = await service.notifyQuoteSubmissionSuccess({
+    entry,
+    pricing: { serviceName: "Deep Cleaning" },
+    leadConnectorClient,
+  });
+
+  assert.equal(result.customerSmsSent, true);
+  assert.equal(result.managerSmsSent, true);
+  assert.equal(result.managerSmsSentCount, 1);
+  assert.equal(leadConnectorClient.calls.length, 3);
+  assert.equal(Boolean(leadConnectorClient.calls[1].allowDirectToNumber), true);
+  assert.equal(Boolean(leadConnectorClient.calls[2].allowDirectToNumber), false);
+  assert.equal((result.entry.payloadForRetry.adminSms.history || []).length, 2);
 });
 
 test("records failed internal lead alert SMS attempts with recipient diagnostics", async () => {
@@ -252,6 +293,7 @@ test("records failed internal lead alert SMS attempts with recipient diagnostics
   const leadConnectorClient = createLeadConnectorSequenceStub([
     { ok: true },
     { ok: true },
+    { ok: false, code: "SMS_SEND_FAILED", message: "Direct send blocked." },
     { ok: false, code: "SMS_SEND_FAILED", message: "Recipient has opted out." },
   ]);
   const service = createAutoNotificationService({
