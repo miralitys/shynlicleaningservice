@@ -189,6 +189,71 @@ test("renders active cleaner orders first and moves completed orders into histor
   assert.match(completedCard, /Completed Client/);
 });
 
+test("renders cleaner checklist completion without a photo upload step", () => {
+  const renderers = createRenderers();
+  const checklistOrder = buildOrder({
+    id: "checklist-order",
+    customerName: "Checklist Client",
+    status: "checklist",
+    scheduleDate: "2099-01-05",
+    updatedAt: "2099-01-03T12:00:00.000Z",
+    confirmed: true,
+  });
+  checklistOrder.completion = {
+    checklistItems: [
+      { id: "item-1", label: "Kitchen", hint: "", completed: true },
+      { id: "item-2", label: "Bathroom", hint: "", completed: true },
+    ],
+    beforePhotos: [],
+    afterPhotos: [],
+    photosSkipped: false,
+  };
+  const legacyPhotosOrder = buildOrder({
+    id: "legacy-photos-order",
+    customerName: "Legacy Photos Client",
+    status: "photos",
+    scheduleDate: "2099-01-06",
+    updatedAt: "2099-01-04T12:00:00.000Z",
+    confirmed: true,
+  });
+
+  const html = renderers.renderDashboardPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    staffSummary: null,
+    assignedOrders: [checklistOrder, legacyPhotosOrder],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  });
+
+  const activeCard = getDesktopCard(html, "Мои заявки");
+  const completedCard = getDesktopCard(html, "Выполненные заказы");
+  assert.match(activeCard, /Checklist Client/);
+  assert.match(activeCard, /Завершить уборку/);
+  assert.doesNotMatch(activeCard, /data-account-photo-editor/);
+  assert.doesNotMatch(activeCard, /complete-assignment-photos/);
+  assert.doesNotMatch(activeCard, /Выбрать фото/);
+  assert.doesNotMatch(activeCard, />Фото</);
+  assert.doesNotMatch(activeCard, /Legacy Photos Client/);
+  assert.match(completedCard, /Legacy Photos Client/);
+  assert.match(completedCard, /Уборка завершена/);
+});
+
 test("renders cleaner calendar cards with the scheduled time range", () => {
   const renderers = createRenderers();
   const html = renderers.renderCalendarPage(

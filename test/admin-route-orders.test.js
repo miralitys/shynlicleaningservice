@@ -1291,12 +1291,12 @@ test('sends a Stripe payment link SMS when an order moves to "invoice-sent"', as
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
+    const paymentShortLinkPattern =
+      /Pay securely here: https:\/\/shynlicleaningservice\.com\/pay\/([a-zA-Z0-9_-]{10})/i;
     const invoiceSmsRequests = captureLines.filter((record) => {
       if (!String(record.url).includes("/conversations/messages")) return false;
       try {
-        return /Pay securely here: https:\/\/stripe\.example\/session/i.test(
-          JSON.parse(record.body).message || ""
-        );
+        return paymentShortLinkPattern.test(JSON.parse(record.body).message || "");
       } catch {
         return false;
       }
@@ -1306,7 +1306,15 @@ test('sends a Stripe payment link SMS when an order moves to "invoice-sent"', as
     assert.equal(invoiceSmsPayload.contactId, "invoice-contact-1");
     assert.equal(invoiceSmsPayload.toNumber, "+13125558844");
     assert.match(invoiceSmsPayload.message, /Hi Invoice,/i);
-    assert.match(invoiceSmsPayload.message, /Pay securely here: https:\/\/stripe\.example\/session/i);
+    const paymentShortLinkMatch = invoiceSmsPayload.message.match(paymentShortLinkPattern);
+    assert.ok(paymentShortLinkMatch);
+    assert.doesNotMatch(invoiceSmsPayload.message, /https:\/\/stripe\.example\/session/i);
+
+    const paymentRedirectResponse = await fetch(`${started.baseUrl}/pay/${paymentShortLinkMatch[1]}`, {
+      redirect: "manual",
+    });
+    assert.equal(paymentRedirectResponse.status, 302);
+    assert.equal(paymentRedirectResponse.headers.get("location"), "https://stripe.example/session");
 
     const repeatSaveResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -1336,9 +1344,7 @@ test('sends a Stripe payment link SMS when an order moves to "invoice-sent"', as
     const invoiceSmsRequestsAfterRepeat = captureLinesAfterRepeat.filter((record) => {
       if (!String(record.url).includes("/conversations/messages")) return false;
       try {
-        return /Pay securely here: https:\/\/stripe\.example\/session/i.test(
-          JSON.parse(record.body).message || ""
-        );
+        return paymentShortLinkPattern.test(JSON.parse(record.body).message || "");
       } catch {
         return false;
       }
@@ -2077,7 +2083,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(checklistResponse.status, 303);
     assert.match(checklistResponse.headers.get("location") || "", /notice=assignment-checklist-complete/);
 
-    const photosOpenDashboardResponse = await fetch(
+    const checklistCompleteDashboardResponse = await fetch(
       `${started.baseUrl}${checklistResponse.headers.get("location") || "/account"}`,
       {
         headers: {
@@ -2085,60 +2091,17 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
         },
       }
     );
-    const photosOpenDashboardBody = await photosOpenDashboardResponse.text();
-    assert.equal(photosOpenDashboardResponse.status, 200);
-    assert.match(photosOpenDashboardBody, /Чеклист выполнен/i);
-    assert.match(photosOpenDashboardBody, />Фото</);
-    assert.match(photosOpenDashboardBody, /data-account-photo-editor/);
-    assert.ok(
-      Array.from(
-        photosOpenDashboardBody.matchAll(/<details class="account-stage-editor account-photo-stage-editor" data-account-photo-editor>/g)
-      ).length >= 2
-    );
-    assert.match(photosOpenDashboardBody, /name="action" value="complete-assignment-photos"/);
-    assert.match(photosOpenDashboardBody, /До уборки/);
-    assert.match(photosOpenDashboardBody, /После уборки/);
-    assert.match(photosOpenDashboardBody, /Фото нельзя сделать/i);
-    assert.match(photosOpenDashboardBody, /Клиент не разрешил съемку/i);
+    const checklistCompleteDashboardBody = await checklistCompleteDashboardResponse.text();
+    assert.equal(checklistCompleteDashboardResponse.status, 200);
+    assert.match(checklistCompleteDashboardBody, /Чеклист выполнен/i);
+    assert.match(checklistCompleteDashboardBody, />Уборка завершена</);
+    assert.doesNotMatch(checklistCompleteDashboardBody, /data-account-photo-editor/);
+    assert.doesNotMatch(checklistCompleteDashboardBody, /name="action" value="complete-assignment-photos"/);
+    assert.doesNotMatch(checklistCompleteDashboardBody, /type="file" name="beforePhotos"/);
+    assert.doesNotMatch(checklistCompleteDashboardBody, /type="file" name="afterPhotos"/);
+    assert.doesNotMatch(checklistCompleteDashboardBody, /Выбрать фото/);
 
-    const photoFormData = new FormData();
-    photoFormData.append("action", "complete-assignment-photos");
-    photoFormData.append("entryId", entryId);
-    photoFormData.append(
-      "beforePhotos",
-      new File([Buffer.from("before-image-1")], "before-one.jpg", { type: "image/jpeg" })
-    );
-    photoFormData.append(
-      "afterPhotos",
-      new File([Buffer.from("after-image-1")], "after-one.jpg", { type: "image/jpeg" })
-    );
-
-    const photosResponse = await fetch(`${started.baseUrl}/account`, {
-      method: "POST",
-      redirect: "manual",
-      headers: {
-        cookie: `shynli_user_session=${userSessionCookieValue}`,
-      },
-      body: photoFormData,
-    });
-    assert.equal(photosResponse.status, 303);
-    assert.match(photosResponse.headers.get("location") || "", /notice=assignment-photos-complete/);
-
-    const photosDashboardResponse = await fetch(
-      `${started.baseUrl}${photosResponse.headers.get("location") || "/account"}`,
-      {
-        headers: {
-          cookie: `shynli_user_session=${userSessionCookieValue}`,
-        },
-      }
-    );
-    const photosDashboardBody = await photosDashboardResponse.text();
-    assert.equal(photosDashboardResponse.status, 200);
-    assert.match(photosDashboardBody, /Этап «Фото» закрыт/i);
-    assert.match(photosDashboardBody, />Уборка завершена</);
-    assert.doesNotMatch(photosDashboardBody, /name="action" value="mark-assignment-cleaning-complete"/);
-
-    const photosOrdersResponse = await fetch(
+    const completedOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
       {
         headers: {
@@ -2146,24 +2109,23 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
         },
       }
     );
-    const photosOrdersBody = await photosOrdersResponse.text();
-    assert.equal(photosOrdersResponse.status, 200);
-    const photosLane = getOrderFunnelLaneSlice(
-      photosOrdersBody,
+    const completedOrdersBody = await completedOrdersResponse.text();
+    assert.equal(completedOrdersResponse.status, 200);
+    const completedLane = getOrderFunnelLaneSlice(
+      completedOrdersBody,
       "cleaning-complete",
       "invoice-sent"
     );
-    assert.match(photosLane, /Cleaner Confirmation Customer/);
-    assert.match(photosLane, /Уборка завершена/);
-    assert.match(photosOrdersBody, /Отчёт клинера/);
-    assert.match(photosOrdersBody, /Фото до/);
-    assert.match(photosOrdersBody, /Фото после/);
-    assert.match(photosOrdersBody, /Посмотреть/);
-    assert.match(photosOrdersBody, /Second cleaner note is appended\./);
-    assert.doesNotMatch(photosOrdersBody, /<img class="admin-order-media-thumb"/);
-    assert.doesNotMatch(photosOrdersBody, /type="file" name="beforePhotos"/);
-    assert.doesNotMatch(photosOrdersBody, /type="file" name="afterPhotos"/);
-    assert.doesNotMatch(photosOrdersBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);
+    assert.match(completedLane, /Cleaner Confirmation Customer/);
+    assert.match(completedLane, /Уборка завершена/);
+    assert.match(completedOrdersBody, /Отчёт клинера/);
+    assert.match(completedOrdersBody, /Second cleaner note is appended\./);
+    assert.doesNotMatch(completedOrdersBody, /Фото до/);
+    assert.doesNotMatch(completedOrdersBody, /Фото после/);
+    assert.doesNotMatch(completedOrdersBody, /<img class="admin-order-media-thumb"/);
+    assert.doesNotMatch(completedOrdersBody, /type="file" name="beforePhotos"/);
+    assert.doesNotMatch(completedOrdersBody, /type="file" name="afterPhotos"/);
+    assert.doesNotMatch(completedOrdersBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);
 
     const cleaningCompleteOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,

@@ -42,6 +42,12 @@ const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request
 const { createSiteSanitizer } = require("./lib/site/sanitize");
 const { createSiteSeoHelpers } = require("./lib/site/seo");
 const {
+  PAYMENT_SHORT_LINK_PATH_PREFIX,
+  buildPaymentShortLink,
+  normalizePaymentShortCode,
+  resolvePaymentShortLink,
+} = require("./lib/payment-short-links");
+const {
   ADMIN_POLICY_ACCEPTANCE_API_BASE_PATH,
   createOrderPolicyAcceptanceService,
 } = require("./lib/order-policy");
@@ -830,10 +836,19 @@ async function createOrderInvoicePaymentLink(entry = {}) {
       metadata,
       ...(isValidEmail ? { customer_email: customerEmail } : {}),
     });
+    const shortLink = buildPaymentShortLink({
+      siteOrigin: SITE_ORIGIN,
+      entryId: metadata.entry_id,
+      requestId,
+      checkoutSessionId: session && session.id,
+      checkoutUrl: session && session.url,
+    });
     return {
       ok: true,
       id: normalizeString(session && session.id, 120),
       url: normalizeString(session && session.url, 4000),
+      shortCode: normalizeString(shortLink.code, 80),
+      shortUrl: normalizeString(shortLink.url, 500),
     };
   } catch (error) {
     return {
@@ -842,6 +857,86 @@ async function createOrderInvoicePaymentLink(entry = {}) {
       message: normalizeString(error && error.message, 300) || "Failed to create Stripe checkout session.",
     };
   }
+}
+
+async function handlePaymentShortLinkRequest(req, res, requestStartNs, requestContext, requestLogger, quoteOpsLedger) {
+  requestContext.cacheHit = false;
+
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    writeHeadWithTiming(
+      res,
+      405,
+      {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+        Allow: "GET, HEAD",
+      },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    res.end(req.method === "HEAD" ? "" : "Method not allowed");
+    return;
+  }
+
+  const requestUrl = getRequestUrl(req);
+  const code = normalizePaymentShortCode(requestUrl.pathname.slice(PAYMENT_SHORT_LINK_PATH_PREFIX.length));
+  if (!code || !quoteOpsLedger || typeof quoteOpsLedger.listEntries !== "function") {
+    writeHeadWithTiming(
+      res,
+      404,
+      {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    res.end(req.method === "HEAD" ? "" : "Payment link not found");
+    return;
+  }
+
+  let match = null;
+  try {
+    match = resolvePaymentShortLink(await quoteOpsLedger.listEntries({ limit: 1000 }), code);
+  } catch (error) {
+    try {
+      requestLogger.log({
+        ts: new Date().toISOString(),
+        type: "payment_short_link_lookup_failed",
+        code,
+        message: normalizeString(error && error.message, 300),
+      });
+    } catch {}
+  }
+
+  if (!match || !match.checkoutUrl) {
+    writeHeadWithTiming(
+      res,
+      404,
+      {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+      requestStartNs,
+      requestContext.cacheHit
+    );
+    res.end(req.method === "HEAD" ? "" : "Payment link not found");
+    return;
+  }
+
+  writeHeadWithTiming(
+    res,
+    302,
+    {
+      Location: match.checkoutUrl,
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
+    },
+    requestStartNs,
+    requestContext.cacheHit
+  );
+  res.end(req.method === "HEAD" ? "" : "Redirecting to secure payment.");
 }
 
 function escapeHtml(value) {
@@ -1513,12 +1608,14 @@ const handleSiteRequest = createSiteRequestHandler({
   QUOTE_SUBMIT_ENDPOINT,
   REDIRECT_ROUTES,
   SITE_DIR,
+  PAYMENT_SHORT_LINK_PATH_PREFIX,
   STRIPE_CHECKOUT_ENDPOINT,
   STRIPE_WEBHOOK_ENDPOINT,
   handleCleanerApplicationSubmissionRequest,
   handleGhlInboundSmsWebhookRequest,
   handleAccountRequest,
   handleAdminRequest,
+  handlePaymentShortLinkRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
   handleStripeWebhookRequest,
