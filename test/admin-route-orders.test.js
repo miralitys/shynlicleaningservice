@@ -34,6 +34,9 @@ const {
 } = require("./admin-route-helpers");
 const { createStripeStub } = require("./server-test-helpers");
 
+const DIRECT_REVIEW_URL_PATTERN =
+  /https:\/\/www\.google\.com\/search\?q=Shynli\+Cleaning\+Service(?:&|&amp;)ludocid=9307087877612204108#lrd=0x63f898dd18cf9cc3:0x81296b1d166b704c,3/;
+
 test("allows admins to add a manual order from the orders page", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
@@ -307,6 +310,7 @@ test("creates the next recurring order when a recurring order is completed", asy
     const recurringCases = [
       {
         requestId: "recurring-weekly-order",
+        serviceType: "regular",
         fullName: "Recurring Weekly Client",
         email: "recurring-weekly@example.com",
         phone: "312-555-2101",
@@ -318,6 +322,7 @@ test("creates the next recurring order when a recurring order is completed", asy
       },
       {
         requestId: "recurring-biweekly-order",
+        serviceType: "regular",
         fullName: "Recurring Biweekly Client",
         email: "recurring-biweekly@example.com",
         phone: "312-555-2102",
@@ -329,6 +334,7 @@ test("creates the next recurring order when a recurring order is completed", asy
       },
       {
         requestId: "recurring-monthly-order",
+        serviceType: "regular",
         fullName: "Recurring Monthly Client",
         email: "recurring-monthly@example.com",
         phone: "312-555-2103",
@@ -1120,11 +1126,12 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
     );
     const reviewRequestEmails = deliveredEmails.filter((rawEmail) =>
       /Leave us a quick review/i.test(rawEmail) &&
-      /https:\/\/maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/.test(rawEmail)
+      DIRECT_REVIEW_URL_PATTERN.test(rawEmail)
     );
     assert.equal(reviewRequestEmails.length, 1);
     assert.match(reviewRequestEmails[0], /review.customer@example.com/i);
-    assert.match(reviewRequestEmails[0], /https:\/\/maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+    assert.match(reviewRequestEmails[0], DIRECT_REVIEW_URL_PATTERN);
+    assert.doesNotMatch(reviewRequestEmails[0], /https:\/\/maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
 
     const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
       .trim()
@@ -1143,7 +1150,8 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
     const reviewSmsPayload = JSON.parse(reviewSmsRequests[0].body);
     assert.equal(reviewSmsPayload.contactId, "review-contact-1");
     assert.equal(reviewSmsPayload.toNumber, "+13125554455");
-    assert.match(reviewSmsPayload.message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+    assert.match(reviewSmsPayload.message, DIRECT_REVIEW_URL_PATTERN);
+    assert.doesNotMatch(reviewSmsPayload.message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
 
     const repeatSaveResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -1170,7 +1178,7 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
     );
     const reviewRequestEmailsAfterRepeat = deliveredEmailsAfterRepeat.filter((rawEmail) =>
       /Leave us a quick review/i.test(rawEmail) &&
-      /https:\/\/maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/.test(rawEmail)
+      DIRECT_REVIEW_URL_PATTERN.test(rawEmail)
     );
     assert.equal(reviewRequestEmailsAfterRepeat.length, 1);
 

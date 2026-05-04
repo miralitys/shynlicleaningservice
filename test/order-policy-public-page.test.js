@@ -57,3 +57,39 @@ test("opens policy documents inside the public signature page", () => {
   assert.doesNotMatch(html, /window\.open\(href, "_blank", "noopener,noreferrer"\)/);
   assert.doesNotMatch(html, /target="_blank" rel="noopener noreferrer" data-policy-doc-link/);
 });
+
+test("keeps booking summary inside narrow mobile viewports", () => {
+  const html = renderPolicyAcceptancePage({
+    token: "policy-token-mobile",
+    payload: {
+      booking: {
+        id: "booking-mobile-1",
+        requestId: "mobile-booking-with-a-long-id",
+        serviceLabel: "Deep Cleaning",
+        appointmentLabel: "05/05/2026, 1:00 PM",
+        totalPrice: 727,
+      },
+      customer: {
+        fullName: "Tonya",
+        serviceAddress: "1289 Rhodes LN, Naperville, IL 60540, США",
+        email: "",
+        phone: "+1 312-555-0100",
+      },
+      acceptance: {
+        policyAccepted: false,
+        status: "pending",
+      },
+      documents: [],
+    },
+  });
+
+  assert.match(html, /\.page \{ width:100%; max-width:980px;[^}]*overflow-x:hidden;/);
+  assert.match(html, /\.shell \{ width:100%; max-width:100%; min-width:0;/);
+  assert.match(html, /\.grid \{[^}]*min-width:0;/);
+  assert.match(html, /\.section \{ max-width:100%; min-width:0;[^}]*overflow:hidden;/);
+  assert.match(html, /\.summary-grid \{[^}]*min-width:0; max-width:100%;/);
+  assert.match(html, /\.summary-item \{ min-width:0; max-width:100%;/);
+  assert.match(html, /\.summary-value \{ max-width:100%;[^}]*overflow-wrap:anywhere;/);
+  assert.match(html, /@media \(max-width: 380px\) \{/);
+  assert.match(html, /\.summary-item-inline \.summary-value \{ white-space:normal; \}/);
+});

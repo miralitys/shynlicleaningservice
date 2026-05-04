@@ -61,7 +61,7 @@ test("normalizes the existing quote payload into a safe CRM submission", () => {
   assert.equal(submission.contact.phoneE164, "+13125550100");
   assert.equal(submission.contact.email, "jane@example.com");
   assert.equal(submission.quote.serviceType, "deep");
-  assert.equal(submission.quote.frequency, "biweekly");
+  assert.equal(submission.quote.frequency, "");
   assert.deepEqual(submission.quote.services, ["ovenCleaning", "insideCabinets"]);
   assert.equal(submission.quote.totalPrice, 150);
   assert.equal(submission.quote.consent, true);
@@ -437,6 +437,62 @@ test("auto-discovers custom fields when env mapping is not configured", async ()
   assert.match(calls[2].body, /cf-service-type/);
   assert.match(calls[2].body, /cf-rooms/);
   assert.match(calls[2].body, /cf-windows/);
+});
+
+test("clears CRM frequency custom field for one-time quotes", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      body: options.body,
+    });
+
+    if (String(url).includes("/contacts/") && options.method === "POST") {
+      return createResponse(200, { contact: { id: "contact-one-time" } });
+    }
+
+    if (String(url).includes("/contacts/contact-one-time") && options.method === "PUT") {
+      return createResponse(200, { id: "contact-one-time" });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_CUSTOM_FIELDS_JSON: JSON.stringify({ serviceType: "cf-service-type", frequency: "cf-frequency" }),
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "0",
+    },
+    fetch,
+  });
+
+  const result = await client.submitQuoteSubmission(
+    {
+      contactData: {
+        fullName: "Deep Customer",
+        phone: "3125550100",
+      },
+      calculatorData: {
+        serviceType: "deep",
+        frequency: "biweekly",
+        totalPrice: 240,
+      },
+    },
+    { syncQuoteCustomFields: true }
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.customFieldsUpdated, true);
+  const customFieldsPayload = JSON.parse(calls[1].body);
+  assert.deepEqual(customFieldsPayload.customFields, [
+    { id: "cf-service-type", value: "deep" },
+    { id: "cf-frequency", value: "" },
+  ]);
 });
 
 test("auto-discovers opportunity pipeline and stage by configured names", async () => {

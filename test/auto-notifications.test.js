@@ -9,6 +9,9 @@ const {
   localDateTimeToInstant,
 } = require("../lib/auto-notifications");
 
+const DIRECT_REVIEW_URL_PATTERN =
+  /https:\/\/www\.google\.com\/search\?q=Shynli\+Cleaning\+Service&ludocid=9307087877612204108#lrd=0x63f898dd18cf9cc3:0x81296b1d166b704c,3/;
+
 function createLeadEntry(overrides = {}) {
   return {
     id: "entry-1",
@@ -820,11 +823,13 @@ test("sends review request email and SMS once when an order enters awaiting-revi
   assert.equal(emailCalls.length, 1);
   assert.equal(leadConnectorClient.calls.length, 1);
   assert.match(leadConnectorClient.calls[0].message, /quick review/i);
-  assert.match(leadConnectorClient.calls[0].message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+  assert.match(leadConnectorClient.calls[0].message, DIRECT_REVIEW_URL_PATTERN);
+  assert.doesNotMatch(leadConnectorClient.calls[0].message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
   assert.equal((firstResult.entry.payloadForRetry.adminSms.history || []).length, 1);
   const firstNotificationState = getOrderNotificationState(firstResult.entry);
   assert.ok(firstNotificationState.reviewRequest.emailSentAt);
   assert.ok(firstNotificationState.reviewRequest.smsSentAt);
+  assert.match(firstNotificationState.reviewRequest.reviewUrl, DIRECT_REVIEW_URL_PATTERN);
 
   const secondResult = await service.notifyAwaitingReviewRequest({
     entry: firstResult.entry,

@@ -1885,7 +1885,7 @@ async function main() {
     quoteOpsLedger,
     reminderScanLimit: CLIENT_REMINDER_SCAN_LIMIT,
     siteOrigin: SITE_ORIGIN,
-    reviewUrl: process.env.CUSTOMER_REVIEW_URL || "https://maps.app.goo.gl/4u9s7onykNrJEEn99",
+    reviewUrl: process.env.CUSTOMER_REVIEW_URL || "",
     staffStore,
     log: (entry) => requestLogger.log(entry),
   });

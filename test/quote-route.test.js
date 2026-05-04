@@ -219,6 +219,7 @@ test("accepts valid quote submissions through the backend CRM helper", async () 
         },
         quote: {
           serviceType: "deep",
+          frequency: "biweekly",
           totalPrice: 199.99,
           selectedDate: "2026-03-22",
           selectedTime: "09:00",
@@ -238,6 +239,7 @@ test("accepts valid quote submissions through the backend CRM helper", async () 
     assert.equal(payload.contactId, "contact-123");
     assert.equal(payload.noteCreated, false);
     assert.equal(payload.opportunityCreated, false);
+    assert.equal(payload.pricing.serviceName, "Deep Cleaning");
 
     const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
     const calls = captureRaw
@@ -252,6 +254,8 @@ test("accepts valid quote submissions through the backend CRM helper", async () 
     assert.match(contactCalls[0].url, /\/contacts\/$/);
     assert.match(contactCalls[0].body, /"firstName":"Jane"/);
     assert.match(contactCalls[0].body, /"lastName":"Doe"/);
+    assert.doesNotMatch(contactCalls[0].body, /biweekly/i);
+    assert.doesNotMatch(contactCalls[0].body, /frequency/i);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

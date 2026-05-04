@@ -25,6 +25,30 @@ test("calculates quote pricing with the same core rules as the client calculator
   assert.equal(pricing.totalPriceCents, 38000);
 });
 
+test("clears recurring frequency for one-time service types", () => {
+  const deepPricing = calculateQuotePricing({
+    serviceType: "deep",
+    frequency: "biweekly",
+    rooms: "2",
+    bathrooms: "2",
+    squareMeters: "0",
+  });
+
+  assert.equal(deepPricing.serviceType, "deep");
+  assert.equal(deepPricing.frequency, "");
+
+  const movingPricing = calculateQuotePricing({
+    serviceType: "moving",
+    frequency: "weekly",
+    rooms: "2",
+    bathrooms: "2",
+    squareMeters: "0",
+  });
+
+  assert.equal(movingPricing.serviceType, "moving");
+  assert.equal(movingPricing.frequency, "");
+});
+
 test("supports the current UI square-foot step indexes and still accepts legacy square-foot buckets", () => {
   const stepIndexedPricing = calculateQuotePricing({
     serviceType: "regular",

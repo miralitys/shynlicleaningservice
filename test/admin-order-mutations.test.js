@@ -224,3 +224,43 @@ test("persists service duration and carries it into recurring orders", () => {
   assert.equal(recurringSubmission.payloadForRetry.orderState.serviceDurationMinutes, 150);
   assert.equal(recurringSubmission.payloadForRetry.adminOrder.serviceDurationMinutes, 150);
 });
+
+test("clears recurring frequency for deep cleaning orders", () => {
+  const { applyOrderEntryUpdates, buildRecurringOrderSubmission } = createMutationDomain();
+  const entry = {
+    id: "deep-order-1",
+    requestId: "deep-order-1",
+    customerName: "Deep Customer",
+    customerPhone: "3125550101",
+    serviceType: "deep",
+    serviceName: "Deep",
+    selectedDate: "2026-04-20",
+    selectedTime: "10:00",
+    totalPrice: 240,
+    payloadForRetry: {
+      calculatorData: {
+        serviceType: "deep",
+        frequency: "biweekly",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:00",
+        totalPrice: 240,
+      },
+      adminOrder: {
+        isCreated: true,
+        status: "new",
+        frequency: "biweekly",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:00",
+      },
+    },
+  };
+
+  applyOrderEntryUpdates(entry, {
+    createOrder: true,
+    frequency: "biweekly",
+  });
+
+  assert.equal(getEntryOrderState(entry).frequency, "");
+  assert.equal(getEntryPayload(entry).calculatorData.frequency, undefined);
+  assert.equal(buildRecurringOrderSubmission(entry), null);
+});

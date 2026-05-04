@@ -448,7 +448,7 @@
   function calculateCurrentPricing() {
     const serviceType = getSelectedServiceType();
     const typePricing = PRICING[serviceType] || PRICING.regular;
-    const frequency = getSelectedFrequency();
+    const frequency = serviceType === "regular" ? getSelectedFrequency() : "";
     const rooms = Number.parseInt(elements.rooms.value || "1", 10) || 1;
     const bathrooms = parseBathroomCount(elements.bathrooms.value, 1);
     const squareFeet = Number.parseInt(elements.squareFeet.value || "0", 10) || 0;
@@ -766,8 +766,10 @@
       button.classList.toggle("is-active", button.getAttribute("data-service") === nextValue);
     });
     elements.frequencyField.style.display = nextValue === "regular" ? "" : "none";
-    if (nextValue !== "regular") {
+    if (nextValue === "regular" && !elements.frequency.value) {
       elements.frequency.value = "biweekly";
+    } else if (nextValue !== "regular") {
+      elements.frequency.value = "";
     }
     applyIncludedServiceDefaults(nextValue);
     updateEstimateTargets();
