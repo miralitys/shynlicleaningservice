@@ -337,6 +337,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /Команда: Olga Stone/);
     assert.match(selectedClientDialog, /aria-label="Редактировать клиента"/i);
     assert.match(selectedClientDialog, /name="action" value="update-client"/i);
+    assert.match(selectedClientDialog, /data-admin-save-confirm="true"/i);
     assert.match(selectedClientDialog, /name="clientKey" value="3125550100"/i);
     assert.match(selectedClientDialog, /name="addresses"/i);
     assert.match(selectedClientDialog, /name="addressPropertyTypes"/i);
