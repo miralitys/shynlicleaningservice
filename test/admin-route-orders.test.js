@@ -425,6 +425,131 @@ test("creates the next recurring order when a recurring order is completed", asy
   }
 });
 
+test("lets admins manually schedule the next recurring visit", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-next-recurring-order-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-next-recurring-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "manual-next-recurring-order",
+      serviceType: "regular",
+      fullName: "Manual Next Client",
+      email: "manual-next@example.com",
+      phone: "312-555-2111",
+      frequency: "weekly",
+      selectedDate: "2026-04-14",
+      selectedTime: "09:00",
+      fullAddress: "404 Next Visit Road, Aurora, IL 60505",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "manual-next-recurring-order"
+    );
+
+    const originalOrderResponse = await fetch(`${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const originalOrderBody = await originalOrderResponse.text();
+    assert.equal(originalOrderResponse.status, 200);
+    assert.match(originalOrderBody, /Запланировать следующий визит/);
+
+    const scheduleNextResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "schedule-next-order",
+        entryId,
+        returnTo: "/admin/orders",
+      }),
+    });
+
+    assert.equal(scheduleNextResponse.status, 303);
+    const scheduleNextLocation = scheduleNextResponse.headers.get("location") || "";
+    assert.match(scheduleNextLocation, /notice=next-order-created/);
+    const nextEntryId = new URL(scheduleNextLocation, started.baseUrl).searchParams.get("order");
+    assert.ok(nextEntryId);
+    assert.notEqual(nextEntryId, entryId);
+
+    const ordersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Manual Next Client")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Найдено 2 из \d+ заказов\./);
+    assert.match(ordersBody, /04\/21\/2026, 09:00 AM/);
+
+    const repeatScheduleNextResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "schedule-next-order",
+        entryId,
+        returnTo: "/admin/orders",
+      }),
+    });
+
+    assert.equal(repeatScheduleNextResponse.status, 303);
+    assert.match(repeatScheduleNextResponse.headers.get("location") || "", /notice=next-order-already-created/);
+
+    const repeatOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Manual Next Client")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const repeatOrdersBody = await repeatOrdersResponse.text();
+    assert.equal(repeatOrdersResponse.status, 200);
+    assert.match(repeatOrdersBody, /Найдено 2 из \d+ заказов\./);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("sends order SMS over ajax and keeps SMS history in the order dialog", async () => {
   const fetchStub = createFetchStub([
     {
@@ -1293,6 +1418,10 @@ test('sends a Stripe payment link SMS when an order moves to "invoice-sent"', as
     assert.equal(stripeCapture.options.customer_email, "invoice.customer@example.com");
     assert.equal(stripeCapture.options.success_url, "https://shynlicleaningservice.com/quote?payment=success");
     assert.equal(stripeCapture.options.cancel_url, "https://shynlicleaningservice.com/quote?payment=cancelled");
+    assert.equal(stripeCapture.options.payment_method_types, undefined);
+    assert.deepEqual(stripeCapture.paymentMethodDomainCreates, [
+      { domain_name: "shynlicleaningservice.com", enabled: true },
+    ]);
 
     const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
       .trim()

@@ -225,13 +225,48 @@ const fs = require("node:fs");
 class StripeStub {
   constructor(secretKey) {
     this.secretKey = secretKey;
+    this.capture = {
+      secretKey: this.secretKey,
+      paymentMethodDomainCreates: [],
+      paymentMethodDomainLists: [],
+      paymentMethodDomainUpdates: [],
+      options: null,
+    };
+    this.writeCapture = () => {
+      fs.writeFileSync(
+        process.env.STRIPE_CAPTURE_FILE,
+        JSON.stringify(this.capture, null, 2)
+      );
+    };
+    this.paymentMethodDomains = {
+      list: async (options) => {
+        this.capture.paymentMethodDomainLists.push(options);
+        this.writeCapture();
+        return { data: [] };
+      },
+      create: async (options) => {
+        this.capture.paymentMethodDomainCreates.push(options);
+        this.writeCapture();
+        return {
+          id: "pmd_test_stub",
+          domain_name: options.domain_name,
+          enabled: options.enabled !== false,
+        };
+      },
+      update: async (id, options) => {
+        this.capture.paymentMethodDomainUpdates.push({ id, options });
+        this.writeCapture();
+        return {
+          id,
+          enabled: options.enabled !== false,
+        };
+      },
+    };
     this.checkout = {
       sessions: {
         create: async (options) => {
-          fs.writeFileSync(
-            process.env.STRIPE_CAPTURE_FILE,
-            JSON.stringify({ secretKey: this.secretKey, options }, null, 2)
-          );
+          this.capture.options = options;
+          this.writeCapture();
           return {
             id: "cs_test_stub",
             url: "https://stripe.example/session",

@@ -48,6 +48,10 @@ const {
   resolvePaymentShortLink,
 } = require("./lib/payment-short-links");
 const {
+  applyStripeCheckoutPaymentOptions,
+  ensureStripePaymentMethodDomain,
+} = require("./lib/stripe-checkout-options");
+const {
   ADMIN_POLICY_ACCEPTANCE_API_BASE_PATH,
   createOrderPolicyAcceptanceService,
 } = require("./lib/order-policy");
@@ -814,7 +818,12 @@ async function createOrderInvoicePaymentLink(entry = {}) {
   };
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    await ensureStripePaymentMethodDomain(stripe, {
+      env: process.env,
+      siteOrigin: SITE_ORIGIN,
+    });
+
+    const session = await stripe.checkout.sessions.create(applyStripeCheckoutPaymentOptions({
       mode: "payment",
       client_reference_id: requestId,
       line_items: [
@@ -835,7 +844,7 @@ async function createOrderInvoicePaymentLink(entry = {}) {
       cancel_url: cancelUrl,
       metadata,
       ...(isValidEmail ? { customer_email: customerEmail } : {}),
-    });
+    }));
     const shortLink = buildPaymentShortLink({
       siteOrigin: SITE_ORIGIN,
       entryId: metadata.entry_id,

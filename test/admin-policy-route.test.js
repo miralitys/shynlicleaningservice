@@ -934,6 +934,8 @@ test("sends policy acceptance by SMS only when the order has no email", async ()
         serviceType: "deep",
         selectedDate: "",
         selectedTime: "",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
         frequency: "",
         totalPrice: "240.00",
         fullAddress: "215 North Elm Street, Naperville, IL 60563",

@@ -503,6 +503,10 @@ test("issues a quoteToken that the checkout endpoint accepts for the canonical s
 
     const captured = await readJsonFile(stripeStub.captureFile);
     assert.equal(captured.options.line_items[0].price_data.unit_amount, quotePayload.pricing.totalPriceCents);
+    assert.equal(captured.options.payment_method_types, undefined);
+    assert.deepEqual(captured.paymentMethodDomainCreates, [
+      { domain_name: "shynlicleaningservice.com", enabled: true },
+    ]);
   } finally {
     await stopServer(started.child);
     stripeStub.cleanup();

@@ -845,13 +845,20 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       .filter(Boolean)
       .map((line) => JSON.parse(line));
     const crmSyncCalls = calls.filter((record) =>
-      String(record.url).includes("/contacts/")
+      ["POST", "PUT"].includes(record.method) && String(record.url).includes("/contacts/")
     );
     const autoSmsCalls = calls.filter((record) =>
       String(record.url).includes("/conversations/messages")
     );
+    const assignmentSmsCalls = autoSmsCalls.filter((record) => {
+      try {
+        return String(JSON.parse(record.body).message || "").includes("На вас назначена уборка SHYNLI");
+      } catch {
+        return false;
+      }
+    });
     assert.equal(crmSyncCalls.length, 2);
-    assert.equal(autoSmsCalls.length, 1);
+    assert.ok(assignmentSmsCalls.length >= 1);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

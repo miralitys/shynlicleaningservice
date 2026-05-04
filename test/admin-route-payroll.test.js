@@ -156,6 +156,14 @@ test("renders admin payroll and lets admins mark payouts as paid", async () => {
     assert.match(payrollBody, /К выплате/i);
     assert.match(payrollBody, /name="dateFrom"/);
     assert.match(payrollBody, /name="dateTo"/);
+    assert.match(payrollBody, /Активность клинера/i);
+    assert.match(payrollBody, /name="activityStaffId"/);
+    assert.match(payrollBody, /name="activityDateFrom" value="2026-04-27"/);
+    assert.match(payrollBody, /name="activityDateTo" value="2026-05-03"/);
+    assert.match(
+      payrollBody,
+      /data-admin-payroll-activity-row="true"[\s\S]*05\/01\/2026 • 10:00[\s\S]*Payroll Admin Client[\s\S]*\$240\.00[\s\S]*\$180\.00/
+    );
     assert.match(payrollBody, /class="admin-nav-link admin-nav-link-parent-active" href="\/admin\/staff"[\s\S]*Сотрудники/);
     assert.match(payrollBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/payroll">Зарплаты<\/a>/);
     assert.match(payrollBody, /data-admin-dialog-row="true"/);
