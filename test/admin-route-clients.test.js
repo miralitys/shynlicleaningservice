@@ -174,6 +174,7 @@ test("renders the clients table with filters and request history", async () => {
         phone: "312-555-0109",
         email: "john@example.com",
         serviceType: "regular",
+        frequency: "weekly",
         selectedDate: "2026-03-20",
         selectedTime: "10:30",
         fullAddress: "456 Oak Ave, Naperville, IL 60540",
@@ -311,6 +312,14 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(clientsBody, /123 Main St, Romeoville, IL 60446/i);
     assert.match(clientsBody, /789 Cedar Ln, Plainfield, IL 60544/i);
     assert.doesNotMatch(clientsBody, /<span class="admin-client-address-preview-more"/i);
+    assert.match(clientsBody, /Постоянные: 1/);
+    assert.match(clientsBody, /Одноразовые: 1/);
+    assert.match(clientsBody, /Регулярные: 1/);
+    assert.match(clientsBody, /Нерегулярные: 1/);
+    assert.match(clientsBody, /Постоянный клиент/);
+    assert.match(clientsBody, /Одноразовый клиент/);
+    assert.match(clientsBody, /Регулярные уборки/);
+    assert.match(clientsBody, /Нерегулярные уборки/);
 
     const selectedClientResponse = await fetch(
       `${started.baseUrl}/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}&addressKey=${encodeURIComponent(romeovilleAddressKey)}`,
@@ -428,6 +437,46 @@ test("renders the clients table with filters and request history", async () => {
     assert.equal(phoneFilterResponse.status, 200);
     assert.match(phoneFilterBody, /John Smith/);
     assert.doesNotMatch(phoneFilterBody, /Jane Doe/);
+
+    const permanentFilterResponse = await fetch(`${started.baseUrl}/admin/clients?lifecycle=permanent`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const permanentFilterBody = await permanentFilterResponse.text();
+    assert.equal(permanentFilterResponse.status, 200);
+    assert.match(permanentFilterBody, /John Smith/);
+    assert.doesNotMatch(permanentFilterBody, /Jane Doe/);
+
+    const oneTimeFilterResponse = await fetch(`${started.baseUrl}/admin/clients?lifecycle=one-time`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const oneTimeFilterBody = await oneTimeFilterResponse.text();
+    assert.equal(oneTimeFilterResponse.status, 200);
+    assert.match(oneTimeFilterBody, /Jane Doe/);
+    assert.doesNotMatch(oneTimeFilterBody, /John Smith/);
+
+    const regularFilterResponse = await fetch(`${started.baseUrl}/admin/clients?serviceSegment=regular`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const regularFilterBody = await regularFilterResponse.text();
+    assert.equal(regularFilterResponse.status, 200);
+    assert.match(regularFilterBody, /John Smith/);
+    assert.doesNotMatch(regularFilterBody, /Jane Doe/);
+
+    const nonRegularFilterResponse = await fetch(`${started.baseUrl}/admin/clients?serviceSegment=nonregular`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const nonRegularFilterBody = await nonRegularFilterResponse.text();
+    assert.equal(nonRegularFilterResponse.status, 200);
+    assert.match(nonRegularFilterBody, /Jane Doe/);
+    assert.doesNotMatch(nonRegularFilterBody, /John Smith/);
 
     const updateClientForm = new URLSearchParams({
       action: "update-client",

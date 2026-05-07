@@ -66,6 +66,7 @@ test("renders checklist templates in settings and persists checklist updates", a
     assert.match(settingsBody, /Уборка перед переездом/i);
     assert.match(settingsBody, /Пылесосить полы/i);
     assert.match(settingsBody, /Все комнаты/i);
+    assert.doesNotMatch(settingsBody, /Окна открыть перед уходом/i);
     assert.doesNotMatch(settingsBody, /Сохранить отметки/i);
     assert.doesNotMatch(settingsBody, /<th>Открыть<\/th>/i);
     assert.doesNotMatch(settingsBody, /Все типы уборки в одном месте\./i);

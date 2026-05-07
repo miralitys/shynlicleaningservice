@@ -102,3 +102,41 @@ test("keeps booking summary inside narrow mobile viewports", () => {
   assert.match(html, /@media \(max-width: 380px\) \{/);
   assert.match(html, /\.summary-item-inline \.summary-value \{ white-space:normal; \}/);
 });
+
+test("shows a loading state while policy acceptance is submitted", () => {
+  const html = renderPolicyAcceptancePage({
+    token: "policy-token-loading",
+    payload: {
+      booking: {
+        id: "booking-loading-1",
+        requestId: "REQ-LOADING-1",
+        serviceLabel: "Regular Cleaning",
+        appointmentLabel: "05/08/2026, 9:00 AM",
+        totalPrice: 188,
+      },
+      customer: {
+        fullName: "Loading Customer",
+        serviceAddress: "100 Spinner St, Naperville, IL 60540",
+        email: "loading@example.com",
+        phone: "+1 312-555-0199",
+      },
+      acceptance: {
+        policyAccepted: false,
+        status: "pending",
+      },
+      documents: [],
+    },
+  });
+
+  assert.match(html, /id="policy-loading" role="status" aria-live="polite"/);
+  assert.match(html, /Submitting your signature\. Please wait a few seconds\./);
+  assert.match(html, /\.loading-spinner \{/);
+  assert.match(html, /@keyframes policy-spin/);
+  assert.match(html, /let isSubmitting = false;/);
+  assert.match(html, /function setFormSubmitting\(nextSubmitting\)/);
+  assert.match(html, /const initialButtonText = button \? button\.textContent : "";/);
+  assert.match(html, /button\.textContent = isSubmitting \? "Signing\.\.\." : initialButtonText;/);
+  assert.match(html, /if \(isSubmitting\) \{\s+return;\s+\}/);
+  assert.match(html, /setFormSubmitting\(true\);/);
+  assert.match(html, /setFormSubmitting\(false\);/);
+});

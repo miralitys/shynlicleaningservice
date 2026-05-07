@@ -3,6 +3,7 @@
 const {
   test,
   assert,
+  createFetchStub,
   loadAdminConfig,
   startServer,
   stopServer,
@@ -10,9 +11,42 @@ const {
 } = require("./admin-route-helpers");
 
 test("renders messages as dialog rows with unread counts", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [],
+      },
+    },
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-messages-outbound-only",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        id: "message-messages-outbound-only",
+        conversationId: "conversation-messages-outbound-only",
+      },
+    },
+  ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
   };
   const started = await startServer({ env });
   const config = loadAdminConfig(env);
@@ -71,6 +105,49 @@ test("renders messages as dialog rows with unread counts", async () => {
     assert.equal(secondCreateOrderResponse.status, 303);
     const secondOrderEntryId = new URL(secondCreateOrderResponse.headers.get("location") || "", started.baseUrl).searchParams.get("order");
     assert.ok(secondOrderEntryId);
+
+    const outboundOnlyCreateOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Outbound Only Customer",
+        customerPhone: "6308127077",
+        customerEmail: "",
+        serviceType: "regular",
+        selectedDate: "2026-05-13",
+        selectedTime: "12:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "0",
+        totalPrice: "175.00",
+        fullAddress: "903 Follow Up Drive, Bolingbrook, IL 60440",
+      }),
+    });
+    assert.equal(outboundOnlyCreateOrderResponse.status, 303);
+    const outboundOnlyEntryId = new URL(outboundOnlyCreateOrderResponse.headers.get("location") || "", started.baseUrl).searchParams.get("order");
+    assert.ok(outboundOnlyEntryId);
+
+    const outboundOnlySmsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-order-sms",
+        entryId: outboundOnlyEntryId,
+        message: "Outbound-only history should still create a dialog.",
+        returnTo: `/admin/orders?order=${encodeURIComponent(outboundOnlyEntryId)}`,
+      }),
+    });
+    assert.equal(outboundOnlySmsResponse.status, 200);
 
     const orderWebhookResponse = await fetch(`${started.baseUrl}/api/ghl/inbound-sms`, {
       method: "POST",
@@ -147,9 +224,14 @@ test("renders messages as dialog rows with unread counts", async () => {
     assert.match(messagesBody, /class="admin-message-row-new admin-table-row-clickable"/);
     assert.match(messagesBody, /data-admin-dialog-row="true"/);
     assert.match(messagesBody, /data-admin-dialog-focus="\.admin-ghl-sms-card"/);
-    assert.match(messagesBody, /data-admin-message-dialog-key="name:order message customer"/);
+    assert.match(messagesBody, /data-admin-message-dialog-key="contact:contact-messages-order-1"/);
+    assert.match(messagesBody, /data-admin-message-dialog-key="conversation:conversation-messages-order-different-phone"/);
+    assert.match(messagesBody, /data-admin-message-dialog-key="contact:contact-messages-outbound-only"/);
+    assert.doesNotMatch(messagesBody, /data-admin-message-dialog-key="name:order message customer"/);
     assert.match(messagesBody, new RegExp(`data-admin-message-entry-id="(${orderEntryId}|${secondOrderEntryId})"`));
-    assert.match(messagesBody, /data-admin-message-unread-count="3"/);
+    assert.match(messagesBody, /data-admin-message-unread-count="2"/);
+    assert.match(messagesBody, /data-admin-message-unread-count="1"/);
+    assert.match(messagesBody, /data-admin-message-unread-count="0"/);
     assert.match(messagesBody, /data-admin-nav-unread-message-count="3"/);
     assert.match(messagesBody, /data-admin-message-refs="[^"]*message-messages-order-1/);
     assert.match(messagesBody, /data-admin-message-refs="[^"]*message-messages-order-2/);
@@ -158,13 +240,20 @@ test("renders messages as dialog rows with unread counts", async () => {
     assert.match(messagesBody, /data-admin-message-list-kind="unread"/);
     assert.match(messagesBody, /data-admin-message-status-cell="true"/);
     assert.match(messagesBody, /data-admin-message-summary-unread="true">3</);
-    assert.match(messagesBody, />3 новых</);
+    assert.match(messagesBody, />2 новых</);
+    assert.match(messagesBody, />1 новое</);
     assert.match(messagesBody, /data-admin-dialog-open="admin-order-detail-dialog-/);
     assert.match(messagesBody, /id="admin-order-detail-dialog-/);
     assert.match(messagesBody, /Message from another phone, same client name\./);
-    assert.equal((messagesBody.match(/data-admin-message-dialog-key="name:order message customer"/g) || []).length, 2);
+    assert.match(messagesBody, /Outbound-only history should still create a dialog\./);
+    assert.match(messagesBody, /2 SMS в переписке/);
+    assert.match(messagesBody, /1 SMS в переписке/);
+    assert.equal((messagesBody.match(/data-admin-message-dialog-key="contact:contact-messages-order-1"/g) || []).length, 2);
+    assert.equal((messagesBody.match(/data-admin-message-dialog-key="conversation:conversation-messages-order-different-phone"/g) || []).length, 2);
+    assert.equal((messagesBody.match(/data-admin-message-dialog-key="contact:contact-messages-outbound-only"/g) || []).length, 1);
   } finally {
     await stopServer(started.child);
+    fetchStub.cleanup();
   }
 });
 

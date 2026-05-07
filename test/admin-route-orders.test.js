@@ -35,7 +35,30 @@ const {
 const { createStripeStub } = require("./server-test-helpers");
 
 const DIRECT_REVIEW_URL_PATTERN =
-  /https:\/\/www\.google\.com\/search\?q=Shynli\+Cleaning\+Service(?:&|&amp;)ludocid=9307087877612204108#lrd=0x63f898dd18cf9cc3:0x81296b1d166b704c,3/;
+  /https:\/\/g\.page\/r\/CUxwaxYdaymBEAI\/review/;
+
+function getChicagoDateTimeValueFromNow(offsetMs = 0) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    hourCycle: "h23",
+  });
+  const parts = formatter.formatToParts(new Date(Date.now() + Number(offsetMs || 0)));
+  const values = {};
+  for (const part of parts) {
+    if (part.type === "literal") continue;
+    values[part.type] = part.value;
+  }
+  return {
+    date: `${values.year}-${values.month}-${values.day}`,
+    time: `${values.hour}:${values.minute}`,
+  };
+}
 
 test("allows admins to add a manual order from the orders page", async () => {
   const env = {
@@ -557,6 +580,120 @@ test("lets admins manually schedule the next recurring visit", async () => {
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
+  }
+});
+
+test("saving a new visit from a completed order creates a separate scheduled order", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-completed-next-visit-"));
+  const staffStorePath = path.join(tempDir, "admin-staff-store.json");
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-completed-next-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: staffStorePath,
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "completed-next-visit-order",
+      serviceType: "deep",
+      fullName: "Completed Next Visit Client",
+      email: "completed.next@example.com",
+      phone: "312-555-2121",
+      frequency: "",
+      selectedDate: "2026-04-14",
+      selectedTime: "09:00",
+      fullAddress: "606 Completed Next Road, Aurora, IL 60505",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const entryId = await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "completed-next-visit-order"
+    );
+
+    const completeResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: "/admin/orders",
+        orderStatus: "completed",
+      }),
+    });
+    assert.equal(completeResponse.status, 303);
+
+    const scheduleFromCompletedResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: "/admin/orders",
+        orderStatus: "scheduled",
+        selectedDate: "2026-05-01",
+        selectedTime: "11:30",
+        frequency: "",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
+      }),
+    });
+
+    assert.equal(scheduleFromCompletedResponse.status, 303);
+    const scheduleLocation = scheduleFromCompletedResponse.headers.get("location") || "";
+    assert.match(scheduleLocation, /notice=next-order-created/);
+    const nextEntryId = new URL(scheduleLocation, started.baseUrl).searchParams.get("order");
+    assert.ok(nextEntryId);
+    assert.notEqual(nextEntryId, entryId);
+
+    const ordersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Completed Next Visit Client")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Найдено 2 из \d+ заказов\./);
+
+    const scheduledLane = getOrderFunnelLaneSlice(ordersBody, "scheduled", "en-route");
+    const completedLane = getOrderFunnelLaneSlice(ordersBody, "completed", "canceled");
+    assert.match(scheduledLane, /Completed Next Visit Client/);
+    assert.match(scheduledLane, /05\/01\/2026, 11:30 AM/);
+    assert.match(completedLane, /Completed Next Visit Client/);
+    assert.match(completedLane, /04\/14\/2026, 09:00 AM/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
@@ -1483,6 +1620,7 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
     assert.match(reviewRequestEmails[0], /review.customer@example.com/i);
     assert.match(reviewRequestEmails[0], DIRECT_REVIEW_URL_PATTERN);
     assert.doesNotMatch(reviewRequestEmails[0], /https:\/\/maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+    assert.doesNotMatch(reviewRequestEmails[0], /google\.com\/search/);
 
     const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
       .trim()
@@ -1503,6 +1641,7 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
     assert.equal(reviewSmsPayload.toNumber, "+13125554455");
     assert.match(reviewSmsPayload.message, DIRECT_REVIEW_URL_PATTERN);
     assert.doesNotMatch(reviewSmsPayload.message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+    assert.doesNotMatch(reviewSmsPayload.message, /google\.com\/search/);
 
     const repeatSaveResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -2172,7 +2311,26 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(confirmedDashboardResponse.status, 200);
     assert.match(confirmedDashboardBody, /Вы подтвердили заказ\./);
     assert.match(confirmedDashboardBody, /Подтверждено/);
+    assert.match(confirmedDashboardBody, /Кнопка «Я в пути» станет активной за 2 часа до начала уборки\./);
     assert.match(confirmedDashboardBody, /name="action" value="mark-assignment-en-route"/);
+    assert.match(confirmedDashboardBody, /<button[^>]*disabled[^>]*>Я в пути<\/button>/);
+
+    const tooEarlyEnRouteResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-assignment-en-route",
+        entryId,
+      }),
+    });
+    assert.equal(tooEarlyEnRouteResponse.status, 303);
+    const tooEarlyLocation = tooEarlyEnRouteResponse.headers.get("location") || "";
+    assert.match(tooEarlyLocation, /notice=assignment-error/);
+    assert.match(decodeURIComponent(tooEarlyLocation.replace(/\+/g, " ")), /Кнопка «Я в пути» станет активной за 2 часа/i);
 
     const confirmedOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,
@@ -2191,6 +2349,38 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     );
     assert.match(scheduledLaneAfterCleanerConfirm, /Подтверждено/);
     assert.match(scheduledLaneAfterCleanerConfirm, /admin-badge admin-badge-success">Подтверждено</);
+
+    const enRouteReadySchedule = getChicagoDateTimeValueFromNow(60 * 60 * 1000);
+    const moveIntoEnRouteWindowResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+        orderStatus: "scheduled",
+        assignedStaff: "Ariana Cleaner",
+        paymentStatus: "unpaid",
+        paymentMethod: "invoice",
+        selectedDate: enRouteReadySchedule.date,
+        selectedTime: enRouteReadySchedule.time,
+        frequency: "",
+      }),
+    });
+    assert.equal(moveIntoEnRouteWindowResponse.status, 303);
+
+    const readyDashboardResponse = await fetch(`${started.baseUrl}/account`, {
+      headers: {
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+    });
+    const readyDashboardBody = await readyDashboardResponse.text();
+    assert.equal(readyDashboardResponse.status, 200);
+    assert.match(readyDashboardBody, /name="action" value="mark-assignment-en-route"/);
+    assert.doesNotMatch(readyDashboardBody, /Кнопка «Я в пути» станет активной за 2 часа до начала уборки\./);
 
     const enRouteResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",

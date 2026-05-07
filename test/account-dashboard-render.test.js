@@ -256,6 +256,7 @@ test("renders cleaner checklist completion without a photo upload step", () => {
     checklistItems: [
       { id: "item-1", label: "Kitchen", hint: "", completed: true },
       { id: "item-2", label: "Bathroom", hint: "", completed: true },
+      { id: "item-3", label: "Проветрить помещения", hint: "Окна открыть перед уходом", completed: true },
     ],
     beforePhotos: [],
     afterPhotos: [],
@@ -298,6 +299,9 @@ test("renders cleaner checklist completion without a photo upload step", () => {
   const completedCard = getDesktopCard(html, "Выполненные заказы");
   assert.match(activeCard, /Checklist Client/);
   assert.match(activeCard, /Завершить уборку/);
+  assert.match(activeCard, /account-checklist-check/);
+  assert.match(activeCard, /account-checklist-copy/);
+  assert.doesNotMatch(activeCard, /Окна открыть перед уходом/);
   assert.doesNotMatch(activeCard, /data-account-photo-editor/);
   assert.doesNotMatch(activeCard, /complete-assignment-photos/);
   assert.doesNotMatch(activeCard, /Выбрать фото/);
@@ -305,6 +309,47 @@ test("renders cleaner checklist completion without a photo upload step", () => {
   assert.doesNotMatch(activeCard, /Legacy Photos Client/);
   assert.match(completedCard, /Legacy Photos Client/);
   assert.match(completedCard, /Уборка завершена/);
+});
+
+test("keeps cleaner en-route action disabled until two hours before the appointment", () => {
+  const renderers = createRenderers();
+  const html = renderers.renderDashboardPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    staffSummary: null,
+    assignedOrders: [
+      buildOrder({
+        id: "future-confirmed-order",
+        customerName: "Future Confirmed Client",
+        status: "scheduled",
+        scheduleDate: "2099-01-05",
+        scheduleTime: "09:00",
+        updatedAt: "2099-01-03T12:00:00.000Z",
+        confirmed: true,
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  });
+
+  assert.match(html, /Кнопка «Я в пути» станет активной за 2 часа до начала уборки\./);
+  assert.match(html, /name="action" value="mark-assignment-en-route"/);
+  assert.match(html, /<button[^>]*disabled[^>]*>Я в пути<\/button>/);
 });
 
 test("renders cleaner calendar cards with the scheduled time range", () => {

@@ -7,10 +7,11 @@ const {
   createAutoNotificationService,
   getOrderNotificationState,
   localDateTimeToInstant,
+  normalizeCustomerReviewUrl,
 } = require("../lib/auto-notifications");
 
 const DIRECT_REVIEW_URL_PATTERN =
-  /https:\/\/www\.google\.com\/search\?q=Shynli\+Cleaning\+Service&ludocid=9307087877612204108#lrd=0x63f898dd18cf9cc3:0x81296b1d166b704c,3/;
+  /https:\/\/g\.page\/r\/CUxwaxYdaymBEAI\/review/;
 
 function createLeadEntry(overrides = {}) {
   return {
@@ -825,6 +826,7 @@ test("sends review request email and SMS once when an order enters awaiting-revi
   assert.match(leadConnectorClient.calls[0].message, /quick review/i);
   assert.match(leadConnectorClient.calls[0].message, DIRECT_REVIEW_URL_PATTERN);
   assert.doesNotMatch(leadConnectorClient.calls[0].message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
+  assert.doesNotMatch(leadConnectorClient.calls[0].message, /google\.com\/search/);
   assert.equal((firstResult.entry.payloadForRetry.adminSms.history || []).length, 1);
   const firstNotificationState = getOrderNotificationState(firstResult.entry);
   assert.ok(firstNotificationState.reviewRequest.emailSentAt);
@@ -839,6 +841,19 @@ test("sends review request email and SMS once when an order enters awaiting-revi
   assert.equal(secondResult.customerSmsSent, false);
   assert.equal(emailCalls.length, 1);
   assert.equal(leadConnectorClient.calls.length, 1);
+});
+
+test("normalizes legacy review links to the direct Google review page", () => {
+  assert.equal(
+    normalizeCustomerReviewUrl("https://maps.app.goo.gl/4u9s7onykNrJEEn99"),
+    "https://g.page/r/CUxwaxYdaymBEAI/review"
+  );
+  assert.equal(
+    normalizeCustomerReviewUrl(
+      "https://www.google.com/search?q=Shynli+Cleaning+Service&ludocid=9307087877612204108#lrd=0x63f898dd18cf9cc3:0x81296b1d166b704c,3"
+    ),
+    "https://g.page/r/CUxwaxYdaymBEAI/review"
+  );
 });
 
 test("uses the configured reminder scan limit during reminder sweeps", async () => {

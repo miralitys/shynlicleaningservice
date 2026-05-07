@@ -119,10 +119,62 @@ test("replaces legacy checklist templates with Cleaning app defaults", async () 
     assert.ok(movingTemplate);
     assert.equal(regularTemplate.items.length, 12);
     assert.equal(deepTemplate.items.length, 22);
-    assert.equal(movingTemplate.items.length, 32);
+    assert.equal(movingTemplate.items.length, 31);
     assert.equal(regularTemplate.items[0].label, "Пылесосить полы");
     assert.equal(regularTemplate.items[0].hint, "Все комнаты");
+    assert.equal(
+      movingTemplate.items.some((item) => item.label === "Проветрить помещения" || item.hint === "Окна открыть перед уходом"),
+      false
+    );
     assert.notEqual(regularTemplate.items[0].label, "Старый пункт");
+  } finally {
+    await fsp.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("filters deprecated window-opening checklist item from saved templates", async () => {
+  const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "shynli-settings-deprecated-"));
+  const storePath = path.join(tempDir, "admin-settings-store.json");
+  await fsp.writeFile(
+    storePath,
+    JSON.stringify(
+      {
+        version: 2,
+        templates: {
+          regular: {
+            serviceType: "regular",
+            items: [{ id: "regular-1", label: "Пылесосить полы", hint: "Все комнаты", sortOrder: 0 }],
+          },
+          deep: {
+            serviceType: "deep",
+            items: [{ id: "deep-1", label: "Пылесосить полы", hint: "Все комнаты", sortOrder: 0 }],
+          },
+          moving: {
+            serviceType: "moving",
+            items: [
+              { id: "moving-1", label: "Финальная проверка", hint: "Все комнаты", sortOrder: 0 },
+              { id: "moving-2", label: "Проветрить помещения", hint: "Окна открыть перед уходом", sortOrder: 1 },
+            ],
+          },
+        },
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+
+  const store = createAdminSettingsStore({ filePath: storePath });
+
+  try {
+    const snapshot = await store.getSnapshot();
+    const movingTemplate = snapshot.templates.find((template) => template.serviceType === "moving");
+
+    assert.ok(movingTemplate);
+    assert.deepEqual(
+      movingTemplate.items.map((item) => item.label),
+      ["Финальная проверка"]
+    );
   } finally {
     await fsp.rm(tempDir, { recursive: true, force: true });
   }
