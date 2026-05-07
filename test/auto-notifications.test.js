@@ -388,7 +388,7 @@ test("sends assignment SMS once per schedule signature for scheduled orders", as
   assert.equal(Boolean(leadConnectorClient.calls[0].allowDirectToNumber), true);
   assert.match(leadConnectorClient.calls[0].message, /На вас назначена уборка SHYNLI/i);
   assert.match(leadConnectorClient.calls[0].message, /Подтвердите или отклоните заказ/i);
-  assert.match(leadConnectorClient.calls[0].message, /shynlicleaningservice\.com\/account/i);
+  assert.match(leadConnectorClient.calls[0].message, /shynlicleaningservice\.com\/account\?order=order-1/i);
   const notificationState = getOrderNotificationState(firstResult.entry);
   assert.equal(
     notificationState.assignmentSmsByStaffId["staff-1"].signature,

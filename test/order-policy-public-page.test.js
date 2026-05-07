@@ -52,10 +52,19 @@ test("opens policy documents inside the public signature page", () => {
     /class="doc-card doc-card-link" href="https:\/\/shynlicleaningservice\.com\/cancellation-policy" data-policy-doc-link data-policy-doc-title="Payment and Cancellation Policy"/
   );
   assert.match(html, /id="policy-doc-overlay"/);
+  const payloadScriptMatch = html.match(
+    /<script id="policy-acceptance-payload" type="application\/json">([\s\S]*?)<\/script>/
+  );
+  assert.ok(payloadScriptMatch);
+  assert.match(payloadScriptMatch[1], /^\{"booking":/);
+  assert.doesNotMatch(payloadScriptMatch[1], /&quot;/);
   assert.match(html, /function openPolicyDocument\(event\)/);
+  assert.match(html, /function showPolicyDocumentFrame\(href, title\)/);
+  assert.match(html, /class="policy-doc-frame"/);
   assert.match(html, /docList\.addEventListener\("click", openPolicyDocument\)/);
   assert.doesNotMatch(html, /window\.open\(href, "_blank", "noopener,noreferrer"\)/);
   assert.doesNotMatch(html, /target="_blank" rel="noopener noreferrer" data-policy-doc-link/);
+  assert.doesNotMatch(html, /Open in this tab/);
 });
 
 test("keeps booking summary inside narrow mobile viewports", () => {

@@ -742,6 +742,139 @@ test("renders the clients table with filters and request history", async () => {
   }
 });
 
+test("allows admins to attach persistent photos to a client card", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-client-photo-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "client-photo-request-1",
+      fullName: "Photo Client",
+      phone: "(312) 555-0134",
+      email: "photo.client@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-05-07",
+      selectedTime: "09:00",
+      fullAddress: "77 Photo Lane, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const clientKey = "3125550134";
+    const returnTo = `/admin/clients?client=${encodeURIComponent(clientKey)}`;
+    const initialClientResponse = await fetch(`${started.baseUrl}${returnTo}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const initialClientBody = await initialClientResponse.text();
+    assert.equal(initialClientResponse.status, 200);
+    assert.match(initialClientBody, /Важные фото/i);
+    assert.match(initialClientBody, /name="action" value="add-client-photo"/i);
+    assert.match(initialClientBody, /Фото пока нет/i);
+
+    const uploadForm = new FormData();
+    uploadForm.set("action", "add-client-photo");
+    uploadForm.set("clientKey", clientKey);
+    uploadForm.set("returnTo", returnTo);
+    uploadForm.append(
+      "clientPhotos",
+      new Blob([Buffer.from("client-important-photo")], { type: "image/jpeg" }),
+      "Access Panel.JPG"
+    );
+
+    const uploadResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: uploadForm,
+    });
+    assert.equal(uploadResponse.status, 303);
+    assert.match(uploadResponse.headers.get("location") || "", /notice=client-photo-added/);
+
+    const uploadedClientResponse = await fetch(`${started.baseUrl}${uploadResponse.headers.get("location") || ""}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const uploadedClientBody = await uploadedClientResponse.text();
+    assert.equal(uploadedClientResponse.status, 200);
+    assert.match(uploadedClientBody, /Фото прикреплено к карточке клиента/i);
+    assert.match(uploadedClientBody, /access-panel\.jpg/i);
+    assert.match(uploadedClientBody, /name="action" value="delete-client-photo"/i);
+
+    const mediaSrc = uploadedClientBody.match(/<img class="admin-client-photo-thumb" src="([^"]+)"/)?.[1] || "";
+    assert.ok(mediaSrc, "Expected an admin media image URL for the client photo");
+    const mediaResponse = await fetch(`${started.baseUrl}${mediaSrc.replace(/&amp;/g, "&")}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    assert.equal(mediaResponse.status, 200);
+    assert.match(mediaResponse.headers.get("content-type") || "", /image\/jpeg/);
+    assert.equal(Buffer.from(await mediaResponse.arrayBuffer()).toString("utf8"), "client-important-photo");
+
+    const assetId = uploadedClientBody.match(/name="assetId" value="([^"]+)"/)?.[1] || "";
+    const assetPath = uploadedClientBody.match(/name="assetPath" value="([^"]+)"/)?.[1] || "";
+    assert.ok(assetId);
+    assert.ok(assetPath);
+
+    const deletePhotoResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "delete-client-photo",
+        clientKey,
+        assetId,
+        assetPath,
+        returnTo,
+      }),
+    });
+    assert.equal(deletePhotoResponse.status, 303);
+    assert.match(deletePhotoResponse.headers.get("location") || "", /notice=client-photo-deleted/);
+
+    const deletedPhotoResponse = await fetch(`${started.baseUrl}${deletePhotoResponse.headers.get("location") || ""}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const deletedPhotoBody = await deletedPhotoResponse.text();
+    assert.equal(deletedPhotoResponse.status, 200);
+    assert.match(deletedPhotoBody, /Фото удалено из карточки клиента/i);
+    assert.doesNotMatch(deletedPhotoBody, /access-panel\.jpg/i);
+    assert.match(deletedPhotoBody, /Фото пока нет/i);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("loads inbound SMS replies into the client dialog history", async () => {
   const fetchStub = createFetchStub([
     {

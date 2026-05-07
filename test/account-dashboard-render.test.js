@@ -189,6 +189,59 @@ test("renders active cleaner orders first and moves completed orders into histor
   assert.match(completedCard, /Completed Client/);
 });
 
+test("prioritizes the cleaner order opened from an SMS link", () => {
+  const renderers = createRenderers();
+  const html = renderers.renderDashboardPage(
+    {
+      user: {
+        id: "user-1",
+        email: "ariana.cleaner@example.com",
+        phone: "3125550100",
+        staffId: "staff-1",
+        role: "cleaner",
+      },
+      staffRecord: {
+        id: "staff-1",
+        name: "Ariana Cleaner",
+        email: "ariana.cleaner@example.com",
+        phone: "3125550100",
+        status: "active",
+        w9: { document: { relativePath: "w9.pdf" } },
+        contract: { document: { relativePath: "contract.pdf" } },
+      },
+      staffSummary: null,
+      assignedOrders: [
+        buildOrder({
+          id: "newer-pending-order",
+          customerName: "Newer Pending Client",
+          scheduleDate: "2099-02-10",
+          updatedAt: "2099-01-04T12:00:00.000Z",
+          confirmed: false,
+        }),
+        buildOrder({
+          id: "sms-focused-order",
+          customerName: "SMS Focused Client",
+          scheduleDate: "2099-02-11",
+          updatedAt: "2099-01-02T12:00:00.000Z",
+          confirmed: false,
+        }),
+      ],
+      managerContact: null,
+      calendarMeta: { configured: false, connected: false },
+      payrollSummary: { records: [], totals: {} },
+    },
+    {
+      focusedOrderId: "sms-focused-order",
+    }
+  );
+
+  const activeCard = getDesktopCard(html, "Мои заявки");
+  assert.ok(activeCard.indexOf("SMS Focused Client") < activeCard.indexOf("Newer Pending Client"));
+  assert.match(html, /data-account-focused-detail-id="account-mobile-order-detail-sms-focused-order"/);
+  assert.match(html, /Заказ из SMS/);
+  assert.match(html, /Открыто из SMS\. Подтвердите или отклоните именно этот заказ\./);
+});
+
 test("renders cleaner checklist completion without a photo upload step", () => {
   const renderers = createRenderers();
   const checklistOrder = buildOrder({
