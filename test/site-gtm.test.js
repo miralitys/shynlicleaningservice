@@ -8,6 +8,9 @@ const { startServer, stopServer } = require("./server-test-helpers");
 let serverProcess = null;
 let BASE_URL = null;
 
+const CALLRAIL_SWAP_SCRIPT_PATTERN =
+  /<script type="text\/javascript" src="\/\/cdn\.callrail\.com\/companies\/562095680\/7c306f50357be4c201eb\/12\/swap\.js"><\/script>/;
+
 test.before(async () => {
   const started = await startServer();
   serverProcess = started.child;
@@ -30,6 +33,7 @@ test("serves GTM on public site routes", async () => {
     assert.match(body, /GTM-5P88N7LD/, route);
     assert.match(body, /<!-- Google Tag Manager \(noscript\) -->/, route);
     assert.match(body, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/, route);
+    assert.match(body, CALLRAIL_SWAP_SCRIPT_PATTERN, route);
   }
 });
 
@@ -41,6 +45,7 @@ test("serves GTM on account pages but not on admin pages", async () => {
   assert.match(accountBody, /id="shynli-tracking-script"/);
   assert.match(accountBody, /<!-- Google Tag Manager -->/);
   assert.match(accountBody, /<!-- Google Tag Manager \(noscript\) -->/);
+  assert.doesNotMatch(accountBody, /cdn\.callrail\.com/);
 
   const adminResponse = await fetch(`${BASE_URL}/admin/login`);
   const adminBody = await adminResponse.text();
@@ -50,6 +55,7 @@ test("serves GTM on account pages but not on admin pages", async () => {
   assert.doesNotMatch(adminBody, /<!-- Google Tag Manager -->/);
   assert.doesNotMatch(adminBody, /<!-- Google Tag Manager \(noscript\) -->/);
   assert.doesNotMatch(adminBody, /GTM-5P88N7LD/);
+  assert.doesNotMatch(adminBody, /cdn\.callrail\.com/);
 });
 
 test("serves the shared tracking library asset", async () => {

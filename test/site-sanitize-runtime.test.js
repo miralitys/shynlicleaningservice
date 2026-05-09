@@ -102,6 +102,11 @@ const sanitizeHtml = createSiteSanitizer({
   siteSeoHelpers,
 }).sanitizeHtml;
 
+const CALLRAIL_SWAP_SCRIPT_PATTERN =
+  /<script type="text\/javascript" src="\/\/cdn\.callrail\.com\/companies\/562095680\/7c306f50357be4c201eb\/12\/swap\.js"><\/script>/;
+const CALLRAIL_SWAP_SCRIPT_URL_PATTERN =
+  /cdn\.callrail\.com\/companies\/562095680\/7c306f50357be4c201eb\/12\/swap\.js/g;
+
 function readFixture(fileName) {
   return fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
 }
@@ -170,6 +175,22 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
     assert.match(sanitized, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
     assert.match(sanitized, /<body[^>]*><!-- Google Tag Manager \(noscript\) -->/);
     assert.match(sanitized, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/);
+  }
+});
+
+test("injects CallRail swap script before closing body on public site pages", () => {
+  const fixtures = [
+    { route: "/", html: readFixture("page108488156.html") },
+    { route: "/blog", html: readFixture("page108872586.html") },
+    { route: "/quote", html: readFixture("quote2.html") },
+  ];
+
+  for (const fixture of fixtures) {
+    const sanitized = sanitizeHtml(fixture.html, fixture.route);
+
+    assert.match(sanitized, CALLRAIL_SWAP_SCRIPT_PATTERN, fixture.route);
+    assert.match(sanitized, new RegExp(`${CALLRAIL_SWAP_SCRIPT_PATTERN.source}<\\/body>`, "i"), fixture.route);
+    assert.equal((sanitized.match(CALLRAIL_SWAP_SCRIPT_URL_PATTERN) || []).length, 1, fixture.route);
   }
 });
 
