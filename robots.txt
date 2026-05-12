@@ -1,5 +1,8 @@
 User-Agent: *
 Disallow: /admin
+Disallow: /ads/
+Disallow: /services/deep-cleaning/ads/
+Disallow: /services/regular-cleaning/ads/
 Disallow: /page108872146.html
 Disallow: /page113047926.html
 Disallow: /tilda/form*

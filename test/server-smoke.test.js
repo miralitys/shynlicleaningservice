@@ -172,6 +172,28 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /Shynli Cleaning/i);
 });
 
+test("serves the homepage ads duplicate as noindex", async () => {
+  const response = await fetch(`${BASE_URL}/ads/`);
+  const body = await response.text();
+  const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
+  const sitemapBody = await sitemapResponse.text();
+  const robotsResponse = await fetch(`${BASE_URL}/robots.txt`);
+  const robotsBody = await robotsResponse.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(body, /House Cleaning Services in Chicago Suburbs/i);
+  assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
+  assert.match(body, /id="shynli-home-page-runtime"/);
+  assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/"\s*\/?>/);
+  assert.equal(sitemapResponse.status, 200);
+  assert.doesNotMatch(sitemapBody, /\/ads/);
+  assert.equal(robotsResponse.status, 200);
+  assert.match(robotsBody, /Disallow: \/ads\//);
+});
+
 test("serves home-like routes without zero/lazyload runtimes", async () => {
   const homeLikeRoutes = [
     ["/home-calculator", /Instant House Cleaning Cost Calculator/i],
@@ -477,6 +499,51 @@ test("serves service pages with the shared popup and menu runtime", async () => 
   assert.match(body, /src="images\/tild3232-3034-4639-b536-663862613932__btn-2\.png"/);
   assert.match(body, /href="#city"/);
   assert.match(body, /href="#clean"/);
+});
+
+test("serves the regular-cleaning ads duplicate as noindex", async () => {
+  const response = await fetch(`${BASE_URL}/services/regular-cleaning/ads/`);
+  const body = await response.text();
+  const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
+  const sitemapBody = await sitemapResponse.text();
+  const robotsResponse = await fetch(`${BASE_URL}/robots.txt`);
+  const robotsBody = await robotsResponse.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(body, /Recurring House Cleaning Services/i);
+  assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
+  assert.match(body, /id="shynli-home-page-runtime"/);
+  assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/regular-cleaning"\s*\/?>/);
+  assert.equal(sitemapResponse.status, 200);
+  assert.doesNotMatch(sitemapBody, /\/services\/regular-cleaning\/ads/);
+  assert.equal(robotsResponse.status, 200);
+  assert.match(robotsBody, /Disallow: \/services\/regular-cleaning\/ads\//);
+});
+
+test("serves the deep-cleaning ads duplicate as noindex", async () => {
+  const response = await fetch(`${BASE_URL}/services/deep-cleaning/ads/`);
+  const body = await response.text();
+  const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
+  const sitemapBody = await sitemapResponse.text();
+  const robotsResponse = await fetch(`${BASE_URL}/robots.txt`);
+  const robotsBody = await robotsResponse.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(body, /Deep Cleaning Services/i);
+  assert.match(body, /id="deep-cleaning-addons-static"/);
+  assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
+  assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
+  assert.match(body, /id="shynli-home-page-runtime"/);
+  assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/deep-cleaning"\s*\/?>/);
+  assert.equal(sitemapResponse.status, 200);
+  assert.doesNotMatch(sitemapBody, /\/services\/deep-cleaning\/ads/);
+  assert.equal(robotsResponse.status, 200);
+  assert.match(robotsBody, /Disallow: \/services\/deep-cleaning\/ads\//);
 });
 
 test("serves all service page pilots without zero/lazyload runtimes", async () => {

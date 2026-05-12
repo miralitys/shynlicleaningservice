@@ -446,10 +446,13 @@ const MANAGED_BLOG_HTML_ROUTES = Object.freeze([
   ...BLOG_ARTICLE_PAGES.map((page) => [page.path, BLOG_ROUTE_HTML_FILE]),
 ]);
 const NOINDEX_ROUTES = new Set([
+  "/ads",
   "/home-calculator",
   "/oauth/callback",
   "/quote",
   "/quote2",
+  "/services/deep-cleaning/ads",
+  "/services/regular-cleaning/ads",
   ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
@@ -464,6 +467,7 @@ const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.publishedAt)]),
 ]);
 const BREADCRUMB_LABELS = new Map([
+  ["/ads", "Home"],
   ["/about-us", "About Us"],
   ["/blog", "Blog"],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, page.label]),
@@ -480,10 +484,20 @@ const BREADCRUMB_LABELS = new Map([
   ["/service-areas", "Service Areas"],
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
+  ["/services/deep-cleaning/ads", "Deep Cleaning"],
+  ["/services/regular-cleaning/ads", "Regular Cleaning"],
 ]);
 const ROUTE_META_OVERRIDES = {
   "/": {
     title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    ogDescription:
+      "Trusted local house cleaning in Chicago suburbs with upfront pricing, flexible scheduling, and insured cleaners.",
+  },
+  "/ads": {
+    title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/`,
+    robots: "noindex,nofollow",
     ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
     ogDescription:
       "Trusted local house cleaning in Chicago suburbs with upfront pricing, flexible scheduling, and insured cleaners.",
@@ -518,11 +532,21 @@ const ROUTE_META_OVERRIDES = {
   "/services/deep-cleaning": {
     title: "Deep Cleaning Services | Shynli Cleaning",
   },
+  "/services/deep-cleaning/ads": {
+    title: "Deep Cleaning Services | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/services/deep-cleaning`,
+    robots: "noindex,nofollow",
+  },
   "/services/move-in-move-out-cleaning": {
     title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
   },
   "/services/regular-cleaning": {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
+  },
+  "/services/regular-cleaning/ads": {
+    title: "Recurring House Cleaning Services | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/services/regular-cleaning`,
+    robots: "noindex,nofollow",
   },
   "/oauth/callback": {
     robots: "noindex,nofollow",
