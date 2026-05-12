@@ -203,7 +203,7 @@ test("serves the homepage ads duplicate as noindex", async () => {
   assert.match(body, /Deep Cleaning/);
   assert.match(body, /Leave your phone number and full name\./);
   assert.match(body, /Thank you, we will contact you shortly\./);
-  assert.match(body, /POPUP_DELAY_MS = 10000/);
+  assert.match(body, /POPUP_DELAY_MS = 5000/);
   assert.match(body, /"requestType":"call_me"|requestType: "call_me"/);
   assert.match(body, /\/api\/quote\/submit/);
   assert.doesNotMatch(body, /On Time\. Insured\. No Surprises\./);
