@@ -185,8 +185,7 @@ test("serves the homepage ads duplicate as noindex", async () => {
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /House Cleaning Services in Chicago Suburbs/i);
-  assert.match(body, /From \$200/);
-  assert.match(body, /class="shynli-ads-price-old"/);
+  assert.match(body, /From \$<span class="shynli-ads-price-old">200<\/span>/);
   assert.match(body, /class="shynli-ads-price-new"\>\$135/);
   assert.match(body, /&middot; Same-Day Available &middot; Pay After Done/);
   assert.match(body, /class="shynli-ads-hero-highlight"/);
