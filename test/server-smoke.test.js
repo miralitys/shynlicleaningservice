@@ -202,6 +202,8 @@ test("serves the homepage ads duplicate as noindex", async () => {
   assert.match(body, /Regular Cleaning/);
   assert.match(body, /Deep Cleaning/);
   assert.match(body, /Leave your phone number and full name\./);
+  assert.match(body, /inputmode="numeric"/);
+  assert.match(body, /data-phone-max-digits="10"/);
   assert.match(body, /Thank you, we will contact you shortly\./);
   assert.match(body, /POPUP_DELAY_MS = 5000/);
   assert.match(body, /"requestType":"call_me"|requestType: "call_me"/);
