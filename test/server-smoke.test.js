@@ -211,6 +211,11 @@ test("serves the quote page through the static route layer", async () => {
   assert.match(body, /Name/i);
   assert.match(body, /placeholder="\+1\(000\)000-0000"/);
   assert.doesNotMatch(body, /placeholder="\+1 \(630\) 555-0102"/);
+  assert.match(body, /Great — how would you like to continue\?/);
+  assert.match(body, /Call me to confirm the details/);
+  assert.match(body, /We’ll ask a few quick questions and give you the final quote\./);
+  assert.match(body, /I want to calculate online/);
+  assert.match(body, /Answer a few questions to get a more accurate estimate\./);
 });
 
 test("serves the blog page without legacy feed asset hints", async () => {

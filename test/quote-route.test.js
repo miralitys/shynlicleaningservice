@@ -100,6 +100,87 @@ test("rejects quote submissions outside the service area ZIP coverage", async ()
   }
 });
 
+test("accepts call-me quote requests without address or ZIP", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [],
+      },
+    },
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-call-me-123",
+        },
+      },
+    },
+  ]);
+
+  const started = await startServer({
+    env: {
+      GHL_API_KEY: "ghl_test_key",
+      GHL_LOCATION_ID: "location-123",
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "0",
+      SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/api/quote/submit`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        requestType: "call_me",
+        source: "Website Callback Request",
+        contact: {
+          fullName: "Callback Client",
+          phone: "+1(312)555-0198",
+        },
+        quote: {
+          requestType: "call_me",
+          serviceType: "regular",
+          totalPrice: 0,
+          additionalDetails: "Customer asked for a phone call to confirm details and receive the final quote.",
+          consent: true,
+        },
+      }),
+    });
+
+    assert.equal(response.status, 201);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.success, true);
+    assert.equal(payload.contactId, "contact-call-me-123");
+    assert.equal(payload.pricing.serviceName, "Callback Request");
+    assert.equal(payload.pricing.totalPrice, 0);
+    assert.equal(payload.pricing.totalPriceCents, 0);
+    assert.equal(payload.quoteToken, "");
+
+    const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
+    const calls = captureRaw
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const contactCalls = calls.filter((call) => /\/contacts\/$/.test(call.url));
+
+    assert.equal(contactCalls.length, 1);
+    assert.match(contactCalls[0].body, /"firstName":"Callback"/);
+    assert.match(contactCalls[0].body, /"lastName":"Client"/);
+    assert.match(contactCalls[0].body, /"phone":"13125550198"/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("returns a graceful 503 when LeadConnector is not configured", async () => {
   const started = await startServer();
 

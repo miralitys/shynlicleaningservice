@@ -116,7 +116,10 @@
     profileConfirmed: false,
     addonsConfirmed: false,
     addressConfirmed: false,
+    contactIntent: "",
+    intentAutoOpened: false,
     profileAutoOpened: false,
+    callMeSubmitting: false,
     lastAppleCalendarUrl: "",
     autocompleteRequested: false,
     autocompleteMounted: false,
@@ -124,6 +127,7 @@
 
   const elements = {
     globalNotice: document.getElementById("quote2GlobalNotice"),
+    callbackSuccessCard: document.getElementById("quote2CallbackSuccessCard"),
     successCard: document.getElementById("quote2SuccessCard"),
     successService: document.getElementById("quote2SuccessService"),
     successSchedule: document.getElementById("quote2SuccessSchedule"),
@@ -164,6 +168,8 @@
     timeSlots: Array.from(document.querySelectorAll("#quote2TimeSlots [data-time]")),
     additionalDetails: document.getElementById("quote2AdditionalDetails"),
     consentCheckbox: document.getElementById("quote2ConsentCheckbox"),
+    callMeButton: document.getElementById("quote2CallMeButton"),
+    calculateOnlineButton: document.getElementById("quote2CalculateOnlineButton"),
     continueToAddons: document.getElementById("quote2ContinueToAddons"),
     continueToAddress: document.getElementById("quote2ContinueToAddress"),
     continueToNotes: document.getElementById("quote2ContinueToNotes"),
@@ -171,6 +177,7 @@
     estimateTargets: Array.from(document.querySelectorAll('[data-quote2-estimate="true"]')),
     stepCards: {
       contact: document.querySelector('[data-step-card="contact"]'),
+      intent: document.querySelector('[data-step-card="intent"]'),
       profile: document.querySelector('[data-step-card="profile"]'),
       addons: document.querySelector('[data-step-card="addons"]'),
       address: document.querySelector('[data-step-card="address"]'),
@@ -728,21 +735,34 @@
       state.profileConfirmed = false;
       state.addonsConfirmed = false;
       state.addressConfirmed = false;
+      setContactIntent("");
+      state.intentAutoOpened = false;
       state.profileAutoOpened = false;
     }
 
-    const profileVisible = contactReady;
+    const intentVisible = contactReady;
+    const profileVisible = intentVisible && state.contactIntent === "calculate";
     const addonsVisible = profileVisible && state.profileConfirmed;
     const addressVisible = addonsVisible && state.addonsConfirmed;
     const notesVisible = addressVisible && state.addressConfirmed;
 
+    const intentWasHidden = elements.stepCards.intent && elements.stepCards.intent.hidden;
     const profileWasHidden = elements.stepCards.profile.hidden;
+    if (elements.stepCards.intent) {
+      elements.stepCards.intent.hidden = !intentVisible;
+    }
     elements.stepCards.profile.hidden = !profileVisible;
     elements.stepCards.addons.hidden = !addonsVisible;
     elements.stepCards.address.hidden = !addressVisible;
     elements.stepCards.notes.hidden = !notesVisible;
     if (elements.stickyEstimate) {
       elements.stickyEstimate.hidden = !profileVisible;
+    }
+
+    if (intentVisible && intentWasHidden && !settings.skipScroll && !state.intentAutoOpened) {
+      state.intentAutoOpened = true;
+      scrollToCard(elements.stepCards.intent);
+      return;
     }
 
     if (profileVisible && profileWasHidden && !settings.skipScroll && !state.profileAutoOpened) {
@@ -1011,6 +1031,124 @@
     state.profileConfirmed = true;
     refreshStepVisibility({ skipScroll: true });
     scrollToCard(elements.stepCards.addons);
+  }
+
+  function setContactIntent(intent) {
+    state.contactIntent = intent || "";
+    [elements.callMeButton, elements.calculateOnlineButton].forEach(function (button) {
+      if (!button) return;
+      button.classList.toggle("is-active", button === elements.calculateOnlineButton && state.contactIntent === "calculate");
+    });
+  }
+
+  function buildCallMePayload() {
+    const fullName = elements.fullName.value.trim();
+    const phone = normalizeUsPhoneDigits(elements.phone.value);
+    const contactData = {
+      fullName: fullName,
+      phone: phone,
+      email: "",
+    };
+    const calculatorData = {
+      requestType: "call_me",
+      serviceType: "regular",
+      frequency: "",
+      rooms: "0",
+      bathrooms: "0",
+      squareMeters: "0",
+      hasPets: "",
+      basementCleaning: "no",
+      services: [],
+      quantityServices: {},
+      additionalDetails: "Customer asked for a phone call to confirm details and receive the final quote.",
+      totalPrice: 0,
+      selectedDate: "",
+      selectedTime: "",
+      formattedDateTime: "",
+      address: "",
+      fullAddress: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      zipCode: "",
+    };
+
+    return {
+      source: "Website Callback Request",
+      sourcePagePath: QUOTE_PAGE_PATH,
+      returnPath: QUOTE_PAGE_PATH,
+      requestType: "call_me",
+      consent: true,
+      contact: contactData,
+      contactData: contactData,
+      quote: calculatorData,
+      calculatorData: calculatorData,
+      fullName: contactData.fullName,
+      phone: contactData.phone,
+      email: "",
+      serviceType: calculatorData.serviceType,
+      totalPrice: 0,
+      selectedDate: "",
+      selectedTime: "",
+      fullAddress: "",
+      submittedAt: new Date().toISOString(),
+    };
+  }
+
+  function setChoiceButtonsDisabled(disabled) {
+    [elements.callMeButton, elements.calculateOnlineButton].forEach(function (button) {
+      if (!button) return;
+      button.disabled = Boolean(disabled);
+    });
+  }
+
+  async function submitCallMeRequest() {
+    if (!isContactStepComplete() || state.callMeSubmitting) {
+      setNotice("Please enter your name and a valid US phone number first.", "warning");
+      return;
+    }
+
+    state.callMeSubmitting = true;
+    setChoiceButtonsDisabled(true);
+    const callMeLabel = elements.callMeButton ? elements.callMeButton.querySelector(".quote2-choice-label") : null;
+    const originalLabel = callMeLabel ? callMeLabel.textContent : "";
+    if (elements.callMeButton) {
+      if (callMeLabel) callMeLabel.textContent = "Sending request...";
+    }
+
+    try {
+      const payload = buildCallMePayload();
+      await submitQuoteToBackend(payload);
+      if (elements.callbackSuccessCard) {
+        elements.callbackSuccessCard.hidden = false;
+      }
+      elements.form.hidden = true;
+      if (elements.stickyEstimate) {
+        elements.stickyEstimate.hidden = true;
+      }
+      setNotice("Спасибо, мы свяжемся с вами в ближайшее время.", "success");
+      if (elements.callbackSuccessCard) {
+        elements.callbackSuccessCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    } catch (error) {
+      setNotice(error && error.message ? error.message : "We could not send the request right now.", "error");
+    } finally {
+      state.callMeSubmitting = false;
+      setChoiceButtonsDisabled(false);
+      if (elements.callMeButton) {
+        if (callMeLabel) callMeLabel.textContent = originalLabel || "Call me to confirm the details";
+      }
+    }
+  }
+
+  function openOnlineCalculator() {
+    if (!isContactStepComplete()) {
+      setNotice("Please enter your name and a valid US phone number first.", "warning");
+      return;
+    }
+    setContactIntent("calculate");
+    refreshStepVisibility({ skipScroll: true });
+    scrollToCard(elements.stepCards.profile);
   }
 
   function openAddressStep() {
@@ -1376,6 +1514,12 @@
   }
 
   function initContinueButtons() {
+    if (elements.callMeButton) {
+      elements.callMeButton.addEventListener("click", submitCallMeRequest);
+    }
+    if (elements.calculateOnlineButton) {
+      elements.calculateOnlineButton.addEventListener("click", openOnlineCalculator);
+    }
     elements.continueToAddons.addEventListener("click", openAddonsStep);
     elements.continueToAddress.addEventListener("click", openAddressStep);
     elements.continueToNotes.addEventListener("click", openNotesStep);

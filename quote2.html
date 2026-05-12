@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..900&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/quote2.css?v=20260503-service-area-zip-validation" />
+    <link rel="stylesheet" href="css/quote2.css?v=20260512-contact-choice" />
   </head>
   <body class="quote2-body">
     <div class="quote2-page">
@@ -90,6 +90,14 @@
           </div>
         </section>
 
+        <section id="quote2CallbackSuccessCard" class="quote2-card quote2-callback-success-card" hidden>
+          <p class="quote2-kicker">REQUEST RECEIVED</p>
+          <h2 class="quote2-section-title">Спасибо, мы свяжемся с вами в ближайшее время.</h2>
+          <p class="quote2-section-copy">
+            We will call to ask a few quick questions and give you the final quote.
+          </p>
+        </section>
+
         <form id="quote2Form" class="quote2-form-shell" novalidate>
           <section class="quote2-card quote2-step-card" data-step-card="contact">
             <div class="quote2-section-head">
@@ -110,9 +118,27 @@
             <p class="quote2-field-note">Enter your full name and phone number to calculate the service cost.</p>
           </section>
 
-          <section class="quote2-card quote2-step-card" data-step-card="profile" hidden>
+          <section class="quote2-card quote2-step-card" data-step-card="intent" hidden>
             <div class="quote2-section-head">
               <p class="quote2-kicker">STEP 2</p>
+              <h2 class="quote2-section-title">Great — how would you like to continue?</h2>
+            </div>
+
+            <div class="quote2-choice-grid">
+              <button id="quote2CallMeButton" class="quote2-choice-card quote2-choice-card-primary" type="button">
+                <span class="quote2-choice-label">Call me to confirm the details</span>
+                <span class="quote2-choice-copy">We’ll ask a few quick questions and give you the final quote.</span>
+              </button>
+              <button id="quote2CalculateOnlineButton" class="quote2-choice-card" type="button">
+                <span class="quote2-choice-label">I want to calculate online</span>
+                <span class="quote2-choice-copy">Answer a few questions to get a more accurate estimate.</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="quote2-card quote2-step-card" data-step-card="profile" hidden>
+            <div class="quote2-section-head">
+              <p class="quote2-kicker">STEP 3</p>
               <h2 class="quote2-section-title">Cleaning profile</h2>
               <p class="quote2-section-copy">Choose the service type and home profile, then continue to add-ons.</p>
             </div>
@@ -208,7 +234,7 @@
 
           <section class="quote2-card quote2-step-card" data-step-card="addons" hidden>
             <div class="quote2-section-head">
-              <p class="quote2-kicker">STEP 3</p>
+              <p class="quote2-kicker">STEP 4</p>
               <h2 class="quote2-section-title">Add-ons</h2>
               <p class="quote2-section-copy">Select any one-time extras you want included in the estimate.</p>
             </div>
@@ -308,7 +334,7 @@
 
           <section class="quote2-card quote2-step-card" data-step-card="address" hidden>
             <div class="quote2-section-head">
-              <p class="quote2-kicker">STEP 4</p>
+              <p class="quote2-kicker">STEP 5</p>
               <h2 class="quote2-section-title">Address and schedule</h2>
               <p class="quote2-section-copy">Pick the service address, then choose the date and arrival window you prefer.</p>
             </div>
@@ -365,7 +391,7 @@
 
           <section class="quote2-card quote2-step-card" data-step-card="notes" hidden>
             <div class="quote2-section-head">
-              <p class="quote2-kicker">STEP 5</p>
+              <p class="quote2-kicker">STEP 6</p>
               <h2 class="quote2-section-title">Final notes</h2>
               <p class="quote2-section-copy">Add anything the team should know before we reach out.</p>
             </div>
@@ -394,6 +420,6 @@
       </main>
     </div>
 
-    <script src="js/quote2-app.js?v=20260504-one-time-frequency"></script>
+    <script src="js/quote2-app.js?v=20260512-contact-choice"></script>
   </body>
 </html>

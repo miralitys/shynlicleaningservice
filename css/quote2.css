@@ -170,6 +170,7 @@ a {
 }
 
 .quote2-success-card,
+.quote2-callback-success-card,
 .quote2-form-shell > .quote2-card {
   padding: 34px;
 }
@@ -422,6 +423,13 @@ a {
   margin-bottom: 18px;
 }
 
+.quote2-choice-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 14px;
+}
+
+.quote2-choice-card,
 .quote2-service-card,
 .quote2-time-slot {
   border: 1px solid rgba(158, 67, 90, 0.12);
@@ -435,6 +443,7 @@ a {
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
+.quote2-choice-card:hover,
 .quote2-service-card:hover,
 .quote2-time-slot:hover {
   transform: translateY(-2px);
@@ -442,6 +451,7 @@ a {
   box-shadow: 0 18px 28px rgba(101, 78, 70, 0.1);
 }
 
+.quote2-choice-card.is-active,
 .quote2-service-card.is-active,
 .quote2-time-slot.is-active {
   border-color: var(--quote2-accent);
@@ -449,6 +459,19 @@ a {
   box-shadow: 0 18px 28px rgba(158, 67, 90, 0.14);
 }
 
+.quote2-choice-card-primary {
+  border-color: rgba(158, 67, 90, 0.28);
+  background: linear-gradient(180deg, rgba(158, 67, 90, 0.14), rgba(255, 249, 246, 0.94));
+}
+
+.quote2-choice-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  box-shadow: none;
+}
+
+.quote2-choice-label,
 .quote2-service-label {
   display: block;
   margin-bottom: 8px;
@@ -456,6 +479,7 @@ a {
   font-weight: 800;
 }
 
+.quote2-choice-copy,
 .quote2-service-copy {
   color: var(--quote2-muted);
   font-size: 0.92rem;
@@ -758,6 +782,7 @@ a {
   }
 
   .quote2-service-grid,
+  .quote2-choice-grid,
   .quote2-addon-grid,
   .quote2-quantity-grid,
   .quote2-success-grid {
@@ -789,6 +814,7 @@ a {
   .quote2-field-grid-three,
   .quote2-field-grid-four,
   .quote2-service-grid,
+  .quote2-choice-grid,
   .quote2-addon-grid,
   .quote2-quantity-grid,
   .quote2-time-grid,
@@ -797,6 +823,7 @@ a {
   }
 
   .quote2-success-card,
+  .quote2-callback-success-card,
   .quote2-form-shell > .quote2-card {
     padding: 24px;
   }
@@ -843,6 +870,7 @@ a {
   }
 
   .quote2-success-card,
+  .quote2-callback-success-card,
   .quote2-form-shell > .quote2-card {
     padding: 20px;
   }
