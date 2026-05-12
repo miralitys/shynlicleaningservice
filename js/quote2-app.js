@@ -185,11 +185,22 @@
     },
   };
 
-  function normalizeUsPhoneDigits(value) {
-    const digits = String(value || "").replace(/\D/g, "");
+  function extractUsPhoneNationalDigits(value) {
+    const rawValue = String(value || "");
+    let digits = rawValue.replace(/\D/g, "");
     if (!digits) return "";
-    if (digits.length === 11 && digits.startsWith("1")) return digits;
-    return "";
+    if (rawValue.trim().startsWith("+1") && digits.startsWith("1")) {
+      digits = digits.slice(1);
+    } else if (digits.length === 11 && digits.startsWith("1")) {
+      digits = digits.slice(1);
+    }
+    return digits.slice(0, 10);
+  }
+
+  function normalizeUsPhoneDigits(value) {
+    const nationalDigits = extractUsPhoneNationalDigits(value);
+    if (nationalDigits.length !== 10) return "";
+    return `1${nationalDigits}`;
   }
 
   function isCompleteUsPhone(value) {
@@ -199,15 +210,13 @@
   }
 
   function formatPhoneProgressive(value) {
-    let digits = String(value || "").replace(/\D/g, "");
+    const digits = extractUsPhoneNationalDigits(value);
     if (!digits) return "";
-    if (!digits.startsWith("1")) digits = `1${digits}`;
-    digits = digits.slice(0, 11);
 
-    let formatted = `+${digits.slice(0, 1)}`;
-    if (digits.length > 1) formatted += ` (${digits.slice(1, 4)}`;
-    if (digits.length >= 4) formatted += `) ${digits.slice(4, 7)}`;
-    if (digits.length >= 7) formatted += `-${digits.slice(7, 11)}`;
+    let formatted = "+1";
+    if (digits.length > 0) formatted += ` (${digits.slice(0, 3)}`;
+    if (digits.length > 3) formatted += `) ${digits.slice(3, 6)}`;
+    if (digits.length > 6) formatted += `-${digits.slice(6, 10)}`;
     return formatted;
   }
 
