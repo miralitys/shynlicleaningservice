@@ -170,6 +170,8 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /data-shynli-form-kind="cleaner-application"/);
   assert.match(body, /id="shynli-cleaner-application-form-runtime"/);
   assert.match(body, /Shynli Cleaning/i);
+  assert.match(body, /On Time\. Insured\. No Surprises\./);
+  assert.match(body, /Trusted by 300\+ local families\. Flat pricing\. Safe products\./);
 });
 
 test("serves the homepage ads duplicate as noindex", async () => {
@@ -183,6 +185,14 @@ test("serves the homepage ads duplicate as noindex", async () => {
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /House Cleaning Services in Chicago Suburbs/i);
+  assert.match(body, /From \$135 &middot; Same-Day Available &middot; Pay After Done/);
+  assert.match(body, /class="shynli-ads-hero-highlight"/);
+  assert.match(body, /data-shynli-ads-countdown/);
+  assert.match(body, /05:00/);
+  assert.match(body, /GET FREE QUOTE/);
+  assert.match(body, /id="shynli-ads-countdown-runtime"/);
+  assert.doesNotMatch(body, /On Time\. Insured\. No Surprises\./);
+  assert.doesNotMatch(body, /Trusted by 300\+ local families\. Flat pricing\. Safe products\./);
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
