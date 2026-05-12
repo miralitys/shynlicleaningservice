@@ -540,6 +540,13 @@ test("serves the regular-cleaning ads duplicate as noindex", async () => {
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
+  assert.match(body, /id="shynli-ads-lead-popup-runtime"/);
+  assert.match(body, /data-shynli-ads-lead-popup/);
+  assert.match(body, /What service do you need\?/);
+  assert.match(body, /Regular Cleaning/);
+  assert.match(body, /Deep Cleaning/);
+  assert.match(body, /POPUP_DELAY_MS = 5000/);
+  assert.match(body, /\/api\/quote\/submit/);
   assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/regular-cleaning"\s*\/?>/);
   assert.equal(sitemapResponse.status, 200);
@@ -563,6 +570,13 @@ test("serves the deep-cleaning ads duplicate as noindex", async () => {
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
+  assert.match(body, /id="shynli-ads-lead-popup-runtime"/);
+  assert.match(body, /data-shynli-ads-lead-popup/);
+  assert.match(body, /What service do you need\?/);
+  assert.match(body, /Regular Cleaning/);
+  assert.match(body, /Deep Cleaning/);
+  assert.match(body, /POPUP_DELAY_MS = 5000/);
+  assert.match(body, /\/api\/quote\/submit/);
   assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/deep-cleaning"\s*\/?>/);
   assert.equal(sitemapResponse.status, 200);
