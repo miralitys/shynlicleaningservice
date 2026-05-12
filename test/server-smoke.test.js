@@ -539,6 +539,14 @@ test("serves the regular-cleaning ads duplicate as noindex", async () => {
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /Recurring House Cleaning Services/i);
+  assert.doesNotMatch(body, /Keep your home consistently clean, calm, and comfortable with professional service/);
+  assert.match(body, /From <span class="shynli-service-ads-price-old">\$200<\/span>/);
+  assert.match(body, /class="shynli-service-ads-price-new">\$135/);
+  assert.match(body, /&middot; Same-Day Available &middot; Pay After Done/);
+  assert.match(body, /Offer ends in/);
+  assert.match(body, /data-shynli-ads-countdown/);
+  assert.match(body, /GET FREE QUOTE/);
+  assert.match(body, /id="shynli-ads-countdown-runtime"/);
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
