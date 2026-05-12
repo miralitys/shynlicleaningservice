@@ -209,6 +209,8 @@ test("serves the quote page through the static route layer", async () => {
   assert.match(body, /Request a Quote/i);
   assert.match(body, /Enter your full name and phone number to calculate the service cost/i);
   assert.match(body, /Name/i);
+  assert.match(body, /placeholder="\+1\(000\)000-0000"/);
+  assert.doesNotMatch(body, /placeholder="\+1 \(630\) 555-0102"/);
 });
 
 test("serves the blog page without legacy feed asset hints", async () => {
