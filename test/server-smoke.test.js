@@ -587,6 +587,7 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   assert.match(body, /data-shynli-ads-countdown/);
   assert.match(body, /GET FREE QUOTE/);
   assert.match(body, /id="shynli-ads-countdown-runtime"/);
+  assert.match(body, /id="shynli-deep-cleaning-ads-layout-fix"/);
   assert.match(body, /id="deep-cleaning-addons-static"/);
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
