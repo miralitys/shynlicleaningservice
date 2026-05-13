@@ -446,13 +446,10 @@ const MANAGED_BLOG_HTML_ROUTES = Object.freeze([
   ...BLOG_ARTICLE_PAGES.map((page) => [page.path, BLOG_ROUTE_HTML_FILE]),
 ]);
 const NOINDEX_ROUTES = new Set([
-  "/ads",
   "/home-calculator",
   "/oauth/callback",
   "/quote",
   "/quote2",
-  "/services/deep-cleaning/ads",
-  "/services/regular-cleaning/ads",
   ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
@@ -496,8 +493,7 @@ const ROUTE_META_OVERRIDES = {
   },
   "/ads": {
     title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
-    canonical: `${SITE_ORIGIN}/`,
-    robots: "noindex,nofollow",
+    canonical: `${SITE_ORIGIN}/ads`,
     ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
     ogDescription:
       "Trusted local house cleaning in Chicago suburbs with upfront pricing, flexible scheduling, and insured cleaners.",
@@ -534,8 +530,7 @@ const ROUTE_META_OVERRIDES = {
   },
   "/services/deep-cleaning/ads": {
     title: "Deep Cleaning Services | Shynli Cleaning",
-    canonical: `${SITE_ORIGIN}/services/deep-cleaning`,
-    robots: "noindex,nofollow",
+    canonical: `${SITE_ORIGIN}/services/deep-cleaning/ads`,
   },
   "/services/move-in-move-out-cleaning": {
     title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
@@ -545,8 +540,7 @@ const ROUTE_META_OVERRIDES = {
   },
   "/services/regular-cleaning/ads": {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
-    canonical: `${SITE_ORIGIN}/services/regular-cleaning`,
-    robots: "noindex,nofollow",
+    canonical: `${SITE_ORIGIN}/services/regular-cleaning/ads`,
   },
   "/oauth/callback": {
     robots: "noindex,nofollow",

@@ -174,7 +174,7 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /Trusted by 300\+ local families\. Flat pricing\. Safe products\./);
 });
 
-test("serves the homepage ads duplicate as noindex", async () => {
+test("serves the homepage ads duplicate as an indexable sitemap route", async () => {
   const response = await fetch(`${BASE_URL}/ads/`);
   const body = await response.text();
   const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
@@ -213,12 +213,12 @@ test("serves the homepage ads duplicate as noindex", async () => {
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
-  assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
-  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/"\s*\/?>/);
+  assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/ads"\s*\/?>/);
   assert.equal(sitemapResponse.status, 200);
-  assert.doesNotMatch(sitemapBody, /\/ads/);
+  assert.match(sitemapBody, /<loc>https:\/\/shynlicleaningservice\.com\/ads<\/loc>/);
   assert.equal(robotsResponse.status, 200);
-  assert.match(robotsBody, /Disallow: \/ads\//);
+  assert.doesNotMatch(robotsBody, /Disallow: \/ads\//);
 });
 
 test("serves home-like routes without zero/lazyload runtimes", async () => {
@@ -528,7 +528,7 @@ test("serves service pages with the shared popup and menu runtime", async () => 
   assert.match(body, /href="#clean"/);
 });
 
-test("serves the regular-cleaning ads duplicate as noindex", async () => {
+test("serves the regular-cleaning ads duplicate as an indexable sitemap route", async () => {
   const response = await fetch(`${BASE_URL}/services/regular-cleaning/ads/`);
   const body = await response.text();
   const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
@@ -557,15 +557,18 @@ test("serves the regular-cleaning ads duplicate as noindex", async () => {
   assert.match(body, /Deep Cleaning/);
   assert.match(body, /POPUP_DELAY_MS = 5000/);
   assert.match(body, /\/api\/quote\/submit/);
-  assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
-  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/regular-cleaning"\s*\/?>/);
+  assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/regular-cleaning\/ads"\s*\/?>/);
   assert.equal(sitemapResponse.status, 200);
-  assert.doesNotMatch(sitemapBody, /\/services\/regular-cleaning\/ads/);
+  assert.match(
+    sitemapBody,
+    /<loc>https:\/\/shynlicleaningservice\.com\/services\/regular-cleaning\/ads<\/loc>/
+  );
   assert.equal(robotsResponse.status, 200);
-  assert.match(robotsBody, /Disallow: \/services\/regular-cleaning\/ads\//);
+  assert.doesNotMatch(robotsBody, /Disallow: \/services\/regular-cleaning\/ads\//);
 });
 
-test("serves the deep-cleaning ads duplicate as noindex", async () => {
+test("serves the deep-cleaning ads duplicate as an indexable sitemap route", async () => {
   const response = await fetch(`${BASE_URL}/services/deep-cleaning/ads/`);
   const body = await response.text();
   const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
@@ -595,12 +598,15 @@ test("serves the deep-cleaning ads duplicate as noindex", async () => {
   assert.match(body, /Deep Cleaning/);
   assert.match(body, /POPUP_DELAY_MS = 5000/);
   assert.match(body, /\/api\/quote\/submit/);
-  assert.match(body, /<meta name="robots" content="noindex,nofollow" \/>/);
-  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/deep-cleaning"\s*\/?>/);
+  assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/deep-cleaning\/ads"\s*\/?>/);
   assert.equal(sitemapResponse.status, 200);
-  assert.doesNotMatch(sitemapBody, /\/services\/deep-cleaning\/ads/);
+  assert.match(
+    sitemapBody,
+    /<loc>https:\/\/shynlicleaningservice\.com\/services\/deep-cleaning\/ads<\/loc>/
+  );
   assert.equal(robotsResponse.status, 200);
-  assert.match(robotsBody, /Disallow: \/services\/deep-cleaning\/ads\//);
+  assert.doesNotMatch(robotsBody, /Disallow: \/services\/deep-cleaning\/ads\//);
 });
 
 test("serves all service page pilots without zero/lazyload runtimes", async () => {
