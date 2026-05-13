@@ -185,8 +185,8 @@ test("serves the homepage ads duplicate as an indexable sitemap route", async ()
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /House Cleaning Services in Chicago Suburbs/i);
-  assert.match(body, /From \$<span class="shynli-ads-price-old">200<\/span>/);
-  assert.match(body, /class="shynli-ads-price-new"\>\$135/);
+  assert.match(body, /From <span class="shynli-ads-price-new">\$135<\/span>/);
+  assert.doesNotMatch(body, /shynli-ads-price-old/);
   assert.match(body, /&middot; Same-Day Available &middot; Pay After Done/);
   assert.match(body, /class="shynli-ads-hero-highlight"/);
   assert.match(body, /data-shynli-ads-countdown/);
@@ -540,8 +540,8 @@ test("serves the regular-cleaning ads duplicate as an indexable sitemap route", 
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /Recurring House Cleaning Services/i);
   assert.doesNotMatch(body, /Keep your home consistently clean, calm, and comfortable with professional service/);
-  assert.match(body, /From <span class="shynli-service-ads-price-old">\$200<\/span>/);
-  assert.match(body, /class="shynli-service-ads-price-new">\$135/);
+  assert.match(body, /From <span class="shynli-service-ads-price-new">\$135<\/span>/);
+  assert.doesNotMatch(body, /shynli-service-ads-price-old/);
   assert.match(body, /&middot; Same-Day Available &middot; Pay After Done/);
   assert.match(body, /Offer ends in/);
   assert.match(body, /data-shynli-ads-countdown/);
@@ -580,8 +580,8 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /Deep Cleaning Services/i);
   assert.doesNotMatch(body, /When your home needs a full reset and a 'like new' feeling/);
-  assert.match(body, /From <span class="shynli-service-ads-price-old">\$300<\/span>/);
-  assert.match(body, /class="shynli-service-ads-price-new">\$195/);
+  assert.match(body, /From <span class="shynli-service-ads-price-new">\$195<\/span>/);
+  assert.doesNotMatch(body, /shynli-service-ads-price-old/);
   assert.match(body, /&middot; Same-Day Available &middot; Pay After Done/);
   assert.match(body, /Offer ends in/);
   assert.match(body, /data-shynli-ads-countdown/);
