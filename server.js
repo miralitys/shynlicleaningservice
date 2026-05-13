@@ -482,6 +482,7 @@ const BREADCRUMB_LABELS = new Map([
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
   ["/services/deep-cleaning/ads", "Deep Cleaning"],
+  ["/services/move-in-move-out-cleaning/ads", "Move-In & Move-Out Cleaning"],
   ["/services/regular-cleaning/ads", "Regular Cleaning"],
 ]);
 const ROUTE_META_OVERRIDES = {
@@ -534,6 +535,12 @@ const ROUTE_META_OVERRIDES = {
   },
   "/services/move-in-move-out-cleaning": {
     title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
+  },
+  "/services/move-in-move-out-cleaning/ads": {
+    title: "Move-In & Move-Out Cleaning Service | Shynli Cleaning",
+    description:
+      "Professional move-in and move-out cleaning service in Chicagoland. Inspection-ready results. Get a free quote in 60 seconds.",
+    canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning`,
   },
   "/services/regular-cleaning": {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
