@@ -1105,11 +1105,13 @@ test("loads inbound SMS replies into the order dialog history", async () => {
       match: "/conversations/search",
       status: 200,
       body: {
-        conversations: [
-          {
-            id: "conversation-sms-order-321",
-          },
-        ],
+        conversations: {
+          conversations: [
+            {
+              id: "conversation-sms-order-321",
+            },
+          ],
+        },
       },
     },
     {
@@ -1117,35 +1119,37 @@ test("loads inbound SMS replies into the order dialog history", async () => {
       match: "/conversations/conversation-sms-order-321/messages",
       status: 200,
       body: {
-        messages: [
-          {
-            id: "message-sms-order-321",
-            type: "TYPE_SMS",
-            direction: "outbound",
-            body: "Please confirm your order.",
-            dateAdded: "2026-04-18T14:00:00.000Z",
-            conversationId: "conversation-sms-order-321",
-            phone: "+14244199102",
-          },
-          {
-            id: "message-sms-order-reply-321",
-            type: "TYPE_SMS",
-            direction: "inbound",
-            body: "Yes, confirmed.",
-            dateAdded: "2026-04-18T14:05:00.000Z",
-            conversationId: "conversation-sms-order-321",
-            phone: "+14244199102",
-          },
-          {
-            id: "message-internal-lead-alert-321",
-            type: "TYPE_SMS",
-            direction: "outbound",
-            body: "Hi Anastasia, a new Shynli lead was submitted. Admin: https://shynlicleaningservice.com/admin/quote-ops",
-            dateAdded: "2026-04-18T14:06:00.000Z",
-            conversationId: "conversation-sms-order-321",
-            phone: "+14244199102",
-          },
-        ],
+        messages: {
+          messages: [
+            {
+              id: "message-sms-order-321",
+              type: "TYPE_SMS",
+              direction: "outbound",
+              body: "Please confirm your order.",
+              dateAdded: "2026-04-18T14:00:00.000Z",
+              conversationId: "conversation-sms-order-321",
+              to: { phone: "+14244199102" },
+            },
+            {
+              id: "message-sms-order-reply-321",
+              type: "TYPE_SMS",
+              direction: "inbound",
+              body: "Yes, confirmed.",
+              dateAdded: "2026-04-18T14:05:00.000Z",
+              conversationId: "conversation-sms-order-321",
+              from: { phone: "+14244199102" },
+            },
+            {
+              id: "message-internal-lead-alert-321",
+              type: "TYPE_SMS",
+              direction: "outbound",
+              body: "Hi Anastasia, a new Shynli lead was submitted. Admin: https://shynlicleaningservice.com/admin/quote-ops",
+              dateAdded: "2026-04-18T14:06:00.000Z",
+              conversationId: "conversation-sms-order-321",
+              to: { phone: "+14244199102" },
+            },
+          ],
+        },
       },
     },
   ]);

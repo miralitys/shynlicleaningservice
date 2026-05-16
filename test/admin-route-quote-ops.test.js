@@ -917,6 +917,49 @@ test("sends SMS from the quote dialog through Go High Level", async () => {
         conversationId: "conversation-sms-quote-123",
       },
     },
+    {
+      method: "GET",
+      match: "/conversations/search",
+      status: 200,
+      body: {
+        conversations: {
+          conversations: [
+            {
+              id: "conversation-sms-quote-123",
+            },
+          ],
+        },
+      },
+    },
+    {
+      method: "GET",
+      match: "/conversations/conversation-sms-quote-123/messages",
+      status: 200,
+      body: {
+        messages: {
+          messages: [
+            {
+              id: "message-sms-quote-123",
+              type: "TYPE_SMS",
+              direction: "outbound",
+              body: "Your SHYNLI team is confirming your cleaning appointment.",
+              dateAdded: "2026-04-18T14:00:00.000Z",
+              conversationId: "conversation-sms-quote-123",
+              to: { phone: "+13125550177" },
+            },
+            {
+              id: "message-sms-quote-reply-123",
+              type: "TYPE_SMS",
+              direction: "inbound",
+              body: "Ok",
+              dateAdded: "2026-04-18T14:05:00.000Z",
+              conversationId: "conversation-sms-quote-123",
+              from: { phone: "+13125550177" },
+            },
+          ],
+        },
+      },
+    },
   ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
@@ -1001,6 +1044,30 @@ test("sends SMS from the quote dialog through Go High Level", async () => {
       status: "pending",
       toNumber: "+13125550177",
     });
+
+    const historyResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "load-quote-sms-history",
+        entryId,
+        returnTo,
+      }),
+    });
+
+    assert.equal(historyResponse.status, 200);
+    const historyPayload = await historyResponse.json();
+    assert.equal(historyPayload.ok, true);
+    assert.equal(historyPayload.sms.historyCountLabel, "2 SMS");
+    assert.equal(historyPayload.sms.history.length, 2);
+    assert.equal(historyPayload.sms.history[0].direction, "inbound");
+    assert.equal(historyPayload.sms.history[0].sourceLabel, "Клиент");
+    assert.equal(historyPayload.sms.history[0].message, "Ok");
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

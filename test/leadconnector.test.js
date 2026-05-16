@@ -660,8 +660,10 @@ test("sends an SMS through conversations API when contactId is provided", async 
 
     if (String(url).includes("/conversations/messages") && options.method === "POST") {
       return createResponse(200, {
-        id: "message-123",
-        conversationId: "conversation-123",
+        message: {
+          id: "message-123",
+          conversationId: "conversation-123",
+        },
       });
     }
 
@@ -958,26 +960,28 @@ test("loads inbound and outbound SMS history from a conversation", async () => {
 
     if (String(url).includes("/conversations/conversation-555/messages") && options.method === "GET") {
       return createResponse(200, {
-        messages: [
-          {
-            id: "message-outbound-1",
-            type: "TYPE_SMS",
-            direction: "outbound",
-            body: "Your booking is confirmed.",
-            dateAdded: "2026-04-18T14:00:00.000Z",
-            conversationId: "conversation-555",
-            phone: "+13125550100",
-          },
-          {
-            id: "message-inbound-1",
-            type: "TYPE_SMS",
-            direction: "inbound",
-            body: "Thank you!",
-            dateAdded: "2026-04-18T14:05:00.000Z",
-            conversationId: "conversation-555",
-            phone: "+13125550100",
-          },
-        ],
+        messages: {
+          messages: [
+            {
+              id: "message-outbound-1",
+              type: "TYPE_SMS",
+              direction: "outbound",
+              body: "Your booking is confirmed.",
+              dateAdded: "2026-04-18T14:00:00.000Z",
+              conversationId: "conversation-555",
+              to: { phone: "+13125550100" },
+            },
+            {
+              id: "message-inbound-1",
+              type: "TYPE_SMS",
+              direction: "inbound",
+              body: "Thank you!",
+              dateAdded: "2026-04-18T14:05:00.000Z",
+              conversationId: "conversation-555",
+              from: { phone: "+13125550100" },
+            },
+          ],
+        },
       });
     }
 
@@ -999,7 +1003,9 @@ test("loads inbound and outbound SMS history from a conversation", async () => {
 
     if (String(url).includes("/conversations/search?locationId=loc-1&contactId=contact-555") && options.method === "GET") {
       return createResponse(200, {
-        conversations: [{ id: "conversation-555" }],
+        conversations: {
+          conversations: [{ id: "conversation-555" }],
+        },
       });
     }
 
