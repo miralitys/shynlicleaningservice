@@ -36,7 +36,7 @@ test("formats quote confirmation SMS with sentence line breaks", () => {
       "Hi ramis, we received your request from Shynli Cleaning Service.",
       "Service: Regular Cleaning.",
       "Requested time: 05/17/2026, 09:00 AM.",
-      "Address: 1289 Rhodes Ln, Naperville, IL 60540, США.",
+      "Address: 1289 Rhodes Ln, Naperville, IL 60540, USA.",
       "A manager will contact you shortly.",
     ].join("\n")
   );

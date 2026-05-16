@@ -596,7 +596,20 @@
   }
 
   function getFullAddress() {
-    return String(elements.addressInput.value || "").trim();
+    return normalizeEnglishAddressLabel(elements.addressInput.value);
+  }
+
+  function normalizeEnglishAddressLabel(value) {
+    return String(value || "")
+      .trim()
+      .replace(/,\s*США\s*$/giu, ", USA")
+      .replace(/(^|[^\p{L}\p{N}_])США(?=$|[^\p{L}\p{N}_])/giu, "$1USA")
+      .replace(/,\s*Соедин[её]нные Штаты(?: Америки)?\s*$/giu, ", USA")
+      .replace(
+        /(^|[^\p{L}\p{N}_])Соедин[её]нные Штаты(?: Америки)?(?=$|[^\p{L}\p{N}_])/giu,
+        "$1USA"
+      )
+      .replace(/\s+/g, " ");
   }
 
   function normalizeAddressSearchValue(value) {
@@ -962,7 +975,7 @@
     if (!place) return;
 
     if (place.formatted_address) {
-      elements.addressInput.value = place.formatted_address;
+      elements.addressInput.value = normalizeEnglishAddressLabel(place.formatted_address);
     }
 
     let city = "";
@@ -1038,7 +1051,7 @@
     script.src =
       "https://maps.googleapis.com/maps/api/js?key=" +
       encodeURIComponent(GOOGLE_PLACES_API_KEY) +
-      "&libraries=places&loading=async&callback=__quote2GooglePlacesReady";
+      "&language=en&region=US&libraries=places&loading=async&callback=__quote2GooglePlacesReady";
     script.async = true;
     script.defer = true;
     script.onerror = initAddressFallback;
@@ -1440,7 +1453,7 @@
     const calculatorData = state.latestCheckoutData.calculatorData || {};
     const serviceLabel = SERVICE_LABELS[calculatorData.serviceType] || "Cleaning Service";
     const scheduleLabel = getScheduleLabel(calculatorData.selectedDate, calculatorData.selectedTime);
-    const addressLabel = calculatorData.address || calculatorData.fullAddress || "Pending";
+    const addressLabel = normalizeEnglishAddressLabel(calculatorData.address || calculatorData.fullAddress || "Pending");
 
     elements.successService.textContent = serviceLabel;
     elements.successSchedule.textContent = scheduleLabel;
