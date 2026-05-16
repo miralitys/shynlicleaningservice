@@ -1204,8 +1204,13 @@ async function listActiveLeadWorkspaceUsers(allowedRoles = [], options = {}) {
     const userRole = normalizeString(user && user.role, 32).toLowerCase();
     const userStatus = normalizeString(user && user.status, 32).toLowerCase();
     const staffMeta = staffMetaById.get(staffId) || {};
+    const hasLinkedStaffRecord = Boolean(staffId && staffMetaById.has(staffId));
     const effectiveRole = allowedRoleSet.has(userRole) ? userRole : staffMeta.role;
-    if (userStatus !== "active" || !allowedRoleSet.has(effectiveRole)) {
+    if (
+      userStatus !== "active" ||
+      (hasLinkedStaffRecord && staffMeta.status !== "active") ||
+      !allowedRoleSet.has(effectiveRole)
+    ) {
       return;
     }
     recipients.push({
@@ -1269,6 +1274,9 @@ async function resolveLeadManagerById(managerId) {
   const staffRecord = staffRecords.find(
     (record) => normalizeString(record && record.id, 120) === normalizeString(userRecord.staffId, 120)
   ) || null;
+  if (staffRecord && normalizeString(staffRecord.status, 32).toLowerCase() !== "active") {
+    return null;
+  }
 
   return {
     id: normalizedManagerId,

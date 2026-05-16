@@ -603,8 +603,8 @@ test("auto-assigns new quote submissions to managers in round robin order", asyn
           action: "create_user",
           name: payload.name,
           role: payload.role,
-          status: "active",
-          staffStatus: "active",
+          status: payload.status || "active",
+          staffStatus: payload.staffStatus || "active",
           email: payload.email,
           phone: payload.phone,
           address: payload.address,
@@ -618,6 +618,16 @@ test("auto-assigns new quote submissions to managers in round robin order", asyn
       assert.match(response.headers.get("location") || "", /notice=user-created-email-skipped/);
     };
 
+    await createUser({
+      name: "Aaron Inactive",
+      role: "manager",
+      status: "active",
+      staffStatus: "inactive",
+      email: "aaron.inactive@example.com",
+      phone: "3125550300",
+      address: "300 Manager Loop, Naperville, IL 60540",
+      notes: "Inactive manager should stay out of lead assignment",
+    });
     await createUser({
       name: "Mila Rivers",
       role: "manager",
@@ -705,6 +715,7 @@ test("auto-assigns new quote submissions to managers in round robin order", asyn
     assert.match(quoteOpsBody, />Mila Rivers<\/option>/);
     assert.match(quoteOpsBody, />Nora Lane<\/option>/);
     assert.doesNotMatch(quoteOpsBody, />Не назначен<\/option>/);
+    assert.doesNotMatch(quoteOpsBody, />Aaron Inactive<\/option>/);
     assert.doesNotMatch(quoteOpsBody, />Zoe Admin<\/option>/);
   } finally {
     await stopServer(started.child);
