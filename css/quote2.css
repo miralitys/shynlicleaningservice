@@ -656,6 +656,14 @@ a {
   justify-content: flex-end;
 }
 
+.quote2-submit-actions {
+  justify-content: center;
+}
+
+.quote2-submit-actions > .quote2-button {
+  min-width: min(390px, 100%);
+}
+
 .quote2-button {
   display: inline-flex;
   align-items: center;

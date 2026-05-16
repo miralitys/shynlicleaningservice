@@ -4,6 +4,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  buildQuoteConfirmationSmsMessage,
+  buildScheduleLabel,
   createAutoNotificationService,
   getOrderNotificationState,
   localDateTimeToInstant,
@@ -12,6 +14,33 @@ const {
 
 const DIRECT_REVIEW_URL_PATTERN =
   /https:\/\/g\.page\/r\/CUxwaxYdaymBEAI\/review/;
+
+test("formats SMS schedule labels in US date and AM/PM time", () => {
+  assert.equal(buildScheduleLabel("2026-05-12", "11:18"), "05/12/2026, 11:18 AM");
+  assert.equal(buildScheduleLabel("2026-05-17", "09:00"), "05/17/2026, 09:00 AM");
+  assert.equal(buildScheduleLabel("2026-05-17", "13:30"), "05/17/2026, 01:30 PM");
+});
+
+test("formats quote confirmation SMS with sentence line breaks", () => {
+  const message = buildQuoteConfirmationSmsMessage({
+    customerName: "ramis",
+    serviceName: "Regular Cleaning",
+    selectedDate: "2026-05-17",
+    selectedTime: "09:00",
+    fullAddress: "1289 Rhodes Ln, Naperville, IL 60540, США",
+  });
+
+  assert.equal(
+    message,
+    [
+      "Hi ramis, we received your request from Shynli Cleaning Service.",
+      "Service: Regular Cleaning.",
+      "Requested time: 05/17/2026, 09:00 AM.",
+      "Address: 1289 Rhodes Ln, Naperville, IL 60540, США.",
+      "A manager will contact you shortly.",
+    ].join("\n")
+  );
+});
 
 function createLeadEntry(overrides = {}) {
   return {
@@ -466,7 +495,7 @@ test("sends assignment SMS for rescheduled orders when staff is assigned", async
   assert.equal(result.sent, 1);
   assert.equal(leadConnectorClient.calls.length, 1);
   assert.match(leadConnectorClient.calls[0].message, /На вас назначена уборка SHYNLI/i);
-  assert.match(leadConnectorClient.calls[0].message, /Дата и время: 2026-04-21 в 12:30/i);
+  assert.match(leadConnectorClient.calls[0].message, /Дата и время: 04\/21\/2026, 12:30 PM/i);
 });
 
 test("falls back to contact-based assignment SMS when direct send is rejected", async () => {

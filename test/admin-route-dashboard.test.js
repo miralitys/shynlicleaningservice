@@ -227,6 +227,9 @@ test("renders overview tables for unassigned clients and today's orders", async 
     const newRequestsSection = dashboardBody.match(
       /data-admin-dashboard-new-requests="true"[\s\S]*?<\/table>/
     )?.[0];
+    const tasksSection = dashboardBody.match(
+      /data-admin-dashboard-tasks="true"[\s\S]*?<\/table>/
+    )?.[0];
     const unassignedSection = dashboardBody.match(
       /data-admin-dashboard-unassigned-orders="true"[\s\S]*?<\/table>/
     )?.[0];
@@ -235,7 +238,7 @@ test("renders overview tables for unassigned clients and today's orders", async 
     )?.[0];
 
     assert.ok(newRequestsSection);
-    assert.match(dashboardBody, /data-admin-dashboard-tasks="true"/);
+    assert.ok(tasksSection);
     assert.ok(unassignedSection);
     assert.ok(todaySection);
     assert.match(newRequestsSection, /Fresh Lead/);
@@ -249,9 +252,10 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.match(dashboardBody, /Fresh Lead/);
     assert.doesNotMatch(dashboardBody, /Просроченные/);
     assert.doesNotMatch(dashboardBody, /На сегодня/);
-    assert.doesNotMatch(dashboardBody, /Просрочено/);
+    assert.match(tasksSection, /admin-dashboard-task-overdue-badge/);
+    assert.match(tasksSection, /admin-badge admin-badge-danger">Просрочено/);
     assert.match(dashboardBody, /admin-dialog admin-dialog-wide admin-dialog-orders" id="admin-quote-task-result-dialog-/);
-    assert.doesNotMatch(dashboardBody, /data-admin-dashboard-tasks="true"[\s\S]*Future Task Lead/);
+    assert.doesNotMatch(tasksSection, /Future Task Lead/);
     assert.match(unassignedSection, /data-admin-dialog-row="true"/);
     assert.match(unassignedSection, /<span class="admin-table-link">Future No Team<\/span>/);
     assert.match(dashboardBody, /id="admin-order-detail-dialog-/);
