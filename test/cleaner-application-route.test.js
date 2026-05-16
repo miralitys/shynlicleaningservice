@@ -294,6 +294,7 @@ test("writes successful cleaner applications to Web Leads as applications", asyn
     assert.equal(row[8], "Available weekdays.");
     assert.equal(row[9], "test_application_gclid");
     assert.equal(row[14], "New");
+    assert.equal(row[15], "");
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

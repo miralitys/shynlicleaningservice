@@ -308,12 +308,14 @@ test("writes successful quote leads to Google Sheets and Telegram without blocki
     assert.equal(row[12], "cleaning company");
     assert.equal(row[13], "https://shynlicleaningservice.com/services/regular-cleaning/ads");
     assert.equal(row[14], "New");
-    assert.deepEqual(row.slice(15), ["", "", "", "", ""]);
+    assert.match(row[15], /^\$\d+\.\d{2}$/);
+    assert.deepEqual(row.slice(16), ["", "", "", ""]);
 
     const telegramPayload = JSON.parse(telegramCall.body);
     assert.match(telegramPayload.text, /New Shynli lead/);
     assert.match(telegramPayload.text, /Test Run/);
     assert.match(telegramPayload.text, /Deep Cleaning/);
+    assert.match(telegramPayload.text, /Price: \$\d+\.\d{2}/);
     assert.match(telegramPayload.text, /CRM: https:\/\/shynlicleaningservice\.com\/admin\/quote-ops\?entry=/);
   } finally {
     await stopServer(started.child);
@@ -432,6 +434,7 @@ test("writes successful quote leads through Apps Script webhook when configured"
     assert.equal(row[9], "test_apps_script_001");
     assert.equal(row[13], "https://shynlicleaningservice.com/ads-v2");
     assert.equal(row[14], "New");
+    assert.match(row[15], /^\$\d+\.\d{2}$/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
