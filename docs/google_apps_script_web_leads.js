@@ -25,6 +25,9 @@ const WEB_LEADS_HEADERS = [
 ];
 
 function doPost(event) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(5000);
+
   try {
     const payload = JSON.parse((event.postData && event.postData.contents) || "{}");
 
@@ -42,6 +45,16 @@ function doPost(event) {
     const sheet = spreadsheet.getSheetByName(tabName) || spreadsheet.insertSheet(tabName);
     ensureHeaders(sheet);
 
+    const properties = PropertiesService.getScriptProperties();
+    const idempotencyKey = payload.idempotencyKey ? "lead_" + payload.idempotencyKey : "";
+    if (idempotencyKey && properties.getProperty(idempotencyKey)) {
+      return jsonResponse({
+        ok: true,
+        duplicate: true,
+        appended: 0,
+      });
+    }
+
     const rows = Array.isArray(payload.values) ? payload.values : [];
     rows.forEach(function appendRow(row) {
       if (!Array.isArray(row)) return;
@@ -50,6 +63,9 @@ function doPost(event) {
       });
       sheet.appendRow(normalized);
     });
+    if (idempotencyKey && rows.length > 0) {
+      properties.setProperty(idempotencyKey, String(Date.now()));
+    }
 
     return jsonResponse({
       ok: true,
@@ -60,6 +76,8 @@ function doPost(event) {
       ok: false,
       error: String((error && error.message) || error),
     });
+  } finally {
+    lock.releaseLock();
   }
 }
 

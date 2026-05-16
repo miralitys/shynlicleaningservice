@@ -420,6 +420,7 @@ test("writes successful quote leads through Apps Script webhook when configured"
     assert.equal(appsScriptPayload.tabName, "Web Leads");
     assert.equal(appsScriptPayload.secret, "script-secret-test");
     assert.equal(appsScriptPayload.source, "shynli-web-leads");
+    assert.match(appsScriptPayload.idempotencyKey, /^[a-f0-9]{64}$/);
     assert.equal(appsScriptPayload.values.length, 1);
 
     const row = appsScriptPayload.values[0];
