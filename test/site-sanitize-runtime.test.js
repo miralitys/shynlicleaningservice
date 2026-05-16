@@ -86,6 +86,7 @@ const runtimeScriptIds = new Set([
   "mobile-sticky-cta",
   "pricing-calculator-scroll",
   "safari-home-layout-fix",
+  "shynli-form-attribution-runtime",
   "shynli-menu-widgeticons-runtime-stub",
   "shynli-menusub-runtime",
   "shynli-cleaner-application-form-runtime",
@@ -224,6 +225,41 @@ test("injects quote-start widget runtime wherever quick quote widgets exist", ()
   assert.match(blogArticleHtml, /form_name: 'Blog Quote Widget'/);
   assert.match(blogArticleHtml, /window\.setTimeout\(function\(\)\{\s*window\.location\.href = redirectTarget;\s*\}, 200\)/);
   assert.doesNotMatch(quoteHtml, /id="shynli-quote-start-widget-runtime"/);
+});
+
+test("injects page version and gclid attribution runtime on public forms", () => {
+  const pricingHtml = sanitizeHtml(readFixture("page110278596.html"), "/pricing-v2");
+  const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/ads-v2");
+
+  for (const html of [pricingHtml, homeHtml]) {
+    assert.match(html, /id="shynli-form-attribution-runtime"/);
+    assert.match(html, /name", "page_version", "page_version"|ensureHidden\(form, "page_version", "page_version"\)/);
+    assert.match(html, /ensureHidden\(form, "gclid", "gclid"\)/);
+    assert.match(html, /event: "form_submit"/);
+    assert.match(html, /page_version:/);
+  }
+});
+
+test("builds no-calculator v2 pages with static anchor pricing", () => {
+  const pricingHtml = sanitizeHtml(readFixture("page110278596.html"), "/pricing-v2");
+  const regularAdsHtml = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning/ads-v2");
+  const deepAdsHtml = sanitizeHtml(readFixture("page109721366.html"), "/services/deep-cleaning/ads-v2");
+  const moveAdsHtml = sanitizeHtml(readFixture("page109993436.html"), "/services/move-in-move-out-cleaning/ads-v2");
+  const homeAdsHtml = sanitizeHtml(readFixture("page108488156.html"), "/ads-v2");
+  const serviceAreasHtml = sanitizeHtml(readFixture("page108912616.html"), "/service-areas-v2");
+
+  for (const html of [pricingHtml, regularAdsHtml, deepAdsHtml, moveAdsHtml, homeAdsHtml, serviceAreasHtml]) {
+    assert.match(html, /class="shynli-anchor-pricing"/);
+    assert.match(html, /Regular Cleaning<\/span><span class="shynli-anchor-pricing__range">\$120 &ndash; \$200/);
+    assert.match(html, /Deep Cleaning<\/span><span class="shynli-anchor-pricing__range">\$180 &ndash; \$350/);
+    assert.match(html, /Move In\/Out<\/span><span class="shynli-anchor-pricing__range">\$250 &ndash; \$500/);
+    assert.match(html, /Free quote in 60 seconds &mdash; no obligation/);
+    assert.doesNotMatch(html, /id="cleaningCalculator"/);
+  }
+
+  assert.match(pricingHtml, /Get Your Free Quote/);
+  assert.match(pricingHtml, /Want to estimate your price online\? Use our calculator/);
+  assert.doesNotMatch(pricingHtml, /Calculate <span style="color: rgb\(158, 68, 90\);">Your Cleaning Price<\/span>/);
 });
 
 test("injects cleaner application tracking without enhanced conversion data", () => {

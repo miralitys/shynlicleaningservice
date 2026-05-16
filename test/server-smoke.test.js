@@ -620,6 +620,39 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   assert.doesNotMatch(robotsBody, /Disallow: \/services\/deep-cleaning\/ads\//);
 });
 
+test("serves ads v2 no-calculator variants as indexable routes", async () => {
+  const routes = [
+    "/ads-v2",
+    "/service-areas-v2",
+    "/pricing-v2",
+    "/services/regular-cleaning/ads-v2",
+    "/services/deep-cleaning/ads-v2",
+    "/services/move-in-move-out-cleaning/ads-v2",
+  ];
+  const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
+  const sitemapBody = await sitemapResponse.text();
+
+  for (const route of routes) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
+
+    assert.equal(response.status, 200, route);
+    assert.match(response.headers.get("content-type") || "", /text\/html/, route);
+    assert.match(body, /class="shynli-anchor-pricing"/, route);
+    assert.match(body, /Most homes &mdash; final price after free quote/, route);
+    assert.match(body, /Free quote in 60 seconds &mdash; no obligation/, route);
+    assert.match(body, /id="shynli-form-attribution-runtime"/, route);
+    assert.doesNotMatch(body, /id="cleaningCalculator"/, route);
+    assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/, route);
+    assert.match(sitemapBody, new RegExp(`<loc>https://shynlicleaningservice\\.com${route}</loc>`), route);
+  }
+
+  const pricingResponse = await fetch(`${BASE_URL}/pricing`);
+  const pricingBody = await pricingResponse.text();
+  assert.match(pricingBody, /Prefer a quick quote instead\? Get a free quote/);
+  assert.match(pricingBody, /href="\/pricing-v2"/);
+});
+
 test("serves all service page pilots without zero/lazyload runtimes", async () => {
   const serviceRoutes = [
     ["/services/regular-cleaning", /Recurring House Cleaning Services/i],

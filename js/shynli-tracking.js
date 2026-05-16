@@ -36,7 +36,7 @@
     "utm_term",
   ];
   var ATTRIBUTION_COOKIE = "shynli_attribution";
-  var ATTRIBUTION_TTL_DAYS = 90;
+  var ATTRIBUTION_TTL_DAYS = 365;
 
   function getQueryParam(name) {
     try {

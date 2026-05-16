@@ -465,6 +465,7 @@ const SITEMAP_LASTMOD_OVERRIDES = new Map([
 ]);
 const BREADCRUMB_LABELS = new Map([
   ["/ads", "Home"],
+  ["/ads-v2", "Home"],
   ["/about-us", "About Us"],
   ["/blog", "Blog"],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, page.label]),
@@ -475,15 +476,20 @@ const BREADCRUMB_LABELS = new Map([
   ["/home-calculator", "Home Calculator"],
   ["/oauth/callback", "OAuth Callback"],
   ["/pricing", "Pricing"],
+  ["/pricing-v2", "Pricing"],
   ["/privacy-policy", "Privacy Policy"],
   ["/quote", "Quote"],
   ["/quote2", "Quote"],
   ["/service-areas", "Service Areas"],
+  ["/service-areas-v2", "Service Areas"],
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
   ["/services/deep-cleaning/ads", "Deep Cleaning"],
+  ["/services/deep-cleaning/ads-v2", "Deep Cleaning"],
   ["/services/move-in-move-out-cleaning/ads", "Move-In & Move-Out Cleaning"],
+  ["/services/move-in-move-out-cleaning/ads-v2", "Move-In & Move-Out Cleaning"],
   ["/services/regular-cleaning/ads", "Regular Cleaning"],
+  ["/services/regular-cleaning/ads-v2", "Regular Cleaning"],
 ]);
 const ROUTE_META_OVERRIDES = {
   "/": {
@@ -495,6 +501,13 @@ const ROUTE_META_OVERRIDES = {
   "/ads": {
     title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
     canonical: `${SITE_ORIGIN}/ads`,
+    ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    ogDescription:
+      "Trusted local house cleaning in Chicago suburbs with upfront pricing, flexible scheduling, and insured cleaners.",
+  },
+  "/ads-v2": {
+    title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/ads-v2`,
     ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
     ogDescription:
       "Trusted local house cleaning in Chicago suburbs with upfront pricing, flexible scheduling, and insured cleaners.",
@@ -533,6 +546,10 @@ const ROUTE_META_OVERRIDES = {
     title: "Deep Cleaning Services | Shynli Cleaning",
     canonical: `${SITE_ORIGIN}/services/deep-cleaning/ads`,
   },
+  "/services/deep-cleaning/ads-v2": {
+    title: "Deep Cleaning Services | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/services/deep-cleaning/ads-v2`,
+  },
   "/services/move-in-move-out-cleaning": {
     title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
   },
@@ -542,6 +559,12 @@ const ROUTE_META_OVERRIDES = {
       "Professional move-in and move-out cleaning service in Chicagoland. Inspection-ready results. Get a free quote in 60 seconds.",
     canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning`,
   },
+  "/services/move-in-move-out-cleaning/ads-v2": {
+    title: "Move-In & Move-Out Cleaning Service | Shynli Cleaning",
+    description:
+      "Professional move-in and move-out cleaning service in Chicagoland. Inspection-ready results. Get a free quote in 60 seconds.",
+    canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning/ads-v2`,
+  },
   "/services/regular-cleaning": {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
   },
@@ -549,11 +572,23 @@ const ROUTE_META_OVERRIDES = {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
     canonical: `${SITE_ORIGIN}/services/regular-cleaning/ads`,
   },
+  "/services/regular-cleaning/ads-v2": {
+    title: "Recurring House Cleaning Services | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/services/regular-cleaning/ads-v2`,
+  },
   "/oauth/callback": {
     robots: "noindex,nofollow",
   },
   "/pricing": {
     title: "House Cleaning Prices | Shynli Cleaning",
+  },
+  "/pricing-v2": {
+    title: "House Cleaning Prices | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/pricing-v2`,
+  },
+  "/service-areas-v2": {
+    title: "Service Areas | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/service-areas-v2`,
   },
   "/quote": {
     title: "Get a Free Quote | Shynli Cleaning",

@@ -67,4 +67,5 @@ test("serves the shared tracking library asset", async () => {
   assert.match(body, /window\.shynliTracking/);
   assert.match(body, /lead_call_click_website/);
   assert.match(body, /captureAttribution/);
+  assert.match(body, /ATTRIBUTION_TTL_DAYS = 365/);
 });
