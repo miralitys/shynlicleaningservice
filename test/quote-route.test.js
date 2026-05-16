@@ -181,6 +181,145 @@ test("accepts call-me quote requests without address or ZIP", async () => {
   }
 });
 
+test("writes successful quote leads to Google Sheets and Telegram without blocking CRM", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [],
+      },
+    },
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-web-leads-123",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "sheets.googleapis.com",
+      status: 200,
+      body: {
+        updates: {
+          updatedRows: 1,
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "api.telegram.org",
+      status: 200,
+      body: {
+        ok: true,
+      },
+    },
+  ]);
+
+  const started = await startServer({
+    env: {
+      GHL_API_KEY: "ghl_test_key",
+      GHL_LOCATION_ID: "location-123",
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "0",
+      WEB_LEADS_SHEET_ID: "sheet-test-123",
+      WEB_LEADS_GOOGLE_ACCESS_TOKEN: "ya29.test-token",
+      WEB_LEADS_TELEGRAM_BOT_TOKEN: "telegram-test-token",
+      WEB_LEADS_TELEGRAM_CHAT_ID: "123456",
+      SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/api/quote/submit`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: [
+          "shynli_attribution=" +
+            encodeURIComponent(
+              JSON.stringify({
+                gclid: "test_e2e_shynli_001",
+                utm_source: "google",
+                utm_medium: "cpc",
+                utm_campaign: "23708521174",
+                utm_term: "cleaning company",
+              })
+            ),
+          "shynli_landing_page=" + encodeURIComponent("https://shynlicleaningservice.com/services/regular-cleaning/ads"),
+        ].join("; "),
+      },
+      body: JSON.stringify({
+        contact: {
+          fullName: "Test Run",
+          phone: "(555) 123-4567",
+        },
+        quote: buildSupportedQuote({
+          serviceType: "deep",
+          rooms: "3",
+          bathrooms: "2",
+          squareMeters: "1800",
+          additionalDetails: "Please call before arrival.",
+        }),
+        source: "quote",
+      }),
+    });
+
+    assert.equal(response.status, 201);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.success, true);
+    assert.equal(payload.contactId, "contact-web-leads-123");
+
+    const calls = await waitFor(async () => {
+      const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8").catch(() => "");
+      const parsedCalls = captureRaw
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      return parsedCalls.some((call) => call.url.includes("sheets.googleapis.com")) &&
+        parsedCalls.some((call) => call.url.includes("api.telegram.org"))
+        ? parsedCalls
+        : null;
+    });
+
+    const sheetsCall = calls.find((call) => call.url.includes("sheets.googleapis.com"));
+    const telegramCall = calls.find((call) => call.url.includes("api.telegram.org"));
+    assert.ok(sheetsCall);
+    assert.ok(telegramCall);
+
+    const sheetsPayload = JSON.parse(sheetsCall.body);
+    const row = sheetsPayload.values[0];
+    assert.equal(row.length, 20);
+    assert.equal(row[1], "website_quiz");
+    assert.equal(row[2], "Test Run");
+    assert.equal(row[3], "+15551234567");
+    assert.equal(row[6], "Deep Cleaning");
+    assert.match(row[7], /Bedrooms: 3/);
+    assert.equal(row[9], "test_e2e_shynli_001");
+    assert.equal(row[10], "google / cpc");
+    assert.equal(row[11], "23708521174");
+    assert.equal(row[12], "cleaning company");
+    assert.equal(row[13], "https://shynlicleaningservice.com/services/regular-cleaning/ads");
+    assert.equal(row[14], "New");
+    assert.deepEqual(row.slice(15), ["", "", "", "", ""]);
+
+    const telegramPayload = JSON.parse(telegramCall.body);
+    assert.match(telegramPayload.text, /New Shynli lead/);
+    assert.match(telegramPayload.text, /Test Run/);
+    assert.match(telegramPayload.text, /Deep Cleaning/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("returns a graceful 503 when LeadConnector is not configured", async () => {
   const started = await startServer();
 

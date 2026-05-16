@@ -225,6 +225,33 @@
     return digits.length === 5 ? digits : "";
   }
 
+  function getQuoteAttributionPayload() {
+    const attribution =
+      window.shynliTracking && typeof window.shynliTracking.getAttribution === "function"
+        ? window.shynliTracking.getAttribution() || {}
+        : {};
+    const landingPage =
+      window.shynliTracking && typeof window.shynliTracking.getLandingPage === "function"
+        ? window.shynliTracking.getLandingPage() || ""
+        : "";
+    return {
+      attribution: {
+        gclid: attribution.gclid || "",
+        utm_source: attribution.utm_source || "",
+        utm_medium: attribution.utm_medium || "",
+        utm_campaign: attribution.utm_campaign || "",
+        utm_term: attribution.utm_term || "",
+        landing_page: landingPage,
+      },
+      gclid: attribution.gclid || "",
+      utm_source: attribution.utm_source || "",
+      utm_medium: attribution.utm_medium || "",
+      utm_campaign: attribution.utm_campaign || "",
+      utm_term: attribution.utm_term || "",
+      landingPage,
+    };
+  }
+
   function extractZipCodeFromText(value) {
     const match = String(value || "").match(/\b(\d{5})(?:-\d{4})?\b/);
     return match ? normalizeZipCodeValue(match[1]) : "";
@@ -1083,6 +1110,7 @@
     };
 
     return {
+      ...getQuoteAttributionPayload(),
       source: "Website Callback Request",
       sourcePagePath: QUOTE_PAGE_PATH,
       returnPath: QUOTE_PAGE_PATH,
@@ -1252,6 +1280,7 @@
     };
 
     return {
+      ...getQuoteAttributionPayload(),
       source: "quote",
       sourcePagePath: QUOTE_PAGE_PATH,
       returnPath: QUOTE_PAGE_PATH,

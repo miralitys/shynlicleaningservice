@@ -36,6 +36,7 @@
     "utm_term",
   ];
   var ATTRIBUTION_COOKIE = "shynli_attribution";
+  var LANDING_PAGE_COOKIE = "shynli_landing_page";
   var ATTRIBUTION_TTL_DAYS = 365;
 
   function getQueryParam(name) {
@@ -79,7 +80,7 @@
   }
 
   function captureAttribution() {
-    var captured = {};
+    var captured = getAttribution();
     var found = false;
     for (var i = 0; i < ATTRIBUTION_KEYS.length; i++) {
       var key = ATTRIBUTION_KEYS[i];
@@ -95,6 +96,12 @@
         setCookie(ATTRIBUTION_COOKIE, JSON.stringify(captured), ATTRIBUTION_TTL_DAYS);
       } catch (e) {}
     }
+    try {
+      if (!getCookie(LANDING_PAGE_COOKIE)) {
+        var landing = window.location.origin + window.location.pathname;
+        setCookie(LANDING_PAGE_COOKIE, landing, ATTRIBUTION_TTL_DAYS);
+      }
+    } catch (e) {}
   }
 
   function getAttribution() {
@@ -267,6 +274,8 @@
       var key = ATTRIBUTION_KEYS[i];
       if (attr[key]) p[key] = attr[key];
     }
+    var landingPage = getCookie(LANDING_PAGE_COOKIE);
+    if (landingPage) p.landing_page = landingPage;
     return p;
   }
 
@@ -328,6 +337,9 @@
 
   ns.captureAttribution = captureAttribution;
   ns.getAttribution = getAttribution;
+  ns.getLandingPage = function () {
+    return getCookie(LANDING_PAGE_COOKIE) || "";
+  };
   ns.pushEvent = pushEvent;
   ns.buildUserData = buildUserData;
   ns.generateEventId = generateEventId;
