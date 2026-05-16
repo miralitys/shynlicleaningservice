@@ -321,6 +321,122 @@ test("writes successful quote leads to Google Sheets and Telegram without blocki
   }
 });
 
+test("writes successful quote leads through Apps Script webhook when configured", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [],
+      },
+    },
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-apps-script-123",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "script.google.com",
+      status: 200,
+      body: {
+        ok: true,
+        appended: 1,
+      },
+    },
+  ]);
+
+  const started = await startServer({
+    env: {
+      GHL_API_KEY: "ghl_test_key",
+      GHL_LOCATION_ID: "location-123",
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "0",
+      WEB_LEADS_SHEET_ID: "sheet-test-123",
+      WEB_LEADS_APPS_SCRIPT_URL: "https://script.google.com/macros/s/test-web-leads/exec",
+      WEB_LEADS_APPS_SCRIPT_SECRET: "script-secret-test",
+      SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/api/quote/submit`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: [
+          "shynli_attribution=" +
+            encodeURIComponent(
+              JSON.stringify({
+                gclid: "test_apps_script_001",
+                utm_source: "google",
+                utm_medium: "cpc",
+                utm_campaign: "apps-script-campaign",
+                utm_term: "house cleaning",
+              })
+            ),
+          "shynli_landing_page=" + encodeURIComponent("https://shynlicleaningservice.com/ads-v2"),
+        ].join("; "),
+      },
+      body: JSON.stringify({
+        contact: {
+          fullName: "Apps Script Test",
+          phone: "555-555-0199",
+        },
+        quote: buildSupportedQuote({
+          serviceType: "regular",
+          additionalDetails: "Apps Script webhook path.",
+        }),
+        source: "quote",
+      }),
+    });
+
+    assert.equal(response.status, 201);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.contactId, "contact-apps-script-123");
+
+    const calls = await waitFor(async () => {
+      const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8").catch(() => "");
+      const parsedCalls = captureRaw
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      return parsedCalls.some((call) => call.url.includes("script.google.com")) ? parsedCalls : null;
+    });
+
+    const appsScriptCall = calls.find((call) => call.url.includes("script.google.com"));
+    assert.ok(appsScriptCall);
+
+    const appsScriptPayload = JSON.parse(appsScriptCall.body);
+    assert.equal(appsScriptPayload.sheetId, "sheet-test-123");
+    assert.equal(appsScriptPayload.tabName, "Web Leads");
+    assert.equal(appsScriptPayload.secret, "script-secret-test");
+    assert.equal(appsScriptPayload.source, "shynli-web-leads");
+    assert.equal(appsScriptPayload.values.length, 1);
+
+    const row = appsScriptPayload.values[0];
+    assert.equal(row.length, 20);
+    assert.equal(row[1], "website_quiz");
+    assert.equal(row[2], "Apps Script Test");
+    assert.equal(row[3], "+15555550199");
+    assert.equal(row[6], "Regular Cleaning");
+    assert.equal(row[9], "test_apps_script_001");
+    assert.equal(row[13], "https://shynlicleaningservice.com/ads-v2");
+    assert.equal(row[14], "New");
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("returns a graceful 503 when LeadConnector is not configured", async () => {
   const started = await startServer();
 

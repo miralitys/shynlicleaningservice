@@ -14,6 +14,10 @@ The new parallel flow is:
 
 `website form -> Node backend -> Google Sheets Web Leads`
 
+If Google service account key creation is blocked, the backend can use Apps Script instead:
+
+`website form -> Node backend -> Apps Script webhook -> Google Sheets Web Leads`
+
 Optional Telegram notification:
 
 `website form -> Node backend -> Telegram sendMessage`
@@ -33,8 +37,10 @@ Required for Google Sheets writes:
 - `WEB_LEADS_SHEET_ID`: Google Sheet ID.
 - `WEB_LEADS_TAB_NAME`: optional, defaults to `Web Leads`.
 
-Authentication, choose one:
+Authentication, choose one. The Apps Script webhook is preferred when Google Cloud blocks service account JSON keys:
 
+- `WEB_LEADS_APPS_SCRIPT_URL`: deployed Apps Script Web app URL.
+- `WEB_LEADS_APPS_SCRIPT_SECRET`: shared secret sent to Apps Script, recommended.
 - `WEB_LEADS_GOOGLE_SERVICE_ACCOUNT_JSON`: full service account JSON as an environment secret.
 - `WEB_LEADS_GOOGLE_APPLICATION_CREDENTIALS`: path to a service account JSON file.
 - `WEB_LEADS_GOOGLE_ACCESS_TOKEN`: short-lived access token, mainly for tests/debugging.
@@ -53,6 +59,25 @@ Optional:
 - `WEB_LEADS_TELEGRAM_TIMEOUT_MS`: Telegram timeout in ms, defaults to `1600`.
 
 ## Google Cloud Setup
+
+### Option A: Apps Script webhook, no service account key
+
+Use this option when Google Cloud shows `iam.disableServiceAccountKeyCreation`.
+
+1. Open the target Google Sheet.
+2. Go to Extensions -> Apps Script.
+3. Paste the code from `docs/google_apps_script_web_leads.js`.
+4. Replace `PASTE_RANDOM_SECRET_HERE` with a long random secret.
+5. Deploy -> New deployment -> Web app.
+6. Set "Execute as" to your account.
+7. Set access to "Anyone" or "Anyone with the link".
+8. Copy the Web app URL into `WEB_LEADS_APPS_SCRIPT_URL`.
+9. Add the same random secret to `WEB_LEADS_APPS_SCRIPT_SECRET`.
+10. Keep `WEB_LEADS_SHEET_ID` set to the target spreadsheet ID.
+
+The Apps Script will create/fix the `Web Leads` header row and append one 20-column row per lead.
+
+### Option B: Service account JSON key
 
 1. Create a project for Shynli Web Leads.
 2. Enable Google Sheets API and Google Drive API.
