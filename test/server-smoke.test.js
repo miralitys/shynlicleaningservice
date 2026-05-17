@@ -463,6 +463,10 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   const h1Text = h1Match
     ? h1Match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
     : "";
+  const focusedServicesMatch = body.match(
+    /<section id="sugargrove-residential-services"[\s\S]*?<\/section>/
+  );
+  const focusedServices = focusedServicesMatch ? focusedServicesMatch[0] : "";
 
   assert.equal(response.status, 200);
   assert.match(
@@ -479,6 +483,17 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
     /Reliable regular, deep, and move-out cleaning for homes in Sugar Grove, IL\./
   );
   assert.doesNotMatch(body, /Reliable home cleaning for busy households in Sugar Grove/);
+  assert.ok(focusedServices, "Sugar Grove should use the residential-focused services section");
+  assert.match(focusedServices, /Residential Cleaning Services in Sugar Grove/);
+  assert.match(
+    focusedServices,
+    /Regular Home Cleaning[\s\S]*Deep Cleaning[\s\S]*Move-In \/ Move-Out Cleaning/
+  );
+  assert.match(
+    focusedServices,
+    /Also available when needed:[\s\S]*Airbnb Cleaning[\s\S]*Post-Construction Cleaning[\s\S]*Commercial Cleaning/
+  );
+  assert.doesNotMatch(focusedServices, /Deep Cleaning for Homes That Need Extra Care/);
 });
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
