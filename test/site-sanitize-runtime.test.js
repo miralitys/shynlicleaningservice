@@ -552,6 +552,18 @@ test("strips the legacy safety intro copy from marketing pages", () => {
   assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN);
 });
 
+test("adds the homepage fast quote CTA before the service areas map", () => {
+  const html = sanitizeHtml(readFixture("page108488156.html"), "/");
+
+  const ctaIndex = html.indexOf('id="shynli-home-fast-quote-cta"');
+  const serviceAreasIndex = html.indexOf('id="rec1822455943"');
+
+  assert.notEqual(ctaIndex, -1);
+  assert.notEqual(serviceAreasIndex, -1);
+  assert.ok(ctaIndex < serviceAreasIndex);
+  assert.match(html, /class="shynli-home-fast-quote-cta__button" href="\/quote">Fast free quote/);
+});
+
 test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
   const html = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning");
 
