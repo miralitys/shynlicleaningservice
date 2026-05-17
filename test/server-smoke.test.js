@@ -521,6 +521,8 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   );
   assert.doesNotMatch(body, /Choose the cleaning schedule that fits your home and routine:/);
   assert.ok(nearbyAreas, "Sugar Grove should include the nearby areas block");
+  assert.match(nearbyAreas, /Serving Sugar Grove and nearby communities/);
+  assert.doesNotMatch(nearbyAreas, /Find your area by ZIP code/);
   assert.deepEqual(
     nearbyAreaButtons.map(({ label, href }) => [label, href]),
     [

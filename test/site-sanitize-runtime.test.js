@@ -686,7 +686,10 @@ test("keeps city-specific copy aligned on every city page", () => {
       fixture.route
     );
     assertOnlyCity(
-      captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Find your area by ZIP code/g),
+      [
+        ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Find your area by ZIP code/g),
+        ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Serving Sugar Grove and nearby communities/g),
+      ],
       fixture.city,
       "nearby areas heading",
       fixture.route
