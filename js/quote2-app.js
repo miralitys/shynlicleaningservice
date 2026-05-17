@@ -8,6 +8,9 @@
   const GOOGLE_PLACES_API_KEY =
     RUNTIME_CONFIG.googlePlacesApiKey || "";
   const normalizedPath = window.location.pathname.replace(/\/+$/, "") || "/";
+  const NO_CALCULATOR_MODE =
+    Boolean(RUNTIME_CONFIG.quoteNoCalculator) ||
+    normalizedPath === "/quote-no-calculator";
   const NO_PRICE_MODE =
     Boolean(RUNTIME_CONFIG.quoteNoPrice || RUNTIME_CONFIG.quoteNoCalculator) ||
     normalizedPath === "/quote-no-price" ||
@@ -782,6 +785,16 @@
     return field ? String(field.value || "") : "";
   }
 
+  function generateTrackingEventId() {
+    if (window.shynliTracking && typeof window.shynliTracking.generateEventId === "function") {
+      return window.shynliTracking.generateEventId();
+    }
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return window.crypto.randomUUID();
+    }
+    return `qs_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   function scrollToCard(card) {
     if (!card) return;
     card.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1165,6 +1178,7 @@
       form_type: "callback",
       form_location: window.location.pathname,
       page_version: getFormHiddenValue("page_version"),
+      event_id: generateTrackingEventId(),
       gclid: getFormHiddenValue("gclid"),
       value: CALLBACK_CONVERSION_VALUE,
       currency: "USD",
@@ -1355,6 +1369,7 @@
     return window.shynliTracking.pushEvent(
       {
         event: "lead_quote_submit",
+        event_id: generateTrackingEventId(),
         value: Number(totalValue) || 50,
         currency: "USD",
         form_id: "quote2-form",
@@ -1618,6 +1633,11 @@
   function initNoPriceMode() {
     if (!NO_PRICE_MODE) return;
 
+    if (NO_CALCULATOR_MODE && elements.calculateOnlineButton) {
+      elements.calculateOnlineButton.hidden = true;
+      elements.calculateOnlineButton.disabled = true;
+      elements.calculateOnlineButton.setAttribute("aria-hidden", "true");
+    }
     if (elements.stickyEstimate) {
       elements.stickyEstimate.hidden = true;
     }
@@ -1625,6 +1645,13 @@
     const contactNote = document.querySelector('[data-step-card="contact"] .quote2-field-note');
     if (contactNote) {
       contactNote.textContent = "Enter your full name and phone number, then continue or ask us to call you.";
+    }
+
+    if (NO_CALCULATOR_MODE) {
+      const intentTitle = document.querySelector('[data-step-card="intent"] .quote2-section-title');
+      if (intentTitle) {
+        intentTitle.textContent = "Ready for a quick call?";
+      }
     }
   }
 

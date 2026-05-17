@@ -257,8 +257,11 @@ test("tracks the short quote callback form as a lead conversion", () => {
   assert.match(source, /event: "lead_quote_submit"/);
   assert.match(source, /form_id: "quote2Form"/);
   assert.match(source, /form_type: "callback"/);
+  assert.match(source, /event_id: generateTrackingEventId\(\)/);
   assert.match(source, /value: CALLBACK_CONVERSION_VALUE/);
   assert.match(source, /trackCallbackLeadSubmission\(\);/);
+  assert.match(source, /function generateTrackingEventId/);
+  assert.match(source, /event_id: generateTrackingEventId\(\),\n\s+value: Number\(totalValue\) \|\| 50/);
 });
 
 test("builds no-calculator v2 pages with static anchor pricing", () => {
