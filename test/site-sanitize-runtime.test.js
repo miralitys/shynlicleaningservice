@@ -628,7 +628,9 @@ test("rebuilds the homepage review block with unique current reviews", () => {
   assert.ok(sectionMatch, "homepage review section should be present");
 
   const section = sectionMatch[0];
-  const names = [...section.matchAll(/clients-say-home__name">([^<]+)</g)].map((match) => match[1]);
+  const names = [
+    ...section.matchAll(/data-shynli-review-card="primary"[\s\S]*?clients-say-home__name">([^<]+)</g),
+  ].map((match) => match[1]);
 
   assert.equal(names.length, 24);
   assert.equal(new Set(names).size, names.length);
@@ -644,8 +646,11 @@ test("rebuilds the homepage review block with unique current reviews", () => {
     "Igor Bych",
     "Lina Gonzales",
   ].forEach((name) => assert.ok(names.includes(name), name));
+  assert.equal((section.match(/clients-say-home__group--clone" aria-hidden="true"/g) || []).length, 2);
+  assert.match(section, /animation-name:clientsSayMoveRight/);
+  assert.match(section, /animation-name:clientsSayMoveLeft/);
+  assert.match(section, /animation-play-state:paused/);
   assert.doesNotMatch(section, /clients-say-home__group--ghost/);
-  assert.doesNotMatch(section, /aria-hidden="true"><article class="clients-say-home__card"/);
   assert.doesNotMatch(section, /initClientsSayMarquee/);
 });
 

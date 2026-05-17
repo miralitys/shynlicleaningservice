@@ -209,6 +209,9 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /Mobile Legends Jek/);
   assert.match(body, /Yevgeniy Magomedov/);
   assert.match(body, /Lina Gonzales/);
+  assert.match(body, /animation-name:clientsSayMoveRight/);
+  assert.match(body, /animation-name:clientsSayMoveLeft/);
+  assert.match(body, /animation-play-state:paused/);
   assert.doesNotMatch(body, /clients-say-home__group--ghost/);
   assert.doesNotMatch(body, /initClientsSayMarquee/);
   [
