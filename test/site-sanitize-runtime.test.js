@@ -703,6 +703,7 @@ test("keeps city-specific copy aligned on every city page", () => {
     assertOnlyCity(
       [
         ...captureAll(text, /Get a Free Quote for Home Cleaning in\s+([A-Za-z.\s]+?)(?:\s+Get Your Home|\s+\+1\(630\)|\s+Ready to get started\?)/g),
+        ...captureAll(text, /Get a Free Quote for Home Cleaning in\s+([A-Za-z.\s]+?)\s+Your name/g),
         ...captureAll(text, /Get a\s+([A-Za-z.\s]+?)\s+Cleaning Quote/g),
       ],
       fixture.city,

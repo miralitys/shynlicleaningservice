@@ -473,6 +473,8 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   const recurringCleaning = recurringCleaningMatch ? recurringCleaningMatch[0] : "";
   const nearbyAreasMatch = body.match(/<div id="rec1824177293"[\s\S]*?(?=<div id="rec1802286173")/);
   const nearbyAreas = nearbyAreasMatch ? nearbyAreasMatch[0] : "";
+  const finalCtaMatch = body.match(/<div id="rec1802286193"[\s\S]*?(?=<div id="rec1795404693")/);
+  const finalCta = finalCtaMatch ? finalCtaMatch[0] : "";
   const nearbyAreaButtons = [...nearbyAreas.matchAll(
     /<div class='t396__elem tn-elem[^']*'([^>]*)data-elem-type='button'([^>]*)>\s*<a class='tn-atom' href="([^"]+)">\s*<div class='tn-atom__button-content'>\s*<span class="tn-atom__button-text">([^<]+)<\/span>/g
   )]
@@ -537,6 +539,15 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
     ),
     "Sugar Grove nearby area buttons should stay local to Sugar Grove"
   );
+  assert.match(finalCta, /Get a Free Quote for Home Cleaning in[\s\S]*Sugar Grove/);
+  assert.match(
+    finalCta,
+    /We'll confirm the details and help you choose the right cleaning schedule\./
+  );
+  assert.doesNotMatch(finalCta, /Get Your Home Professionally Cleaned/);
+  assert.doesNotMatch(finalCta, /Get a\s+<span[^>]*>Sugar Grove<\/span>\s+Cleaning Quote/);
+  assert.doesNotMatch(finalCta, /Ready to get started\?/);
+  assert.doesNotMatch(finalCta, /We'll confirm details in 2 minutes/);
 });
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
