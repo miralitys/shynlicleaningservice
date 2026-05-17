@@ -489,6 +489,15 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   const nearbyAreas = nearbyAreasMatch ? nearbyAreasMatch[0] : "";
   const finalCtaMatch = body.match(/<div id="rec1802286193"[\s\S]*?(?=<div id="rec1795404693")/);
   const finalCta = finalCtaMatch ? finalCtaMatch[0] : "";
+  const localTeamMatch = body.match(
+    /<div id="rec\d+" class="r t-rec"(?:(?!<div id="rec\d+" class="r t-rec")[\s\S])*?Your Local Cleaning Team(?:(?!<div id="rec\d+" class="r t-rec")[\s\S])*?<!-- \/T396 -->\s*<\/div>/
+  );
+  const localTeam = localTeamMatch ? localTeamMatch[0] : "";
+  const localTeamPlainText = localTeam
+    .replace(/&#8209;/g, "-")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const nearbyAreaButtons = [...nearbyAreas.matchAll(
     /<div class='t396__elem tn-elem[^']*'([^>]*)data-elem-type='button'([^>]*)>\s*<a class='tn-atom' href="([^"]+)">\s*<div class='tn-atom__button-content'>\s*<span class="tn-atom__button-text">([^<]+)<\/span>/g
   )]
@@ -564,6 +573,13 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   assert.doesNotMatch(finalCta, /Get a\s+<span[^>]*>Sugar Grove<\/span>\s+Cleaning Quote/);
   assert.doesNotMatch(finalCta, /Ready to get started\?/);
   assert.doesNotMatch(finalCta, /We'll confirm details in 2 minutes/);
+  assert.ok(localTeam, "Sugar Grove should include the local cleaning team block");
+  assert.match(localTeamPlainText, /Locally scheduled cleaning appointments/);
+  assert.match(localTeamPlainText, /Carefully selected cleaners/);
+  assert.match(localTeamPlainText, /Flexible weekly, bi-weekly, or one-time service/);
+  assert.doesNotMatch(localTeam, />locally scheduled</);
+  assert.doesNotMatch(localTeam, />flexible weekly or one-time service</);
+  assert.match(body, /id="shynli-local-team-benefits-style"/);
 });
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
