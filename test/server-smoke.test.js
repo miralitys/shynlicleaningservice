@@ -577,8 +577,10 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   assert.match(localTeamPlainText, /Locally scheduled cleaning appointments/);
   assert.match(localTeamPlainText, /Carefully selected cleaners/);
   assert.match(localTeamPlainText, /Flexible weekly, bi-weekly, or one-time service/);
+  assert.doesNotMatch(localTeamPlainText, /Our local cleaners are:/);
   assert.doesNotMatch(localTeam, />locally scheduled</);
   assert.doesNotMatch(localTeam, />flexible weekly or one-time service</);
+  assert.doesNotMatch(localTeam, /field=['"]tn_text_1768415655552000001['"]/);
   assert.match(body, /id="shynli-local-team-benefits-style"/);
 });
 
