@@ -7,9 +7,11 @@
   const RUNTIME_CONFIG = window.__shynliRuntimeConfig || {};
   const GOOGLE_PLACES_API_KEY =
     RUNTIME_CONFIG.googlePlacesApiKey || "";
-  const NO_CALCULATOR_MODE =
-    Boolean(RUNTIME_CONFIG.quoteNoCalculator) ||
-    window.location.pathname.replace(/\/+$/, "") === "/quote-no-calculator";
+  const normalizedPath = window.location.pathname.replace(/\/+$/, "") || "/";
+  const NO_PRICE_MODE =
+    Boolean(RUNTIME_CONFIG.quoteNoPrice || RUNTIME_CONFIG.quoteNoCalculator) ||
+    normalizedPath === "/quote-no-price" ||
+    normalizedPath === "/quote-no-calculator";
   const CALLBACK_CONVERSION_VALUE = 50;
   const SERVICE_AREA_ZIP_CODES = new Set(
     Array.isArray(RUNTIME_CONFIG.serviceAreaZipCodes)
@@ -769,9 +771,9 @@
     syncAddressZipValidation();
     const pricing = calculateCurrentPricing();
     elements.estimateTargets.forEach(function (target) {
-      target.textContent = formatCurrency(pricing.totalPrice);
+      target.textContent = NO_PRICE_MODE ? "Free quote" : formatCurrency(pricing.totalPrice);
     });
-    elements.submitButton.textContent = `Send request — ${formatCurrency(pricing.totalPrice)}`;
+    elements.submitButton.textContent = NO_PRICE_MODE ? "Send request" : `Send request — ${formatCurrency(pricing.totalPrice)}`;
     elements.continueToNotes.disabled = !isAddressStepComplete();
   }
 
@@ -814,7 +816,7 @@
     elements.stepCards.address.hidden = !addressVisible;
     elements.stepCards.notes.hidden = !notesVisible;
     if (elements.stickyEstimate) {
-      elements.stickyEstimate.hidden = !profileVisible;
+      elements.stickyEstimate.hidden = NO_PRICE_MODE || !profileVisible;
     }
 
     if (intentVisible && intentWasHidden && !settings.skipScroll && !state.intentAutoOpened) {
@@ -1217,9 +1219,6 @@
   }
 
   function openOnlineCalculator() {
-    if (NO_CALCULATOR_MODE) {
-      return;
-    }
     if (!isContactStepComplete()) {
       setNotice("Please enter your name and a valid US phone number first.", "warning");
       return;
@@ -1423,11 +1422,15 @@
       return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
     }
 
+    const calendarDetails = NO_PRICE_MODE
+      ? `${serviceLabel}\nFinal quote after call`
+      : `${serviceLabel}\nEstimate: ${formatCurrency(calculatorData.totalPrice || 0)}`;
+
     const params = new URLSearchParams({
       action: "TEMPLATE",
       text: serviceLabel,
       dates: `${formatDate(startDate)}/${formatDate(endDate)}`,
-      details: `${serviceLabel}\nEstimate: ${formatCurrency(calculatorData.totalPrice || 0)}`,
+      details: calendarDetails,
       location: calculatorData.address || calculatorData.fullAddress || "",
     });
 
@@ -1458,7 +1461,9 @@
       `DTSTART:${formatIcsDate(startDate)}`,
       `DTEND:${formatIcsDate(endDate)}`,
       `SUMMARY:${serviceLabel}`,
-      `DESCRIPTION:Estimate ${formatCurrency(calculatorData.totalPrice || 0)}`,
+      NO_PRICE_MODE
+        ? "DESCRIPTION:Final quote after call"
+        : `DESCRIPTION:Estimate ${formatCurrency(calculatorData.totalPrice || 0)}`,
       `LOCATION:${calculatorData.address || calculatorData.fullAddress || ""}`,
       "END:VEVENT",
       "END:VCALENDAR",
@@ -1486,11 +1491,17 @@
     elements.successService.textContent = serviceLabel;
     elements.successSchedule.textContent = scheduleLabel;
     elements.successAddress.textContent = addressLabel;
-    elements.successTotal.textContent = formatCurrency(calculatorData.totalPrice || 0);
-    elements.successNote.textContent =
-      "You can pay now or after your cleaning is complete.";
+    elements.successTotal.textContent = NO_PRICE_MODE ? "Final quote after call" : formatCurrency(calculatorData.totalPrice || 0);
+    const successTotalLabel = elements.successTotal.previousElementSibling;
+    if (successTotalLabel) {
+      successTotalLabel.textContent = NO_PRICE_MODE ? "Quote" : "Estimate";
+    }
+    elements.successNote.textContent = NO_PRICE_MODE
+      ? "We will review the details and confirm your quote before scheduling."
+      : "You can pay now or after your cleaning is complete.";
 
     elements.payNowButton.disabled = !state.latestCheckoutData.quoteToken;
+    elements.payNowButton.hidden = Boolean(NO_PRICE_MODE);
     elements.googleCalendarButton.href = buildGoogleCalendarUrl(calculatorData, serviceLabel);
     elements.appleCalendarButton.href = buildAppleCalendarBlobUrl(calculatorData, serviceLabel);
   }
@@ -1604,33 +1615,23 @@
     elements.continueToNotes.addEventListener("click", openNotesStep);
   }
 
-  function initNoCalculatorMode() {
-    if (!NO_CALCULATOR_MODE) return;
+  function initNoPriceMode() {
+    if (!NO_PRICE_MODE) return;
 
-    if (elements.calculateOnlineButton) {
-      elements.calculateOnlineButton.hidden = true;
-      elements.calculateOnlineButton.disabled = true;
-      elements.calculateOnlineButton.setAttribute("aria-hidden", "true");
-    }
     if (elements.stickyEstimate) {
       elements.stickyEstimate.hidden = true;
     }
 
     const contactNote = document.querySelector('[data-step-card="contact"] .quote2-field-note');
     if (contactNote) {
-      contactNote.textContent = "Enter your full name and phone number, and we will call you with a free quote.";
-    }
-
-    const intentTitle = document.querySelector('[data-step-card="intent"] .quote2-section-title');
-    if (intentTitle) {
-      intentTitle.textContent = "Ready for a quick call?";
+      contactNote.textContent = "Enter your full name and phone number, then continue or ask us to call you.";
     }
   }
 
   function init() {
     if (!elements.form) return;
 
-    initNoCalculatorMode();
+    initNoPriceMode();
     initDateInput();
     initServiceButtons();
     initTimeSlots();

@@ -267,8 +267,9 @@ const ORDER_FREQUENCY_VALUES = new Set(["weekly", "biweekly", "monthly"]);
 const ORDER_ASSIGNMENT_VALUES = new Set(["all", "assigned", "unassigned"]);
 const QUOTE_PUBLIC_PATH = "/quote";
 const QUOTE_NO_CALCULATOR_PUBLIC_PATH = "/quote-no-calculator";
+const QUOTE_NO_PRICE_PUBLIC_PATH = "/quote-no-price";
 const QUOTE_V2_PUBLIC_PATH = "/quote2";
-const QUOTE_PUBLIC_PATHS = new Set([QUOTE_PUBLIC_PATH, QUOTE_NO_CALCULATOR_PUBLIC_PATH, QUOTE_V2_PUBLIC_PATH]);
+const QUOTE_PUBLIC_PATHS = new Set([QUOTE_PUBLIC_PATH, QUOTE_NO_CALCULATOR_PUBLIC_PATH, QUOTE_NO_PRICE_PUBLIC_PATH, QUOTE_V2_PUBLIC_PATH]);
 const REDIRECT_ROUTES = new Map([
   ["/home-simple", "/"],
   ["/действуй", "/quote"],
@@ -451,6 +452,7 @@ const NOINDEX_ROUTES = new Set([
   "/oauth/callback",
   "/quote",
   "/quote-no-calculator",
+  "/quote-no-price",
   "/quote2",
   ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
@@ -482,6 +484,7 @@ const BREADCRUMB_LABELS = new Map([
   ["/privacy-policy", "Privacy Policy"],
   ["/quote", "Quote"],
   ["/quote-no-calculator", "Quote"],
+  ["/quote-no-price", "Quote"],
   ["/quote2", "Quote"],
   ["/service-areas", "Service Areas"],
   ["/service-areas-v2", "Service Areas"],
@@ -627,6 +630,16 @@ const ROUTE_META_OVERRIDES = {
     ogDescription:
       "Request a callback for a flat-rate cleaning quote from Shynli Cleaning in Chicagoland.",
     canonical: `${SITE_ORIGIN}/quote-no-calculator`,
+    robots: "noindex,nofollow",
+  },
+  "/quote-no-price": {
+    title: "Get a Free Quote | Shynli Cleaning",
+    description:
+      "Request a cleaning quote from Shynli Cleaning in Chicagoland without showing an upfront online estimate.",
+    ogTitle: "Get a Free Quote | Shynli Cleaning",
+    ogDescription:
+      "Request a cleaning quote from Shynli Cleaning in Chicagoland without showing an upfront online estimate.",
+    canonical: `${SITE_ORIGIN}/quote-no-price`,
     robots: "noindex,nofollow",
   },
   ...Object.fromEntries(

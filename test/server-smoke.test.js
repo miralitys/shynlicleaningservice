@@ -344,18 +344,19 @@ test("serves the quote page through the static route layer", async () => {
   assert.match(body, /Answer a few questions to get a more accurate estimate\./);
 });
 
-test("serves the no-calculator quote variant for ads traffic", async () => {
-  const response = await fetch(`${BASE_URL}/quote-no-calculator`);
+test("serves the no-price quote variant for ads traffic", async () => {
+  const response = await fetch(`${BASE_URL}/quote-no-price`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(response.headers.get("x-robots-tag") || "", /noindex/i);
-  assert.match(body, /id="quote-no-calculator-runtime"/);
-  assert.match(body, /quoteNoCalculator: true/);
-  assert.match(body, /Enter your full name and phone number, and we will call you with a free quote\./);
-  assert.match(body, /Ready for a quick call\?/);
-  assert.match(body, /id="quote2CalculateOnlineButton"[^>]+hidden[^>]+disabled/);
+  assert.match(body, /id="quote-no-price-runtime"/);
+  assert.match(body, /quoteNoPrice: true/);
+  assert.match(body, /Enter your full name and phone number, then continue or ask us to call you\./);
+  assert.match(body, /Great — how would you like to continue\?/);
+  assert.match(body, /I want to calculate online/);
+  assert.doesNotMatch(body, /id="quote2CalculateOnlineButton"[^>]+hidden[^>]+disabled/);
 });
 
 test("serves the blog page without legacy feed asset hints", async () => {
@@ -683,7 +684,7 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   assert.match(body, /GET FREE QUOTE/);
   assert.doesNotMatch(body, /id="shynli-ads-countdown-runtime"/);
   assert.match(body, /Deep cleaning starts from \$195 for typical homes/);
-  assert.match(body, /final price based on size and condition &mdash; <a href="\/quote-no-calculator">get instant quote<\/a>/);
+  assert.match(body, /final price based on size and condition &mdash; <a href="\/quote-no-price">get instant quote<\/a>/);
   assert.match(body, /id="shynli-deep-cleaning-ads-layout-fix"/);
   assert.match(body, /id="deep-cleaning-addons-static"/);
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
@@ -740,7 +741,7 @@ test("serves ads v2 no-calculator variants as indexable routes", async () => {
   assert.match(pricingBody, /href="\/pricing-v2"/);
 });
 
-test("points ads page quote CTAs to the no-calculator form", async () => {
+test("points ads page quote CTAs to the no-price form", async () => {
   const routes = [
     "/ads",
     "/ads-v2",
@@ -757,7 +758,7 @@ test("points ads page quote CTAs to the no-calculator form", async () => {
     const body = await response.text();
 
     assert.equal(response.status, 200, route);
-    assert.match(body, /href="\/quote-no-calculator"/, route);
+    assert.match(body, /href="\/quote-no-price"/, route);
     assert.doesNotMatch(body, /href="\/quote"/, route);
   }
 });
