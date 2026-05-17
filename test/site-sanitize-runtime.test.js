@@ -578,6 +578,16 @@ test("adds local-service FAQ questions to the homepage FAQ grid", () => {
   assert.match(html, /Our cleaners bring professional cleaning supplies and products\./);
 });
 
+test("removes the duplicate offscreen homepage simple steps copy", () => {
+  const html = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const simpleStepsMatches =
+    html.match(/4 simple steps to a perfectly clean, cozy, and comfortable space/g) || [];
+
+  assert.equal(simpleStepsMatches.length, 1);
+  assert.doesNotMatch(html, /data-elem-id=['"]1767790203594000001['"]/);
+  assert.match(html, /data-elem-id=['"]1767788361435['"]/);
+});
+
 test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
   const html = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning");
 

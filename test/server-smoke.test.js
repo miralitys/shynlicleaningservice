@@ -187,6 +187,11 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /id="shynli-homepage-copy-fit-style"/);
   assert.match(body, /id="shynli-home-fast-quote-cta"/);
   assert.match(body, /href="\/quote">Fast free quote/);
+  assert.equal(
+    (body.match(/4 simple steps to a perfectly clean, cozy, and comfortable space/g) || []).length,
+    1
+  );
+  assert.doesNotMatch(body, /data-elem-id=['"]1767790203594000001['"]/);
   [
     /Do you offer house cleaning in Naperville and Aurora\?/,
     /Shynli Cleaning serves Naperville, Aurora, Sugar Grove, Plainfield, Bolingbrook, Lisle, Downers Grove, Wheaton, and nearby Chicago suburbs\./,
