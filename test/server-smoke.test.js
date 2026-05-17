@@ -474,6 +474,11 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
     /<meta property="og:title" content="Residential Cleaning in Sugar Grove, IL \| Home Cleaning Services" \/>/
   );
   assert.equal(h1Text.replace(/\s+,/g, ","), "Home Cleaning Services in Sugar Grove, IL");
+  assert.match(
+    body,
+    /Reliable regular, deep, and move-out cleaning for homes in Sugar Grove, IL\./
+  );
+  assert.doesNotMatch(body, /Reliable home cleaning for busy households in Sugar Grove/);
 });
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
