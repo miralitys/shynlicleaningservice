@@ -178,6 +178,7 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /data-shynli-form-kind="cleaner-application"/);
   assert.match(body, /id="shynli-cleaner-application-form-runtime"/);
   assert.match(body, /Shynli Cleaning/i);
+  assert.doesNotMatch(body, /For your safety and ours, we don't provide:/);
   assert.match(body, /House Cleaning Services in Naperville<br>&amp; Chicago Suburbs/);
   assert.match(
     body,

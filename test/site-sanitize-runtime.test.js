@@ -7,6 +7,8 @@ const path = require("node:path");
 
 const { createSiteSanitizer } = require("../lib/site/sanitize");
 
+const LEGACY_SAFETY_INTRO_PATTERN = /For your safety and ours, we don't provide:/;
+
 function normalizeRoute(rawPath) {
   let value = rawPath || "/";
   if (!value.startsWith("/")) value = `/${value}`;
@@ -436,6 +438,7 @@ test("replaces heavy zero runtimes across home-like routes", () => {
     assert.match(html, /href="#city"/, fixture.route);
     assert.match(html, /href="#clean"/, fixture.route);
     assert.match(html, /Shynli Cleaning/i, fixture.route);
+    assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
 });
 
@@ -537,7 +540,16 @@ test("replaces heavy zero runtimes across static marketing page pilots", () => {
     assert.match(html, /href="#city"/, fixture.route);
     assert.match(html, /href="#clean"/, fixture.route);
     assert.match(html, fixture.expected, fixture.route);
+    assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
+});
+
+test("strips the legacy safety intro copy from marketing pages", () => {
+  const source = `${readFixture("page108488156.html")}For your safety and ours, we don't provide:`;
+  const html = sanitizeHtml(source, "/");
+
+  assert.match(html, /Why <span[^>]*>Shynli Cleaning<\/span> Is Different/);
+  assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN);
 });
 
 test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
@@ -582,6 +594,7 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
     assert.match(html, /src="images\/[^"]+"/, fixture.route);
     assert.match(html, /href="#city"/, fixture.route);
     assert.match(html, /href="#clean"/, fixture.route);
+    assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
 });
 
