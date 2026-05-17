@@ -456,6 +456,26 @@ test("serves city landing pages with the shared menu shell runtime", async () =>
   assert.match(body, /href="#clean"/);
 });
 
+test("serves Sugar Grove with the residential cleaning title and stable H1", async () => {
+  const response = await fetch(`${BASE_URL}/sugargrove`);
+  const body = await response.text();
+  const h1Match = body.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  const h1Text = h1Match
+    ? h1Match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+    : "";
+
+  assert.equal(response.status, 200);
+  assert.match(
+    body,
+    /<title>Residential Cleaning in Sugar Grove, IL \| Home Cleaning Services<\/title>/
+  );
+  assert.match(
+    body,
+    /<meta property="og:title" content="Residential Cleaning in Sugar Grove, IL \| Home Cleaning Services" \/>/
+  );
+  assert.equal(h1Text.replace(/\s+,/g, ","), "Home Cleaning Services in Sugar Grove, IL");
+});
+
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
   const cityRoutes = [
     ["/addison", /Addison/i],

@@ -602,6 +602,10 @@ const ROUTE_META_OVERRIDES = {
     title: "Service Areas | Shynli Cleaning",
     canonical: `${SITE_ORIGIN}/service-areas-v2`,
   },
+  "/sugargrove": {
+    title: "Residential Cleaning in Sugar Grove, IL | Home Cleaning Services",
+    ogTitle: "Residential Cleaning in Sugar Grove, IL | Home Cleaning Services",
+  },
   "/quote": {
     title: "Get a Free Quote | Shynli Cleaning",
     description:
