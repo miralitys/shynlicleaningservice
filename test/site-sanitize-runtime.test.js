@@ -109,9 +109,17 @@ const CALLRAIL_SWAP_SCRIPT_PATTERN =
   /<script type="text\/javascript" src="\/\/cdn\.callrail\.com\/companies\/562095680\/7c306f50357be4c201eb\/12\/swap\.js"><\/script>/;
 const CALLRAIL_SWAP_SCRIPT_URL_PATTERN =
   /cdn\.callrail\.com\/companies\/562095680\/7c306f50357be4c201eb\/12\/swap\.js/g;
+const BENEFIT_HIDDEN_FEES_COPY_PATTERN =
+  /What you see is what you pay\.(?:\s*<br\s*\/?>\s*|\s+)No hidden fees\./g;
+const BENEFIT_STANDARDS_COPY_PATTERN =
+  /Same quality, same standards,(?:\s*<br\s*\/?>\s*|\s+)every single visit\./g;
 
 function readFixture(fileName) {
   return fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
+}
+
+function countMatches(html, pattern) {
+  return (String(html || "").match(pattern) || []).length;
 }
 
 function extractRuntimeScripts(html) {
@@ -586,6 +594,31 @@ test("removes the duplicate offscreen homepage simple steps copy", () => {
   assert.equal(simpleStepsMatches.length, 1);
   assert.doesNotMatch(html, /data-elem-id=['"]1767790203594000001['"]/);
   assert.match(html, /data-elem-id=['"]1767788361435['"]/);
+});
+
+test("removes duplicate copy from the shared benefits block", () => {
+  const sharedBenefitFixtures = [
+    { route: "/", file: "page108488156.html" },
+    { route: "/about-us", file: "page109184776.html" },
+    { route: "/home-calculator", file: "page110230356.html" },
+    { route: "/services/regular-cleaning", file: "page109653016.html" },
+    { route: "/services/deep-cleaning", file: "page109721366.html" },
+    { route: "/services/move-in-move-out-cleaning", file: "page109993436.html" },
+    { route: "/services/airbnb-cleaning", file: "page110326416.html" },
+    { route: "/services/commercial-cleaning", file: "page110512356.html" },
+  ];
+
+  for (const fixture of sharedBenefitFixtures) {
+    const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+
+    assert.equal(countMatches(html, BENEFIT_HIDDEN_FEES_COPY_PATTERN), 1, fixture.route);
+    assert.equal(countMatches(html, BENEFIT_STANDARDS_COPY_PATTERN), 1, fixture.route);
+    assert.doesNotMatch(html, /data-elem-id=['"]1767791730605['"]/, fixture.route);
+    assert.doesNotMatch(html, /data-elem-id=['"]1767881559686000001['"]/, fixture.route);
+    assert.match(html, /data-elem-id=['"]1767800990870000002['"]/, fixture.route);
+    assert.match(html, /data-elem-id=['"]1767881579154000002['"]/, fixture.route);
+    assert.match(html, /id="shynli-benefit-copy-single-instance-style"/, fixture.route);
+  }
 });
 
 test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
