@@ -184,6 +184,21 @@ test("serves the home page through the custom route layer", async () => {
     /Reliable regular, deep, and move-out cleaning for busy families<br>in Naperville, Aurora, Sugar Grove, and nearby areas\./
   );
   assert.match(body, /id="shynli-homepage-copy-fit-style"/);
+  assert.match(body, /id="shynli-home-service-area-summary"/);
+  assert.match(body, /Shynli Cleaning serves homes across/);
+  [
+    ["href=\"/naperville\"", /Naperville/],
+    ["href=\"/aurora\"", /Aurora/],
+    ["href=\"/sugargrove\"", /Sugar Grove/],
+    ["href=\"/plainfield\"", /Plainfield/],
+    ["href=\"/bolingbrook\"", /Bolingbrook/],
+    ["href=\"/lisle\"", /Lisle/],
+    ["href=\"/downersgrove\"", /Downers Grove/],
+    ["href=\"/wheaton\"", /Wheaton/],
+  ].forEach(([href, label]) => {
+    assert.match(body, new RegExp(href));
+    assert.match(body, label);
+  });
 });
 
 test("serves the homepage ads duplicate as an indexable sitemap route", async () => {
