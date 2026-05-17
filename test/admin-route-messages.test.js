@@ -10,6 +10,48 @@ const {
   createAdminSession,
 } = require("./admin-route-helpers");
 
+async function submitQuote(baseUrl, options) {
+  return fetch(`${baseUrl}/api/quote/submit`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-request-id": options.requestId,
+    },
+    body: JSON.stringify({
+      contact: {
+        fullName: options.fullName,
+        phone: options.phone,
+        email: options.email,
+      },
+      quote: {
+        serviceType: options.serviceType || "regular",
+        rooms: 3,
+        bathrooms: 2,
+        squareMeters: 1200,
+        frequency: "",
+        selectedDate: "2026-05-22",
+        selectedTime: "10:00",
+        fullAddress: options.fullAddress,
+        consent: true,
+      },
+    }),
+  });
+}
+
+async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
+  const quoteOpsResponse = await fetch(`${baseUrl}/admin/quote-ops?q=${encodeURIComponent(query)}`, {
+    headers: {
+      cookie: `shynli_admin_session=${sessionCookieValue}`,
+    },
+  });
+  const quoteOpsBody = await quoteOpsResponse.text();
+  assert.equal(quoteOpsResponse.status, 200);
+
+  const entryIdMatch = quoteOpsBody.match(/name="entryId" value="([^"]+)"/);
+  assert.ok(entryIdMatch, `Expected quote ops entry for ${query}`);
+  return entryIdMatch[1];
+}
+
 test("renders messages as dialog rows with unread counts", async () => {
   const fetchStub = createFetchStub([
     {
@@ -379,6 +421,128 @@ test("marks a message as read via ajax when requested from the messages route", 
     assert.doesNotMatch(messagesBody, />0 новых</);
   } finally {
     await stopServer(started.child);
+  }
+});
+
+test("persists read state for quote lead messages after page refresh", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-messages-lead-read",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        conversationId: "conversation-messages-lead-read-auto",
+        messageId: "message-messages-lead-read-auto",
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "lead-read-request-1",
+      fullName: "Lead Read Customer",
+      phone: "424-419-9102",
+      email: "lead.read@example.com",
+      fullAddress: "904 Follow Up Drive, Bolingbrook, IL 60440",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const entryId = await getQuoteOpsEntryId(started.baseUrl, sessionCookieValue, "Lead Read Customer");
+
+    const webhookResponse = await fetch(`${started.baseUrl}/api/ghl/inbound-sms`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType: "InboundMessage",
+        messageType: "SMS",
+        direction: "inbound",
+        from: "+1 (424) 419-9102",
+        body: "Lead unread message to mark as read.",
+        dateAdded: "2026-05-03T15:15:00.000Z",
+        conversationId: "conversation-messages-lead-read",
+        messageId: "message-messages-lead-read",
+        contactId: "contact-messages-lead-read",
+        locationId: "location-123",
+      }),
+    });
+    assert.equal(webhookResponse.status, 200);
+    const webhookPayload = await webhookResponse.json();
+    assert.equal(webhookPayload.matched, true);
+    assert.equal(webhookPayload.targetId, entryId);
+
+    const unreadMessagesResponse = await fetch(`${started.baseUrl}/admin/messages`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const unreadMessagesBody = await unreadMessagesResponse.text();
+    assert.equal(unreadMessagesResponse.status, 200);
+    assert.match(unreadMessagesBody, new RegExp(`data-admin-message-entry-id="${entryId}"[^>]*data-admin-message-status="new"`));
+    assert.match(unreadMessagesBody, /data-admin-message-summary-unread="true">1</);
+
+    const markReadResponse = await fetch(`${started.baseUrl}/admin/messages`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "mark-message-read",
+        entryId,
+        messageKey: `${entryId}:message:message-messages-lead-read`,
+        messageRefs: JSON.stringify([
+          {
+            entryId,
+            messageKey: `${entryId}:message:message-messages-lead-read`,
+          },
+        ]),
+      }),
+    });
+    assert.equal(markReadResponse.status, 200);
+    const payload = await markReadResponse.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.changed, true);
+    assert.equal(payload.changedCount, 1);
+
+    const refreshedMessagesResponse = await fetch(`${started.baseUrl}/admin/messages`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const refreshedMessagesBody = await refreshedMessagesResponse.text();
+    assert.equal(refreshedMessagesResponse.status, 200);
+    assert.doesNotMatch(refreshedMessagesBody, new RegExp(`data-admin-message-entry-id="${entryId}"[^>]*data-admin-message-status="new"`));
+    assert.match(refreshedMessagesBody, new RegExp(`data-admin-message-entry-id="${entryId}"[^>]*data-admin-message-status="read"`));
+    assert.match(refreshedMessagesBody, /data-admin-message-summary-unread="true">0</);
+    assert.doesNotMatch(refreshedMessagesBody, /data-admin-nav-unread-message-count="[1-9]/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
   }
 });
 
