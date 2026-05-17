@@ -178,8 +178,12 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /data-shynli-form-kind="cleaner-application"/);
   assert.match(body, /id="shynli-cleaner-application-form-runtime"/);
   assert.match(body, /Shynli Cleaning/i);
-  assert.match(body, /On Time\. Insured\. No Surprises\./);
-  assert.match(body, /Trusted by 300\+ local families\. Flat pricing\. Safe products\./);
+  assert.match(body, /House Cleaning Services in Naperville &amp; Chicago Suburbs/);
+  assert.match(
+    body,
+    /Reliable regular, deep, and move-out cleaning for busy families in Naperville, Aurora, Sugar Grove, and nearby areas\./
+  );
+  assert.match(body, /id="shynli-homepage-copy-fit-style"/);
 });
 
 test("serves the homepage ads duplicate as an indexable sitemap route", async () => {
@@ -220,8 +224,11 @@ test("serves the homepage ads duplicate as an indexable sitemap route", async ()
   assert.match(body, /POPUP_DELAY_MS = 5000/);
   assert.match(body, /"requestType":"call_me"|requestType: "call_me"/);
   assert.match(body, /\/api\/quote\/submit/);
-  assert.doesNotMatch(body, /On Time\. Insured\. No Surprises\./);
-  assert.doesNotMatch(body, /Trusted by 300\+ local families\. Flat pricing\. Safe products\./);
+  assert.doesNotMatch(body, /House Cleaning Services in Naperville &amp; Chicago Suburbs/);
+  assert.doesNotMatch(
+    body,
+    /Reliable regular, deep, and move-out cleaning for busy families in Naperville, Aurora, Sugar Grove, and nearby areas\./
+  );
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
