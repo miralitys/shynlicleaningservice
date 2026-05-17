@@ -381,3 +381,159 @@ test("marks a message as read via ajax when requested from the messages route", 
     await stopServer(started.child);
   }
 });
+
+test("refreshes dialog rows from GHL and shows the latest SMS on the messages page", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [],
+      },
+    },
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-messages-remote-latest",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "/conversations/messages",
+      status: 200,
+      body: {
+        message: {
+          id: "message-messages-remote-outbound",
+          conversationId: "conversation-messages-remote-latest",
+        },
+      },
+    },
+    {
+      method: "GET",
+      match: "/conversations/search",
+      status: 200,
+      body: {
+        conversations: {
+          conversations: [
+            {
+              id: "conversation-messages-remote-latest",
+            },
+          ],
+        },
+      },
+    },
+    {
+      method: "GET",
+      match: "/conversations/conversation-messages-remote-latest/messages",
+      status: 200,
+      body: {
+        messages: {
+          messages: [
+            {
+              id: "message-messages-remote-outbound",
+              type: "TYPE_SMS",
+              direction: "outbound",
+              body: "Original outbound SMS from admin.",
+              dateAdded: "2026-05-03T15:00:00.000Z",
+              conversationId: "conversation-messages-remote-latest",
+              to: { phone: "+14244199102" },
+            },
+            {
+              id: "message-messages-remote-inbound",
+              type: "TYPE_SMS",
+              direction: "inbound",
+              body: "Latest remote reply on messages page.",
+              dateAdded: "2026-05-03T15:12:00.000Z",
+              conversationId: "conversation-messages-remote-latest",
+              from: { phone: "+14244199102" },
+            },
+          ],
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Remote Latest Customer",
+        customerPhone: "4244199102",
+        customerEmail: "",
+        serviceType: "regular",
+        selectedDate: "2026-05-11",
+        selectedTime: "10:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "0",
+        totalPrice: "155.00",
+        fullAddress: "901 Follow Up Drive, Bolingbrook, IL 60440",
+      }),
+    });
+    assert.equal(createOrderResponse.status, 303);
+    const entryId = new URL(createOrderResponse.headers.get("location") || "", started.baseUrl).searchParams.get("order");
+    assert.ok(entryId);
+
+    const smsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-order-sms",
+        entryId,
+        message: "Original outbound SMS from admin.",
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+      }),
+    });
+    assert.equal(smsResponse.status, 200);
+
+    const messagesResponse = await fetch(`${started.baseUrl}/admin/messages`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const messagesBody = await messagesResponse.text();
+    assert.equal(messagesResponse.status, 200);
+    assert.match(
+      messagesBody,
+      /data-admin-message-dialog-key="contact:contact-messages-remote-latest"[\s\S]*Latest remote reply on messages page\./
+    );
+    const olderMessageIndex = messagesBody.indexOf("Original outbound SMS from admin.");
+    const newerMessageIndex = messagesBody.lastIndexOf("Latest remote reply on messages page.");
+    assert.ok(olderMessageIndex >= 0);
+    assert.ok(newerMessageIndex >= 0);
+    assert.ok(olderMessageIndex < newerMessageIndex);
+    assert.match(messagesBody, /data-admin-message-unread-count="1"/);
+    assert.match(messagesBody, /data-admin-message-summary-unread="true">1</);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
