@@ -133,6 +133,14 @@ test("serves the home page through the custom route layer", async () => {
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(
+    body,
+    /<title>House Cleaning Services in Naperville & Chicago Suburbs \| Shynli Cleaning<\/title>/
+  );
+  assert.match(
+    body,
+    /<meta name="description" content="Professional house cleaning in Naperville, Aurora, Sugar Grove, and nearby Chicago suburbs\. Regular, deep, and move-out cleaning with fast free quotes\." \/>/
+  );
   assert.equal(response.headers.get("x-frame-options"), "DENY");
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
@@ -228,7 +236,7 @@ test("serves the homepage ads duplicate as an indexable sitemap route", async ()
 test("serves home-like routes without zero/lazyload runtimes", async () => {
   const homeLikeRoutes = [
     ["/home-calculator", /Instant House Cleaning Cost Calculator/i],
-    ["/home-simple", /House Cleaning Services in Chicago Suburbs/i],
+    ["/home-simple", /House Cleaning Services in Naperville & Chicago Suburbs/i],
   ];
 
   for (const [route, expectedTitle] of homeLikeRoutes) {

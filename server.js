@@ -493,13 +493,17 @@ const BREADCRUMB_LABELS = new Map([
 ]);
 const ROUTE_META_OVERRIDES = {
   "/": {
-    title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
-    ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    title: "House Cleaning Services in Naperville & Chicago Suburbs | Shynli Cleaning",
+    description:
+      "Professional house cleaning in Naperville, Aurora, Sugar Grove, and nearby Chicago suburbs. Regular, deep, and move-out cleaning with fast free quotes.",
+    ogTitle: "House Cleaning Services in Naperville & Chicago Suburbs | Shynli Cleaning",
     ogDescription:
-      "Trusted local house cleaning in Chicago suburbs with upfront pricing, flexible scheduling, and insured cleaners.",
+      "Professional house cleaning in Naperville, Aurora, Sugar Grove, and nearby Chicago suburbs. Regular, deep, and move-out cleaning with fast free quotes.",
   },
   "/ads": {
     title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    description:
+      "Looking for reliable home cleaning in the Chicago area? Fully insured local cleaners, flexible scheduling, and upfront pricing. Request a free quote today.",
     canonical: `${SITE_ORIGIN}/ads`,
     ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
     ogDescription:
@@ -507,6 +511,8 @@ const ROUTE_META_OVERRIDES = {
   },
   "/ads-v2": {
     title: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
+    description:
+      "Looking for reliable home cleaning in the Chicago area? Fully insured local cleaners, flexible scheduling, and upfront pricing. Request a free quote today.",
     canonical: `${SITE_ORIGIN}/ads-v2`,
     ogTitle: "House Cleaning Services in Chicago Suburbs | Shynli Cleaning",
     ogDescription:
