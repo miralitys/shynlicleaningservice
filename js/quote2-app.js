@@ -7,6 +7,10 @@
   const RUNTIME_CONFIG = window.__shynliRuntimeConfig || {};
   const GOOGLE_PLACES_API_KEY =
     RUNTIME_CONFIG.googlePlacesApiKey || "";
+  const NO_CALCULATOR_MODE =
+    Boolean(RUNTIME_CONFIG.quoteNoCalculator) ||
+    window.location.pathname.replace(/\/+$/, "") === "/quote-no-calculator";
+  const CALLBACK_CONVERSION_VALUE = 50;
   const SERVICE_AREA_ZIP_CODES = new Set(
     Array.isArray(RUNTIME_CONFIG.serviceAreaZipCodes)
       ? RUNTIME_CONFIG.serviceAreaZipCodes
@@ -771,6 +775,11 @@
     elements.continueToNotes.disabled = !isAddressStepComplete();
   }
 
+  function getFormHiddenValue(name) {
+    const field = document.querySelector(`input[name="${name}"]`);
+    return field ? String(field.value || "") : "";
+  }
+
   function scrollToCard(card) {
     if (!card) return;
     card.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1145,6 +1154,21 @@
     };
   }
 
+  function trackCallbackLeadSubmission() {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "lead_quote_submit",
+      form_id: "quote2Form",
+      form_name: "quote2Form",
+      form_type: "callback",
+      form_location: window.location.pathname,
+      page_version: getFormHiddenValue("page_version"),
+      gclid: getFormHiddenValue("gclid"),
+      value: CALLBACK_CONVERSION_VALUE,
+      currency: "USD",
+    });
+  }
+
   function setChoiceButtonsDisabled(disabled) {
     [elements.callMeButton, elements.calculateOnlineButton].forEach(function (button) {
       if (!button) return;
@@ -1169,6 +1193,7 @@
     try {
       const payload = buildCallMePayload();
       await submitQuoteToBackend(payload);
+      trackCallbackLeadSubmission();
       if (elements.callbackSuccessCard) {
         elements.callbackSuccessCard.hidden = false;
       }
@@ -1192,6 +1217,9 @@
   }
 
   function openOnlineCalculator() {
+    if (NO_CALCULATOR_MODE) {
+      return;
+    }
     if (!isContactStepComplete()) {
       setNotice("Please enter your name and a valid US phone number first.", "warning");
       return;
@@ -1576,9 +1604,33 @@
     elements.continueToNotes.addEventListener("click", openNotesStep);
   }
 
+  function initNoCalculatorMode() {
+    if (!NO_CALCULATOR_MODE) return;
+
+    if (elements.calculateOnlineButton) {
+      elements.calculateOnlineButton.hidden = true;
+      elements.calculateOnlineButton.disabled = true;
+      elements.calculateOnlineButton.setAttribute("aria-hidden", "true");
+    }
+    if (elements.stickyEstimate) {
+      elements.stickyEstimate.hidden = true;
+    }
+
+    const contactNote = document.querySelector('[data-step-card="contact"] .quote2-field-note');
+    if (contactNote) {
+      contactNote.textContent = "Enter your full name and phone number, and we will call you with a free quote.";
+    }
+
+    const intentTitle = document.querySelector('[data-step-card="intent"] .quote2-section-title');
+    if (intentTitle) {
+      intentTitle.textContent = "Ready for a quick call?";
+    }
+  }
+
   function init() {
     if (!elements.form) return;
 
+    initNoCalculatorMode();
     initDateInput();
     initServiceButtons();
     initTimeSlots();

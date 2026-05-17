@@ -250,6 +250,17 @@ test("injects page version and gclid attribution runtime on public forms", () =>
   }
 });
 
+test("tracks the short quote callback form as a lead conversion", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "js", "quote2-app.js"), "utf8");
+
+  assert.match(source, /function trackCallbackLeadSubmission/);
+  assert.match(source, /event: "lead_quote_submit"/);
+  assert.match(source, /form_id: "quote2Form"/);
+  assert.match(source, /form_type: "callback"/);
+  assert.match(source, /value: CALLBACK_CONVERSION_VALUE/);
+  assert.match(source, /trackCallbackLeadSubmission\(\);/);
+});
+
 test("builds no-calculator v2 pages with static anchor pricing", () => {
   const pricingHtml = sanitizeHtml(readFixture("page110278596.html"), "/pricing-v2");
   const regularAdsHtml = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning/ads-v2");

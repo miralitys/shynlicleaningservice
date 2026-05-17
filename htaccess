@@ -168,6 +168,8 @@ RewriteRule ^woodridge/$ page111641796.html [NC]
 
 RewriteRule ^quote$ quote2.html [NC]
 RewriteRule ^quote/$ quote2.html [NC]
+RewriteRule ^quote-no-calculator$ quote2.html [NC]
+RewriteRule ^quote-no-calculator/$ quote2.html [NC]
 
 RewriteRule ^services/post-construction-cleaning$ page113041806.html [NC]
 RewriteRule ^services/post-construction-cleaning/$ page113041806.html [NC]

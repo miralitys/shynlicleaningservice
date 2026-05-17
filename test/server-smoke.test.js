@@ -344,6 +344,20 @@ test("serves the quote page through the static route layer", async () => {
   assert.match(body, /Answer a few questions to get a more accurate estimate\./);
 });
 
+test("serves the no-calculator quote variant for ads traffic", async () => {
+  const response = await fetch(`${BASE_URL}/quote-no-calculator`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.match(response.headers.get("x-robots-tag") || "", /noindex/i);
+  assert.match(body, /id="quote-no-calculator-runtime"/);
+  assert.match(body, /quoteNoCalculator: true/);
+  assert.match(body, /Enter your full name and phone number, and we will call you with a free quote\./);
+  assert.match(body, /Ready for a quick call\?/);
+  assert.match(body, /id="quote2CalculateOnlineButton"[^>]+hidden[^>]+disabled/);
+});
+
 test("serves the blog page without legacy feed asset hints", async () => {
   const response = await fetch(`${BASE_URL}/blog`);
   const body = await response.text();
@@ -669,7 +683,7 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   assert.match(body, /GET FREE QUOTE/);
   assert.doesNotMatch(body, /id="shynli-ads-countdown-runtime"/);
   assert.match(body, /Deep cleaning starts from \$195 for typical homes/);
-  assert.match(body, /final price based on size and condition &mdash; <a href="\/quote">get instant quote<\/a>/);
+  assert.match(body, /final price based on size and condition &mdash; <a href="\/quote-no-calculator">get instant quote<\/a>/);
   assert.match(body, /id="shynli-deep-cleaning-ads-layout-fix"/);
   assert.match(body, /id="deep-cleaning-addons-static"/);
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
@@ -724,6 +738,28 @@ test("serves ads v2 no-calculator variants as indexable routes", async () => {
   const pricingBody = await pricingResponse.text();
   assert.match(pricingBody, /Prefer a quick quote instead\? Get a free quote/);
   assert.match(pricingBody, /href="\/pricing-v2"/);
+});
+
+test("points ads page quote CTAs to the no-calculator form", async () => {
+  const routes = [
+    "/ads",
+    "/ads-v2",
+    "/services/regular-cleaning/ads",
+    "/services/regular-cleaning/ads-v2",
+    "/services/deep-cleaning/ads",
+    "/services/deep-cleaning/ads-v2",
+    "/services/move-in-move-out-cleaning/ads",
+    "/services/move-in-move-out-cleaning/ads-v2",
+  ];
+
+  for (const route of routes) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
+
+    assert.equal(response.status, 200, route);
+    assert.match(body, /href="\/quote-no-calculator"/, route);
+    assert.doesNotMatch(body, /href="\/quote"/, route);
+  }
 });
 
 test("serves all service page pilots without zero/lazyload runtimes", async () => {
