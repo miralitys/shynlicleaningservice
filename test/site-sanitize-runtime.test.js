@@ -607,20 +607,108 @@ test("removes the duplicate offscreen homepage simple steps copy", () => {
   assert.match(html, /data-elem-id=['"]1767788361435['"]/);
 });
 
-test("removes duplicate offscreen city pricing copy", () => {
+test("keeps city-specific copy aligned on every city page", () => {
   const fixtures = [
-    { route: "/sugargrove", file: "page123500102.html", city: "Sugar Grove" },
+    { route: "/addison", file: "page110524796.html", city: "Addison" },
     { route: "/aurora", file: "page110920356.html", city: "Aurora" },
+    { route: "/bartlett", file: "page111297646.html", city: "Bartlett" },
+    { route: "/batavia", file: "page111301556.html", city: "Batavia" },
+    { route: "/bolingbrook", file: "page111302756.html", city: "Bolingbrook" },
+    { route: "/bristol", file: "page123500104.html", city: "Bristol" },
+    { route: "/burrridge", file: "page111303116.html", city: "Burr Ridge" },
+    { route: "/carolstream", file: "page111303466.html", city: "Carol Stream" },
+    { route: "/clarendonhills", file: "page111303756.html", city: "Clarendon Hills" },
+    { route: "/darien", file: "page111304216.html", city: "Darien" },
+    { route: "/downersgrove", file: "page111304546.html", city: "Downers Grove" },
+    { route: "/elmhurst", file: "page111639506.html", city: "Elmhurst" },
+    { route: "/geneva", file: "page111639596.html", city: "Geneva" },
+    { route: "/glenellyn", file: "page111639666.html", city: "Glen Ellyn" },
+    { route: "/hinsdale", file: "page111639736.html", city: "Hinsdale" },
+    { route: "/homerglen", file: "page111640086.html", city: "Homer Glen" },
+    { route: "/itasca", file: "page111640026.html", city: "Itasca" },
+    { route: "/lemont", file: "page111640146.html", city: "Lemont" },
+    { route: "/lisle", file: "page111640226.html", city: "Lisle" },
+    { route: "/lockport", file: "page111640286.html", city: "Lockport" },
+    { route: "/lombard", file: "page111942956.html", city: "Lombard" },
+    { route: "/montgomery", file: "page111640476.html", city: "Montgomery" },
+    { route: "/naperville", file: "page111640686.html", city: "Naperville" },
     { route: "/northaurora", file: "page123500101.html", city: "North Aurora" },
+    { route: "/oakbrook", file: "page111640746.html", city: "Oak Brook" },
+    { route: "/oswego", file: "page111640796.html", city: "Oswego" },
+    { route: "/plainfield", file: "page111640836.html", city: "Plainfield" },
+    { route: "/romeoville", file: "page111640886.html", city: "Romeoville" },
+    { route: "/stcharles", file: "page111640956.html", city: "St. Charles" },
+    { route: "/streamwood", file: "page111641016.html", city: "Streamwood" },
+    { route: "/sugargrove", file: "page123500102.html", city: "Sugar Grove" },
+    { route: "/villapark", file: "page111641126.html", city: "Villa Park" },
+    { route: "/warrenville", file: "page111641216.html", city: "Warrenville" },
+    { route: "/wayne", file: "page111641256.html", city: "Wayne" },
+    { route: "/westchicago", file: "page111641356.html", city: "West Chicago" },
+    { route: "/westmont", file: "page111641416.html", city: "Westmont" },
+    { route: "/wheaton", file: "page111641466.html", city: "Wheaton" },
+    { route: "/willowbrook", file: "page111641546.html", city: "Willowbrook" },
+    { route: "/winfield", file: "page111641576.html", city: "Winfield" },
+    { route: "/wooddale", file: "page111641666.html", city: "Wood Dale" },
+    { route: "/woodridge", file: "page111641796.html", city: "Woodridge" },
+    { route: "/yorkville", file: "page123500103.html", city: "Yorkville" },
   ];
+  const toText = (html) =>
+    String(html || "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;|&#160;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .trim();
+  const captureAll = (text, pattern) =>
+    [...text.matchAll(pattern)].map((match) => match[1].trim().replace(/\s+/g, " "));
+  const assertOnlyCity = (values, city, label, route) => {
+    assert.ok(values.length >= 1, `${route} should include ${label}`);
+    assert.equal(new Set(values).size, 1, `${route} should not mix cities in ${label}`);
+    assert.equal(values[0], city, `${route} ${label}`);
+  };
 
   for (const fixture of fixtures) {
     const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
-    const pricingMatches = [
-      ...html.matchAll(/Pricing for home cleaning in\s*(?:<strong>)?([^<]+)(?:<\/strong>)?\s*depends on:/g),
-    ].map((match) => match[1].trim());
+    const text = toText(html);
 
-    assert.deepEqual(pricingMatches, [fixture.city], fixture.route);
+    assertOnlyCity(
+      captureAll(text, /Home Cleaning Services in\s+([^,]+?)\s*,\s*IL/g),
+      fixture.city,
+      "hero heading",
+      fixture.route
+    );
+    assertOnlyCity(
+      captureAll(text, /Pricing for home cleaning in\s*(?:<strong>)?([^<:]+)(?:<\/strong>)?\s*depends on:/g),
+      fixture.city,
+      "pricing intro",
+      fixture.route
+    );
+    assertOnlyCity(
+      captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Find your area by ZIP code/g),
+      fixture.city,
+      "nearby areas heading",
+      fixture.route
+    );
+    assertOnlyCity(
+      [
+        ...captureAll(text, /We serve select areas in and around\s+([A-Za-z.\s]+?)\s+to ensure/g),
+        ...captureAll(text, /We serve\s+([A-Za-z.\s]+?)\s+and nearby/g),
+      ],
+      fixture.city,
+      "service-area sentence",
+      fixture.route
+    );
+    assertOnlyCity(
+      [
+        ...captureAll(text, /Get a Free Quote for Home Cleaning in\s+([A-Za-z.\s]+?)(?:\s+Get Your Home|\s+\+1\(630\)|\s+Ready to get started\?)/g),
+        ...captureAll(text, /Get a\s+([A-Za-z.\s]+?)\s+Cleaning Quote/g),
+      ],
+      fixture.city,
+      "quote heading",
+      fixture.route
+    );
     assert.doesNotMatch(html, /data-elem-id=['"]1767790203594000001['"]/, fixture.route);
   }
 });
