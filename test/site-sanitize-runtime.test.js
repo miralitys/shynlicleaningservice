@@ -621,6 +621,34 @@ test("removes duplicate copy from the shared benefits block", () => {
   }
 });
 
+test("rebuilds the homepage review block with unique current reviews", () => {
+  const html = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const sectionMatch = html.match(/<div id="rec1892001001"[\s\S]*?(?=<div id="rec1766779523")/);
+
+  assert.ok(sectionMatch, "homepage review section should be present");
+
+  const section = sectionMatch[0];
+  const names = [...section.matchAll(/clients-say-home__name">([^<]+)</g)].map((match) => match[1]);
+
+  assert.equal(names.length, 24);
+  assert.equal(new Set(names).size, names.length);
+  [
+    "Suganya Swamy",
+    "D B",
+    "Mobile Legends Jek",
+    "Yevgeniy Magomedov",
+    "Aleksei Krenitsyn",
+    "Max Krasavin",
+    "Vlad B",
+    "Anur",
+    "Igor Bych",
+    "Lina Gonzales",
+  ].forEach((name) => assert.ok(names.includes(name), name));
+  assert.doesNotMatch(section, /clients-say-home__group--ghost/);
+  assert.doesNotMatch(section, /aria-hidden="true"><article class="clients-say-home__card"/);
+  assert.doesNotMatch(section, /initClientsSayMarquee/);
+});
+
 test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
   const html = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning");
 

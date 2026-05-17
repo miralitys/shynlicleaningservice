@@ -205,6 +205,12 @@ test("serves the home page through the custom route layer", async () => {
   assert.doesNotMatch(body, /data-elem-id=['"]1767791730605['"]/);
   assert.doesNotMatch(body, /data-elem-id=['"]1767881559686000001['"]/);
   assert.match(body, /id="shynli-benefit-copy-single-instance-style"/);
+  assert.match(body, /Suganya Swamy/);
+  assert.match(body, /Mobile Legends Jek/);
+  assert.match(body, /Yevgeniy Magomedov/);
+  assert.match(body, /Lina Gonzales/);
+  assert.doesNotMatch(body, /clients-say-home__group--ghost/);
+  assert.doesNotMatch(body, /initClientsSayMarquee/);
   [
     /Do you offer house cleaning in Naperville and Aurora\?/,
     /Shynli Cleaning serves Naperville, Aurora, Sugar Grove, Plainfield, Bolingbrook, Lisle, Downers Grove, Wheaton, and nearby Chicago suburbs\./,
