@@ -467,6 +467,10 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
     /<section id="sugargrove-residential-services"[\s\S]*?<\/section>/
   );
   const focusedServices = focusedServicesMatch ? focusedServicesMatch[0] : "";
+  const recurringCleaningMatch = body.match(
+    /<section id="sugargrove-recurring-cleaning"[\s\S]*?<\/section>/
+  );
+  const recurringCleaning = recurringCleaningMatch ? recurringCleaningMatch[0] : "";
 
   assert.equal(response.status, 200);
   assert.match(
@@ -494,6 +498,14 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
     /Also available when needed:[\s\S]*Airbnb Cleaning[\s\S]*Post-Construction Cleaning[\s\S]*Commercial Cleaning/
   );
   assert.doesNotMatch(focusedServices, /Deep Cleaning for Homes That Need Extra Care/);
+  assert.ok(recurringCleaning, "Sugar Grove should use the local recurring cleaning section");
+  assert.match(recurringCleaning, /Why Choose[\s\S]*Recurring Cleaning in Sugar Grove\?/);
+  assert.match(recurringCleaning, /Most of our Sugar Grove clients choose bi-weekly cleaning\./);
+  assert.match(
+    recurringCleaning,
+    /For many Sugar Grove families, bi-weekly cleaning is the best balance between a consistently clean home and affordable recurring service\./
+  );
+  assert.doesNotMatch(body, /Choose the cleaning schedule that fits your home and routine:/);
 });
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
