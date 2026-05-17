@@ -607,6 +607,24 @@ test("removes the duplicate offscreen homepage simple steps copy", () => {
   assert.match(html, /data-elem-id=['"]1767788361435['"]/);
 });
 
+test("removes duplicate offscreen city pricing copy", () => {
+  const fixtures = [
+    { route: "/sugargrove", file: "page123500102.html", city: "Sugar Grove" },
+    { route: "/aurora", file: "page110920356.html", city: "Aurora" },
+    { route: "/northaurora", file: "page123500101.html", city: "North Aurora" },
+  ];
+
+  for (const fixture of fixtures) {
+    const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+    const pricingMatches = [
+      ...html.matchAll(/Pricing for home cleaning in\s*(?:<strong>)?([^<]+)(?:<\/strong>)?\s*depends on:/g),
+    ].map((match) => match[1].trim());
+
+    assert.deepEqual(pricingMatches, [fixture.city], fixture.route);
+    assert.doesNotMatch(html, /data-elem-id=['"]1767790203594000001['"]/, fixture.route);
+  }
+});
+
 test("removes duplicate copy from the shared benefits block", () => {
   const sharedBenefitFixtures = [
     { route: "/", file: "page108488156.html" },
