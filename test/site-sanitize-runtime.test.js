@@ -564,6 +564,20 @@ test("adds the homepage fast quote CTA before the service areas map", () => {
   assert.match(html, /class="shynli-home-fast-quote-cta__button" href="\/quote">Fast free quote/);
 });
 
+test("adds local-service FAQ questions to the homepage FAQ grid", () => {
+  const html = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const firstNewQuestionIndex = html.indexOf("Do you offer house cleaning in Naperville and Aurora?");
+  const originalFirstQuestionIndex = html.indexOf("Do you offer one-time cleaning?");
+
+  assert.notEqual(firstNewQuestionIndex, -1);
+  assert.notEqual(originalFirstQuestionIndex, -1);
+  assert.ok(firstNewQuestionIndex < originalFirstQuestionIndex);
+  assert.match(html, /Do you bring cleaning supplies\?/);
+  assert.match(html, /Can I book recurring cleaning\?/);
+  assert.match(html, /Do you offer move-out cleaning\?/);
+  assert.match(html, /Our cleaners bring professional cleaning supplies and products\./);
+});
+
 test("replaces the regular-cleaning page runtime with the shared popup and menu runtime", () => {
   const html = sanitizeHtml(readFixture("page109653016.html"), "/services/regular-cleaning");
 
