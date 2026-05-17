@@ -223,7 +223,7 @@ test("renders messages as dialog rows with unread counts", async () => {
     assert.doesNotMatch(messagesBody, /<th>\s*Действие\s*<\/th>/);
     assert.match(messagesBody, /class="admin-message-row-new admin-table-row-clickable"/);
     assert.match(messagesBody, /data-admin-dialog-row="true"/);
-    assert.match(messagesBody, /data-admin-dialog-focus="\.admin-ghl-sms-card"/);
+    assert.match(messagesBody, /data-admin-dialog-focus="\.admin-ghl-sms-chat-panel"/);
     assert.match(messagesBody, /data-admin-message-dialog-key="contact:contact-messages-order-1"/);
     assert.match(messagesBody, /data-admin-message-dialog-key="conversation:conversation-messages-order-different-phone"/);
     assert.match(messagesBody, /data-admin-message-dialog-key="contact:contact-messages-outbound-only"/);
