@@ -178,10 +178,10 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /data-shynli-form-kind="cleaner-application"/);
   assert.match(body, /id="shynli-cleaner-application-form-runtime"/);
   assert.match(body, /Shynli Cleaning/i);
-  assert.match(body, /House Cleaning Services in Naperville &amp; Chicago Suburbs/);
+  assert.match(body, /House Cleaning Services in Naperville<br>&amp; Chicago Suburbs/);
   assert.match(
     body,
-    /Reliable regular, deep, and move-out cleaning for busy families in Naperville, Aurora, Sugar Grove, and nearby areas\./
+    /Reliable regular, deep, and move-out cleaning for busy families<br>in Naperville, Aurora, Sugar Grove, and nearby areas\./
   );
   assert.match(body, /id="shynli-homepage-copy-fit-style"/);
 });
@@ -224,10 +224,13 @@ test("serves the homepage ads duplicate as an indexable sitemap route", async ()
   assert.match(body, /POPUP_DELAY_MS = 5000/);
   assert.match(body, /"requestType":"call_me"|requestType: "call_me"/);
   assert.match(body, /\/api\/quote\/submit/);
-  assert.doesNotMatch(body, /House Cleaning Services in Naperville &amp; Chicago Suburbs/);
   assert.doesNotMatch(
     body,
-    /Reliable regular, deep, and move-out cleaning for busy families in Naperville, Aurora, Sugar Grove, and nearby areas\./
+    /House Cleaning Services in Naperville(?:\s*<br\s*\/?>\s*|\s+)&amp; Chicago Suburbs/
+  );
+  assert.doesNotMatch(
+    body,
+    /Reliable regular, deep, and move-out cleaning for busy families(?:\s*<br\s*\/?>\s*|\s+)in Naperville, Aurora, Sugar Grove, and nearby areas\./
   );
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
@@ -243,7 +246,7 @@ test("serves the homepage ads duplicate as an indexable sitemap route", async ()
 test("serves home-like routes without zero/lazyload runtimes", async () => {
   const homeLikeRoutes = [
     ["/home-calculator", /Instant House Cleaning Cost Calculator/i],
-    ["/home-simple", /House Cleaning Services in Naperville & Chicago Suburbs/i],
+    ["/home-simple", /House Cleaning Services in Naperville<br>&amp; Chicago Suburbs/i],
   ];
 
   for (const [route, expectedTitle] of homeLikeRoutes) {
