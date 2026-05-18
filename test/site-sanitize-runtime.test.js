@@ -692,15 +692,17 @@ test("keeps city-specific copy aligned on every city page", () => {
       [
         ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Find your area by ZIP code/g),
         ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Serving Sugar Grove and nearby communities/g),
+        ...captureAll(text, /Shynli Cleaning serves\s+([A-Za-z.\s]+?)\s+and nearby communities across/g),
       ],
       fixture.city,
-      "nearby areas heading",
+      "nearby areas section",
       fixture.route
     );
     assertOnlyCity(
       [
         ...captureAll(text, /We serve select areas in and around\s+([A-Za-z.\s]+?)\s+to ensure/g),
         ...captureAll(text, /We serve\s+([A-Za-z.\s]+?)\s+and nearby/g),
+        ...captureAll(text, /Shynli Cleaning serves\s+([A-Za-z.\s]+?)\s+and nearby communities/g),
       ],
       fixture.city,
       "service-area sentence",
