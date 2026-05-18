@@ -405,38 +405,54 @@
     .sg-review-stack {
       display: flex;
       align-items: center;
-      gap: 14px;
-      transform: translateY(-11px);
+      gap: 10px;
+      transform: translateY(-12px);
     }
 
     .sg-review-stack__icons {
       display: flex;
       align-items: center;
+      width: 100px;
     }
 
     .sg-review-stack__icon {
-      width: 48px;
-      height: 48px;
-      margin-right: -18px;
+      position: relative;
+      flex: 0 0 50px;
+      width: 50px;
+      height: 50px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border-radius: 999px;
       background: #d4cec6;
       color: #fff;
-      border: 4px solid var(--sg-soft);
+      box-sizing: border-box;
       font-weight: 700;
+    }
+
+    .sg-review-stack__icon:not(:last-child) {
+      margin-right: -25px;
     }
 
     .sg-review-stack__icon:first-child {
       background: var(--sg-rose);
+      z-index: 3;
+    }
+
+    .sg-review-stack__icon:nth-child(2) {
+      background: #b9b4ae;
       z-index: 2;
     }
 
-    .sg-review-stack__icon:nth-child(n+2)::before {
-      content: "\2726";
-      font-size: 18px;
-      line-height: 1;
+    .sg-review-stack__icon:nth-child(3) {
+      background: #d8cfc4;
+      z-index: 1;
+    }
+
+    .sg-review-stack__icon svg {
+      width: 25px;
+      height: 25px;
+      display: block;
     }
 
     .sg-review-stack__number,
@@ -783,7 +799,9 @@
     }
 
     .sg-pricing__header .sg-section-lead {
-      margin-top: 16px;
+      width: 620px;
+      max-width: 100%;
+      margin: 16px 0 0 auto;
     }
 
 	    .sg-pricing__grid {
@@ -832,24 +850,80 @@
         top: 247px;
         width: 562px;
         height: 290px;
-        padding: 28px 20px 36px;
+        padding: 28px 20px 29px;
         clip-path: path("M0 20 Q0 0 20 0 H440 Q460 0 460 20 V102 Q460 122 480 122 H542 Q562 122 562 142 V270 Q562 290 542 290 H20 Q0 290 0 270 Z");
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(3) h3 {
+        margin-bottom: 13px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(3) p {
+        width: 301px;
+        max-width: 301px;
+        line-height: 1.2;
       }
 
       .sg-pricing__grid .sg-price-card:nth-child(4) {
         left: 582px;
-        top: 348px;
+        top: 350px;
         width: 580px;
         height: 189px;
-        padding: 28px 20px 36px;
+        padding: 28px 20px 31px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(4) .sg-price-card__number {
+        top: 24px;
+        left: 23px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(4) h3 {
+        margin-bottom: 13px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(4) p {
+        width: 532px;
+        max-width: 532px;
+        line-height: 1.2;
       }
 
       .sg-pricing__grid .sg-price-card:nth-child(5) {
         left: 0;
-        top: 557px;
-        width: 1160px;
+        top: 559px;
+        width: 1161px;
         height: 124px;
+        min-height: 0;
         padding: 28px 34px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) .sg-price-card__number {
+        top: 37px;
+        left: 29px;
+        width: 36px;
+        height: 45px;
+        color: transparent;
+        background: url("images/shynli-pricing-five.svg") center / contain no-repeat;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) .sg-price-card__icon {
+        top: -2px;
+        right: 54px;
+        font-size: 100px;
+        line-height: 1.2;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) h3 {
+        margin-bottom: 13px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) > div {
+        transform: translateY(2px);
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) p {
+        width: 604px;
+        max-width: 604px;
+        line-height: 1.2;
       }
     }
 
@@ -957,10 +1031,6 @@
 
     .sg-price-card--rose h3::after {
       background: #fff;
-    }
-
-    .sg-price-card--wide h3::after {
-      display: none;
     }
 
     .sg-price-card p {
@@ -1439,6 +1509,9 @@
     .sg-footer {
       background: #2f2f2f;
       color: #d8cfc4;
+      height: 350px;
+      box-sizing: border-box;
+      margin-top: 1px;
       padding: 67px 0 25px;
     }
 
@@ -1456,29 +1529,43 @@
 
     .sg-footer h2 {
       font-family: "Montserrat", Arial, sans-serif;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 400;
+      line-height: 1.55;
       color: #d8cfc4;
     }
 
+    .sg-footer__logo {
+      display: block;
+      width: 200px;
+      margin: 8px 0 9px;
+    }
+
+    .sg-footer__logo img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
     .sg-footer__copy {
-      margin-top: 18px !important;
+      margin-top: 5px !important;
       color: rgba(216, 207, 196, 0.28);
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.55;
     }
 
     .sg-footer h3 {
-      margin-bottom: 18px;
+      margin-bottom: 2px;
       font-family: "Playfair Display", Georgia, serif;
       font-size: 24px;
       font-weight: 400;
+      line-height: 1.55;
       color: rgba(216, 207, 196, 0.25);
     }
 
     .sg-footer ul {
       display: grid;
-      gap: 12px;
+      gap: 0;
       margin: 0;
       padding: 0;
       list-style: none;
@@ -1488,6 +1575,7 @@
       color: #d8cfc4;
       text-decoration: none;
       font-size: 14px;
+      line-height: 2.2;
     }
 
     .sg-reveal {
@@ -1635,10 +1723,10 @@
 	        grid-area: cta;
 	      }
 
-	      .sg-review-stack {
+      .sg-review-stack {
 	        grid-area: reviews;
 	        justify-content: flex-start;
-	        gap: 12px;
+	        gap: 10px;
 	        transform: none;
 	      }
 
@@ -1855,6 +1943,11 @@
         height: 185px !important;
         min-height: 0;
         padding-top: 92px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) .sg-price-card__number {
+        top: 30px;
+        left: 22px;
       }
 
       .sg-price-card__number {
@@ -2108,7 +2201,7 @@
       }
 
       .sg-footer__grid > div:nth-child(1) {
-        top: 117px;
+        top: 75px;
       }
 
       .sg-footer__grid > div:nth-child(2) {
@@ -2124,8 +2217,12 @@
       }
 
       .sg-footer h2 {
-        font-size: 17px;
+        font-size: 16px;
         line-height: 1.45;
+      }
+
+      .sg-footer__logo {
+        margin: 0 0 1px;
       }
 
       .sg-footer__copy {
@@ -2176,6 +2273,29 @@
         font-size: 22px;
       }
 
+      .sg-review-stack {
+        gap: 7px;
+      }
+
+      .sg-review-stack__icons {
+        width: 72px;
+      }
+
+      .sg-review-stack__icon {
+        flex-basis: 36px;
+        width: 36px;
+        height: 36px;
+      }
+
+      .sg-review-stack__icon:not(:last-child) {
+        margin-right: -18px;
+      }
+
+      .sg-review-stack__icon svg {
+        width: 18px;
+        height: 18px;
+      }
+
       .sg-rating__score {
         font-size: 30px;
       }
@@ -2210,6 +2330,89 @@
       .sg-map__dots {
         width: 644px;
         height: 453px;
+      }
+
+      .sg-footer__grid > div:nth-child(1) {
+        top: 60px;
+      }
+
+      .sg-footer {
+        margin-top: -8px;
+      }
+
+      .sg-footer__logo {
+        margin: 0 0 1px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(3) {
+        margin-top: -11px;
+        margin-bottom: 4px;
+        padding: 133px 20px 24px !important;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(3) h3 {
+        margin-bottom: 10px;
+        font-size: 21px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(3) p {
+        width: 278px;
+        max-width: 278px;
+        line-height: 1.2;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(4) {
+        height: 212px !important;
+        padding: 120px 20px 24px !important;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(4) .sg-price-card__number {
+        top: 33px;
+        left: 23px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(4) h3 {
+        margin-bottom: 10px;
+        font-size: 21px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(4) p {
+        width: 261px;
+        max-width: 261px;
+        line-height: 1.2;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) {
+        height: 207px !important;
+        margin-top: 5px;
+        padding: 126px 20px 24px !important;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) .sg-price-card__number {
+        top: 30px;
+        left: 22px;
+        width: 34px;
+        height: 43px;
+        color: transparent;
+        background: url("images/shynli-pricing-five.svg") center / contain no-repeat;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) .sg-price-card__icon {
+        top: -20px;
+        right: 24px;
+        font-size: 100px;
+        line-height: 1.2;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) h3 {
+        margin-bottom: 13px;
+        font-size: 21px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) p {
+        width: 282px;
+        max-width: 282px;
+        line-height: 1.2;
       }
 
       .sg-map__dot {
@@ -2294,9 +2497,15 @@
               <div class="sg-hero-panel__top">
                 <div class="sg-review-stack" aria-label="300 plus customer reviews">
                   <div class="sg-review-stack__icons" aria-hidden="true">
-                    <span class="sg-review-stack__icon">&#10022;</span>
-                    <span class="sg-review-stack__icon"></span>
-                    <span class="sg-review-stack__icon"></span>
+                    <span class="sg-review-stack__icon">
+                      <svg viewBox="0 0 25 25" focusable="false" aria-hidden="true"><path d="M22.5 0H2.5C1.125 0 0 1.125 0 2.5V25L5 20H22.5C23.875 20 25 18.875 25 17.5V2.5C25 1.125 23.875 0 22.5 0ZM14.4625 11.9625L12.5 16.25L10.5375 11.9625L6.25 10L10.5375 8.0375L12.5 3.75L14.4625 8.0375L18.75 10L14.4625 11.9625Z" fill="#FAF9F6"></path></svg>
+                    </span>
+                    <span class="sg-review-stack__icon">
+                      <svg viewBox="0 0 25 25" focusable="false" aria-hidden="true"><path d="M22.5 0H2.5C1.125 0 0 1.125 0 2.5V25L5 20H22.5C23.875 20 25 18.875 25 17.5V2.5C25 1.125 23.875 0 22.5 0ZM14.4625 11.9625L12.5 16.25L10.5375 11.9625L6.25 10L10.5375 8.0375L12.5 3.75L14.4625 8.0375L18.75 10L14.4625 11.9625Z" fill="#FAF9F6"></path></svg>
+                    </span>
+                    <span class="sg-review-stack__icon">
+                      <svg viewBox="0 0 25 25" focusable="false" aria-hidden="true"><path d="M22.5 0H2.5C1.125 0 0 1.125 0 2.5V25L5 20H22.5C23.875 20 25 18.875 25 17.5V2.5C25 1.125 23.875 0 22.5 0ZM14.4625 11.9625L12.5 16.25L10.5375 11.9625L6.25 10L10.5375 8.0375L12.5 3.75L14.4625 8.0375L18.75 10L14.4625 11.9625Z" fill="#FAF9F6"></path></svg>
+                    </span>
                   </div>
                   <div>
                     <div class="sg-review-stack__number">300+</div>
@@ -2416,6 +2625,7 @@
               <p>Regular Cleaning, Deep Cleaning, and Move-In / Move-Out Cleaning each have different scopes and pricing logic.</p>
             </div>
             <div class="sg-price-card sg-price-card--wide sg-reveal">
+              <span class="sg-price-card__number">5</span>
               <span class="sg-price-card__icon" aria-hidden="true">+</span>
               <div>
                 <h3>Add-On Services</h3>
@@ -2547,6 +2757,9 @@
     <footer class="sg-footer">
       <div class="sg-container sg-footer__grid">
         <div>
+          <a class="sg-footer__logo" href="/" aria-label="Shynli Cleaning home">
+            <img src="images/shynli-footer-logo-light.png" alt="Shynli Cleaning">
+          </a>
           <h2>Clean Home. Clear Mind.</h2>
           <p class="sg-footer__copy">&copy; 2026 Shynli Cleaning.<br>All rights reserved.</p>
         </div>
