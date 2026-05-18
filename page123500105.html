@@ -1079,9 +1079,39 @@
     }
 
     .sg-areas {
+      position: relative;
       padding-top: 60px;
       padding-bottom: 98px;
       text-align: center;
+      overflow: hidden;
+    }
+
+    .sg-areas::before,
+    .sg-areas::after {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      background: url("images/shynli-area-star.svg") center / contain no-repeat;
+      pointer-events: none;
+    }
+
+    .sg-areas::before {
+      top: 34px;
+      left: calc(50% - 600px - 67px);
+      width: 219px;
+      aspect-ratio: 219 / 216;
+    }
+
+    .sg-areas::after {
+      top: 613px;
+      left: calc(50% - 600px + 1062px);
+      width: 89px;
+      aspect-ratio: 89 / 88;
+    }
+
+    .sg-areas > .sg-container {
+      position: relative;
+      z-index: 1;
     }
 
     .sg-map {
@@ -1089,11 +1119,32 @@
       width: min(714px, 100%);
       min-height: 600px;
       margin: 41px auto 0;
+      isolation: isolate;
+      overflow: visible;
+    }
+
+    .sg-map::before {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      top: 0;
+      left: 50%;
+      width: 916px;
+      max-width: none;
+      aspect-ratio: 916 / 644;
+      transform: translateX(-50%);
+      background: url("images/shynli-sugargrove-area-map.svg") center top / contain no-repeat;
+      pointer-events: none;
     }
 
     .sg-map__dots {
       position: absolute;
-      inset: 0;
+      z-index: 1;
+      top: 0;
+      left: 50%;
+      width: 916px;
+      height: 644px;
+      transform: translateX(-50%);
       pointer-events: none;
     }
 
@@ -1225,6 +1276,16 @@
       font-size: 20px;
       cursor: pointer;
       transition: background-color 180ms ease, transform 180ms ease;
+    }
+
+    .sg-zip__button svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
     }
 
     .sg-zip__button:hover {
@@ -1899,7 +1960,7 @@
         flex-direction: column;
         gap: 14px;
         max-width: 100%;
-        padding-top: 344px;
+        padding-top: 439px;
       }
 
       .sg-area-pill,
@@ -1947,7 +2008,7 @@
 
       .sg-zip {
         position: absolute;
-        top: 104px;
+        top: 134px;
         left: 50%;
         width: 342px;
         max-width: 100%;
@@ -1956,8 +2017,14 @@
         padding: 28px 18px 34px;
       }
 
+      .sg-zip.sg-reveal,
+      .sg-zip.sg-reveal.is-visible {
+        transform: translateX(-50%);
+      }
+
       .sg-zip h2 {
         font-size: 24px;
+        margin-bottom: 26px;
       }
 
       .sg-zip__form {
@@ -2124,6 +2191,34 @@
 
       .sg-areas .sg-section-title {
         font-size: 23px;
+      }
+
+      .sg-areas::before {
+        top: 0;
+        left: calc(50% - 160px - 116px);
+        width: 179px;
+      }
+
+      .sg-areas::after {
+        display: none;
+      }
+
+      .sg-map::before {
+        width: 644px;
+      }
+
+      .sg-map__dots {
+        width: 644px;
+        height: 453px;
+      }
+
+      .sg-map__dot {
+        width: 14px;
+        height: 14px;
+      }
+
+      .sg-map__dot::after {
+        inset: 3px;
       }
 
       .sg-quote .sg-section-title {
@@ -2354,20 +2449,44 @@
           <h2 class="sg-section-title sg-reveal">Areas We Serve <span class="sg-accent">Near Sugar Grove</span></h2>
           <div class="sg-map">
             <div class="sg-map__dots" aria-hidden="true">
-              <span class="sg-map__dot" style="left: 50%; top: 0%;"></span>
-              <span class="sg-map__dot" style="left: 49%; top: 8%;"></span>
-              <span class="sg-map__dot" style="left: 24%; top: 18%;"></span>
-              <span class="sg-map__dot" style="left: 70%; top: 17%;"></span>
-              <span class="sg-map__dot" style="left: 76%; top: 21%;"></span>
-              <span class="sg-map__dot" style="left: 74%; top: 31%;"></span>
-              <span class="sg-map__dot" style="left: 8%; top: 36%;"></span>
-              <span class="sg-map__dot" style="left: 43%; top: 41%;"></span>
-              <span class="sg-map__dot" style="left: 23%; top: 51%;"></span>
-              <span class="sg-map__dot" style="left: 68%; top: 51%;"></span>
-              <span class="sg-map__dot" style="left: 52%; top: 59%;"></span>
-              <span class="sg-map__dot" style="left: 33%; top: 71%;"></span>
-              <span class="sg-map__dot" style="left: 78%; top: 76%;"></span>
-              <span class="sg-map__dot" style="left: 58%; top: 88%;"></span>
+              <span class="sg-map__dot" style="left: 44.7%; top: 32.1%;"></span>
+              <span class="sg-map__dot" style="left: 46.7%; top: 30.1%;"></span>
+              <span class="sg-map__dot" style="left: 52.2%; top: 27.3%;"></span>
+              <span class="sg-map__dot" style="left: 46.7%; top: 21.3%;"></span>
+              <span class="sg-map__dot" style="left: 47.8%; top: 14.4%;"></span>
+              <span class="sg-map__dot" style="left: 44.7%; top: 11.8%;"></span>
+              <span class="sg-map__dot" style="left: 50.7%; top: 40.5%;"></span>
+              <span class="sg-map__dot" style="left: 52.5%; top: 49.1%;"></span>
+              <span class="sg-map__dot" style="left: 50.5%; top: 49.7%;"></span>
+              <span class="sg-map__dot" style="left: 48.3%; top: 50.2%;"></span>
+              <span class="sg-map__dot" style="left: 44.2%; top: 47.4%;"></span>
+              <span class="sg-map__dot" style="left: 48.4%; top: 60.1%;"></span>
+              <span class="sg-map__dot" style="left: 45.3%; top: 75.8%;"></span>
+              <span class="sg-map__dot" style="left: 37.9%; top: 70.7%;"></span>
+              <span class="sg-map__dot" style="left: 35.6%; top: 81.4%;"></span>
+              <span class="sg-map__dot" style="left: 23.0%; top: 88.8%;"></span>
+              <span class="sg-map__dot" style="left: 28.4%; top: 59.5%;"></span>
+              <span class="sg-map__dot" style="left: 40.0%; top: 60.4%;"></span>
+              <span class="sg-map__dot" style="left: 37.2%; top: 48.9%;"></span>
+              <span class="sg-map__dot" style="left: 26.3%; top: 45.3%;"></span>
+              <span class="sg-map__dot" style="left: 27.6%; top: 36.0%;"></span>
+              <span class="sg-map__dot" style="left: 33.6%; top: 35.1%;"></span>
+              <span class="sg-map__dot" style="left: 30.6%; top: 25.3%;"></span>
+              <span class="sg-map__dot" style="left: 22.8%; top: 31.2%;"></span>
+              <span class="sg-map__dot" style="left: 18.6%; top: 17.2%;"></span>
+              <span class="sg-map__dot" style="left: 11.2%; top: 25.0%;"></span>
+              <span class="sg-map__dot" style="left: 9.5%; top: 29.3%;"></span>
+              <span class="sg-map__dot" style="left: 10.8%; top: 38.5%;"></span>
+              <span class="sg-map__dot" style="left: 9.9%; top: 57.5%;"></span>
+              <span class="sg-map__dot" style="left: 7.1%; top: 63.8%;"></span>
+              <span class="sg-map__dot" style="left: 6.4%; top: 74.1%;"></span>
+              <span class="sg-map__dot" style="left: 24.9%; top: 7.8%;"></span>
+              <span class="sg-map__dot" style="left: 25.7%; top: 1.2%;"></span>
+              <span class="sg-map__dot" style="left: 38.0%; top: 32.6%;"></span>
+              <span class="sg-map__dot" style="left: 39.1%; top: 93.6%;"></span>
+              <span class="sg-map__dot" style="left: 52.3%; top: 91.3%;"></span>
+              <span class="sg-map__dot" style="left: 52.5%; top: 55.6%;"></span>
+              <span class="sg-map__dot" style="left: 54.6%; top: 60.1%;"></span>
             </div>
             <div class="sg-area-links" aria-label="Nearby city links">
               <a class="sg-area-pill" href="/aurora">Aurora</a>
@@ -2383,7 +2502,12 @@
               <form class="sg-zip__form" data-zip-form>
                 <label class="sg-sr-only" for="sgZip">ZIP code</label>
                 <input id="sgZip" name="zip" inputmode="numeric" maxlength="5" placeholder="Enter your ZIP code" autocomplete="postal-code">
-                <button class="sg-zip__button" type="submit" aria-label="Check ZIP">&#9906;</button>
+                <button class="sg-zip__button" type="submit" aria-label="Check ZIP">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="6"></circle>
+                    <path d="m16 16 4 4"></path>
+                  </svg>
+                </button>
               </form>
               <p class="sg-zip__result" data-zip-result aria-live="polite"></p>
             </div>
