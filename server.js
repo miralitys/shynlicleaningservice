@@ -609,7 +609,11 @@ const ROUTE_META_OVERRIDES = {
   },
   "/sugargrove2": {
     title: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
+    description:
+      "Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
     ogTitle: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
+    ogDescription:
+      "Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
     canonical: `${SITE_ORIGIN}/sugargrove2`,
   },
   "/quote": {

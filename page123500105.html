@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!--metatextblock-->
   <title>House Cleaning Services in Sugar Grove, IL | Shynli Cleaning</title>
-  <meta name="description" content="Residential cleaning in Sugar Grove, IL for busy homes that need regular, deep, or move-out service. Get a free quote from Shynli Cleaning.">
+  <meta name="description" content="Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.">
   <meta name="keywords" content="home cleaning sugar grove il, house cleaning sugar grove, cleaning services sugar grove il, maid service sugar grove">
   <meta property="og:url" content="https://shynlicleaningservice.com/sugargrove2">
   <meta property="og:title" content="House Cleaning Services in Sugar Grove, IL | Shynli Cleaning">
-  <meta property="og:description" content="Residential cleaning in Sugar Grove, IL for busy homes that need regular, deep, or move-out service. Get a free quote from Shynli Cleaning.">
+  <meta property="og:description" content="Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://shynlicleaningservice.com/images/shynli-og-photo.png">
   <link rel="canonical" href="https://shynlicleaningservice.com/sugargrove2">
@@ -54,6 +54,10 @@
     }
 
     body.sg-menu-open {
+      overflow: hidden;
+    }
+
+    body.sg-city-modal-open {
       overflow: hidden;
     }
 
@@ -151,6 +155,19 @@
 
     .sg-services-menu {
       position: relative;
+      --sg-services-menu-gap: 15px;
+      --sg-services-menu-width: 400px;
+    }
+
+    .sg-services-menu::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      width: var(--sg-services-menu-width);
+      max-width: calc(100vw - 40px);
+      height: var(--sg-services-menu-gap);
+      transform: translateX(-50%);
     }
 
     .sg-services-menu__chevron {
@@ -163,33 +180,36 @@
 
     .sg-services-menu__list {
       position: absolute;
-      top: calc(100% + 20px);
+      top: calc(100% + var(--sg-services-menu-gap));
       left: 50%;
       display: grid;
-      gap: 22px;
-      width: 720px;
-      padding: 34px 36px 36px;
+      gap: 12px;
+      width: var(--sg-services-menu-width);
+      max-width: calc(100vw - 40px);
+      padding: 18px 20px;
       margin: 0;
       list-style: none;
       background: var(--sg-soft);
-      border-radius: 14px;
-      box-shadow: 0 24px 48px rgba(49, 49, 49, 0.1);
+      border: 1px solid #eee;
+      border-radius: 10px;
+      box-shadow: 0 15px 30px -10px rgba(0, 11, 48, 0.2);
       opacity: 0;
       pointer-events: none;
-      transform: translate(-50%, 8px);
-      transition: opacity 180ms ease, transform 180ms ease;
+      visibility: hidden;
+      transform: translate(-50%, 6px);
+      transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
     }
 
     .sg-services-menu__list::before {
       content: "";
       position: absolute;
-      top: -17px;
+      top: -19px;
       left: 50%;
       width: 0;
       height: 0;
-      border-left: 18px solid transparent;
-      border-right: 18px solid transparent;
-      border-bottom: 18px solid var(--sg-soft);
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 10px solid var(--sg-soft);
       transform: translateX(-50%);
     }
 
@@ -197,17 +217,19 @@
     .sg-services-menu:focus-within .sg-services-menu__list {
       opacity: 1;
       pointer-events: auto;
+      visibility: visible;
       transform: translate(-50%, 0);
+      transition-delay: 0s;
     }
 
     .sg-services-menu__list a {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
       width: max-content;
       max-width: 100%;
-      font-size: 18px;
-      line-height: 1.2;
+      font-size: 14px;
+      line-height: 1.5;
       color: var(--sg-ink);
       padding: 0;
       white-space: nowrap;
@@ -223,17 +245,13 @@
 
     @media (min-width: 981px) and (max-width: 1320px) {
       .sg-services-menu__list {
-        left: -180px;
-        transform: translateY(8px);
-      }
-
-      .sg-services-menu__list::before {
-        left: 222px;
+        left: 50%;
+        transform: translate(-50%, 6px);
       }
 
       .sg-services-menu:hover .sg-services-menu__list,
       .sg-services-menu:focus-within .sg-services-menu__list {
-        transform: translateY(0);
+        transform: translate(-50%, 0);
       }
     }
 
@@ -317,6 +335,117 @@
       transform: rotate(45deg) translateY(-2px);
     }
 
+    .sg-city-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 68px 20px 24px;
+      background: rgba(49, 49, 49, 0.3);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 220ms ease;
+    }
+
+    .sg-city-modal.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sg-city-modal[hidden] {
+      display: none;
+    }
+
+    .sg-city-modal__dialog {
+      position: relative;
+      width: min(960px, calc(100vw - 80px));
+      max-height: calc(100vh - 92px);
+      overflow: auto;
+      padding: 30px 34px 34px;
+      background: var(--sg-cream);
+      border-radius: 0 0 18px 18px;
+      box-shadow: 0 24px 48px rgba(49, 49, 49, 0.16);
+    }
+
+    .sg-city-modal__close {
+      position: fixed;
+      top: 86px;
+      right: 24px;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--sg-ink);
+      cursor: pointer;
+    }
+
+    .sg-city-modal__close::before,
+    .sg-city-modal__close::after {
+      content: "";
+      position: absolute;
+      top: 16px;
+      left: 3px;
+      width: 28px;
+      height: 2px;
+      background: currentColor;
+      transform: rotate(45deg);
+    }
+
+    .sg-city-modal__close::after {
+      transform: rotate(-45deg);
+    }
+
+    .sg-city-modal__grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 28px;
+    }
+
+    .sg-city-modal__group h3 {
+      margin: 0 0 10px;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 32px;
+      font-weight: 400;
+      line-height: 1.1;
+      color: var(--sg-ink);
+    }
+
+    .sg-city-modal__list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .sg-city-modal__list a {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18px;
+      border: 1px solid var(--sg-rose);
+      border-radius: 999px;
+      color: var(--sg-muted);
+      text-decoration: none;
+      font-size: 15px;
+      line-height: 1.2;
+      background: rgba(250, 249, 246, 0.48);
+      transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    .sg-city-modal__list a:hover,
+    .sg-city-modal__list a:focus-visible {
+      background: var(--sg-rose);
+      color: #fff;
+      outline: none;
+    }
+
     .sg-nav__call + .sg-button {
       margin-left: 9px;
     }
@@ -378,6 +507,14 @@
       font-size: 18px;
       line-height: 1.2;
       color: var(--sg-muted);
+    }
+
+    .sg-hero__trust {
+      margin: 12px 0 0;
+      font-size: 15px;
+      line-height: 1.35;
+      color: var(--sg-rose);
+      font-weight: 600;
     }
 
     .sg-hero__visual {
@@ -532,6 +669,10 @@
       font-size: 40px;
     }
 
+    .sg-review-stack__number {
+      font-size: 40px;
+    }
+
     .sg-rating__stars {
       color: var(--sg-rose);
       letter-spacing: 2px;
@@ -541,7 +682,7 @@
       display: grid;
       grid-template-columns: 1fr 1.4fr;
       gap: 20px;
-      margin-top: 86px;
+      margin-top: 43px;
     }
 
     .sg-info-tile {
@@ -827,11 +968,13 @@
       width: min(680px, 100%);
       margin-left: auto;
       margin-bottom: 0;
+      text-align: right;
     }
 
     .sg-pricing .sg-section-title,
     .sg-team .sg-section-title,
     .sg-areas .sg-section-title,
+    .sg-faq .sg-section-title,
     .sg-quote .sg-section-title {
       font-size: 50px;
       line-height: 1.16;
@@ -841,6 +984,7 @@
       width: 620px;
       max-width: 100%;
       margin: 16px 0 0 auto;
+      text-align: right;
     }
 
 	    .sg-pricing__grid {
@@ -912,7 +1056,7 @@
       }
 
       .sg-pricing__grid .sg-price-card:nth-child(4) .sg-price-card__number {
-        top: 24px;
+        top: 10px;
         left: 23px;
       }
 
@@ -1330,6 +1474,42 @@
       color: #fff;
     }
 
+    .sg-area-summary {
+      max-width: 980px;
+      margin: 56px auto 0;
+      padding: 28px 20px 0;
+      border-top: 1px solid rgba(216, 207, 196, 0.72);
+      color: var(--sg-muted);
+      font-size: 18px;
+      line-height: 1.9;
+    }
+
+    .sg-area-summary__chunk {
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .sg-area-summary__city {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 4px;
+      padding: 2px 12px 3px;
+      border: 1px solid rgba(158, 67, 90, 0.14);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.22);
+      color: var(--sg-rose);
+      font-weight: 700;
+      line-height: 1.25;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .sg-area-summary__city:hover {
+      border-color: rgba(158, 67, 90, 0.3);
+      background: rgba(255, 255, 255, 0.45);
+    }
+
     .sg-zip {
       position: relative;
       z-index: 3;
@@ -1344,13 +1524,14 @@
     }
 
     .sg-zip h2 {
-      max-width: 333px;
-      margin: 0 auto 5px;
+      max-width: 100%;
+      margin: 0 auto 18px;
       font-family: "Playfair Display", Georgia, serif;
       font-size: 28px;
       font-weight: 400;
       line-height: 1.05;
       color: var(--sg-rose);
+      white-space: nowrap;
     }
 
     .sg-zip__form {
@@ -1362,6 +1543,12 @@
       border-radius: 12px;
       -webkit-backdrop-filter: blur(15px);
       backdrop-filter: blur(15px);
+      transition: background-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .sg-zip__form:focus-within {
+      background: rgba(250, 249, 246, 0.85);
+      box-shadow: 0 0 0 3px rgba(158, 68, 90, 0.2);
     }
 
     .sg-zip__form input {
@@ -1376,7 +1563,10 @@
       color: var(--sg-ink);
     }
 
-    .sg-zip__form input:focus,
+    .sg-zip__form input:focus {
+      outline: 0;
+    }
+
     .sg-quote-form input:focus {
       outline: 2px solid rgba(168, 68, 96, 0.25);
       outline-offset: 2px;
@@ -1410,14 +1600,142 @@
     }
 
     .sg-zip__result {
+      display: none;
+      width: 100%;
+      max-width: 640px;
       min-height: 0;
-      margin: 0;
+      margin: 20px auto 0;
+      padding: 16px;
+      border-radius: 12px;
+      box-sizing: border-box;
       color: var(--sg-muted);
-      font-size: 13px;
+      font-size: 15px;
+      line-height: 1.6;
+      text-align: left;
+      -webkit-backdrop-filter: blur(15px);
+      backdrop-filter: blur(15px);
+      animation: sgZipResultIn 220ms ease;
     }
 
-    .sg-zip__result:empty {
+    .sg-zip__result.is-visible {
+      display: block;
+    }
+
+    .sg-zip__result.success {
+      background: rgba(240, 253, 244, 0.95);
+      border: 2px solid var(--sg-rose);
+      color: #166534;
+    }
+
+    .sg-zip__result.error {
+      background: rgba(254, 242, 242, 0.95);
+      border: 2px solid var(--sg-rose);
+      color: #991b1b;
+    }
+
+    .sg-zip__result a {
+      color: var(--sg-rose);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .sg-zip__result a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes sgZipResultIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .sg-faq {
+      padding: 0 0 58px;
+    }
+
+    .sg-faq .sg-section-title {
+      text-align: center;
+      margin-bottom: 76px;
+    }
+
+    .sg-faq__panel {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 42px 72px;
+      margin: 0 auto;
+      padding: 62px 68px 58px;
+      border-radius: 22px;
+      background: rgba(216, 207, 196, 0.58);
+    }
+
+    .sg-faq__column {
+      display: grid;
+      gap: 34px;
+      align-content: start;
+    }
+
+    .sg-faq__item {
+      margin: 0;
+    }
+
+    .sg-faq__item summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 28px;
+      gap: 20px;
+      align-items: center;
+      color: var(--sg-ink);
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 22px;
+      line-height: 1.22;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .sg-faq__item summary::-webkit-details-marker {
       display: none;
+    }
+
+    .sg-faq__question {
+      text-decoration-line: underline;
+      text-decoration-color: var(--sg-rose);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 7px;
+      text-decoration-skip-ink: none;
+    }
+
+    .sg-faq__item summary::after {
+      content: "+";
+      width: 25px;
+      height: 25px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--sg-rose);
+      color: #fff;
+      font-family: "Montserrat", Arial, sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .sg-faq__item[open] summary::after {
+      content: "\2212";
+      padding-bottom: 2px;
+    }
+
+    .sg-faq__answer {
+      margin: 16px 48px 0 0;
+      color: var(--sg-muted);
+      font-size: 15px;
+      line-height: 1.55;
     }
 
     .sg-quote {
@@ -1626,6 +1944,10 @@
       line-height: 2.2;
     }
 
+    .sg-mobile-cta {
+      display: none;
+    }
+
     .sg-reveal {
       opacity: 1;
       transform: translateY(0);
@@ -1652,6 +1974,67 @@
 
       .sg-mobile-toggle {
         display: block;
+      }
+
+      .sg-page {
+        padding-bottom: calc(78px + env(safe-area-inset-bottom));
+      }
+
+      .sg-mobile-cta {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 80;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+        background: rgba(250, 249, 246, 0.92);
+        border-top: 1px solid rgba(165, 70, 99, 0.18);
+        box-shadow: 0 -14px 28px rgba(49, 49, 49, 0.12);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(112%);
+        transition: opacity 180ms ease, transform 180ms ease;
+      }
+
+      .sg-mobile-cta.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      body.sg-menu-open .sg-mobile-cta,
+      body.sg-city-modal-open .sg-mobile-cta {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(112%);
+      }
+
+      .sg-mobile-cta a {
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--sg-rose);
+        border-radius: 999px;
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .sg-mobile-cta__book {
+        background: var(--sg-rose);
+        color: #fff;
+      }
+
+      .sg-mobile-cta__call {
+        background: rgba(255, 255, 255, 0.78);
+        color: var(--sg-rose);
       }
 
       .sg-nav {
@@ -1683,6 +2066,10 @@
         margin-top: 20px;
       }
 
+      .sg-services-menu::after {
+        display: none;
+      }
+
       .sg-services-menu__list {
         position: static;
         width: auto;
@@ -1691,7 +2078,9 @@
         padding: 18px;
         opacity: 1;
         pointer-events: auto;
+        visibility: visible;
         transform: none;
+        transition: none;
         box-shadow: none;
       }
 
@@ -1723,21 +2112,60 @@
         margin-left: 0;
       }
 
+      .sg-city-modal {
+        padding: 74px 12px 18px;
+      }
+
+      .sg-city-modal__dialog {
+        width: 100%;
+        max-height: calc(100vh - 92px);
+        padding: 24px 18px 28px;
+        border-radius: 16px;
+      }
+
+      .sg-city-modal__close {
+        top: 86px;
+        right: 22px;
+      }
+
+      .sg-city-modal__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px 14px;
+      }
+
+      .sg-city-modal__group h3 {
+        font-size: 27px;
+      }
+
+      .sg-city-modal__list a {
+        min-height: 38px;
+        padding: 0 12px;
+        font-size: 13px;
+      }
+
       .sg-hero {
         padding: 22px 0 0;
       }
 
       .sg-hero h1 {
-        max-width: 320px;
+        max-width: 360px;
         margin: 0 auto;
-        font-size: 31px;
-        line-height: 1.06;
+        font-size: 38px;
+        line-height: 1.04;
       }
 
       .sg-hero__lead {
-        max-width: 330px;
-        margin: 31px auto 0;
-        font-size: 15px;
+        max-width: 340px;
+        margin: 22px auto 0;
+        font-size: 14px;
+        line-height: 1.24;
+      }
+
+      .sg-hero__trust {
+        max-width: 340px;
+        margin: 13px auto 0;
+        font-size: 13px;
+        line-height: 1.26;
       }
 
       .sg-hero__visual {
@@ -1807,7 +2235,7 @@
       .sg-hero-panel__tiles {
         grid-template-columns: 1fr;
         gap: 18px;
-        margin-top: 100px;
+        margin-top: 50px;
       }
 
       .sg-info-tile {
@@ -1846,6 +2274,7 @@
       .sg-pricing .sg-section-title,
       .sg-team .sg-section-title,
       .sg-areas .sg-section-title,
+      .sg-faq .sg-section-title,
       .sg-quote .sg-section-title {
         font-size: 32px;
         line-height: 1.08;
@@ -1951,6 +2380,7 @@
         max-width: 320px;
         margin: 9px auto 0;
         line-height: 1.15;
+        text-align: center;
       }
 
       .sg-pricing__grid {
@@ -2115,17 +2545,17 @@
 
       .sg-map {
         width: 100%;
-        min-height: 760px;
-        margin-top: 28px;
+        min-height: 700px;
+        margin-top: 24px;
       }
 
       .sg-area-links {
         align-items: center;
         justify-content: center;
         flex-direction: column;
-        gap: 14px;
+        gap: 12px;
         max-width: 100%;
-        padding-top: 439px;
+        padding-top: 372px;
       }
 
       .sg-area-pill,
@@ -2136,39 +2566,20 @@
         font-size: 13px;
       }
 
-      .sg-area-pill:nth-child(1) {
-        order: 1;
+      .sg-area-pill:nth-child(n) {
         width: 300px;
       }
 
-      .sg-area-pill:nth-child(2) {
-        order: 2;
-        width: 300px;
+      .sg-area-summary {
+        margin-top: 28px;
+        padding: 22px 12px 0;
+        font-size: 16px;
+        line-height: 1.75;
       }
 
-      .sg-area-pill:nth-child(3) {
-        order: 4;
-        width: 300px;
-      }
-
-      .sg-area-pill:nth-child(4) {
-        order: 6;
-        width: 300px;
-      }
-
-      .sg-area-pill:nth-child(5) {
-        order: 5;
-        width: 300px;
-      }
-
-      .sg-area-pill:nth-child(6) {
-        order: 3;
-        width: 300px;
-      }
-
-      .sg-area-pill:nth-child(7) {
-        order: 7;
-        width: 300px;
+      .sg-area-summary__city {
+        margin: 3px 2px;
+        padding: 2px 10px 3px;
       }
 
       .sg-zip {
@@ -2190,6 +2601,7 @@
       .sg-zip h2 {
         font-size: 24px;
         margin-bottom: 26px;
+        white-space: normal;
       }
 
       .sg-zip__form {
@@ -2198,6 +2610,43 @@
 
       .sg-zip__button {
         width: 50px;
+      }
+
+      .sg-faq {
+        padding: 38px 0 34px;
+      }
+
+      .sg-faq .sg-section-title {
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      .sg-faq__panel {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 30px 22px;
+        border-radius: 18px;
+      }
+
+      .sg-faq__column {
+        gap: 24px;
+      }
+
+      .sg-faq__item summary {
+        grid-template-columns: minmax(0, 1fr) 25px;
+        gap: 14px;
+        font-size: 21px;
+      }
+
+      .sg-faq__item summary::after {
+        width: 24px;
+        height: 24px;
+        font-size: 18px;
+      }
+
+      .sg-faq__answer {
+        margin: 14px 38px 0 0;
+        font-size: 14px;
       }
 
       .sg-quote {
@@ -2328,12 +2777,48 @@
         width: calc(100% - 28px);
       }
 
+      .sg-mobile-cta {
+        gap: 8px;
+        padding-right: 10px;
+        padding-left: 10px;
+      }
+
+      .sg-mobile-cta a {
+        min-height: 48px;
+        font-size: 14px;
+      }
+
       .sg-logo img {
         width: 142px;
       }
 
+      .sg-city-modal {
+        padding-top: 64px;
+      }
+
+      .sg-city-modal__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sg-city-modal__close {
+        top: 74px;
+        right: 18px;
+      }
+
       .sg-hero h1 {
-        font-size: 29px;
+        max-width: 360px;
+        font-size: 35px;
+      }
+
+      .sg-hero__lead {
+        max-width: 342px;
+        margin-top: 20px;
+      }
+
+      .sg-hero__trust {
+        max-width: 350px;
+        margin-top: 11px;
+        font-size: 12.5px;
       }
 
       .sg-hero-panel {
@@ -2342,7 +2827,7 @@
       }
 
       .sg-review-stack__number {
-        font-size: 22px;
+        font-size: 30px;
       }
 
       .sg-review-stack {
@@ -2377,6 +2862,7 @@
       .sg-pricing .sg-section-title,
       .sg-team .sg-section-title,
       .sg-areas .sg-section-title,
+      .sg-faq .sg-section-title,
       .sg-quote .sg-section-title {
         font-size: 28px;
       }
@@ -2545,21 +3031,92 @@
             <a href="/faq">FAQ</a>
           </div>
           <div class="sg-nav__right">
-            <a class="sg-nav__accent" href="#clean">Become a Cleaner</a>
             <a class="sg-nav__call" href="tel:+16308127077"><span aria-hidden="true">&#128222;</span>Call Us</a>
             <a class="sg-button" href="/quote">Get Free Quote</a>
-            <a class="sg-button sg-button--outline sg-city-button" href="#city">Sugar Grove</a>
+            <a class="sg-button sg-button--outline sg-city-button" href="#city" data-city-open aria-controls="sg-city-modal" aria-expanded="false">Sugar Grove</a>
           </div>
         </nav>
       </div>
     </header>
 
+    <div class="sg-city-modal" id="sg-city-modal" data-city-modal hidden aria-hidden="true">
+      <div class="sg-city-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="sg-city-modal-title">
+        <h2 class="sg-sr-only" id="sg-city-modal-title">Choose your city</h2>
+        <button class="sg-city-modal__close" type="button" data-city-close aria-label="Close city list"></button>
+        <div class="sg-city-modal__grid" id="city-picker">
+          <div class="sg-city-modal__group">
+            <h3>A-D:</h3>
+            <ul class="sg-city-modal__list">
+              <li><a href="/addison">Addison</a></li>
+              <li><a href="/aurora">Aurora</a></li>
+              <li><a href="/bartlett">Bartlett</a></li>
+              <li><a href="/batavia">Batavia</a></li>
+              <li><a href="/bolingbrook">Bolingbrook</a></li>
+              <li><a href="/bristol">Bristol</a></li>
+              <li><a href="/burrridge">Burr Ridge</a></li>
+              <li><a href="/carolstream">Carol Stream</a></li>
+              <li><a href="/clarendonhills">Clarendon Hills</a></li>
+              <li><a href="/darien">Darien</a></li>
+              <li><a href="/downersgrove">Downers Grove</a></li>
+            </ul>
+          </div>
+          <div class="sg-city-modal__group">
+            <h3>E-L:</h3>
+            <ul class="sg-city-modal__list">
+              <li><a href="/elmhurst">Elmhurst</a></li>
+              <li><a href="/geneva">Geneva</a></li>
+              <li><a href="/glenellyn">Glen Ellyn</a></li>
+              <li><a href="/hinsdale">Hinsdale</a></li>
+              <li><a href="/homerglen">Homer Glen</a></li>
+              <li><a href="/itasca">Itasca</a></li>
+              <li><a href="/lemont">Lemont</a></li>
+              <li><a href="/lisle">Lisle</a></li>
+              <li><a href="/lockport">Lockport</a></li>
+              <li><a href="/lombard">Lombard</a></li>
+            </ul>
+          </div>
+          <div class="sg-city-modal__group">
+            <h3>M-S:</h3>
+            <ul class="sg-city-modal__list">
+              <li><a href="/montgomery">Montgomery</a></li>
+              <li><a href="/naperville">Naperville</a></li>
+              <li><a href="/northaurora">North Aurora</a></li>
+              <li><a href="/oakbrook">Oak Brook</a></li>
+              <li><a href="/oswego">Oswego</a></li>
+              <li><a href="/plainfield">Plainfield</a></li>
+              <li><a href="/romeoville">Romeoville</a></li>
+              <li><a href="/stcharles">St. Charles</a></li>
+              <li><a href="/streamwood">Streamwood</a></li>
+              <li><a href="/sugargrove">Sugar Grove</a></li>
+            </ul>
+          </div>
+          <div class="sg-city-modal__group">
+            <h3>V-Y:</h3>
+            <ul class="sg-city-modal__list">
+              <li><a href="/villapark">Villa Park</a></li>
+              <li><a href="/warrenville">Warrenville</a></li>
+              <li><a href="/wayne">Wayne</a></li>
+              <li><a href="/westchicago">West Chicago</a></li>
+              <li><a href="/westmont">Westmont</a></li>
+              <li><a href="/wheaton">Wheaton</a></li>
+              <li><a href="/willowbrook">Willowbrook</a></li>
+              <li><a href="/winfield">Winfield</a></li>
+              <li><a href="/wooddale">Wood Dale</a></li>
+              <li><a href="/woodridge">Woodridge</a></li>
+              <li><a href="/yorkville">Yorkville</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <main>
       <section class="sg-hero">
         <div class="sg-container">
           <div class="sg-hero__copy sg-reveal">
-            <h1>Home Cleaning Services in <span class="sg-accent">Sugar Grove</span>, IL</h1>
-            <p class="sg-hero__lead">Reliable regular, deep, and move-out cleaning for homes in Sugar Grove, IL.</p>
+            <h1>House Cleaning Services in <span class="sg-accent">Sugar Grove</span>, IL</h1>
+            <p class="sg-hero__lead">Reliable regular, deep, and move-in/move-out cleaning for homes in Sugar Grove and nearby areas.</p>
+            <p class="sg-hero__trust">Local cleaning team &bull; Transparent pricing &bull; Weekly, bi-weekly, and one-time service</p>
           </div>
           <div class="sg-hero__visual sg-reveal">
             <span class="sg-spark sg-hero__spark-left" aria-hidden="true"></span>
@@ -2585,7 +3142,7 @@
                   </div>
                 </div>
                 <div>
-                  <a class="sg-button sg-hero-panel__cta" href="/quote">Get Instant Quote</a>
+                  <a class="sg-button sg-hero-panel__cta" href="/quote">Get Free Quote</a>
                   <div class="sg-hero-panel__hint">Takes less than 60 seconds</div>
                 </div>
                 <div class="sg-rating" aria-label="5 out of 5 rating">
@@ -2596,16 +3153,16 @@
               <div class="sg-hero-panel__tiles">
                 <div class="sg-info-tile sg-info-tile--muted">
                   <span class="sg-info-tile__icon" aria-hidden="true">&#10022;</span>
-                  <p>Looking for professional home cleaning services in <strong>Sugar Grove?</strong></p>
+                  <p>Looking for a reliable house cleaning service in <strong>Sugar Grove?</strong></p>
                 </div>
                 <div class="sg-info-tile">
                   <span class="sg-info-tile__icon sg-info-tile__icon--team" aria-hidden="true"></span>
-                  <p>We focus on consistent service, transparent pricing, and trusted cleaners who know your home.</p>
+                  <p>Shynli Cleaning helps Sugar Grove homeowners keep their homes clean, fresh, and easier to maintain.<br>We provide regular house cleaning, deep cleaning, move-in/move-out cleaning, and one-time cleaning based on your home's size, condition, and schedule.</p>
                 </div>
               </div>
               <div class="sg-hero-panel__statement">
                 <img src="images/shynli-logo-icon-white.svg" alt="">
-                <p>Shynli Cleaning provides reliable recurring, deep, and move-in / move-out cleaning for busy Sugar Grove households.</p>
+                <p>Whether you need weekly cleaning, bi-weekly cleaning, or a full deep clean before guests, our team will confirm the scope and pricing before service.</p>
               </div>
             </div>
           </div>
@@ -2617,7 +3174,7 @@
           <div class="sg-services__header sg-reveal">
             <div>
               <p class="sg-eyebrow">Home cleaning focus</p>
-              <h2 class="sg-section-title">Residential Cleaning Services in Sugar Grove</h2>
+              <h2 class="sg-section-title">Residential Cleaning Services in <span class="sg-accent">Sugar Grove</span></h2>
             </div>
             <p class="sg-services__intro">Start with the three services most Sugar Grove homeowners book: regular upkeep, a detailed reset, or cleaning around a move.</p>
           </div>
@@ -2773,10 +3330,10 @@
             <div class="sg-area-links" aria-label="Nearby city links">
               <a class="sg-area-pill" href="/aurora">Aurora</a>
               <a class="sg-area-pill" href="/northaurora">North Aurora</a>
-              <a class="sg-area-pill" href="/yorkville">Yorkville</a>
-              <a class="sg-area-pill" href="/batavia">Batavia</a>
               <a class="sg-area-pill" href="/montgomery">Montgomery</a>
               <a class="sg-area-pill" href="/oswego">Oswego</a>
+              <a class="sg-area-pill" href="/batavia">Batavia</a>
+              <a class="sg-area-pill" href="/yorkville">Yorkville</a>
               <a class="sg-area-pill sg-area-pill--primary" href="/naperville">Naperville</a>
             </div>
             <div class="sg-zip sg-reveal">
@@ -2792,6 +3349,77 @@
                 </button>
               </form>
               <p class="sg-zip__result" data-zip-result aria-live="polite"></p>
+            </div>
+          </div>
+          <div class="sg-area-summary sg-reveal" aria-label="Service area city summary">
+            Shynli Cleaning serves homes across
+            <span class="sg-area-summary__chunk"><a class="sg-area-summary__city" href="/sugargrove">Sugar Grove</a>,</span>
+            <span class="sg-area-summary__chunk"><a class="sg-area-summary__city" href="/aurora">Aurora</a>,</span>
+            <span class="sg-area-summary__chunk"><a class="sg-area-summary__city" href="/northaurora">North Aurora</a>,</span>
+            <span class="sg-area-summary__chunk"><a class="sg-area-summary__city" href="/yorkville">Yorkville</a>,</span>
+            <span class="sg-area-summary__chunk"><a class="sg-area-summary__city" href="/batavia">Batavia</a>,</span>
+            <span class="sg-area-summary__chunk"><a class="sg-area-summary__city" href="/montgomery">Montgomery</a>,</span>
+            <span class="sg-area-summary__chunk"><a class="sg-area-summary__city" href="/oswego">Oswego</a>,</span>
+            <span class="sg-area-summary__chunk">and <a class="sg-area-summary__city" href="/naperville">Naperville</a>.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="sg-section sg-faq" id="faq" aria-label="Sugar Grove cleaning FAQ">
+        <div class="sg-container">
+          <h2 class="sg-section-title sg-reveal">FAQ</h2>
+          <div class="sg-faq__panel sg-reveal">
+            <div class="sg-faq__column">
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Do you offer house cleaning in Naperville and Aurora?</span></summary>
+                <p class="sg-faq__answer">Yes. We serve Sugar Grove and nearby Fox Valley communities, including Aurora, North Aurora, Yorkville, Batavia, Montgomery, Oswego, and Naperville.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Can I book recurring cleaning?</span></summary>
+                <p class="sg-faq__answer">Yes. Weekly, bi-weekly, and monthly recurring cleaning can be scheduled around your home and preferred cadence.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Do you offer one-time cleaning?</span></summary>
+                <p class="sg-faq__answer">Yes. One-time cleaning is available for seasonal resets, special occasions, and homes that need a focused refresh.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Is deep cleaning required every visit?</span></summary>
+                <p class="sg-faq__answer">No. Deep cleaning is usually recommended for the first visit or when a home needs extra attention before regular upkeep begins.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Do I need to be home during cleaning?</span></summary>
+                <p class="sg-faq__answer">No. Many clients provide entry instructions, and we confirm details before the appointment.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Will I get the same cleaner each visit?</span></summary>
+                <p class="sg-faq__answer">Whenever possible, we keep the same cleaner or team assigned so your home preferences stay consistent.</p>
+              </details>
+            </div>
+            <div class="sg-faq__column">
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Do you bring cleaning supplies?</span></summary>
+                <p class="sg-faq__answer">Yes. We bring standard cleaning supplies and can use your preferred products if you leave them available.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Do you offer move-out cleaning?</span></summary>
+                <p class="sg-faq__answer">Yes. Move-out and move-in cleaning can be booked for apartments, condos, and single-family homes.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">How often should I schedule cleaning?</span></summary>
+                <p class="sg-faq__answer">Most homes choose bi-weekly cleaning, while busy households or homes with pets may prefer weekly service.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">Can I pause or change my cleaning schedule?</span></summary>
+                <p class="sg-faq__answer">Yes. You can adjust your schedule with advance notice, and we will help find the next available time.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">How long does a cleaning take?</span></summary>
+                <p class="sg-faq__answer">Timing depends on home size, condition, service type, and cleaning frequency. We confirm the estimate before service.</p>
+              </details>
+              <details class="sg-faq__item">
+                <summary><span class="sg-faq__question">How is pricing calculated?</span></summary>
+                <p class="sg-faq__answer">Pricing is based on bedrooms, bathrooms, square footage, home condition, service type, add-ons, and cleaning frequency.</p>
+              </details>
             </div>
           </div>
         </div>
@@ -2864,6 +3492,7 @@
             <li><a href="/blog">Blog</a></li>
             <li><a href="/faq">FAQ</a></li>
             <li><a href="/contacts">Contacts</a></li>
+            <li><a href="#clean">Become a Cleaner</a></li>
           </ul>
         </div>
         <div>
@@ -2877,6 +3506,11 @@
       </div>
     </footer>
   </div>
+
+  <nav class="sg-mobile-cta" data-mobile-cta aria-label="Quick booking actions">
+    <a class="sg-mobile-cta__book" href="/quote">Book Now</a>
+    <a class="sg-mobile-cta__call" href="tel:+16304466235">Call Us</a>
+  </nav>
 
   <script id="shynli-menu-widgeticons-runtime-stub"></script>
   <script id="shynli-home-page-runtime"></script>
@@ -2903,6 +3537,84 @@
             toggle.setAttribute("aria-expanded", "false");
           });
         });
+      }
+
+      const cityModal = document.querySelector("[data-city-modal]");
+      const cityOpeners = document.querySelectorAll("[data-city-open]");
+      const cityClose = document.querySelector("[data-city-close]");
+      let cityLastFocus = null;
+
+      const setCityOpenersExpanded = (expanded) => {
+        cityOpeners.forEach((opener) => opener.setAttribute("aria-expanded", expanded ? "true" : "false"));
+      };
+
+      const openCityModal = (event) => {
+        if (!cityModal) return;
+        if (event) event.preventDefault();
+        cityLastFocus = document.activeElement;
+        body.classList.remove("sg-menu-open");
+        if (toggle) toggle.setAttribute("aria-expanded", "false");
+        body.classList.add("sg-city-modal-open");
+        cityModal.hidden = false;
+        cityModal.setAttribute("aria-hidden", "false");
+        setCityOpenersExpanded(true);
+        requestAnimationFrame(() => {
+          cityModal.classList.add("is-open");
+          if (cityClose) cityClose.focus({ preventScroll: true });
+        });
+      };
+
+      const closeCityModal = () => {
+        if (!cityModal || cityModal.hidden) return;
+        cityModal.classList.remove("is-open");
+        cityModal.setAttribute("aria-hidden", "true");
+        body.classList.remove("sg-city-modal-open");
+        setCityOpenersExpanded(false);
+        window.setTimeout(() => {
+          cityModal.hidden = true;
+          if (cityLastFocus && typeof cityLastFocus.focus === "function") {
+            cityLastFocus.focus({ preventScroll: true });
+          }
+        }, 220);
+      };
+
+      cityOpeners.forEach((opener) => opener.addEventListener("click", openCityModal));
+      if (cityClose) cityClose.addEventListener("click", closeCityModal);
+      if (cityModal) {
+        cityModal.addEventListener("click", (event) => {
+          if (event.target === cityModal) closeCityModal();
+        });
+      }
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeCityModal();
+      });
+
+      const mobileCta = document.querySelector("[data-mobile-cta]");
+      const mobileCtaMedia = window.matchMedia("(max-width: 959px)");
+      let mobileCtaTicking = false;
+      const updateMobileCta = () => {
+        if (!mobileCta) return;
+        const showAfter = window.innerHeight * 0.45;
+        const shouldShow = mobileCtaMedia.matches && window.scrollY > showAfter;
+        mobileCta.classList.toggle("is-visible", shouldShow);
+      };
+      const requestMobileCtaUpdate = () => {
+        if (mobileCtaTicking) return;
+        mobileCtaTicking = true;
+        requestAnimationFrame(() => {
+          updateMobileCta();
+          mobileCtaTicking = false;
+        });
+      };
+      if (mobileCta) {
+        updateMobileCta();
+        window.addEventListener("scroll", requestMobileCtaUpdate, { passive: true });
+        window.addEventListener("resize", requestMobileCtaUpdate);
+        if (typeof mobileCtaMedia.addEventListener === "function") {
+          mobileCtaMedia.addEventListener("change", updateMobileCta);
+        } else if (typeof mobileCtaMedia.addListener === "function") {
+          mobileCtaMedia.addListener(updateMobileCta);
+        }
       }
 
       const revealItems = document.querySelectorAll(".sg-reveal");
@@ -2958,7 +3670,80 @@
       const zipForm = document.querySelector("[data-zip-form]");
       const zipInput = document.getElementById("sgZip");
       const zipResult = document.querySelector("[data-zip-result]");
-      const supportedZips = new Set(["60554", "60511", "60506", "60542", "60560", "60543", "60538", "60585", "60564", "60563", "60565"]);
+      const serviceZips = {
+        "60101": { city: "Addison", url: "/addison" },
+        "60502": { city: "Aurora", url: "/aurora" },
+        "60503": { city: "Aurora", url: "/aurora" },
+        "60504": { city: "Aurora", url: "/aurora" },
+        "60505": { city: "Aurora", url: "/aurora" },
+        "60506": { city: "Aurora", url: "/aurora" },
+        "60507": { city: "Aurora", url: "/aurora" },
+        "60568": { city: "Aurora", url: "/aurora" },
+        "60572": { city: "Aurora", url: "/aurora" },
+        "60103": { city: "Bartlett", url: "/bartlett" },
+        "60510": { city: "Batavia", url: "/batavia" },
+        "60511": { city: "Big Rock", url: "/service-areas" },
+        "60440": { city: "Bolingbrook", url: "/bolingbrook" },
+        "60490": { city: "Bolingbrook", url: "/bolingbrook" },
+        "60527": { city: "Burr Ridge", url: "/burrridge" },
+        "60116": { city: "Carol Stream", url: "/carolstream" },
+        "60128": { city: "Carol Stream", url: "/carolstream" },
+        "60188": { city: "Carol Stream", url: "/carolstream" },
+        "60197": { city: "Carol Stream", url: "/carolstream" },
+        "60199": { city: "Carol Stream", url: "/carolstream" },
+        "60514": { city: "Clarendon Hills", url: "/clarendonhills" },
+        "60561": { city: "Darien", url: "/darien" },
+        "60515": { city: "Downers Grove", url: "/downersgrove" },
+        "60516": { city: "Downers Grove", url: "/downersgrove" },
+        "60126": { city: "Elmhurst", url: "/elmhurst" },
+        "60162": { city: "Elmhurst", url: "/elmhurst" },
+        "60134": { city: "Geneva", url: "/geneva" },
+        "60137": { city: "Glen Ellyn", url: "/glenellyn" },
+        "60138": { city: "Glen Ellyn", url: "/glenellyn" },
+        "60521": { city: "Hinsdale", url: "/hinsdale" },
+        "60522": { city: "Hinsdale", url: "/hinsdale" },
+        "60491": { city: "Homer Glen", url: "/homerglen" },
+        "60143": { city: "Itasca", url: "/itasca" },
+        "60439": { city: "Lemont", url: "/lemont" },
+        "60532": { city: "Lisle", url: "/lisle" },
+        "60441": { city: "Lockport", url: "/lockport" },
+        "60148": { city: "Lombard", url: "/lombard" },
+        "60538": { city: "Montgomery", url: "/montgomery" },
+        "60540": { city: "Naperville", url: "/naperville" },
+        "60563": { city: "Naperville", url: "/naperville" },
+        "60564": { city: "Naperville", url: "/naperville" },
+        "60565": { city: "Naperville", url: "/naperville" },
+        "60567": { city: "Naperville", url: "/naperville" },
+        "60542": { city: "North Aurora", url: "/northaurora" },
+        "60523": { city: "Oak Brook", url: "/oakbrook" },
+        "60543": { city: "Oswego", url: "/oswego" },
+        "60544": { city: "Plainfield", url: "/plainfield" },
+        "60585": { city: "Plainfield", url: "/plainfield" },
+        "60586": { city: "Plainfield", url: "/plainfield" },
+        "60446": { city: "Romeoville", url: "/romeoville" },
+        "60174": { city: "St. Charles", url: "/stcharles" },
+        "60175": { city: "St. Charles", url: "/stcharles" },
+        "60107": { city: "Streamwood", url: "/streamwood" },
+        "60554": { city: "Sugar Grove", url: "/sugargrove" },
+        "60181": { city: "Villa Park", url: "/villapark" },
+        "60555": { city: "Warrenville", url: "/warrenville" },
+        "60184": { city: "Wayne", url: "/wayne" },
+        "60185": { city: "West Chicago", url: "/westchicago" },
+        "60186": { city: "West Chicago", url: "/westchicago" },
+        "60559": { city: "Westmont", url: "/westmont" },
+        "60187": { city: "Wheaton", url: "/wheaton" },
+        "60189": { city: "Wheaton", url: "/wheaton" },
+        "60190": { city: "Winfield", url: "/winfield" },
+        "60191": { city: "Wood Dale", url: "/wooddale" },
+        "60517": { city: "Woodridge", url: "/woodridge" },
+        "60560": { city: "Yorkville", url: "/yorkville" }
+      };
+
+      const showZipResult = (type, message) => {
+        zipResult.className = "sg-zip__result " + type + " is-visible";
+        zipResult.innerHTML = message;
+      };
+
       if (zipInput) {
         zipInput.addEventListener("input", () => {
           zipInput.value = zipInput.value.replace(/\D/g, "").slice(0, 5);
@@ -2968,12 +3753,16 @@
         zipForm.addEventListener("submit", (event) => {
           event.preventDefault();
           const zip = zipInput.value.trim();
-          if (supportedZips.has(zip)) {
-            zipResult.innerHTML = 'Yes, we serve this area. <a href="/quote">Start your quote</a>.';
+          const serviceArea = serviceZips[zip];
+          if (!zip || zip.length !== 5) {
+            showZipResult("error", "&#10060; Please enter a valid 5-digit ZIP code");
+          } else if (serviceArea) {
+            showZipResult(
+              "success",
+              '&#9989; Great news! We serve <a href="' + serviceArea.url + '">' + serviceArea.city + "</a> (ZIP " + zip + "). Ready to book your cleaning service?"
+            );
           } else if (zip.length === 5) {
-            zipResult.textContent = "Send us a quote request and we will confirm availability near Sugar Grove.";
-          } else {
-            zipResult.textContent = "Enter a 5-digit ZIP code.";
+            showZipResult("error", "&#10060; Sorry, ZIP code " + zip + " is currently outside our service area.");
           }
         });
       }

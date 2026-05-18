@@ -622,6 +622,23 @@ test("serves the Sugar Grove copy on /sugargrove2", async () => {
     body,
     /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/sugargrove2">/
   );
+  assert.match(
+    body,
+    /<h1>House Cleaning Services in <span class="sg-accent">Sugar Grove<\/span>, IL<\/h1>/
+  );
+  assert.match(
+    body,
+    /Reliable regular, deep, and move-in\/move-out cleaning for homes in Sugar Grove and nearby areas\./
+  );
+  assert.match(
+    body,
+    /Local cleaning team &bull; Transparent pricing &bull; Weekly, bi-weekly, and one-time service/
+  );
+  assert.match(body, /<a class="sg-button sg-hero-panel__cta" href="\/quote">Get Free Quote<\/a>/);
+  assert.match(body, /Looking for a reliable house cleaning service in <strong>Sugar Grove\?<\/strong>/);
+  assert.match(body, /Shynli Cleaning helps Sugar Grove homeowners keep their homes clean, fresh, and easier to maintain\./);
+  assert.match(body, /regular house cleaning, deep cleaning, move-in\/move-out cleaning, and one-time cleaning/);
+  assert.match(body, /Whether you need weekly cleaning, bi-weekly cleaning, or a full deep clean before guests/);
   assert.match(body, /<section id="sugargrove-residential-services"/);
   assert.match(body, /<section id="sugargrove-recurring-cleaning"/);
   assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
