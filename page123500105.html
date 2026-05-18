@@ -1481,21 +1481,23 @@
     .sg-quote__contact a {
       display: inline-flex;
       align-items: center;
-      gap: 14px;
-      color: #fff;
+      gap: 12px;
+      color: #e8e1d9;
       text-decoration: none;
     }
 
-    .sg-quote__contact a[href^="mailto:"]::before {
-      content: "";
-      width: 26px;
-      height: 18px;
-      display: inline-block;
-      background:
-        linear-gradient(45deg, transparent 45%, #fff 46% 54%, transparent 55%) left 2px top 2px / 13px 13px no-repeat,
-        linear-gradient(-45deg, transparent 45%, #fff 46% 54%, transparent 55%) right 2px top 2px / 13px 13px no-repeat;
-      border: 2px solid #fff;
-      border-radius: 2px;
+    .sg-quote__icon {
+      width: 25px;
+      min-width: 25px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      color: #e8e1d9;
+    }
+
+    .sg-quote__icon svg {
+      display: block;
+      fill: currentColor;
     }
 
     .sg-quote__house {
@@ -2744,8 +2746,18 @@
             <div class="sg-quote__copy">
               <h3>We'll confirm the details and help you choose the right cleaning schedule.</h3>
               <div class="sg-quote__contact">
-                <a href="tel:+16304466235">+1(630)446-6235</a>
-                <a href="mailto:info@shynli.com">info@shynli.com</a>
+                <a href="tel:+16304466235">
+                  <span class="sg-quote__icon" aria-hidden="true">
+                    <svg width="23" height="23" viewBox="0 0 23 23" focusable="false"><path d="M20.2546 15.3125L17.0796 14.95C16.7063 14.9062 16.3279 14.9475 15.9728 15.0709C15.6177 15.1943 15.2953 15.3966 15.0296 15.6625L12.7296 17.9625C9.18133 16.1574 6.29717 13.2733 4.49209 9.725L6.80459 7.4125C7.34209 6.875 7.60459 6.125 7.51709 5.3625L7.15459 2.2125C7.08399 1.60261 6.79142 1.04003 6.33267 0.631995C5.87392 0.223957 5.28105 -0.00100009 4.66709 3.34244e-06H2.50459C1.09209 3.34244e-06 -0.0829082 1.175 0.00459185 2.5875C0.667092 13.2625 9.20459 21.7875 19.8671 22.45C21.2796 22.5375 22.4546 21.3625 22.4546 19.95V17.7875C22.4671 16.525 21.5171 15.4625 20.2546 15.3125Z"></path></svg>
+                  </span>
+                  +1(630)446-6235
+                </a>
+                <a href="mailto:info@shynli.com">
+                  <span class="sg-quote__icon" aria-hidden="true">
+                    <svg width="25" height="20" viewBox="0 0 25 20" focusable="false"><path d="M2.5 20C1.8125 20 1.22417 19.7554 0.735 19.2663C0.245834 18.7771 0.000833333 18.1883 0 17.5V2.5C0 1.8125 0.245 1.22417 0.735 0.735C1.225 0.245833 1.81333 0.000833333 2.5 0H22.5C23.1875 0 23.7763 0.245 24.2663 0.735C24.7563 1.225 25.0008 1.81333 25 2.5V17.5C25 18.1875 24.7554 18.7763 24.2663 19.2663C23.7771 19.7563 23.1883 20.0008 22.5 20H2.5ZM12.5 11.25L22.5 5V2.5L12.5 8.75L2.5 2.5V5L12.5 11.25Z"></path></svg>
+                  </span>
+                  info@shynli.com
+                </a>
               </div>
             </div>
             <img class="sg-quote__house" src="images/shynli-quote-house.png" alt="">
