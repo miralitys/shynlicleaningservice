@@ -24,10 +24,10 @@
       --sg-cream: #faf9f6;
       --sg-ink: #313131;
       --sg-muted: #5d5b57;
-      --sg-soft: #e5ded5;
+      --sg-soft: #e8e1d9;
       --sg-soft-2: #d8cfc4;
       --sg-stone: #bbb6b0;
-      --sg-rose: #a84460;
+      --sg-rose: #9e435a;
       --sg-rose-dark: #7d3648;
       --sg-line: rgba(168, 68, 96, 0.28);
       --sg-shadow: 0 18px 46px rgba(49, 49, 49, 0.08);
@@ -94,11 +94,11 @@
     }
 
     .sg-header__inner {
-      min-height: 70px;
+      min-height: 68px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 24px;
+      gap: 50px;
     }
 
     .sg-logo {
@@ -128,6 +128,10 @@
       align-items: center;
       gap: 26px;
       min-width: 0;
+    }
+
+    .sg-nav__right {
+      gap: 20px;
     }
 
     .sg-nav a,
@@ -196,6 +200,19 @@
       color: var(--sg-rose) !important;
     }
 
+    .sg-nav__call {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--sg-rose) !important;
+    }
+
+    .sg-nav__call span {
+      color: #111;
+      font-size: 15px;
+      line-height: 1;
+    }
+
     .sg-button {
       display: inline-flex;
       align-items: center;
@@ -214,8 +231,9 @@
     }
 
     .sg-nav a.sg-button {
+      width: 167px;
       min-height: 40px;
-      padding: 0 30px;
+      padding: 0;
       border: 1px solid var(--sg-rose);
       background: var(--sg-rose);
       color: #fff !important;
@@ -241,6 +259,29 @@
     .sg-button--outline:hover {
       background: var(--sg-rose);
       color: #fff !important;
+    }
+
+    .sg-city-button {
+      width: 160px !important;
+      gap: 8px;
+    }
+
+    .sg-city-button::after {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-right: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+      transform: rotate(45deg) translateY(-2px);
+    }
+
+    .sg-nav__call + .sg-button {
+      margin-left: 9px;
+    }
+
+    .sg-nav .sg-button + .sg-city-button {
+      margin-left: -9px;
     }
 
     .sg-mobile-toggle {
@@ -283,7 +324,8 @@
     }
 
     .sg-hero h1 {
-      font-size: 54px;
+      font-size: 52px;
+      line-height: 1.2;
     }
 
     .sg-accent {
@@ -291,83 +333,64 @@
     }
 
     .sg-hero__lead {
-      margin: 18px 0 0;
+      margin: 20px 0 0;
       font-size: 18px;
-      line-height: 1.45;
+      line-height: 1.2;
       color: var(--sg-muted);
     }
 
     .sg-hero__visual {
       position: relative;
-      width: min(1060px, 100%);
-      margin: 28px auto 0;
+      width: min(1163px, 100%);
+      margin: 26px auto 0;
     }
 
     .sg-hero__people {
       position: relative;
       z-index: 2;
-      width: 980px;
-      max-width: 88%;
-      margin: 0 auto;
+      width: 1188px;
+      height: auto;
+      aspect-ratio: 1188 / 478;
+      max-width: none;
+      margin-left: 52px;
+      background: url("images/shynli-sugargrove-cleaners.png") center / cover no-repeat;
     }
 
     .sg-spark {
       position: absolute;
-      width: 22px;
-      height: 22px;
-      transform: rotate(28deg);
+      width: 24px;
+      height: 24px;
+      background: url("images/shynli-spark.svg") center / contain no-repeat;
       pointer-events: none;
     }
 
     .sg-spark::before,
     .sg-spark::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      margin: auto;
-      background: var(--sg-rose);
-      border-radius: 2px;
-    }
-
-    .sg-spark::before {
-      width: 7px;
-      height: 22px;
-    }
-
-    .sg-spark::after {
-      width: 22px;
-      height: 7px;
+      display: none;
     }
 
     .sg-hero__spark-left {
-      left: 12%;
-      top: 24%;
+      left: 96px;
+      top: 68px;
+      width: 40px;
+      height: 39px;
     }
 
     .sg-hero__spark-right {
-      right: 8%;
-      top: 39%;
-      width: 14px;
-      height: 14px;
-    }
-
-    .sg-hero__spark-right::before {
-      width: 5px;
-      height: 14px;
-    }
-
-    .sg-hero__spark-right::after {
-      width: 14px;
-      height: 5px;
+      left: 1029px;
+      top: 153px;
+      right: auto;
+      width: 24px;
+      height: 24px;
     }
 
     .sg-hero-panel {
       position: relative;
       z-index: 3;
-      margin-top: -42px;
-      padding: 28px 30px 58px;
+      margin-top: -93px;
+      padding: 20px 30px 58px;
       background: var(--sg-soft);
-      border-radius: 16px 16px 0 0;
+      border-radius: 20px 20px 0 0;
     }
 
     .sg-hero-panel__top {
@@ -381,6 +404,7 @@
       display: flex;
       align-items: center;
       gap: 14px;
+      transform: translateY(-11px);
     }
 
     .sg-review-stack__icons {
@@ -409,7 +433,7 @@
 
     .sg-review-stack__number,
     .sg-rating__score {
-      font-family: "Playfair Display", Georgia, serif;
+      font-family: Georgia, "Times New Roman", serif;
       font-size: 28px;
       line-height: 1;
       font-style: italic;
@@ -425,6 +449,7 @@
     }
 
     .sg-hero-panel__cta {
+      width: 100%;
       min-height: 70px;
       font-size: 16px;
       font-weight: 700;
@@ -437,6 +462,7 @@
 
     .sg-rating {
       text-align: right;
+      transform: translateY(-12px);
     }
 
     .sg-rating__score {
@@ -1281,6 +1307,16 @@
         width: 100%;
       }
 
+      .sg-nav a.sg-button,
+      .sg-city-button {
+        width: 100% !important;
+      }
+
+      .sg-nav__call + .sg-button,
+      .sg-nav .sg-button + .sg-city-button {
+        margin-left: 0;
+      }
+
       .sg-hero {
         padding: 8px 0 44px;
       }
@@ -1303,7 +1339,9 @@
       }
 
       .sg-hero__people {
+        width: 100%;
         max-width: 100%;
+        margin: 0 auto;
       }
 
       .sg-hero__spark-left {
@@ -1312,6 +1350,7 @@
       }
 
       .sg-hero__spark-right {
+        left: auto;
         right: 8%;
         top: 12px;
       }
@@ -1345,11 +1384,13 @@
 	        grid-area: reviews;
 	        justify-content: flex-start;
 	        gap: 12px;
+	        transform: none;
 	      }
 
 	      .sg-rating {
 	        grid-area: rating;
 	        text-align: right;
+	        transform: none;
 	      }
 
       .sg-hero-panel__tiles {
@@ -1692,9 +1733,9 @@
           </div>
           <div class="sg-nav__right">
             <a class="sg-nav__accent" href="#clean">Become a Cleaner</a>
-            <a href="tel:+16308127077">Call Us</a>
+            <a class="sg-nav__call" href="tel:+16308127077"><span aria-hidden="true">&#128222;</span>Call Us</a>
             <a class="sg-button" href="/quote">Get Free Quote</a>
-            <a class="sg-button sg-button--outline" href="#city">Sugar Grove</a>
+            <a class="sg-button sg-button--outline sg-city-button" href="#city">Sugar Grove</a>
           </div>
         </nav>
       </div>
@@ -1710,12 +1751,12 @@
           <div class="sg-hero__visual sg-reveal">
             <span class="sg-spark sg-hero__spark-left" aria-hidden="true"></span>
             <span class="sg-spark sg-hero__spark-right" aria-hidden="true"></span>
-            <img class="sg-hero__people" src="images/shynli-sugargrove-cleaners.png" alt="Shynli cleaners in burgundy aprons">
+            <div class="sg-hero__people" role="img" aria-label="Shynli cleaners in burgundy aprons"></div>
             <div class="sg-hero-panel">
               <div class="sg-hero-panel__top">
                 <div class="sg-review-stack" aria-label="300 plus customer reviews">
                   <div class="sg-review-stack__icons" aria-hidden="true">
-                    <span class="sg-review-stack__icon">+</span>
+                    <span class="sg-review-stack__icon">&#10022;</span>
                     <span class="sg-review-stack__icon"></span>
                     <span class="sg-review-stack__icon"></span>
                   </div>
