@@ -1257,11 +1257,13 @@
       padding: 0 22px;
       border: 2px solid var(--sg-rose);
       border-radius: 999px;
-      background: var(--sg-cream);
+      background: rgba(250, 249, 246, 0);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
       color: var(--sg-ink);
       text-decoration: none;
       font-size: 16px;
-      transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+      transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, backdrop-filter 180ms ease;
     }
 
     .sg-area-pill:nth-child(2),
@@ -1284,6 +1286,8 @@
       width: 351px;
       min-width: 351px;
       background: var(--sg-rose);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
       color: #fff;
     }
 
