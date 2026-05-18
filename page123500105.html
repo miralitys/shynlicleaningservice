@@ -153,16 +153,16 @@
       position: relative;
     }
 
-    .sg-services-menu__trigger::after {
-      content: "";
-      display: inline-block;
-      width: 11px;
-      height: 7px;
+    .sg-services-menu__chevron {
+      width: 12px;
+      height: 8px;
       margin-left: 8px;
-      background: currentColor;
       vertical-align: 2px;
-      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7' fill='none'%3E%3Cpath d='M1 1L5.5 5.5L10 1' stroke='black' stroke-width='1.15' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7' fill='none'%3E%3Cpath d='M1 1L5.5 5.5L10 1' stroke='black' stroke-width='1.15' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .sg-services-menu__list {
@@ -2478,7 +2478,7 @@
         <nav class="sg-nav" aria-label="Main navigation" data-menu>
           <div class="sg-nav__left">
             <div class="sg-services-menu">
-              <button class="sg-services-menu__trigger" type="button">Services</button>
+              <button class="sg-services-menu__trigger" type="button">Services<svg class="sg-services-menu__chevron" viewBox="0 0 12 8" aria-hidden="true" focusable="false"><path d="M1 1.25 6 6.25l5-5"></path></svg></button>
               <ul class="sg-services-menu__list">
                 <li><a href="/services/regular-cleaning">Regular Home Cleaning</a></li>
                 <li><a href="/services/deep-cleaning">Deep Cleaning for Homes That Need Extra Care</a></li>
