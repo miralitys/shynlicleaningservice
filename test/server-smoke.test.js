@@ -549,6 +549,10 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
   assert.match(
     body,
+    /@media screen and \(max-width:1199px\)\{[\s\S]*?#rec1824177293 \.tn-elem\[data-elem-id="1767801668999"\]\{[^}]*width:min\(calc\(100% - 128px\),760px\)!important/
+  );
+  assert.match(
+    body,
     /#rec1802285983 \.tn-elem\[data-elem-id="1767696101290"\]\{[^}]*width:100%!important/
   );
   assert.match(
