@@ -433,6 +433,12 @@
       z-index: 2;
     }
 
+    .sg-review-stack__icon:nth-child(n+2)::before {
+      content: "\2726";
+      font-size: 18px;
+      line-height: 1;
+    }
+
     .sg-review-stack__number,
     .sg-rating__score {
       font-family: Georgia, "Times New Roman", serif;
@@ -511,6 +517,31 @@
       background: var(--sg-rose);
       color: #fff;
       font-weight: 700;
+    }
+
+    .sg-info-tile__icon--team {
+      position: relative;
+      color: transparent;
+    }
+
+    .sg-info-tile__icon--team::before,
+    .sg-info-tile__icon--team::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .sg-info-tile__icon--team::before {
+      left: 12px;
+      top: 14px;
+      box-shadow: 6px -3px 0 #fff, 12px 0 0 #fff, 0 10px 0 #fff, 6px 8px 0 #fff, 12px 10px 0 #fff;
+    }
+
+    .sg-info-tile__icon--team::after {
+      display: none;
     }
 
     .sg-info-tile p {
@@ -732,13 +763,27 @@
 
     .sg-pricing {
       padding-top: 58px;
-      padding-bottom: 34px;
+      padding-bottom: 64px;
     }
 
     .sg-pricing__header {
+      position: relative;
+      top: 5px;
       width: min(680px, 100%);
       margin-left: auto;
       margin-bottom: 0;
+    }
+
+    .sg-pricing .sg-section-title,
+    .sg-team .sg-section-title,
+    .sg-areas .sg-section-title,
+    .sg-quote .sg-section-title {
+      font-size: 50px;
+      line-height: 1.16;
+    }
+
+    .sg-pricing__header .sg-section-lead {
+      margin-top: 16px;
     }
 
 	    .sg-pricing__grid {
@@ -746,7 +791,7 @@
 	      display: block;
 	      width: 100%;
 	      height: 681px;
-	      margin: -62px auto 0;
+	      margin: -81px auto 0;
 	    }
 
     .sg-price-card {
@@ -931,12 +976,15 @@
     }
 
     .sg-pricing__statement {
-      margin: 60px 0 28px;
+      width: min(1240px, calc(100vw - 40px));
+      margin: 60px 0 40px 50%;
+      translate: -50% 0;
       text-align: center;
       font-family: "Playfair Display", Georgia, serif;
       color: var(--sg-rose);
       font-size: 32px;
       line-height: 1.2;
+      white-space: nowrap;
     }
 
     .sg-pricing__buttons {
@@ -955,9 +1003,10 @@
     }
 
 	    .sg-pricing__fineprint {
-	      margin: 12px 0 0;
+	      margin: 8px 0 0;
 	      color: var(--sg-muted);
 	      font-size: 14px;
+	      line-height: 1.2;
 	      text-align: center;
 	    }
 
@@ -968,23 +1017,40 @@
     }
 
     .sg-team__list {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 48px;
-      max-width: 920px;
-      margin: 52px auto 72px;
+      position: relative;
+      display: block;
+      width: min(1160px, 100%);
+      height: 50px;
+      margin: 36px auto 85px;
       padding: 0;
       list-style: none;
       text-align: left;
     }
 
     .sg-team__item {
+      position: absolute;
+      top: 0;
       display: flex;
       align-items: center;
       gap: 14px;
       font-family: "Playfair Display", Georgia, serif;
-      font-size: 22px;
-      line-height: 1.05;
+      font-size: 21px;
+      line-height: 1.18;
+    }
+
+    .sg-team__item:nth-child(1) {
+      left: 82px;
+      width: 294px;
+    }
+
+    .sg-team__item:nth-child(2) {
+      left: 409px;
+      width: 306px;
+    }
+
+    .sg-team__item:nth-child(3) {
+      left: 686px;
+      width: 488px;
     }
 
     .sg-team__dot {
@@ -993,20 +1059,16 @@
     }
 
     .sg-areas {
-      padding-top: 42px;
-      padding-bottom: 104px;
+      padding-top: 60px;
+      padding-bottom: 98px;
       text-align: center;
-    }
-
-    .sg-areas .sg-section-title {
-      font-size: 46px;
     }
 
     .sg-map {
       position: relative;
-      width: min(760px, 100%);
+      width: min(714px, 100%);
       min-height: 600px;
-      margin: 46px auto 0;
+      margin: 41px auto 0;
     }
 
     .sg-map__dots {
@@ -1036,17 +1098,18 @@
       z-index: 2;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       flex-wrap: wrap;
-      gap: 12px;
-      max-width: 720px;
-      margin: 0 auto 20px;
-      padding-top: 84px;
+      gap: 8px 10px;
+      max-width: 714px;
+      margin: 0 auto 21px;
+      padding-top: 50px;
     }
 
     .sg-area-pill {
-      min-width: 144px;
-      min-height: 48px;
+      min-width: 0;
+      width: 140px;
+      min-height: 50px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1060,6 +1123,16 @@
       transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
     }
 
+    .sg-area-pill:nth-child(2),
+    .sg-area-pill:nth-child(4) {
+      width: 170px;
+    }
+
+    .sg-area-pill:nth-child(3),
+    .sg-area-pill:nth-child(6) {
+      width: 200px;
+    }
+
     .sg-area-pill:hover {
       background: var(--sg-rose);
       color: #fff;
@@ -1067,7 +1140,8 @@
     }
 
     .sg-area-pill--primary {
-      min-width: 350px;
+      width: 351px;
+      min-width: 351px;
       background: var(--sg-rose);
       color: #fff;
     }
@@ -1075,19 +1149,20 @@
     .sg-zip {
       position: relative;
       z-index: 3;
-      width: min(720px, 100%);
+      width: min(714px, 100%);
+      min-height: 206px;
       margin: 0 auto;
-      padding: 34px 48px 36px;
+      padding: 30px 35px 34px;
       background: rgba(229, 222, 213, 0.86);
       border-radius: 16px;
       backdrop-filter: blur(10px);
     }
 
     .sg-zip h2 {
-      max-width: 440px;
-      margin: 0 auto 20px;
+      max-width: 333px;
+      margin: 0 auto 5px;
       font-family: "Playfair Display", Georgia, serif;
-      font-size: 30px;
+      font-size: 28px;
       font-weight: 400;
       line-height: 1.05;
       color: var(--sg-rose);
@@ -1097,7 +1172,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px;
+      padding: 12px 8px;
       background: #fff;
       border-radius: 12px;
     }
@@ -1138,20 +1213,24 @@
     }
 
     .sg-zip__result {
-      min-height: 20px;
-      margin: 14px 0 0;
+      min-height: 0;
+      margin: 0;
       color: var(--sg-muted);
       font-size: 13px;
     }
 
+    .sg-zip__result:empty {
+      display: none;
+    }
+
     .sg-quote {
-      padding: 60px 0 92px;
+      padding: 60px 0 59px;
     }
 
     .sg-quote .sg-section-title {
       text-align: center;
       font-size: 50px;
-      margin-bottom: 60px;
+      margin-bottom: 57px;
     }
 
     .sg-quote__panel {
@@ -1249,8 +1328,23 @@
     }
 
     .sg-quote__contact a {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
       color: #fff;
       text-decoration: none;
+    }
+
+    .sg-quote__contact a[href^="mailto:"]::before {
+      content: "";
+      width: 26px;
+      height: 18px;
+      display: inline-block;
+      background:
+        linear-gradient(45deg, transparent 45%, #fff 46% 54%, transparent 55%) left 2px top 2px / 13px 13px no-repeat,
+        linear-gradient(-45deg, transparent 45%, #fff 46% 54%, transparent 55%) right 2px top 2px / 13px 13px no-repeat;
+      border: 2px solid #fff;
+      border-radius: 2px;
     }
 
     .sg-quote__house {
@@ -1264,13 +1358,13 @@
     .sg-footer {
       background: #2f2f2f;
       color: #d8cfc4;
-      padding: 82px 0 74px;
+      padding: 67px 0 25px;
     }
 
     .sg-footer__grid {
       display: grid;
-      grid-template-columns: 1.4fr repeat(3, 1fr);
-      gap: 56px;
+      grid-template-columns: repeat(4, minmax(0, 260px));
+      gap: 40px;
     }
 
     .sg-footer h2,
@@ -1397,11 +1491,11 @@
       }
 
       .sg-hero {
-        padding: 8px 0 44px;
+        padding: 22px 0 0;
       }
 
       .sg-hero h1 {
-        max-width: 360px;
+        max-width: 320px;
         margin: 0 auto;
         font-size: 31px;
         line-height: 1.06;
@@ -1409,18 +1503,19 @@
 
       .sg-hero__lead {
         max-width: 330px;
-        margin-top: 24px;
+        margin-top: 31px;
         font-size: 15px;
       }
 
       .sg-hero__visual {
-        margin-top: 50px;
+        margin-top: 29px;
       }
 
       .sg-hero__people {
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
+        transform: translateY(26px);
       }
 
       .sg-hero__spark-left {
@@ -1436,7 +1531,7 @@
 
       .sg-hero-panel {
         margin-top: -1px;
-        padding: 20px 22px 46px;
+        padding: 20px 22px 61px;
         border-radius: 16px 16px 0 0;
       }
 
@@ -1466,16 +1561,20 @@
 	        transform: none;
 	      }
 
-	      .sg-rating {
-	        grid-area: rating;
-	        text-align: right;
-	        transform: none;
-	      }
+      .sg-rating {
+        grid-area: rating;
+        text-align: right;
+        transform: none;
+      }
+
+      .sg-review-stack__label {
+        white-space: nowrap;
+      }
 
       .sg-hero-panel__tiles {
         grid-template-columns: 1fr;
         gap: 18px;
-        margin-top: 76px;
+        margin-top: 100px;
       }
 
       .sg-info-tile {
@@ -1498,18 +1597,29 @@
         padding: 58px 0;
       }
 
+      .sg-section--services {
+        padding-top: 44px;
+        padding-bottom: 44px;
+      }
+
       .sg-services__header {
         grid-template-columns: 1fr;
         gap: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
       }
 
       .sg-section-title,
       .sg-recurring .sg-section-title,
+      .sg-pricing .sg-section-title,
+      .sg-team .sg-section-title,
       .sg-areas .sg-section-title,
       .sg-quote .sg-section-title {
         font-size: 32px;
         line-height: 1.08;
+      }
+
+      .sg-section--services .sg-section-title {
+        max-width: 340px;
       }
 
       .sg-services__intro,
@@ -1527,16 +1637,33 @@
       .sg-service-card {
         height: auto;
         min-height: 0;
-        padding: 24px;
+        padding: 20px;
       }
 
       .sg-service-card h3 {
-        margin-top: 30px;
+        margin-top: 15px;
         font-size: 24px;
+      }
+
+      .sg-service-card:nth-child(1) {
+        height: 203px;
+      }
+
+      .sg-service-card:nth-child(2) {
+        height: 227px;
+      }
+
+      .sg-service-card:nth-child(3) {
+        height: 254px;
+      }
+
+      .sg-services__grid {
+        gap: 14px;
       }
 
       .sg-services__secondary {
         justify-content: flex-start;
+        min-height: 113px;
         padding: 18px;
       }
 
@@ -1559,41 +1686,94 @@
 
       .sg-note {
         justify-content: flex-start;
+        width: 320px;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
         min-height: 104px;
-        padding: 22px 26px;
+        padding: 22px 10px;
         font-size: 20px;
       }
 
+      .sg-recurring .sg-note {
+        min-height: 119px;
+      }
+
+      .sg-team .sg-note {
+        min-height: 144px;
+      }
+
+      .sg-pricing {
+        padding-top: 0;
+      }
+
       .sg-pricing__header {
+        top: auto;
         width: 100%;
         margin: 0 0 22px;
         text-align: center;
       }
 
-	      .sg-pricing__grid {
-	        position: relative;
-	        display: grid;
-	        width: 100%;
-	        height: auto;
-	        margin: 0;
-	        grid-template-columns: 1fr;
-	        grid-template-rows: none;
-	        gap: 16px;
-	      }
+      .sg-pricing__header .sg-section-lead {
+        max-width: 320px;
+        margin: 9px auto 0;
+        line-height: 1.15;
+      }
+
+      .sg-pricing__grid {
+        position: relative;
+        display: grid;
+        width: 320px;
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto;
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+        gap: 16px;
+      }
 
       .sg-price-card,
       .sg-price-card--tall,
       .sg-price-card--wide {
         position: relative !important;
         inset: auto !important;
-        width: auto !important;
+        width: 320px !important;
+        max-width: 100% !important;
         height: auto !important;
         clip-path: none !important;
         min-height: 210px;
         display: flex;
         justify-content: flex-start;
-        padding: 124px 26px 28px;
+        padding: 124px 16px 24px;
         border-radius: 14px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(1) {
+        height: 243px !important;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(2) {
+        height: 212px !important;
+        min-height: 0;
+        padding-top: 84px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(3) {
+        height: 212px !important;
+        min-height: 0;
+        padding-top: 104px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(4) {
+        height: 218px !important;
+        min-height: 0;
+        padding-top: 86px;
+      }
+
+      .sg-pricing__grid .sg-price-card:nth-child(5) {
+        height: 185px !important;
+        min-height: 0;
+        padding-top: 92px;
       }
 
       .sg-price-card__number {
@@ -1616,14 +1796,28 @@
         font-size: 24px;
       }
 
+      .sg-price-card p {
+        font-size: 12px;
+        line-height: 1.18;
+      }
+
       .sg-pricing__statement {
-        margin: 42px 0 22px;
-        font-size: 21px;
+        width: 320px;
+        max-width: 100%;
+        margin: 42px auto 22px;
+        translate: none;
+        font-size: 19px;
+        line-height: 1;
+        white-space: normal;
       }
 
       .sg-pricing__buttons {
         flex-direction: column-reverse;
         gap: 16px;
+        width: 320px;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
       }
 
       .sg-pricing__buttons .sg-button {
@@ -1632,44 +1826,112 @@
         font-size: 13px;
       }
 
+      .sg-pricing__fineprint {
+        margin-top: 32px;
+      }
+
       .sg-team {
+        padding-top: 15px;
+        padding-bottom: 11px;
         text-align: left;
       }
 
       .sg-team__list {
+        position: static;
+        display: grid;
+        width: 320px;
+        max-width: 100%;
+        height: auto;
         gap: 30px;
-        margin: 38px 0 60px;
+        margin: 76px auto 91px;
+      }
+
+      .sg-team__item,
+      .sg-team__item:nth-child(1),
+      .sg-team__item:nth-child(2),
+      .sg-team__item:nth-child(3) {
+        position: static;
+        width: auto;
+        line-height: 1;
       }
 
       .sg-areas {
         text-align: center;
       }
 
+      .sg-areas .sg-section-title {
+        width: 100vw;
+        max-width: 390px;
+        margin-left: 50%;
+        transform: translateX(-50%);
+        font-size: 23px;
+      }
+
       .sg-map {
-        min-height: 720px;
+        width: 100%;
+        min-height: 851px;
         margin-top: 28px;
       }
 
       .sg-area-links {
-        align-items: stretch;
+        align-items: center;
+        justify-content: center;
         flex-direction: column;
         gap: 14px;
+        max-width: 100%;
         padding-top: 344px;
       }
 
       .sg-area-pill,
       .sg-area-pill--primary {
-        width: 100%;
+        width: 300px;
         min-width: 0;
         min-height: 32px;
         font-size: 13px;
+      }
+
+      .sg-area-pill:nth-child(1) {
+        order: 1;
+        width: 300px;
+      }
+
+      .sg-area-pill:nth-child(2) {
+        order: 2;
+        width: 300px;
+      }
+
+      .sg-area-pill:nth-child(3) {
+        order: 4;
+        width: 300px;
+      }
+
+      .sg-area-pill:nth-child(4) {
+        order: 6;
+        width: 300px;
+      }
+
+      .sg-area-pill:nth-child(5) {
+        order: 5;
+        width: 300px;
+      }
+
+      .sg-area-pill:nth-child(6) {
+        order: 3;
+        width: 300px;
+      }
+
+      .sg-area-pill:nth-child(7) {
+        order: 7;
+        width: 300px;
       }
 
       .sg-zip {
         position: absolute;
         top: 104px;
         left: 50%;
-        width: 100%;
+        width: 342px;
+        max-width: 100%;
+        min-height: 0;
         transform: translateX(-50%);
         padding: 28px 18px 34px;
       }
@@ -1687,12 +1949,12 @@
       }
 
       .sg-quote {
-        padding-top: 18px;
+        padding-top: 35px;
       }
 
       .sg-quote .sg-section-title {
         max-width: 340px;
-        margin: 0 auto 28px;
+        margin: 0 auto 77px;
         text-align: center;
       }
 
@@ -1737,17 +1999,77 @@
       }
 
       .sg-footer {
-        padding: 70px 0;
+        height: 798px;
+        padding: 0;
+      }
+
+      .sg-footer .sg-container {
+        width: 300px;
       }
 
       .sg-footer__grid {
-        gap: 28px;
+        position: relative;
+        display: block;
+        height: 798px;
+        gap: 0;
+      }
+
+      .sg-footer__grid > div {
+        position: absolute;
+        left: 0;
+        width: 300px;
+      }
+
+      .sg-footer__grid > div:nth-child(1) {
+        top: 117px;
+      }
+
+      .sg-footer__grid > div:nth-child(2) {
+        top: 207px;
+      }
+
+      .sg-footer__grid > div:nth-child(3) {
+        top: 400px;
+      }
+
+      .sg-footer__grid > div:nth-child(4) {
+        top: 570px;
+      }
+
+      .sg-footer h2 {
+        font-size: 17px;
+        line-height: 1.45;
+      }
+
+      .sg-footer__copy {
+        margin-top: 6px !important;
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .sg-footer h3 {
+        margin-bottom: 6px;
+        font-size: 22px;
+        line-height: 1.27;
+      }
+
+      .sg-footer ul {
+        gap: 12px;
+      }
+
+      .sg-footer li {
+        line-height: 15px;
+      }
+
+      .sg-footer a {
+        font-size: 12px;
+        line-height: 15px;
       }
     }
 
     @media (max-width: 479px) {
       .sg-container {
-        width: calc(100% - 20px);
+        width: calc(100% - 28px);
       }
 
       .sg-logo img {
@@ -1773,9 +2095,19 @@
 
       .sg-section-title,
       .sg-recurring .sg-section-title,
+      .sg-pricing .sg-section-title,
+      .sg-team .sg-section-title,
       .sg-areas .sg-section-title,
       .sg-quote .sg-section-title {
         font-size: 28px;
+      }
+
+      .sg-areas .sg-section-title {
+        font-size: 23px;
+      }
+
+      .sg-quote .sg-section-title {
+        font-size: 26px;
       }
     }
 
@@ -1871,7 +2203,7 @@
                   <p>Looking for professional home cleaning services in <strong>Sugar Grove?</strong></p>
                 </div>
                 <div class="sg-info-tile">
-                  <span class="sg-info-tile__icon" aria-hidden="true">&#9679;</span>
+                  <span class="sg-info-tile__icon sg-info-tile__icon--team" aria-hidden="true"></span>
                   <p>We focus on consistent service, transparent pricing, and trusted cleaners who know your home.</p>
                 </div>
               </div>
@@ -2058,7 +2390,7 @@
             <div class="sg-quote__copy">
               <h3>We'll confirm the details and help you choose the right cleaning schedule.</h3>
               <div class="sg-quote__contact">
-                <a href="tel:+16309493768">+1(630)949-3768</a>
+                <a href="tel:+16304466235">+1(630)446-6235</a>
                 <a href="mailto:info@shynli.com">info@shynli.com</a>
               </div>
             </div>
