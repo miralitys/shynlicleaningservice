@@ -622,6 +622,7 @@ test("serves the Sugar Grove copy on /sugargrove2", async () => {
   assert.match(body, /<section id="sugargrove-recurring-cleaning"/);
   assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
   assert.match(body, /Serving Sugar Grove and nearby communities/);
+  assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i);
 });
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
