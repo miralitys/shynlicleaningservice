@@ -546,6 +546,19 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   assert.ok(nearbyAreas, "Sugar Grove should include the nearby areas block");
   assert.match(nearbyAreas, /Serving Sugar Grove and nearby communities/);
   assert.doesNotMatch(nearbyAreas, /Find your area by ZIP code/);
+  assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
+  assert.match(
+    body,
+    /#rec1802285983 \.tn-elem\[data-elem-id="1767696101290"\]\{[^}]*width:100%!important/
+  );
+  assert.match(
+    body,
+    /#rec1824177293 \.tn-elem\[data-elem-id="1767801668999"\]\{[^}]*width:calc\(100% - 48px\)!important/
+  );
+  assert.match(
+    body,
+    /#rec1824177293 \.zip-input-wrapper\{[^}]*height:58px!important/
+  );
   assert.deepEqual(
     nearbyAreaButtons.map(({ label, href }) => [label, href]),
     [
