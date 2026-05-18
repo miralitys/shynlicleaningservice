@@ -512,11 +512,11 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   assert.equal(response.status, 200);
   assert.match(
     body,
-    /<title>Residential Cleaning in Sugar Grove, IL \| Home Cleaning Services<\/title>/
+    /<title>House Cleaning Services in Sugar Grove, IL \| Shynli Cleaning<\/title>/
   );
   assert.match(
     body,
-    /<meta property="og:title" content="Residential Cleaning in Sugar Grove, IL \| Home Cleaning Services" \/>/
+    /<meta property="og:title" content="House Cleaning Services in Sugar Grove, IL \| Shynli Cleaning" \/>/
   );
   assert.equal(h1Text.replace(/\s+,/g, ","), "Home Cleaning Services in Sugar Grove, IL");
   assert.match(
