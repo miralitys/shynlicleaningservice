@@ -570,7 +570,7 @@ const ROUTE_META_OVERRIDES = {
     title: "Move-In & Move-Out Cleaning Service | Shynli Cleaning",
     description:
       "Professional move-in and move-out cleaning service in Chicagoland. Inspection-ready results. Get a free quote in 60 seconds.",
-    canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning`,
+    canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning/ads`,
   },
   "/services/move-in-move-out-cleaning/ads-v2": {
     title: "Move-In & Move-Out Cleaning Service | Shynli Cleaning",

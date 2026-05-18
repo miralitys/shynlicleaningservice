@@ -12,6 +12,10 @@ function zipTargets(...entries) {
   return entries.map(([city, url]) => ({ city, url }));
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const EXPECTED_SERVICE_ZIP_LOOKUP = {
   "60101": zipTargets(["Addison", "/addison"]),
   "60103": zipTargets(["Bartlett", "/bartlett"]),
@@ -876,6 +880,53 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   );
   assert.equal(robotsResponse.status, 200);
   assert.doesNotMatch(robotsBody, /Disallow: \/services\/deep-cleaning\/ads\//);
+});
+
+test("serves all ads landing routes as indexable self-canonical pages without redirects", async () => {
+  const routes = [
+    "/ads",
+    "/ads-v2",
+    "/services/regular-cleaning/ads",
+    "/services/regular-cleaning/ads-v2",
+    "/services/deep-cleaning/ads",
+    "/services/deep-cleaning/ads-v2",
+    "/services/move-in-move-out-cleaning/ads",
+    "/services/move-in-move-out-cleaning/ads-v2",
+  ];
+  const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
+  const sitemapBody = await sitemapResponse.text();
+  const robotsResponse = await fetch(`${BASE_URL}/robots.txt`);
+  const robotsBody = await robotsResponse.text();
+
+  assert.equal(sitemapResponse.status, 200);
+  assert.equal(robotsResponse.status, 200);
+
+  for (const route of routes) {
+    const response = await fetch(`${BASE_URL}${route}`, { redirect: "manual" });
+    const body = await response.text();
+    const absoluteUrl = `https://shynlicleaningservice.com${route}`;
+
+    assert.equal(response.status, 200, route);
+    assert.equal(response.headers.get("location"), null, route);
+    assert.doesNotMatch(response.headers.get("x-robots-tag") || "", /noindex/i, route);
+    assert.doesNotMatch(body, /<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i, route);
+    assert.doesNotMatch(body, /<!--\s*\/?noindex\s*-->/i, route);
+    assert.match(
+      body,
+      new RegExp(`<link rel="canonical" href="${escapeRegExp(absoluteUrl)}"\\s*/?>`),
+      route
+    );
+    assert.match(
+      sitemapBody,
+      new RegExp(`<loc>${escapeRegExp(absoluteUrl)}</loc>`),
+      route
+    );
+    assert.doesNotMatch(
+      robotsBody,
+      new RegExp(`Disallow:\\s*${escapeRegExp(route)}(?:/|\\s|$)`),
+      route
+    );
+  }
 });
 
 test("serves ads v2 no-calculator variants as indexable routes", async () => {
