@@ -601,6 +601,29 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   assert.match(body, /id="shynli-local-team-benefits-style"/);
 });
 
+test("serves the Sugar Grove copy on /sugargrove2", async () => {
+  const response = await fetch(`${BASE_URL}/sugargrove2`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(
+    body,
+    /<title>House Cleaning Services in Sugar Grove, IL \| Shynli Cleaning<\/title>/
+  );
+  assert.match(
+    body,
+    /<meta property="og:url" content="https:\/\/shynlicleaningservice\.com\/sugargrove2" \/>/
+  );
+  assert.match(
+    body,
+    /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/sugargrove2">/
+  );
+  assert.match(body, /<section id="sugargrove-residential-services"/);
+  assert.match(body, /<section id="sugargrove-recurring-cleaning"/);
+  assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
+  assert.match(body, /Serving Sugar Grove and nearby communities/);
+});
+
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
   const cityRoutes = [
     ["/addison", /Addison/i],
@@ -634,6 +657,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/stcharles", /St\.? Charles/i],
     ["/streamwood", /Streamwood/i],
     ["/sugargrove", /Sugar Grove/i],
+    ["/sugargrove2", /Sugar Grove/i],
     ["/villapark", /Villa Park/i],
     ["/warrenville", /Warrenville/i],
     ["/wayne", /Wayne/i],

@@ -488,6 +488,7 @@ const BREADCRUMB_LABELS = new Map([
   ["/quote2", "Quote"],
   ["/service-areas", "Service Areas"],
   ["/service-areas-v2", "Service Areas"],
+  ["/sugargrove2", "Sugar Grove"],
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
   ["/services/deep-cleaning/ads", "Deep Cleaning"],
@@ -605,6 +606,11 @@ const ROUTE_META_OVERRIDES = {
   "/sugargrove": {
     title: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
     ogTitle: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
+  },
+  "/sugargrove2": {
+    title: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
+    ogTitle: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/sugargrove2`,
   },
   "/quote": {
     title: "Get a Free Quote | Shynli Cleaning",

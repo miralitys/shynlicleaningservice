@@ -13,6 +13,7 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
     ["/northaurora", "/site/page123500101.html"],
     ["/quote", "/site/quote2.html"],
     ["/sugargrove", "/site/page123500102.html"],
+    ["/sugargrove2", "/site/page123500105.html"],
     ["/home-simple", "/site/page108488156.html"],
     ["/yorkville", "/site/page123500103.html"],
     ["/admin", "/site/page-admin.html"],
@@ -23,6 +24,7 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
     ["/site/page108872586.html", { mtimeMs: Date.parse("2026-01-27T18:26:27Z") }],
     ["/site/page123500101.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
     ["/site/page123500102.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
+    ["/site/page123500105.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
     ["/site/page123500103.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
     ["/site/page123500104.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
   ]);
@@ -49,6 +51,7 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
   assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/bristol<\/loc>/);
   assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/northaurora<\/loc>/);
   assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/sugargrove<\/loc>/);
+  assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/sugargrove2<\/loc>/);
   assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/yorkville<\/loc>/);
   assert.match(xml, /<lastmod>2026-04-18T00:00:00\.000Z<\/lastmod>/);
   assert.doesNotMatch(xml, /https:\/\/shynlicleaningservice\.com\/quote/);
