@@ -990,6 +990,11 @@ test("keeps the commercial-cleaning main route hand-coded without Tilda runtime"
   const html = sanitizeHtml(readFixture("page110512356.html"), "/services/commercial-cleaning");
 
   assert.match(html, /class="commercial-clean-page"/);
+  assert.match(html, /data-city-open/);
+  assert.match(html, /data-city-modal/);
+  assert.match(html, /A-D:/);
+  assert.match(html, /Addison/);
+  assert.match(html, /Yorkville/);
   assert.match(html, /Commercial Cleaning Services/i);
   assert.match(html, /<meta name="robots" content="index,follow"\s*\/?>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/commercial-cleaning"\s*\/?>/);
@@ -1017,7 +1022,7 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
       file: "page110512356.html",
       cleanHandCoded: true,
       handCodedPattern: /class="commercial-clean-page"/,
-      cityHrefPattern: /href="\/locations\/chicago"/,
+      cityHrefPattern: /data-city-open/,
       cleanerHrefPattern: /href="\/become-a-cleaner"/,
     },
     { route: "/services/post-construction-cleaning", file: "page113041806.html" },

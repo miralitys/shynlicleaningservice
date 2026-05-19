@@ -41,7 +41,7 @@
         <a class="nav-link" href="/become-a-cleaner">Become a Cleaner</a>
         <a class="nav-link nav-link--phone" href="tel:+17054816804">&#9742; Call Us</a>
         <a class="nav-quote" href="/quote">Get Free Quote</a>
-        <a class="nav-link nav-link--city" href="/locations/chicago">City</a>
+        <button class="nav-link nav-link--city" type="button" data-city-open aria-haspopup="dialog" aria-expanded="false" aria-controls="cityModal">City</button>
       </nav>
 
       <button class="mobile-menu-button" type="button" aria-label="Open menu" aria-controls="mobileMenu" aria-expanded="false">
@@ -65,6 +65,69 @@
       <a class="mobile-menu__quote" href="/quote">Get Free Quote</a>
     </nav>
   </header>
+
+  <div class="city-modal" id="cityModal" data-city-modal aria-hidden="true">
+    <div class="city-modal__backdrop" data-city-close></div>
+    <div class="city-modal__panel" role="dialog" aria-modal="true" aria-label="Choose your city">
+      <button class="city-modal__close" type="button" aria-label="Close city list" data-city-close></button>
+      <div class="city-modal__grid">
+        <section>
+          <h2>A-D:</h2>
+          <a href="/addison">Addison</a>
+          <a href="/aurora">Aurora</a>
+          <a href="/bartlett">Bartlett</a>
+          <a href="/batavia">Batavia</a>
+          <a href="/bolingbrook">Bolingbrook</a>
+          <a href="/bristol">Bristol</a>
+          <a href="/burrridge">Burr Ridge</a>
+          <a href="/carolstream">Carol Stream</a>
+          <a href="/clarendonhills">Clarendon Hills</a>
+          <a href="/darien">Darien</a>
+          <a href="/downersgrove">Downers Grove</a>
+        </section>
+        <section>
+          <h2>E-L:</h2>
+          <a href="/elmhurst">Elmhurst</a>
+          <a href="/geneva">Geneva</a>
+          <a href="/glenellyn">Glen Ellyn</a>
+          <a href="/hinsdale">Hinsdale</a>
+          <a href="/homerglen">Homer Glen</a>
+          <a href="/itasca">Itasca</a>
+          <a href="/lemont">Lemont</a>
+          <a href="/lisle">Lisle</a>
+          <a href="/lockport">Lockport</a>
+          <a href="/lombard">Lombard</a>
+        </section>
+        <section>
+          <h2>M-S:</h2>
+          <a href="/montgomery">Montgomery</a>
+          <a href="/naperville">Naperville</a>
+          <a href="/northaurora">North Aurora</a>
+          <a href="/oakbrook">Oak Brook</a>
+          <a href="/oswego">Oswego</a>
+          <a href="/plainfield">Plainfield</a>
+          <a href="/romeoville">Romeoville</a>
+          <a href="/stcharles">St. Charles</a>
+          <a href="/streamwood">Streamwood</a>
+          <a href="/sugargrove">Sugar Grove</a>
+        </section>
+        <section>
+          <h2>V-Y:</h2>
+          <a href="/villapark">Villa Park</a>
+          <a href="/warrenville">Warrenville</a>
+          <a href="/wayne">Wayne</a>
+          <a href="/westchicago">West Chicago</a>
+          <a href="/westmont">Westmont</a>
+          <a href="/wheaton">Wheaton</a>
+          <a href="/willowbrook">Willowbrook</a>
+          <a href="/winfield">Winfield</a>
+          <a href="/wooddale">Wood Dale</a>
+          <a href="/woodridge">Woodridge</a>
+          <a href="/yorkville">Yorkville</a>
+        </section>
+      </div>
+    </div>
+  </div>
 
   <main id="main">
     <section class="hero-section" aria-labelledby="commercialHeroTitle">

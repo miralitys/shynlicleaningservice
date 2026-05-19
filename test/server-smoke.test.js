@@ -844,6 +844,11 @@ test("serves the commercial-cleaning main route as clean hand-coded markup", asy
   assert.match(body, /<meta name="robots" content="index,follow"\s*\/?>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/commercial-cleaning"\s*\/?>/);
   assert.match(body, /class="commercial-clean-page"/);
+  assert.match(body, /data-city-open/);
+  assert.match(body, /data-city-modal/);
+  assert.match(body, /A-D:/);
+  assert.match(body, /Addison/);
+  assert.match(body, /Yorkville/);
   assert.match(body, /\/css\/commercial-cleaning-copy\.css/);
   assert.match(body, /\/js\/commercial-cleaning-copy\.js/);
   assert.doesNotMatch(body, /js\/tilda-[^"]+/);
@@ -1150,7 +1155,7 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
     assert.match(
       body,
       route === "/services/commercial-cleaning"
-        ? /href="\/locations\/chicago"/
+        ? /data-city-open/
         : /href="(?:#city|\/services\/regular-cleaning#city)"/,
       route
     );
