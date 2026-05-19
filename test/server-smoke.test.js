@@ -833,10 +833,13 @@ test("serves the regular-cleaning copy as a noindex duplicate", async () => {
 test("serves the commercial-cleaning main route as clean hand-coded markup", async () => {
   const response = await fetch(`${BASE_URL}/services/commercial-cleaning`);
   const body = await response.text();
+  const linkHeader = response.headers.get("link") || "";
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.equal(response.headers.get("x-robots-tag"), null);
+  assert.match(linkHeader, /commercial-cleaning-copy\.css\?v=35/);
+  assert.doesNotMatch(linkHeader, /tilda/i);
   assert.match(body, /Commercial Cleaning Services/i);
   assert.match(body, /<meta name="robots" content="index,follow"\s*\/?>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/commercial-cleaning"\s*\/?>/);
