@@ -9,22 +9,19 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
     ["/blog", "/site/page108872586.html"],
     ["/blog/seasonal", "/site/page108872586.html"],
     ["/blog/seasonal/cleaning-checklist-before-thanksgiving-hosting", "/site/page108872586.html"],
-    ["/bristol", "/site/page123500104.html"],
-    ["/northaurora", "/site/page123500101.html"],
+    ["/bristol", "/site/page123500105.html"],
+    ["/northaurora", "/site/page123500105.html"],
     ["/quote", "/site/quote2.html"],
     ["/sugargrove", "/site/page123500105.html"],
     ["/home-simple", "/site/page108488156.html"],
-    ["/yorkville", "/site/page123500103.html"],
+    ["/yorkville", "/site/page123500105.html"],
     ["/admin", "/site/page-admin.html"],
     ["/api/example", "/site/page-api.html"],
   ]);
   const fileMetaByPath = new Map([
     ["/site/page108488156.html", { mtimeMs: Date.parse("2026-01-27T15:35:20Z") }],
     ["/site/page108872586.html", { mtimeMs: Date.parse("2026-01-27T18:26:27Z") }],
-    ["/site/page123500101.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
     ["/site/page123500105.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
-    ["/site/page123500103.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
-    ["/site/page123500104.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
   ]);
 
   const xml = buildSitemapXml({

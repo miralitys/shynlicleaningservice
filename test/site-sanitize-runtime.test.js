@@ -464,8 +464,8 @@ test("replaces heavy zero runtimes across home-like routes", () => {
   }
 });
 
-test("replaces the romeoville page runtime with the shared popup and menu runtime", () => {
-  const html = sanitizeHtml(readFixture("page111640886.html"), "/romeoville");
+test("serves Romeoville from the clean shared city template", () => {
+  const html = sanitizeHtml(readFixture("page123500105.html"), "/romeoville");
 
   assert.doesNotMatch(html, /js\/tilda-scripts-3\.0\.min\.js/);
   assert.doesNotMatch(html, /js\/tilda-blocks-page111640886\.min\.js/);
@@ -477,68 +477,82 @@ test("replaces the romeoville page runtime with the shared popup and menu runtim
   assert.doesNotMatch(html, /data-original=/);
   assert.match(html, /id="shynli-home-page-runtime"/);
   assert.match(html, /id="shynli-zero-runtime-stub"/);
-  assert.match(html, /src="images\/tild3666-3333-4430-b664-383666616530__logo_2\.png"/);
+  assert.match(html, /src="images\/shynli-logo-primary\.png"/);
+  assert.match(html, /href="\/images\/shynli-icon-32\.png"/);
   assert.match(html, /href="#city"/);
   assert.match(html, /href="#clean"/);
-  assert.match(html, /data-tooltip-hook="#city"/);
-  assert.match(html, /data-tooltip-hook="#clean"/);
-  assert.match(html, /Romeoville ▾/);
+  assert.match(html, /House Cleaning Services in <span class="sg-accent">Romeoville<\/span>, IL/);
+  assert.match(
+    html,
+    /<a class="sg-button sg-button--outline sg-city-button"[^>]*>Romeoville<\/a>/
+  );
+  assert.doesNotMatch(html, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i);
 });
 
 test("replaces heavy zero runtimes across all city page pilots", () => {
   const cityFixtures = [
-    { route: "/addison", file: "page110524796.html", cityLabel: /Addison ▾/ },
-    { route: "/aurora", file: "page110920356.html", cityLabel: /Aurora ▾/ },
-    { route: "/bartlett", file: "page111297646.html", cityLabel: /Bartlett ▾/ },
-    { route: "/batavia", file: "page111301556.html", cityLabel: /Batavia ▾/ },
-    { route: "/bolingbrook", file: "page111302756.html", cityLabel: /Bolingbrook ▾/ },
-    { route: "/burrridge", file: "page111303116.html", cityLabel: /Burr Ridge ▾/ },
-    { route: "/carolstream", file: "page111303466.html", cityLabel: /Carol Stream ▾/ },
-    { route: "/clarendonhills", file: "page111303756.html", cityLabel: /Clarendon Hills ▾/ },
-    { route: "/darien", file: "page111304216.html", cityLabel: /Darien ▾/ },
-    { route: "/downersgrove", file: "page111304546.html", cityLabel: /Downers Grove ▾/ },
-    { route: "/elmhurst", file: "page111639506.html", cityLabel: /Elmhurst ▾/ },
-    { route: "/geneva", file: "page111639596.html", cityLabel: /Geneva ▾/ },
-    { route: "/glenellyn", file: "page111639666.html", cityLabel: /Glen Ellyn ▾/ },
-    { route: "/hinsdale", file: "page111639736.html", cityLabel: /Hinsdale ▾/ },
-    { route: "/homerglen", file: "page111640086.html", cityLabel: /Homer Glen ▾/ },
-    { route: "/itasca", file: "page111640026.html", cityLabel: /Itasca ▾/ },
-    { route: "/lemont", file: "page111640146.html", cityLabel: /Lemont ▾/ },
-    { route: "/lisle", file: "page111640226.html", cityLabel: /Lisle ▾/ },
-    { route: "/lockport", file: "page111640286.html", cityLabel: /Lockport ▾/ },
-    { route: "/lombard", file: "page111942956.html", cityLabel: /Lombard ▾/ },
-    { route: "/montgomery", file: "page111640476.html", cityLabel: /Montgomery ▾/ },
-    { route: "/naperville", file: "page111640686.html", cityLabel: /Naperville ▾/ },
-    { route: "/oakbrook", file: "page111640746.html", cityLabel: /Oak Brook ▾/ },
-    { route: "/oswego", file: "page111640796.html", cityLabel: /Oswego ▾/ },
-    { route: "/plainfield", file: "page111640836.html", cityLabel: /Plainfield ▾/ },
-    { route: "/romeoville", file: "page111640886.html", cityLabel: /Romeoville ▾/ },
-    { route: "/stcharles", file: "page111640956.html", cityLabel: /St\. Charles ▾/ },
-    { route: "/streamwood", file: "page111641016.html", cityLabel: /Streamwood ▾/ },
-    { route: "/villapark", file: "page111641126.html", cityLabel: /Villa Park ▾/ },
-    { route: "/warrenville", file: "page111641216.html", cityLabel: /Warrenville ▾/ },
-    { route: "/wayne", file: "page111641256.html", cityLabel: /Wayne ▾/ },
-    { route: "/westchicago", file: "page111641356.html", cityLabel: /West Chicago ▾/ },
-    { route: "/westmont", file: "page111641416.html", cityLabel: /Westmont ▾/ },
-    { route: "/wheaton", file: "page111641466.html", cityLabel: /Wheaton ▾/ },
-    { route: "/willowbrook", file: "page111641546.html", cityLabel: /Willowbrook ▾/ },
-    { route: "/winfield", file: "page111641576.html", cityLabel: /Winfield ▾/ },
-    { route: "/wooddale", file: "page111641666.html", cityLabel: /Wood Dale ▾/ },
-    { route: "/woodridge", file: "page111641796.html", cityLabel: /Woodridge ▾/ },
+    { route: "/addison", file: "page123500105.html", city: "Addison" },
+    { route: "/aurora", file: "page123500105.html", city: "Aurora" },
+    { route: "/bartlett", file: "page123500105.html", city: "Bartlett" },
+    { route: "/batavia", file: "page123500105.html", city: "Batavia" },
+    { route: "/bolingbrook", file: "page123500105.html", city: "Bolingbrook" },
+    { route: "/bristol", file: "page123500105.html", city: "Bristol" },
+    { route: "/burrridge", file: "page123500105.html", city: "Burr Ridge" },
+    { route: "/carolstream", file: "page123500105.html", city: "Carol Stream" },
+    { route: "/clarendonhills", file: "page123500105.html", city: "Clarendon Hills" },
+    { route: "/darien", file: "page123500105.html", city: "Darien" },
+    { route: "/downersgrove", file: "page123500105.html", city: "Downers Grove" },
+    { route: "/elmhurst", file: "page123500105.html", city: "Elmhurst" },
+    { route: "/geneva", file: "page123500105.html", city: "Geneva" },
+    { route: "/glenellyn", file: "page123500105.html", city: "Glen Ellyn" },
+    { route: "/hinsdale", file: "page123500105.html", city: "Hinsdale" },
+    { route: "/homerglen", file: "page123500105.html", city: "Homer Glen" },
+    { route: "/itasca", file: "page123500105.html", city: "Itasca" },
+    { route: "/lemont", file: "page123500105.html", city: "Lemont" },
+    { route: "/lisle", file: "page123500105.html", city: "Lisle" },
+    { route: "/lockport", file: "page123500105.html", city: "Lockport" },
+    { route: "/lombard", file: "page123500105.html", city: "Lombard" },
+    { route: "/montgomery", file: "page123500105.html", city: "Montgomery" },
+    { route: "/naperville", file: "page123500105.html", city: "Naperville" },
+    { route: "/northaurora", file: "page123500105.html", city: "North Aurora" },
+    { route: "/oakbrook", file: "page123500105.html", city: "Oak Brook" },
+    { route: "/oswego", file: "page123500105.html", city: "Oswego" },
+    { route: "/plainfield", file: "page123500105.html", city: "Plainfield" },
+    { route: "/romeoville", file: "page123500105.html", city: "Romeoville" },
+    { route: "/stcharles", file: "page123500105.html", city: "St. Charles" },
+    { route: "/streamwood", file: "page123500105.html", city: "Streamwood" },
+    { route: "/sugargrove", file: "page123500105.html", city: "Sugar Grove" },
+    { route: "/villapark", file: "page123500105.html", city: "Villa Park" },
+    { route: "/warrenville", file: "page123500105.html", city: "Warrenville" },
+    { route: "/wayne", file: "page123500105.html", city: "Wayne" },
+    { route: "/westchicago", file: "page123500105.html", city: "West Chicago" },
+    { route: "/westmont", file: "page123500105.html", city: "Westmont" },
+    { route: "/wheaton", file: "page123500105.html", city: "Wheaton" },
+    { route: "/willowbrook", file: "page123500105.html", city: "Willowbrook" },
+    { route: "/winfield", file: "page123500105.html", city: "Winfield" },
+    { route: "/wooddale", file: "page123500105.html", city: "Wood Dale" },
+    { route: "/woodridge", file: "page123500105.html", city: "Woodridge" },
+    { route: "/yorkville", file: "page123500105.html", city: "Yorkville" },
   ];
 
   for (const fixture of cityFixtures) {
     const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+    const cityPattern = fixture.city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/, fixture.route);
     assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/, fixture.route);
     assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
     assert.doesNotMatch(html, /data-original=/, fixture.route);
+    assert.doesNotMatch(html, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i, fixture.route);
     assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
     assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-    assert.match(html, /src="images\/tild3666-3333-4430-b664-383666616530__logo_2\.png"/, fixture.route);
+    assert.match(html, /src="images\/shynli-logo-primary\.png"/, fixture.route);
     assert.match(html, /href="#city"/, fixture.route);
     assert.match(html, /href="#clean"/, fixture.route);
-    assert.match(html, fixture.cityLabel, fixture.route);
+    assert.match(
+      html,
+      new RegExp(`<a class="sg-button sg-button--outline sg-city-button"[^>]*>${cityPattern}<\\/a>`),
+      fixture.route
+    );
   }
 });
 
@@ -612,51 +626,52 @@ test("removes the duplicate offscreen homepage simple steps copy", () => {
 
 test("keeps city-specific copy aligned on every city page", () => {
   const fixtures = [
-    { route: "/addison", file: "page110524796.html", city: "Addison" },
-    { route: "/aurora", file: "page110920356.html", city: "Aurora" },
-    { route: "/bartlett", file: "page111297646.html", city: "Bartlett" },
-    { route: "/batavia", file: "page111301556.html", city: "Batavia" },
-    { route: "/bolingbrook", file: "page111302756.html", city: "Bolingbrook" },
-    { route: "/bristol", file: "page123500104.html", city: "Bristol" },
-    { route: "/burrridge", file: "page111303116.html", city: "Burr Ridge" },
-    { route: "/carolstream", file: "page111303466.html", city: "Carol Stream" },
-    { route: "/clarendonhills", file: "page111303756.html", city: "Clarendon Hills" },
-    { route: "/darien", file: "page111304216.html", city: "Darien" },
-    { route: "/downersgrove", file: "page111304546.html", city: "Downers Grove" },
-    { route: "/elmhurst", file: "page111639506.html", city: "Elmhurst" },
-    { route: "/geneva", file: "page111639596.html", city: "Geneva" },
-    { route: "/glenellyn", file: "page111639666.html", city: "Glen Ellyn" },
-    { route: "/hinsdale", file: "page111639736.html", city: "Hinsdale" },
-    { route: "/homerglen", file: "page111640086.html", city: "Homer Glen" },
-    { route: "/itasca", file: "page111640026.html", city: "Itasca" },
-    { route: "/lemont", file: "page111640146.html", city: "Lemont" },
-    { route: "/lisle", file: "page111640226.html", city: "Lisle" },
-    { route: "/lockport", file: "page111640286.html", city: "Lockport" },
-    { route: "/lombard", file: "page111942956.html", city: "Lombard" },
-    { route: "/montgomery", file: "page111640476.html", city: "Montgomery" },
-    { route: "/naperville", file: "page111640686.html", city: "Naperville" },
-    { route: "/northaurora", file: "page123500101.html", city: "North Aurora" },
-    { route: "/oakbrook", file: "page111640746.html", city: "Oak Brook" },
-    { route: "/oswego", file: "page111640796.html", city: "Oswego" },
-    { route: "/plainfield", file: "page111640836.html", city: "Plainfield" },
-    { route: "/romeoville", file: "page111640886.html", city: "Romeoville" },
-    { route: "/stcharles", file: "page111640956.html", city: "St. Charles" },
-    { route: "/streamwood", file: "page111641016.html", city: "Streamwood" },
+    { route: "/addison", file: "page123500105.html", city: "Addison" },
+    { route: "/aurora", file: "page123500105.html", city: "Aurora" },
+    { route: "/bartlett", file: "page123500105.html", city: "Bartlett" },
+    { route: "/batavia", file: "page123500105.html", city: "Batavia" },
+    { route: "/bolingbrook", file: "page123500105.html", city: "Bolingbrook" },
+    { route: "/bristol", file: "page123500105.html", city: "Bristol" },
+    { route: "/burrridge", file: "page123500105.html", city: "Burr Ridge" },
+    { route: "/carolstream", file: "page123500105.html", city: "Carol Stream" },
+    { route: "/clarendonhills", file: "page123500105.html", city: "Clarendon Hills" },
+    { route: "/darien", file: "page123500105.html", city: "Darien" },
+    { route: "/downersgrove", file: "page123500105.html", city: "Downers Grove" },
+    { route: "/elmhurst", file: "page123500105.html", city: "Elmhurst" },
+    { route: "/geneva", file: "page123500105.html", city: "Geneva" },
+    { route: "/glenellyn", file: "page123500105.html", city: "Glen Ellyn" },
+    { route: "/hinsdale", file: "page123500105.html", city: "Hinsdale" },
+    { route: "/homerglen", file: "page123500105.html", city: "Homer Glen" },
+    { route: "/itasca", file: "page123500105.html", city: "Itasca" },
+    { route: "/lemont", file: "page123500105.html", city: "Lemont" },
+    { route: "/lisle", file: "page123500105.html", city: "Lisle" },
+    { route: "/lockport", file: "page123500105.html", city: "Lockport" },
+    { route: "/lombard", file: "page123500105.html", city: "Lombard" },
+    { route: "/montgomery", file: "page123500105.html", city: "Montgomery" },
+    { route: "/naperville", file: "page123500105.html", city: "Naperville" },
+    { route: "/northaurora", file: "page123500105.html", city: "North Aurora" },
+    { route: "/oakbrook", file: "page123500105.html", city: "Oak Brook" },
+    { route: "/oswego", file: "page123500105.html", city: "Oswego" },
+    { route: "/plainfield", file: "page123500105.html", city: "Plainfield" },
+    { route: "/romeoville", file: "page123500105.html", city: "Romeoville" },
+    { route: "/stcharles", file: "page123500105.html", city: "St. Charles" },
+    { route: "/streamwood", file: "page123500105.html", city: "Streamwood" },
     { route: "/sugargrove", file: "page123500105.html", city: "Sugar Grove" },
-    { route: "/villapark", file: "page111641126.html", city: "Villa Park" },
-    { route: "/warrenville", file: "page111641216.html", city: "Warrenville" },
-    { route: "/wayne", file: "page111641256.html", city: "Wayne" },
-    { route: "/westchicago", file: "page111641356.html", city: "West Chicago" },
-    { route: "/westmont", file: "page111641416.html", city: "Westmont" },
-    { route: "/wheaton", file: "page111641466.html", city: "Wheaton" },
-    { route: "/willowbrook", file: "page111641546.html", city: "Willowbrook" },
-    { route: "/winfield", file: "page111641576.html", city: "Winfield" },
-    { route: "/wooddale", file: "page111641666.html", city: "Wood Dale" },
-    { route: "/woodridge", file: "page111641796.html", city: "Woodridge" },
-    { route: "/yorkville", file: "page123500103.html", city: "Yorkville" },
+    { route: "/villapark", file: "page123500105.html", city: "Villa Park" },
+    { route: "/warrenville", file: "page123500105.html", city: "Warrenville" },
+    { route: "/wayne", file: "page123500105.html", city: "Wayne" },
+    { route: "/westchicago", file: "page123500105.html", city: "West Chicago" },
+    { route: "/westmont", file: "page123500105.html", city: "Westmont" },
+    { route: "/wheaton", file: "page123500105.html", city: "Wheaton" },
+    { route: "/willowbrook", file: "page123500105.html", city: "Willowbrook" },
+    { route: "/winfield", file: "page123500105.html", city: "Winfield" },
+    { route: "/wooddale", file: "page123500105.html", city: "Wood Dale" },
+    { route: "/woodridge", file: "page123500105.html", city: "Woodridge" },
+    { route: "/yorkville", file: "page123500105.html", city: "Yorkville" },
   ];
   const toText = (html) =>
     String(html || "")
+      .replace(/<head[\s\S]*?<\/head>/gi, " ")
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
       .replace(/<[^>]+>/g, " ")
@@ -688,14 +703,7 @@ test("keeps city-specific copy aligned on every city page", () => {
       "pricing intro",
       fixture.route
     );
-    const nearbyAreaValues =
-      fixture.route === "/sugargrove"
-        ? captureAll(text, /Serving\s+([A-Za-z.\s]+?)\s+and nearby communities/g)
-        : [
-            ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Find your area by ZIP code/g),
-            ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Serving Sugar Grove and nearby communities/g),
-            ...captureAll(text, /Shynli Cleaning serves\s+([A-Za-z.\s]+?)\s+and nearby communities across/g),
-          ];
+    const nearbyAreaValues = captureAll(text, /Serving\s+([A-Za-z.\s]+?)\s+and nearby communities/g);
     assertOnlyCity(
       nearbyAreaValues,
       fixture.city,

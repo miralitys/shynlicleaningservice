@@ -447,13 +447,16 @@ test("serves blog article pages without unused widgeticon assets", async () => {
   assert.match(body, /data-blog-print/);
 });
 
-test("serves city landing pages with the shared menu shell runtime", async () => {
+test("serves city landing pages from the clean shared city template", async () => {
   const response = await fetch(`${BASE_URL}/romeoville`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
-  assert.match(body, /Romeoville/i);
+  assert.match(body, /<title>House Cleaning Services in Romeoville, IL \| Shynli Cleaning<\/title>/);
+  assert.match(body, /House Cleaning Services in <span class="sg-accent">Romeoville<\/span>, IL/);
+  assert.match(body, /Shynli Cleaning helps Romeoville homeowners/);
+  assert.match(body, /class="sg-page"/);
   assert.doesNotMatch(body, /js\/tilda-scripts-3\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-blocks-page111640886\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-popup-1\.0\.min\.js/);
@@ -464,14 +467,19 @@ test("serves city landing pages with the shared menu shell runtime", async () =>
   assert.doesNotMatch(body, /js\/tilda-menu-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-menu-burger-1\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
-  assert.match(body, /id="shynli-menu-shell-runtime"/);
   assert.match(body, /id="shynli-home-page-runtime"/);
-  assert.match(body, /id="shynli-menusub-runtime"/);
   assert.match(body, /id="shynli-zero-runtime-stub"/);
+  assert.match(body, /src="images\/shynli-logo-primary\.png"/);
+  assert.match(body, /href="\/images\/shynli-icon-32\.png"/);
   assert.doesNotMatch(body, /js\/tilda-events-1\.0\.min\.js/);
   assert.match(body, /href="\/quote"/);
   assert.match(body, /href="#city"/);
   assert.match(body, /href="#clean"/);
+  assert.match(
+    body,
+    /<a class="sg-button sg-button--outline sg-city-button"[^>]*>Romeoville<\/a>/
+  );
+  assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i);
 });
 
 test("serves the clean Sugar Grove copy on /sugargrove", async () => {
@@ -526,61 +534,97 @@ test("redirects the removed /sugargrove2 duplicate to /sugargrove", async () => 
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
   const cityRoutes = [
-    ["/addison", /Addison/i],
-    ["/aurora", /Aurora/i],
-    ["/bartlett", /Bartlett/i],
-    ["/batavia", /Batavia/i],
-    ["/bolingbrook", /Bolingbrook/i],
-    ["/bristol", /Bristol/i],
-    ["/burrridge", /Burr Ridge/i],
-    ["/carolstream", /Carol Stream/i],
-    ["/clarendonhills", /Clarendon Hills/i],
-    ["/darien", /Darien/i],
-    ["/downersgrove", /Downers Grove/i],
-    ["/elmhurst", /Elmhurst/i],
-    ["/geneva", /Geneva/i],
-    ["/glenellyn", /Glen Ellyn/i],
-    ["/hinsdale", /Hinsdale/i],
-    ["/homerglen", /Homer Glen/i],
-    ["/itasca", /Itasca/i],
-    ["/lemont", /Lemont/i],
-    ["/lisle", /Lisle/i],
-    ["/lockport", /Lockport/i],
-    ["/lombard", /Lombard/i],
-    ["/montgomery", /Montgomery/i],
-    ["/naperville", /Naperville/i],
-    ["/northaurora", /North Aurora/i],
-    ["/oakbrook", /Oak Brook/i],
-    ["/oswego", /Oswego/i],
-    ["/plainfield", /Plainfield/i],
-    ["/romeoville", /Romeoville/i],
-    ["/stcharles", /St\.? Charles/i],
-    ["/streamwood", /Streamwood/i],
-    ["/sugargrove", /Sugar Grove/i],
-    ["/villapark", /Villa Park/i],
-    ["/warrenville", /Warrenville/i],
-    ["/wayne", /Wayne/i],
-    ["/westchicago", /West Chicago/i],
-    ["/westmont", /Westmont/i],
-    ["/wheaton", /Wheaton/i],
-    ["/willowbrook", /Willowbrook/i],
-    ["/winfield", /Winfield/i],
-    ["/wooddale", /Wood Dale/i],
-    ["/woodridge", /Woodridge/i],
-    ["/yorkville", /Yorkville/i],
+    ["/addison", "Addison"],
+    ["/aurora", "Aurora"],
+    ["/bartlett", "Bartlett"],
+    ["/batavia", "Batavia"],
+    ["/bolingbrook", "Bolingbrook"],
+    ["/bristol", "Bristol"],
+    ["/burrridge", "Burr Ridge"],
+    ["/carolstream", "Carol Stream"],
+    ["/clarendonhills", "Clarendon Hills"],
+    ["/darien", "Darien"],
+    ["/downersgrove", "Downers Grove"],
+    ["/elmhurst", "Elmhurst"],
+    ["/geneva", "Geneva"],
+    ["/glenellyn", "Glen Ellyn"],
+    ["/hinsdale", "Hinsdale"],
+    ["/homerglen", "Homer Glen"],
+    ["/itasca", "Itasca"],
+    ["/lemont", "Lemont"],
+    ["/lisle", "Lisle"],
+    ["/lockport", "Lockport"],
+    ["/lombard", "Lombard"],
+    ["/montgomery", "Montgomery"],
+    ["/naperville", "Naperville"],
+    ["/northaurora", "North Aurora"],
+    ["/oakbrook", "Oak Brook"],
+    ["/oswego", "Oswego"],
+    ["/plainfield", "Plainfield"],
+    ["/romeoville", "Romeoville"],
+    ["/stcharles", "St. Charles"],
+    ["/streamwood", "Streamwood"],
+    ["/sugargrove", "Sugar Grove"],
+    ["/villapark", "Villa Park"],
+    ["/warrenville", "Warrenville"],
+    ["/wayne", "Wayne"],
+    ["/westchicago", "West Chicago"],
+    ["/westmont", "Westmont"],
+    ["/wheaton", "Wheaton"],
+    ["/willowbrook", "Willowbrook"],
+    ["/winfield", "Winfield"],
+    ["/wooddale", "Wood Dale"],
+    ["/woodridge", "Woodridge"],
+    ["/yorkville", "Yorkville"],
   ];
 
-  for (const [route, expectedTitle] of cityRoutes) {
+  for (const [route, city] of cityRoutes) {
     const response = await fetch(`${BASE_URL}${route}`);
     const body = await response.text();
+    const cityPattern = escapeRegExp(city);
 
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("content-type") || "", /text\/html/, route);
-    assert.match(body, expectedTitle, route);
+    assert.match(
+      body,
+      new RegExp(`<title>House Cleaning Services in ${cityPattern}, IL \\| Shynli Cleaning<\\/title>`),
+      route
+    );
+    assert.match(
+      body,
+      new RegExp(`<meta property="og:url" content="https:\\/\\/shynlicleaningservice\\.com${escapeRegExp(route)}" \\/>`),
+      route
+    );
+    assert.match(
+      body,
+      new RegExp(`<link rel="canonical" href="https:\\/\\/shynlicleaningservice\\.com${escapeRegExp(route)}">`),
+      route
+    );
+    assert.match(
+      body,
+      new RegExp(`House Cleaning Services in <span class="sg-accent">${cityPattern}<\\/span>, IL`),
+      route
+    );
+    assert.match(body, new RegExp(`homes in ${cityPattern} and nearby areas`), route);
+    assert.match(
+      body,
+      new RegExp(`Looking for a reliable house cleaning service in <strong>${cityPattern}\\?<\\/strong>`),
+      route
+    );
+    assert.match(body, new RegExp(`Shynli Cleaning helps ${cityPattern} homeowners`), route);
+    assert.match(body, new RegExp(`Pricing for home cleaning in <strong>${cityPattern}<\\/strong>`), route);
+    assert.match(body, new RegExp(`FAQ About House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
+    assert.match(body, new RegExp(`Get a Free Quote for House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
+    assert.match(
+      body,
+      new RegExp(`<a class="sg-button sg-button--outline sg-city-button"[^>]*>${cityPattern}<\\/a>`),
+      route
+    );
     assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/, route);
     assert.doesNotMatch(body, /js\/tilda-zero-scale-1\.0\.min\.js/, route);
     assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/, route);
     assert.doesNotMatch(body, /data-original=/, route);
+    assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i, route);
     assert.match(body, /id="shynli-home-page-runtime"/, route);
     assert.match(body, /id="shynli-zero-runtime-stub"/, route);
     assert.match(body, /href="#city"/, route);

@@ -41,6 +41,7 @@ const { DEFAULT_GOOGLE_TAG_MANAGER_CONTAINER_ID } = require("./lib/site/google-t
 const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request-handler");
 const { createSiteSanitizer } = require("./lib/site/sanitize");
 const { createSiteSeoHelpers } = require("./lib/site/seo");
+const { SERVICE_AREA_ZIP_MAP } = require("./lib/service-area-zips");
 const {
   PAYMENT_SHORT_LINK_PATH_PREFIX,
   buildPaymentShortLink,
@@ -284,6 +285,28 @@ const REDIRECT_ROUTES = new Map([
 const SITE_ORIGIN = normalizeConfiguredOrigin(
   process.env.PUBLIC_SITE_ORIGIN || process.env.SITE_BASE_URL || "https://shynlicleaningservice.com"
 );
+const CITY_ROUTE_LABELS = Object.freeze(
+  Array.from(
+    Object.values(SERVICE_AREA_ZIP_MAP)
+      .flat()
+      .reduce((cityByPath, target) => cityByPath.set(target.url, target.city), new Map())
+      .entries()
+  ).sort(([leftPath], [rightPath]) => leftPath.localeCompare(rightPath))
+);
+const CITY_ROUTE_META_OVERRIDES = Object.freeze(
+  Object.fromEntries(
+    CITY_ROUTE_LABELS.map(([routePath, city]) => [
+      routePath,
+      {
+        title: `House Cleaning Services in ${city}, IL | Shynli Cleaning`,
+        description: `Professional house cleaning services in ${city}, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.`,
+        ogTitle: `House Cleaning Services in ${city}, IL | Shynli Cleaning`,
+        ogDescription: `Professional house cleaning services in ${city}, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.`,
+        canonical: `${SITE_ORIGIN}${routePath}`,
+      },
+    ])
+  )
+);
 const BLOG_CATEGORY_PAGES = Object.freeze([
   {
     path: "/blog/checklists",
@@ -489,6 +512,7 @@ const BREADCRUMB_LABELS = new Map([
   ["/quote2", "Quote"],
   ["/service-areas", "Service Areas"],
   ["/service-areas-v2", "Service Areas"],
+  ...CITY_ROUTE_LABELS,
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
   ["/services/deep-cleaning/ads", "Deep Cleaning"],
@@ -603,15 +627,7 @@ const ROUTE_META_OVERRIDES = {
     title: "Service Areas | Shynli Cleaning",
     canonical: `${SITE_ORIGIN}/service-areas-v2`,
   },
-  "/sugargrove": {
-    title: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
-    description:
-      "Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
-    ogTitle: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
-    ogDescription:
-      "Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
-    canonical: `${SITE_ORIGIN}/sugargrove`,
-  },
+  ...CITY_ROUTE_META_OVERRIDES,
   "/quote": {
     title: "Get a Free Quote | Shynli Cleaning",
     description:
