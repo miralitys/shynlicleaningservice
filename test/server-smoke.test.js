@@ -830,6 +830,30 @@ test("serves the regular-cleaning copy as a noindex duplicate", async () => {
   );
 });
 
+test("serves the commercial-cleaning main route as clean hand-coded markup", async () => {
+  const response = await fetch(`${BASE_URL}/services/commercial-cleaning`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.equal(response.headers.get("x-robots-tag"), null);
+  assert.match(body, /Commercial Cleaning Services/i);
+  assert.match(body, /<meta name="robots" content="index,follow"\s*\/?>/);
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/commercial-cleaning"\s*\/?>/);
+  assert.match(body, /class="commercial-clean-page"/);
+  assert.match(body, /\/css\/commercial-cleaning-copy\.css/);
+  assert.match(body, /\/js\/commercial-cleaning-copy\.js/);
+  assert.doesNotMatch(body, /js\/tilda-[^"]+/);
+  assert.doesNotMatch(body, /css\/tilda-[^"]+/);
+  assert.doesNotMatch(body, /data-original=/);
+  assert.doesNotMatch(body, /data-tilda/i);
+  assert.doesNotMatch(body, /(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b)/);
+  assert.doesNotMatch(body, /id="shynli-home-page-runtime"/);
+  assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
+  assert.doesNotMatch(body, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(body, /t_menuWidgets/);
+});
+
 test("serves the commercial-cleaning copy as a noindex duplicate", async () => {
   const response = await fetch(`${BASE_URL}/services/commercial-cleaning-copy`);
   const body = await response.text();
@@ -1102,8 +1126,13 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
     assert.doesNotMatch(body, /js\/tilda-zero-scale-1\.0\.min\.js/, route);
     assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/, route);
     assert.doesNotMatch(body, /data-original=/, route);
-    if (route === "/services/regular-cleaning") {
-      assert.match(body, /<main class="clean-service-page">/, route);
+    if (route === "/services/regular-cleaning" || route === "/services/commercial-cleaning") {
+      if (route === "/services/regular-cleaning") {
+        assert.match(body, /<main class="clean-service-page">/, route);
+      }
+      if (route === "/services/commercial-cleaning") {
+        assert.match(body, /class="commercial-clean-page"/, route);
+      }
       assert.doesNotMatch(body, /id="shynli-home-page-runtime"/, route);
       assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/, route);
       assert.doesNotMatch(
@@ -1115,8 +1144,18 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
       assert.match(body, /id="shynli-home-page-runtime"/, route);
       assert.match(body, /id="shynli-zero-runtime-stub"/, route);
     }
-    assert.match(body, /href="(?:#city|\/services\/regular-cleaning#city)"/, route);
-    assert.match(body, /href="#clean"/, route);
+    assert.match(
+      body,
+      route === "/services/commercial-cleaning"
+        ? /href="\/locations\/chicago"/
+        : /href="(?:#city|\/services\/regular-cleaning#city)"/,
+      route
+    );
+    assert.match(
+      body,
+      route === "/services/commercial-cleaning" ? /href="\/become-a-cleaner"/ : /href="#clean"/,
+      route
+    );
   }
 });
 

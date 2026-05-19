@@ -11,8 +11,8 @@
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/commercial-cleaning-copy.css?v=22">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/commercial-cleaning-copy.css?v=35">
 </head>
 <body class="commercial-clean-page">
   <header class="site-header" aria-label="Main navigation">
@@ -82,7 +82,12 @@
             <span><svg viewBox="0 0 25 25" focusable="false" aria-hidden="true"><path d="M22.5 0H2.5C1.125 0 0 1.125 0 2.5V25L5 20H22.5C23.875 20 25 18.875 25 17.5V2.5C25 1.125 23.875 0 22.5 0ZM14.4625 11.9625L12.5 16.25L10.5375 11.9625L6.25 10L10.5375 8.0375L12.5 3.75L14.4625 8.0375L18.75 10L14.4625 11.9625Z"/></svg></span>
             <span><svg viewBox="0 0 25 25" focusable="false" aria-hidden="true"><path d="M22.5 0H2.5C1.125 0 0 1.125 0 2.5V25L5 20H22.5C23.875 20 25 18.875 25 17.5V2.5C25 1.125 23.875 0 22.5 0ZM14.4625 11.9625L12.5 16.25L10.5375 11.9625L6.25 10L10.5375 8.0375L12.5 3.75L14.4625 8.0375L18.75 10L14.4625 11.9625Z"/></svg></span>
           </div>
-          <p><strong>300+</strong><br>Customer Reviews</p>
+          <p>
+            <span class="review-number" aria-label="300+">
+              <svg viewBox="0 0 58 24" focusable="false" aria-hidden="true"><text x="0" y="21" fill="#313131" font-family="Playfair Display, serif" font-style="italic" font-size="31" font-weight="400" letter-spacing="0" textLength="58" lengthAdjust="spacingAndGlyphs">300+</text></svg>
+            </span>
+            <span>Customer Reviews</span>
+          </p>
         </div>
 
         <div class="quote-cluster">
@@ -91,8 +96,10 @@
         </div>
 
         <div class="rating-cluster" aria-label="5 out of 5 rating">
-          <div class="rating-number">5/5</div>
-          <div class="rating-stars" aria-hidden="true">&#9733; &#9733; &#9733; &#9733; &#9733;</div>
+          <div class="rating-number" aria-label="5/5">
+            <svg viewBox="0 0 80 33" focusable="false" aria-hidden="true"><text x="40" y="28" fill="#313131" font-family="Playfair Display, serif" font-style="italic" font-size="37" font-weight="400" text-anchor="middle" textLength="74" lengthAdjust="spacingAndGlyphs">5/5</text></svg>
+          </div>
+          <div class="rating-stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
         </div>
       </div>
     </section>
@@ -279,19 +286,22 @@
   <footer class="site-footer">
     <div class="site-footer__inner">
       <div class="footer-brand">
+        <a class="footer-logo" href="/" aria-label="Shynli Cleaning Service home">
+          <img src="/images/tild3666-3333-4430-b664-383666616530__logo_2.png" alt="">
+        </a>
         <p>Clean Home. Clear Mind.</p>
         <small>&copy; 2026 Shynli Cleaning.<br>All rights reserved.</small>
       </div>
-      <div class="footer-links">
+      <div class="footer-links footer-links--services">
         <h3>Services</h3>
         <a href="/services/regular-cleaning">Regular Cleaning</a>
         <a href="/services/deep-cleaning">Deep Cleaning</a>
         <a href="/services/move-in-move-out-cleaning">Move In/Move Out Cleaning</a>
         <a href="/services/airbnb-cleaning">Airbnb Cleaning</a>
         <a href="/services/commercial-cleaning">Commercial Cleaning</a>
-        <a href="/locations">Service Areas</a>
+        <a href="/service-areas">Service Areas</a>
       </div>
-      <div class="footer-links">
+      <div class="footer-links footer-links--company">
         <h3>Company</h3>
         <a href="/about-us">About Us</a>
         <a href="/pricing">Pricing</a>
@@ -299,7 +309,7 @@
         <a href="/faq">FAQ</a>
         <a href="/contacts">Contacts</a>
       </div>
-      <div class="footer-links">
+      <div class="footer-links footer-links--legal">
         <h3>Legal</h3>
         <a href="/privacy-policy">Privacy Policy</a>
         <a href="/terms-of-service">Terms of Service</a>

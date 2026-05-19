@@ -919,7 +919,6 @@ test("removes duplicate copy from the shared benefits block", () => {
     { route: "/services/deep-cleaning", file: "page109721366.html" },
     { route: "/services/move-in-move-out-cleaning", file: "page109993436.html" },
     { route: "/services/airbnb-cleaning", file: "page110326416.html" },
-    { route: "/services/commercial-cleaning", file: "page110512356.html" },
   ];
 
   for (const fixture of sharedBenefitFixtures) {
@@ -987,13 +986,40 @@ test("keeps the regular-cleaning main route hand-coded without Tilda runtime", (
   assert.match(html, /href="\/services\/regular-cleaning#city"/);
 });
 
+test("keeps the commercial-cleaning main route hand-coded without Tilda runtime", () => {
+  const html = sanitizeHtml(readFixture("page110512356.html"), "/services/commercial-cleaning");
+
+  assert.match(html, /class="commercial-clean-page"/);
+  assert.match(html, /Commercial Cleaning Services/i);
+  assert.match(html, /<meta name="robots" content="index,follow"\s*\/?>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/commercial-cleaning"\s*\/?>/);
+  assert.match(html, /\/css\/commercial-cleaning-copy\.css/);
+  assert.match(html, /\/js\/commercial-cleaning-copy\.js/);
+  assert.doesNotMatch(html, /js\/tilda-[^"]+/);
+  assert.doesNotMatch(html, /css\/tilda-[^"]+/);
+  assert.doesNotMatch(html, /data-original=/);
+  assert.doesNotMatch(html, /data-tilda/i);
+  assert.doesNotMatch(html, /(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b)/);
+  assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
+  assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
+  assert.doesNotMatch(html, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(html, /t_menuWidgets/);
+});
+
 test("replaces heavy zero runtimes across all service page pilots", () => {
   const serviceFixtures = [
     { route: "/services/regular-cleaning", file: "page109653016-copy.html", cleanHandCoded: true },
     { route: "/services/deep-cleaning", file: "page109721366.html" },
     { route: "/services/move-in-move-out-cleaning", file: "page109993436.html" },
     { route: "/services/airbnb-cleaning", file: "page110326416.html" },
-    { route: "/services/commercial-cleaning", file: "page110512356.html" },
+    {
+      route: "/services/commercial-cleaning",
+      file: "page110512356.html",
+      cleanHandCoded: true,
+      handCodedPattern: /class="commercial-clean-page"/,
+      cityHrefPattern: /href="\/locations\/chicago"/,
+      cleanerHrefPattern: /href="\/become-a-cleaner"/,
+    },
     { route: "/services/post-construction-cleaning", file: "page113041806.html" },
   ];
 
@@ -1005,7 +1031,7 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
     assert.doesNotMatch(html, /data-original=/, fixture.route);
     assert.doesNotMatch(html, /__resize__20x__/, fixture.route);
     if (fixture.cleanHandCoded) {
-      assert.match(html, /<main class="clean-service-page">/, fixture.route);
+      assert.match(html, fixture.handCodedPattern || /<main class="clean-service-page">/, fixture.route);
       assert.doesNotMatch(html, /id="shynli-home-page-runtime"/, fixture.route);
       assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/, fixture.route);
       assert.doesNotMatch(
@@ -1017,9 +1043,9 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
       assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
       assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
     }
-    assert.match(html, /src="images\/[^"]+"/, fixture.route);
-    assert.match(html, /href="(?:#city|\/services\/regular-cleaning#city)"/, fixture.route);
-    assert.match(html, /href="#clean"/, fixture.route);
+    assert.match(html, /src="\/?images\/[^"]+"/, fixture.route);
+    assert.match(html, fixture.cityHrefPattern || /href="(?:#city|\/services\/regular-cleaning#city)"/, fixture.route);
+    assert.match(html, fixture.cleanerHrefPattern || /href="#clean"/, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
 });
