@@ -984,7 +984,7 @@ test("keeps the regular-cleaning main route hand-coded without Tilda runtime", (
   assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
   assert.match(html, /href="\/services\/regular-cleaning"/);
   assert.match(html, /href="#clean"/);
-  assert.match(html, /href="#city"/);
+  assert.match(html, /href="\/services\/regular-cleaning#city"/);
 });
 
 test("replaces heavy zero runtimes across all service page pilots", () => {
@@ -1018,7 +1018,7 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
       assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
     }
     assert.match(html, /src="images\/[^"]+"/, fixture.route);
-    assert.match(html, /href="#city"/, fixture.route);
+    assert.match(html, /href="(?:#city|\/services\/regular-cleaning#city)"/, fixture.route);
     assert.match(html, /href="#clean"/, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
@@ -1029,7 +1029,7 @@ test("keeps the regular-cleaning copy hand-coded without Tilda runtime", () => {
 
   assert.match(html, /<main class="clean-service-page">/);
   assert.match(html, /Regular House Cleaning/);
-  assert.match(html, /href="#city"/);
+  assert.match(html, /href="\/services\/regular-cleaning#city"/);
   assert.match(html, /href="#clean"/);
   assert.doesNotMatch(html, /(?:css|js)\/tilda/i);
   assert.doesNotMatch(html, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);

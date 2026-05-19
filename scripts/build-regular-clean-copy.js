@@ -6,6 +6,7 @@ const path = require("node:path");
 const ROOT = path.resolve(__dirname, "..");
 const SOURCE_FILE = path.join(ROOT, "page109653016.html");
 const TARGET_FILE = path.join(ROOT, "page109653016-copy.html");
+const REGULAR_SERVICE_PATH = "/services/regular-cleaning";
 
 const CONTENT_RECORD_IDS = new Set([
   "rec1777833773",
@@ -21,7 +22,7 @@ const CONTENT_RECORD_IDS = new Set([
 ]);
 
 const SERVICE_LINKS = [
-  ["/services/regular-cleaning", "Regular House Cleaning"],
+  [REGULAR_SERVICE_PATH, "Regular House Cleaning"],
   ["/services/deep-cleaning", "Deep Cleaning for Homes That Need Extra Care"],
   ["/services/move-in-move-out-cleaning", "Cleaning for Moving In or Moving Out"],
   ["/services/airbnb-cleaning", "Airbnb cleaning"],
@@ -59,6 +60,7 @@ const CITY_LINKS = [
   ["/romeoville", "Romeoville"],
   ["/stcharles", "St. Charles"],
   ["/streamwood", "Streamwood"],
+  ["/sugargrove", "Sugar Grove"],
   ["/villapark", "Villa Park"],
   ["/warrenville", "Warrenville"],
   ["/wayne", "Wayne"],
@@ -217,7 +219,7 @@ function renderHeader() {
         <a class="clean-header__cleaner" href="#clean">Become a Cleaner</a>
         <span class="clean-header__phone">📞 <a href="tel:+16308127077">Call Us</a></span>
         <a class="clean-button clean-button--primary" href="/quote">Get Free Quote</a>
-        <a class="clean-button clean-button--secondary" href="#city">City ▾</a>
+        <a class="clean-button clean-button--secondary" href="${REGULAR_SERVICE_PATH}#city">City ▾</a>
       </div>
     </div>
   </nav>
@@ -225,15 +227,24 @@ function renderHeader() {
 }
 
 function renderCityModal() {
-  const links = CITY_LINKS.map(([href, label]) => `<a href="${href}">${label}</a>`).join("");
+  const cityGroups = [
+    ["A-D:", CITY_LINKS.filter(([, label]) => /^[A-D]/.test(label))],
+    ["E-L:", CITY_LINKS.filter(([, label]) => /^[E-L]/.test(label))],
+    ["M-S:", CITY_LINKS.filter(([, label]) => /^[M-S]/.test(label))],
+    ["V-Y:", CITY_LINKS.filter(([, label]) => /^[V-Y]/.test(label))],
+  ];
+  const columns = cityGroups
+    .map(([heading, links]) => {
+      const cityLinks = links.map(([href, label]) => `<a href="${href}">${label}</a>`).join("");
+      return `<div class="clean-city-column"><h2>${heading}</h2><div class="clean-city-list">${cityLinks}</div></div>`;
+    })
+    .join("");
   return `
-<aside class="clean-modal" id="city" aria-label="Choose your city">
-  <a class="clean-modal__backdrop" href="#" aria-label="Close city chooser"></a>
-  <div class="clean-modal__panel clean-modal__panel--wide">
-    <a class="clean-modal__close" href="#" aria-label="Close">×</a>
-    <h2>Choose Your City</h2>
-    <p>Select a service area to continue booking with the right local page.</p>
-    <div class="clean-city-grid">${links}</div>
+<aside class="clean-modal clean-modal--city" id="city" aria-label="Choose your city">
+  <a class="clean-modal__backdrop" href="${REGULAR_SERVICE_PATH}" aria-label="Close city chooser"></a>
+  <a class="clean-modal__close clean-modal__close--city" href="${REGULAR_SERVICE_PATH}" aria-label="Close">×</a>
+  <div class="clean-modal__panel clean-modal__panel--city">
+    <div class="clean-city-columns">${columns}</div>
   </div>
 </aside>`;
 }
@@ -405,6 +416,15 @@ a{color:inherit;text-decoration:none;}
 .clean-city-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 16px;}
 .clean-city-grid a{display:block;padding:9px 10px;border-radius:10px;background:#e8e1d9;text-decoration:none;font-size:14px;line-height:1.2;transition:background-color .2s ease,color .2s ease;}
 .clean-city-grid a:hover{background:#9e435a;color:#faf9f6;}
+.clean-modal--city{align-items:flex-start;justify-content:center;padding:0 24px 24px;}
+.clean-modal--city .clean-modal__backdrop{background:rgba(49,49,49,.38);backdrop-filter:blur(2px);}
+.clean-modal__panel--city{width:clamp(920px,67vw,1330px);max-height:calc(100vh - 18px);overflow:auto;border-radius:0 0 28px 28px;padding:34px 50px 56px;background:#faf9f6;box-shadow:none;}
+.clean-modal__close--city{position:fixed;right:28px;top:24px;z-index:1;color:#313131;font-family:Arial,sans-serif;font-size:54px;font-weight:200;line-height:.8;}
+.clean-city-columns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:30px;}
+.clean-modal--city h2{margin:0 0 12px;font-family:var(--clean-headline-font);font-size:46px;font-weight:400;line-height:1;color:#313131;}
+.clean-city-list{display:grid;gap:14px;}
+.clean-city-list a{display:flex;align-items:center;justify-content:center;min-height:56px;border:2px solid #ad5b71;border-radius:999px;color:#4a4a4a;background:#faf9f6;font-family:var(--clean-text-font);font-size:24px;font-weight:400;line-height:1.1;text-decoration:none;transition:background-color .2s ease,color .2s ease,border-color .2s ease;}
+.clean-city-list a:hover,.clean-city-list a:focus-visible{background:#9e435a;border-color:#9e435a;color:#faf9f6;}
 .clean-application-form{display:grid;gap:14px;}
 .clean-application-form label{display:grid;gap:7px;font-size:14px;}
 .clean-application-form input{width:100%;min-height:46px;border:1px solid #d8cfc4;border-radius:10px;background:#e8e1d9;padding:0 14px;font:inherit;}
@@ -425,6 +445,12 @@ a{color:inherit;text-decoration:none;}
   .clean-header__cleaner,.clean-header__phone{grid-column:span 1;align-self:center;}
   .clean-button{min-height:44px;}
   .clean-city-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .clean-modal--city{padding:16px;}
+  .clean-modal__panel--city{width:100%;max-height:calc(100vh - 32px);border-radius:24px;padding:30px 26px;}
+  .clean-modal__close--city{right:20px;top:22px;font-size:44px;}
+  .clean-city-columns{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 18px;}
+  .clean-modal--city h2{font-size:36px;}
+  .clean-city-list a{min-height:48px;font-size:19px;}
 }
 @media (max-width:479px){
   .clean-header__mobile{padding:12px 20px;}
@@ -433,6 +459,12 @@ a{color:inherit;text-decoration:none;}
   .clean-modal__panel{border-radius:18px;padding:28px 20px;}
   .clean-modal h2{font-size:28px;}
   .clean-city-grid{grid-template-columns:1fr;}
+  .clean-modal--city{padding:12px;}
+  .clean-modal__panel--city{border-radius:20px;padding:28px 18px 24px;}
+  .clean-city-columns{grid-template-columns:1fr;gap:24px;}
+  .clean-modal--city h2{font-size:34px;margin-bottom:10px;}
+  .clean-city-list{gap:10px;}
+  .clean-city-list a{min-height:46px;font-size:18px;}
 }
 </style>`;
 }

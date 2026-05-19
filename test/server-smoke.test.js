@@ -799,7 +799,7 @@ test("serves the regular-cleaning main route as clean hand-coded markup", async 
   assert.doesNotMatch(body, /__resize__20x__/);
   assert.doesNotMatch(body, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
-  assert.match(body, /href="#city"/);
+  assert.match(body, /href="\/services\/regular-cleaning#city"/);
   assert.match(body, /href="#clean"/);
 });
 
@@ -1115,7 +1115,7 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
       assert.match(body, /id="shynli-home-page-runtime"/, route);
       assert.match(body, /id="shynli-zero-runtime-stub"/, route);
     }
-    assert.match(body, /href="#city"/, route);
+    assert.match(body, /href="(?:#city|\/services\/regular-cleaning#city)"/, route);
     assert.match(body, /href="#clean"/, route);
   }
 });
