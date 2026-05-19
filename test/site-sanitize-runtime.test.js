@@ -1015,7 +1015,9 @@ test("keeps the commercial-cleaning main route hand-coded without Tilda runtime"
   assert.match(html, /<meta name="robots" content="index,follow"\s*\/?>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/commercial-cleaning"\s*\/?>/);
   assert.match(html, /\/css\/commercial-cleaning-copy\.css/);
+  assert.match(html, /\/css\/commercial-cleaning-city-modal\.css/);
   assert.match(html, /\/js\/commercial-cleaning-copy\.js/);
+  assert.match(html, /\/js\/commercial-cleaning-city-modal\.js/);
   assert.doesNotMatch(html, /js\/tilda-[^"]+/);
   assert.doesNotMatch(html, /css\/tilda-[^"]+/);
   assert.doesNotMatch(html, /data-original=/);
@@ -1098,7 +1100,9 @@ test("keeps the commercial-cleaning copy hand-coded without Tilda runtime", () =
 
   assert.match(html, /class="commercial-clean-page"/);
   assert.match(html, /\/css\/commercial-cleaning-copy\.css/);
+  assert.match(html, /\/css\/commercial-cleaning-city-modal\.css/);
   assert.match(html, /\/js\/commercial-cleaning-copy\.js/);
+  assert.match(html, /\/js\/commercial-cleaning-city-modal\.js/);
   assert.doesNotMatch(html, /js\/tilda-[^"]+/);
   assert.doesNotMatch(html, /css\/tilda-[^"]+/);
   assert.doesNotMatch(html, /data-original=/);
