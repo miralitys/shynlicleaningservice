@@ -686,10 +686,100 @@ test("keeps city-specific copy aligned on every city page", () => {
     assert.equal(new Set(values).size, 1, `${route} should not mix cities in ${label}`);
     assert.equal(values[0], city, `${route} ${label}`);
   };
+  const expectedNearbyCities = {
+    Addison: ["Villa Park", "Elmhurst", "Lombard", "Wood Dale", "Itasca", "Carol Stream", "Glen Ellyn"],
+    Aurora: ["North Aurora", "Montgomery", "Sugar Grove", "Oswego", "Naperville", "Batavia", "Warrenville"],
+    Bartlett: ["Streamwood", "Carol Stream", "Wayne", "West Chicago", "Winfield", "Glen Ellyn", "Wheaton"],
+    Batavia: ["Geneva", "North Aurora", "Aurora", "St. Charles", "Sugar Grove", "West Chicago", "Warrenville"],
+    Bolingbrook: ["Woodridge", "Romeoville", "Plainfield", "Naperville", "Darien", "Lemont", "Lisle"],
+    Bristol: ["Yorkville", "Montgomery", "Oswego", "Sugar Grove", "Aurora", "North Aurora", "Plainfield"],
+    "Burr Ridge": ["Willowbrook", "Hinsdale", "Clarendon Hills", "Darien", "Westmont", "Downers Grove", "Oak Brook"],
+    "Carol Stream": ["Wheaton", "Winfield", "Glen Ellyn", "Bartlett", "West Chicago", "Lombard", "Wayne"],
+    "Clarendon Hills": ["Hinsdale", "Westmont", "Downers Grove", "Burr Ridge", "Oak Brook", "Darien", "Willowbrook"],
+    Darien: ["Willowbrook", "Woodridge", "Downers Grove", "Burr Ridge", "Westmont", "Lemont", "Bolingbrook"],
+    "Downers Grove": ["Westmont", "Woodridge", "Lisle", "Darien", "Clarendon Hills", "Oak Brook", "Lombard"],
+    Elmhurst: ["Villa Park", "Addison", "Lombard", "Oak Brook", "Wood Dale", "Itasca", "Glen Ellyn"],
+    Geneva: ["Batavia", "St. Charles", "West Chicago", "North Aurora", "Aurora", "Winfield", "Warrenville"],
+    "Glen Ellyn": ["Wheaton", "Lombard", "Carol Stream", "Winfield", "Villa Park", "Downers Grove", "Lisle"],
+    Hinsdale: ["Clarendon Hills", "Burr Ridge", "Oak Brook", "Westmont", "Willowbrook", "Downers Grove", "Darien"],
+    "Homer Glen": ["Lemont", "Lockport", "Romeoville", "Bolingbrook", "Woodridge", "Darien", "Plainfield"],
+    Itasca: ["Wood Dale", "Addison", "Elmhurst", "Villa Park", "Lombard", "Carol Stream", "Bartlett"],
+    Lemont: ["Homer Glen", "Lockport", "Darien", "Woodridge", "Bolingbrook", "Romeoville", "Willowbrook"],
+    Lisle: ["Naperville", "Downers Grove", "Woodridge", "Glen Ellyn", "Wheaton", "Lombard", "Westmont"],
+    Lockport: ["Homer Glen", "Romeoville", "Lemont", "Plainfield", "Bolingbrook", "Woodridge", "Naperville"],
+    Lombard: ["Glen Ellyn", "Villa Park", "Addison", "Elmhurst", "Downers Grove", "Oak Brook", "Lisle"],
+    Montgomery: ["Aurora", "Oswego", "North Aurora", "Sugar Grove", "Yorkville", "Bristol", "Naperville"],
+    Naperville: ["Lisle", "Warrenville", "Aurora", "Woodridge", "Plainfield", "Bolingbrook", "Montgomery"],
+    "North Aurora": ["Aurora", "Batavia", "Sugar Grove", "Geneva", "Montgomery", "Warrenville", "West Chicago"],
+    "Oak Brook": ["Hinsdale", "Elmhurst", "Lombard", "Westmont", "Clarendon Hills", "Burr Ridge", "Villa Park"],
+    Oswego: ["Montgomery", "Aurora", "Yorkville", "Plainfield", "Bristol", "Sugar Grove", "North Aurora"],
+    Plainfield: ["Romeoville", "Bolingbrook", "Naperville", "Oswego", "Yorkville", "Montgomery", "Lockport"],
+    Romeoville: ["Bolingbrook", "Lockport", "Plainfield", "Woodridge", "Lemont", "Homer Glen", "Naperville"],
+    "St. Charles": ["Geneva", "Batavia", "Wayne", "West Chicago", "North Aurora", "Bartlett", "Winfield"],
+    Streamwood: ["Bartlett", "Wayne", "Carol Stream", "West Chicago", "Winfield", "Wood Dale", "Itasca"],
+    "Sugar Grove": ["Aurora", "North Aurora", "Montgomery", "Oswego", "Batavia", "Yorkville", "Naperville"],
+    "Villa Park": ["Lombard", "Elmhurst", "Addison", "Oak Brook", "Glen Ellyn", "Wood Dale", "Itasca"],
+    Warrenville: ["Naperville", "Winfield", "Wheaton", "West Chicago", "North Aurora", "Aurora", "Lisle"],
+    Wayne: ["Bartlett", "St. Charles", "West Chicago", "Carol Stream", "Geneva", "Streamwood", "Winfield"],
+    "West Chicago": ["Winfield", "Warrenville", "Wheaton", "Geneva", "Batavia", "Wayne", "Carol Stream"],
+    Westmont: ["Downers Grove", "Clarendon Hills", "Hinsdale", "Oak Brook", "Darien", "Willowbrook", "Woodridge"],
+    Wheaton: ["Glen Ellyn", "Winfield", "Carol Stream", "Warrenville", "West Chicago", "Lisle", "Lombard"],
+    Willowbrook: ["Burr Ridge", "Darien", "Hinsdale", "Clarendon Hills", "Westmont", "Downers Grove", "Woodridge"],
+    Winfield: ["Wheaton", "Warrenville", "West Chicago", "Carol Stream", "Glen Ellyn", "Wayne", "Geneva"],
+    "Wood Dale": ["Itasca", "Addison", "Elmhurst", "Villa Park", "Lombard", "Carol Stream", "Bartlett"],
+    Woodridge: ["Bolingbrook", "Downers Grove", "Darien", "Lisle", "Naperville", "Westmont", "Romeoville"],
+    Yorkville: ["Bristol", "Oswego", "Montgomery", "Sugar Grove", "Aurora", "Plainfield", "North Aurora"],
+  };
+  const routeByCity = new Map(fixtures.map((fixture) => [fixture.city, fixture.route]));
+  const extractAreaLinks = (html, route) => {
+    const match = html.match(
+      /<div class="sg-area-links" aria-label="Nearby city links">([\s\S]*?)<\/div>\s*<div class="sg-zip/
+    );
+    assert.ok(match, `${route} should include nearby area links`);
+    return [...match[1].matchAll(/<a class="sg-area-pill([^"]*)" href="([^"]+)">([^<]+)<\/a>/g)].map(
+      (linkMatch) => ({
+        primary: linkMatch[1].includes("sg-area-pill--primary"),
+        href: linkMatch[2],
+        city: linkMatch[3],
+      })
+    );
+  };
+  const extractAreaSummaryCities = (html, route) => {
+    const match = html.match(
+      /<div class="sg-area-summary sg-reveal" aria-label="Service area city summary">([\s\S]*?)<\/div>/
+    );
+    assert.ok(match, `${route} should include the service area summary`);
+    return [...match[1].matchAll(/<a class="sg-area-summary__city" href="([^"]+)">([^<]+)<\/a>/g)].map(
+      (linkMatch) => ({
+        href: linkMatch[1],
+        city: linkMatch[2],
+      })
+    );
+  };
+  const normalizeInlineText = (value) =>
+    String(value || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&rsquo;|&#39;/g, "'")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .trim();
+  const extractCityFaqItems = (html, route) => {
+    const match = html.match(/<section class="sg-section sg-faq" id="faq"[\s\S]*?<\/section>/);
+    assert.ok(match, `${route} should include city FAQ`);
+    return [
+      ...match[0].matchAll(
+        /<details class="sg-faq__item">[\s\S]*?<span class="sg-faq__question">([^<]+)<\/span>[\s\S]*?<p class="sg-faq__answer">([\s\S]*?)<\/p>/g
+      ),
+    ].map((itemMatch) => ({
+      question: normalizeInlineText(itemMatch[1]),
+      answer: normalizeInlineText(itemMatch[2]),
+    }));
+  };
 
   for (const fixture of fixtures) {
     const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
     const text = toText(html);
+    const cityPattern = fixture.city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     assertOnlyCity(
       captureAll(text, /(?:Home|House) Cleaning Services in\s+([^,]+?)\s*,\s*IL/g),
@@ -728,6 +818,76 @@ test("keeps city-specific copy aligned on every city page", () => {
       ],
       fixture.city,
       "quote heading",
+      fixture.route
+    );
+    assert.match(text, new RegExp(`Shynli Cleaning helps(?: busy)?\\s+${cityPattern}`), fixture.route);
+    assert.match(
+      text,
+      new RegExp(`Why Choose Recurring Cleaning in\\s+${cityPattern}\\?\\s+(?:Most|Many|Recurring cleaning)[^.]*${cityPattern}`),
+      fixture.route
+    );
+    assert.match(
+      text,
+      new RegExp(
+        `We serve\\s+${cityPattern}\\s+and nearby (?:DuPage County communities|Fox Valley communities|northwest suburban communities|southwest suburban communities|western suburbs) with clear, reliable scheduling\\.`
+      ),
+      fixture.route
+    );
+    const expectedAreas = expectedNearbyCities[fixture.city];
+    assert.ok(expectedAreas, `${fixture.route} should have expected nearby cities`);
+    const nearbyLinks = extractAreaLinks(html, fixture.route);
+    assert.deepEqual(
+      nearbyLinks.map((link) => link.city),
+      expectedAreas,
+      `${fixture.route} nearby area buttons`
+    );
+    assert.equal(nearbyLinks.length, 7, `${fixture.route} should have 7 nearby buttons`);
+    assert.ok(!nearbyLinks.some((link) => link.city === fixture.city), `${fixture.route} should not list itself up top`);
+    nearbyLinks.forEach((link, index) => {
+      assert.equal(link.href, routeByCity.get(link.city), `${fixture.route} ${link.city} button href`);
+      assert.equal(link.primary, index === nearbyLinks.length - 1, `${fixture.route} primary nearby button`);
+    });
+    const summaryLinks = extractAreaSummaryCities(html, fixture.route);
+    assert.deepEqual(
+      summaryLinks.map((link) => link.city),
+      [fixture.city, ...expectedAreas],
+      `${fixture.route} service area summary`
+    );
+    summaryLinks.forEach((link) => {
+      assert.equal(link.href, routeByCity.get(link.city), `${fixture.route} ${link.city} summary href`);
+    });
+    const faqItems = extractCityFaqItems(html, fixture.route);
+    assert.deepEqual(
+      faqItems.map((item) => item.question),
+      [
+        `How much does house cleaning cost in ${fixture.city}?`,
+        `Do you offer recurring cleaning in ${fixture.city}?`,
+        `Do you provide deep cleaning in ${fixture.city}?`,
+        `Do you offer move-in and move-out cleaning in ${fixture.city}?`,
+        `Can I get a free quote for house cleaning in ${fixture.city}?`,
+      ],
+      `${fixture.route} city FAQ questions`
+    );
+    assert.deepEqual(
+      faqItems.map((item) => item.answer),
+      [
+        `House cleaning pricing in ${fixture.city} depends on your home's size, number of bedrooms and bathrooms, cleaning frequency, service type, and current condition.`,
+        `Yes. Shynli Cleaning offers weekly, bi-weekly, and monthly recurring house cleaning in ${fixture.city}.`,
+        `Yes. We provide deep cleaning services in ${fixture.city} for seasonal refreshes, first visits, and homes that need extra attention.`,
+        `Yes. We offer move-in and move-out cleaning in ${fixture.city} for houses, apartments, condos, and townhomes.`,
+        `Yes. You can request a free quote for house cleaning in ${fixture.city}, and we'll confirm the details before service.`,
+      ],
+      `${fixture.route} city FAQ answers`
+    );
+    assert.equal(faqItems.length, 5, `${fixture.route} should have five city FAQ items`);
+    assert.doesNotMatch(
+      text,
+      /We provide regular house cleaning, deep cleaning, move-in\/move-out cleaning, and one-time cleaning based on your home(?:'|’|&#39;|&rsquo;)s size, condition, and schedule/i,
+      fixture.route
+    );
+    assert.doesNotMatch(
+      text,
+      new RegExp(`Most of our ${cityPattern} clients choose bi-weekly cleaning`),
       fixture.route
     );
     assert.doesNotMatch(html, /data-elem-id=['"]1767790203594000001['"]/, fixture.route);

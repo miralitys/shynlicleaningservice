@@ -513,9 +513,11 @@ test("serves the clean Sugar Grove copy on /sugargrove", async () => {
   );
   assert.match(body, /<a class="sg-button sg-hero-panel__cta" href="\/quote">Get Free Quote<\/a>/);
   assert.match(body, /Looking for a reliable house cleaning service in <strong>Sugar Grove\?<\/strong>/);
-  assert.match(body, /Shynli Cleaning helps Sugar Grove homeowners keep their homes clean, fresh, and easier to maintain\./);
-  assert.match(body, /regular house cleaning, deep cleaning, move-in\/move-out cleaning, and one-time cleaning/);
+  assert.match(body, /Shynli Cleaning helps Sugar Grove homeowners keep their homes clean, fresh, and easier to maintain with regular house cleaning/);
+  assert.match(body, /regular house cleaning, deep cleaning, and move-in\/move-out service/);
   assert.match(body, /Whether you need weekly cleaning, bi-weekly cleaning, or a full deep clean before guests/);
+  assert.match(body, /Why Choose <span class="sg-accent">Recurring Cleaning in Sugar Grove\?<\/span>/);
+  assert.match(body, /Most Sugar Grove homeowners choose bi-weekly cleaning because it keeps the home consistently clean without the cost of weekly service/);
   assert.match(body, /<section id="sugargrove-residential-services"/);
   assert.match(body, /<section id="sugargrove-recurring-cleaning"/);
   assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
@@ -611,9 +613,49 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
       new RegExp(`Looking for a reliable house cleaning service in <strong>${cityPattern}\\?<\\/strong>`),
       route
     );
-    assert.match(body, new RegExp(`Shynli Cleaning helps ${cityPattern} homeowners`), route);
+    assert.match(body, new RegExp(`Shynli Cleaning helps(?: busy)? ${cityPattern}`), route);
+    assert.match(
+      body,
+      new RegExp(`Why Choose <span class="sg-accent">Recurring Cleaning in ${cityPattern}\\?<\\/span>`),
+      route
+    );
+    assert.match(
+      body,
+      new RegExp(
+        `We serve ${cityPattern} and nearby (?:DuPage County communities|Fox Valley communities|northwest suburban communities|southwest suburban communities|western suburbs) with clear, reliable scheduling\\.`
+      ),
+      route
+    );
+    const nearbyAreaBlock = body.match(
+      /<div class="sg-area-links" aria-label="Nearby city links">([\s\S]*?)<\/div>\s*<div class="sg-zip/
+    );
+    assert.ok(nearbyAreaBlock, route);
+    const nearbyAreaCities = [...nearbyAreaBlock[1].matchAll(/<a class="sg-area-pill[^"]*" href="[^"]+">([^<]+)<\/a>/g)].map(
+      (match) => match[1]
+    );
+    assert.equal(nearbyAreaCities.length, 7, route);
+    assert.ok(!nearbyAreaCities.includes(city), route);
+    const areaSummaryBlock = body.match(
+      /<div class="sg-area-summary sg-reveal" aria-label="Service area city summary">([\s\S]*?)<\/div>/
+    );
+    assert.ok(areaSummaryBlock, route);
+    const areaSummaryCities = [
+      ...areaSummaryBlock[1].matchAll(/<a class="sg-area-summary__city" href="[^"]+">([^<]+)<\/a>/g),
+    ].map((match) => match[1]);
+    assert.equal(areaSummaryCities.length, 8, route);
+    assert.equal(areaSummaryCities[0], city, route);
+    assert.doesNotMatch(
+      body,
+      new RegExp(`Most of our ${cityPattern} clients choose bi-weekly cleaning`),
+      route
+    );
     assert.match(body, new RegExp(`Pricing for home cleaning in <strong>${cityPattern}<\\/strong>`), route);
     assert.match(body, new RegExp(`FAQ About House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
+    const faqSection = body.match(/<section class="sg-section sg-faq" id="faq"[\s\S]*?<\/section>/);
+    assert.ok(faqSection, route);
+    assert.equal((faqSection[0].match(/<details class="sg-faq__item">/g) || []).length, 5, route);
+    assert.match(faqSection[0], new RegExp(`Can I get a free quote for house cleaning in ${cityPattern}\\?`), route);
+    assert.doesNotMatch(faqSection[0], /Do I need to be home during the cleaning\?|How is pricing calculated\?/, route);
     assert.match(body, new RegExp(`Get a Free Quote for House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
     assert.match(
       body,
