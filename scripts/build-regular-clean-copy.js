@@ -171,6 +171,7 @@ function cleanRecord(recordHtml) {
     })
     .replace(/\+1\(630\)381-7829/g, "+1(630)812-7077")
     .replace(/\+16303817829/g, "+16308127077")
+    .replace(/>\/ per visit</g, ">/per visit<")
     .replace(
       /<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 58 24" fill="none"><text x="0" y="21" fill="#313131" font-family="Playfair Display, serif" font-style="italic" font-size="31" font-weight="400" letter-spacing="0" textLength="58" lengthAdjust="spacingAndGlyphs">300\+<\/text><\/svg>/g,
       '<span class="clean-hero-stat-number">300+</span>'
@@ -337,6 +338,9 @@ a{color:inherit;text-decoration:none;}
   .clean-service-page #section1778719793 .clean-node-elem[data-clean-id="1768240056031"]{left:calc(50% - 240px + 10px)!important;width:460px!important;}
   .clean-service-page #section1778719793 .clean-node-elem[data-clean-id="1768240056031"] .clean-node-atom{font-size:24px!important;white-space:normal!important;}
   .clean-service-page #section1778719793 .clean-node-elem[data-clean-id="1768240056120"]{left:calc(50% - 240px + 10px)!important;}
+  .clean-service-page #section1778645403 .clean-node-elem[data-clean-id="1768238214070"]{left:117px!important;}
+  .clean-service-page #section1778645403 .clean-node-elem[data-clean-id="1768238214095"]{left:114px!important;}
+  .clean-service-page #section1778645403 .clean-node-elem[data-clean-id="1768238214129"]{left:110px!important;}
 }
 @media screen and (max-width:479px){
   .clean-service-page #section1777833793 .clean-node-elem[data-clean-id="1768231764218"]{left:calc(50% - 160px + 11px)!important;}
@@ -351,6 +355,9 @@ a{color:inherit;text-decoration:none;}
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000016"],
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586275000017"]{top:526px!important;}
   .clean-service-page #section1778719793 .clean-node-elem[data-clean-id="1768240056120"]{left:calc(50% - 160px + 10px)!important;}
+  .clean-service-page #section1778645403 .clean-node-elem[data-clean-id="1768238214070"]{left:107px!important;}
+  .clean-service-page #section1778645403 .clean-node-elem[data-clean-id="1768238214095"]{left:111px!important;}
+  .clean-service-page #section1778645403 .clean-node-elem[data-clean-id="1768238214129"]{left:107px!important;}
 }
 .clean-block123,.clean-container_100,.clean-width_100{width:100%;}
 .clean-modal{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;}
