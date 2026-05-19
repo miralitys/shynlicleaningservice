@@ -642,7 +642,7 @@ test("keeps city-specific copy aligned on every city page", () => {
     { route: "/romeoville", file: "page111640886.html", city: "Romeoville" },
     { route: "/stcharles", file: "page111640956.html", city: "St. Charles" },
     { route: "/streamwood", file: "page111641016.html", city: "Streamwood" },
-    { route: "/sugargrove", file: "page123500102.html", city: "Sugar Grove" },
+    { route: "/sugargrove", file: "page123500105.html", city: "Sugar Grove" },
     { route: "/villapark", file: "page111641126.html", city: "Villa Park" },
     { route: "/warrenville", file: "page111641216.html", city: "Warrenville" },
     { route: "/wayne", file: "page111641256.html", city: "Wayne" },
@@ -677,7 +677,7 @@ test("keeps city-specific copy aligned on every city page", () => {
     const text = toText(html);
 
     assertOnlyCity(
-      captureAll(text, /Home Cleaning Services in\s+([^,]+?)\s*,\s*IL/g),
+      captureAll(text, /(?:Home|House) Cleaning Services in\s+([^,]+?)\s*,\s*IL/g),
       fixture.city,
       "hero heading",
       fixture.route
@@ -688,12 +688,16 @@ test("keeps city-specific copy aligned on every city page", () => {
       "pricing intro",
       fixture.route
     );
+    const nearbyAreaValues =
+      fixture.route === "/sugargrove"
+        ? captureAll(text, /Serving\s+([A-Za-z.\s]+?)\s+and nearby communities/g)
+        : [
+            ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Find your area by ZIP code/g),
+            ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Serving Sugar Grove and nearby communities/g),
+            ...captureAll(text, /Shynli Cleaning serves\s+([A-Za-z.\s]+?)\s+and nearby communities across/g),
+          ];
     assertOnlyCity(
-      [
-        ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Find your area by ZIP code/g),
-        ...captureAll(text, /Areas We Serve Near\s+([A-Za-z.\s]+?)\s+Serving Sugar Grove and nearby communities/g),
-        ...captureAll(text, /Shynli Cleaning serves\s+([A-Za-z.\s]+?)\s+and nearby communities across/g),
-      ],
+      nearbyAreaValues,
       fixture.city,
       "nearby areas section",
       fixture.route
@@ -710,8 +714,8 @@ test("keeps city-specific copy aligned on every city page", () => {
     );
     assertOnlyCity(
       [
-        ...captureAll(text, /Get a Free Quote for Home Cleaning in\s+([A-Za-z.\s]+?)(?:\s+Get Your Home|\s+\+1\(630\)|\s+Ready to get started\?)/g),
-        ...captureAll(text, /Get a Free Quote for Home Cleaning in\s+([A-Za-z.\s]+?)\s+Your name/g),
+        ...captureAll(text, /Get a Free Quote for (?:Home|House) Cleaning in\s+([A-Za-z.\s]+?)(?:\s+Get Your Home|\s+\+1\(630\)|\s+Ready to get started\?|\s+We'll confirm)/g),
+        ...captureAll(text, /Get a Free Quote for (?:Home|House) Cleaning in\s+([A-Za-z.\s]+?)\s+Your name/g),
         ...captureAll(text, /Get a\s+([A-Za-z.\s]+?)\s+Cleaning Quote/g),
       ],
       fixture.city,

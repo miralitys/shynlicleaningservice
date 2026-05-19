@@ -474,44 +474,9 @@ test("serves city landing pages with the shared menu shell runtime", async () =>
   assert.match(body, /href="#clean"/);
 });
 
-test("serves Sugar Grove with the residential cleaning title and stable H1", async () => {
+test("serves the clean Sugar Grove copy on /sugargrove", async () => {
   const response = await fetch(`${BASE_URL}/sugargrove`);
   const body = await response.text();
-  const h1Match = body.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
-  const h1Text = h1Match
-    ? h1Match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
-    : "";
-  const focusedServicesMatch = body.match(
-    /<section id="sugargrove-residential-services"[\s\S]*?<\/section>/
-  );
-  const focusedServices = focusedServicesMatch ? focusedServicesMatch[0] : "";
-  const recurringCleaningMatch = body.match(
-    /<section id="sugargrove-recurring-cleaning"[\s\S]*?<\/section>/
-  );
-  const recurringCleaning = recurringCleaningMatch ? recurringCleaningMatch[0] : "";
-  const nearbyAreasMatch = body.match(/<div id="rec1824177293"[\s\S]*?(?=<div id="rec1802286173")/);
-  const nearbyAreas = nearbyAreasMatch ? nearbyAreasMatch[0] : "";
-  const finalCtaMatch = body.match(/<div id="rec1802286193"[\s\S]*?(?=<div id="rec1795404693")/);
-  const finalCta = finalCtaMatch ? finalCtaMatch[0] : "";
-  const localTeamMatch = body.match(
-    /<div id="rec\d+" class="r t-rec"(?:(?!<div id="rec\d+" class="r t-rec")[\s\S])*?Your Local Cleaning Team(?:(?!<div id="rec\d+" class="r t-rec")[\s\S])*?<!-- \/T396 -->\s*<\/div>/
-  );
-  const localTeam = localTeamMatch ? localTeamMatch[0] : "";
-  const localTeamPlainText = localTeam
-    .replace(/&#8209;/g, "-")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const nearbyAreaButtons = [...nearbyAreas.matchAll(
-    /<div class='t396__elem tn-elem[^']*'([^>]*)data-elem-type='button'([^>]*)>\s*<a class='tn-atom' href="([^"]+)">\s*<div class='tn-atom__button-content'>\s*<span class="tn-atom__button-text">([^<]+)<\/span>/g
-  )]
-    .map((match) => {
-      const attrs = `${match[1]} ${match[2]}`;
-      const top = Number(attrs.match(/data-field-top-value="([^"]+)"/)?.[1] || 0);
-      const left = Number(attrs.match(/data-field-left-value="([^"]+)"/)?.[1] || 0);
-      return { href: match[3], label: match[4], row: Math.round(top / 10) * 10, left };
-    })
-    .sort((a, b) => a.row - b.row || a.left - b.left);
 
   assert.equal(response.status, 200);
   assert.match(
@@ -520,89 +485,34 @@ test("serves Sugar Grove with the residential cleaning title and stable H1", asy
   );
   assert.match(
     body,
-    /<meta property="og:title" content="House Cleaning Services in Sugar Grove, IL \| Shynli Cleaning" \/>/
+    /<meta property="og:url" content="https:\/\/shynlicleaningservice\.com\/sugargrove" \/>/
   );
-  assert.equal(h1Text.replace(/\s+,/g, ","), "Home Cleaning Services in Sugar Grove, IL");
   assert.match(
     body,
-    /Reliable regular, deep, and move-out cleaning for homes in Sugar Grove, IL\./
-  );
-  assert.doesNotMatch(body, /Reliable home cleaning for busy households in Sugar Grove/);
-  assert.ok(focusedServices, "Sugar Grove should use the residential-focused services section");
-  assert.match(focusedServices, /Residential Cleaning Services in Sugar Grove/);
-  assert.match(
-    focusedServices,
-    /Regular Home Cleaning[\s\S]*Deep Cleaning[\s\S]*Move-In \/ Move-Out Cleaning/
+    /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/sugargrove">/
   );
   assert.match(
-    focusedServices,
-    /Also available when needed:[\s\S]*Airbnb Cleaning[\s\S]*Post-Construction Cleaning[\s\S]*Commercial Cleaning/
+    body,
+    /<h1>House Cleaning Services in <span class="sg-accent">Sugar Grove<\/span>, IL<\/h1>/
   );
-  assert.doesNotMatch(focusedServices, /Deep Cleaning for Homes That Need Extra Care/);
-  assert.ok(recurringCleaning, "Sugar Grove should use the local recurring cleaning section");
-  assert.match(recurringCleaning, /Why Choose[\s\S]*Recurring Cleaning in Sugar Grove\?/);
-  assert.match(recurringCleaning, /Most of our Sugar Grove clients choose bi-weekly cleaning\./);
   assert.match(
-    recurringCleaning,
-    /For many Sugar Grove families, bi-weekly cleaning is the best balance between a consistently clean home and affordable recurring service\./
+    body,
+    /Reliable regular, deep, and move-in\/move-out cleaning for homes in Sugar Grove and nearby areas\./
   );
-  assert.doesNotMatch(body, /Choose the cleaning schedule that fits your home and routine:/);
-  assert.ok(nearbyAreas, "Sugar Grove should include the nearby areas block");
-  assert.match(nearbyAreas, /Serving Sugar Grove and nearby communities/);
-  assert.doesNotMatch(nearbyAreas, /Find your area by ZIP code/);
+  assert.match(
+    body,
+    /Local cleaning team &bull; Transparent pricing &bull; Weekly, bi-weekly, and one-time service/
+  );
+  assert.match(body, /<a class="sg-button sg-hero-panel__cta" href="\/quote">Get Free Quote<\/a>/);
+  assert.match(body, /Looking for a reliable house cleaning service in <strong>Sugar Grove\?<\/strong>/);
+  assert.match(body, /Shynli Cleaning helps Sugar Grove homeowners keep their homes clean, fresh, and easier to maintain\./);
+  assert.match(body, /regular house cleaning, deep cleaning, move-in\/move-out cleaning, and one-time cleaning/);
+  assert.match(body, /Whether you need weekly cleaning, bi-weekly cleaning, or a full deep clean before guests/);
+  assert.match(body, /<section id="sugargrove-residential-services"/);
+  assert.match(body, /<section id="sugargrove-recurring-cleaning"/);
   assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
-  assert.match(
-    body,
-    /@media screen and \(max-width:1199px\)\{[\s\S]*?#rec1824177293 \.tn-elem\[data-elem-id="1767801668999"\]\{[^}]*width:min\(calc\(100% - 128px\),760px\)!important/
-  );
-  assert.match(
-    body,
-    /#rec1802285983 \.tn-elem\[data-elem-id="1767696101290"\]\{[^}]*width:100%!important/
-  );
-  assert.match(
-    body,
-    /#rec1824177293 \.tn-elem\[data-elem-id="1767801668999"\]\{[^}]*width:calc\(100% - 48px\)!important/
-  );
-  assert.match(
-    body,
-    /#rec1824177293 \.zip-input-wrapper\{[^}]*height:58px!important/
-  );
-  assert.deepEqual(
-    nearbyAreaButtons.map(({ label, href }) => [label, href]),
-    [
-      ["Aurora", "/aurora"],
-      ["North Aurora", "/northaurora"],
-      ["Yorkville", "/yorkville"],
-      ["Batavia", "/batavia"],
-      ["Montgomery", "/montgomery"],
-      ["Oswego", "/oswego"],
-      ["Naperville", "/naperville"],
-    ]
-  );
-  assert.ok(
-    !nearbyAreaButtons.some(({ label }) =>
-      ["All Service Areas", "Burr Ridge", "Lisle", "Downers Grove", "Bolingbrook", "Geneva", "St. Charles"].includes(label)
-    ),
-    "Sugar Grove nearby area buttons should stay local to Sugar Grove"
-  );
-  assert.match(finalCta, /Get a Free Quote for Home Cleaning in[\s\S]*Sugar Grove/);
-  assert.match(
-    finalCta,
-    /We'll confirm the details and help you choose the right cleaning schedule\./
-  );
-  assert.doesNotMatch(finalCta, /Get Your Home Professionally Cleaned/);
-  assert.doesNotMatch(finalCta, /Get a\s+<span[^>]*>Sugar Grove<\/span>\s+Cleaning Quote/);
-  assert.doesNotMatch(finalCta, /Ready to get started\?/);
-  assert.doesNotMatch(finalCta, /We'll confirm details in 2 minutes/);
-  assert.ok(localTeam, "Sugar Grove should include the local cleaning team block");
-  assert.match(localTeamPlainText, /Locally scheduled cleaning appointments/);
-  assert.match(localTeamPlainText, /Carefully selected cleaners/);
-  assert.match(localTeamPlainText, /Flexible weekly, bi-weekly, or one-time service/);
-  assert.doesNotMatch(localTeamPlainText, /Our local cleaners are:/);
-  assert.doesNotMatch(localTeam, />locally scheduled</);
-  assert.doesNotMatch(localTeam, />flexible weekly or one-time service</);
-  assert.doesNotMatch(localTeam, /field=['"]tn_text_1768415655552000001['"]/);
-  assert.match(body, /id="shynli-local-team-benefits-style"/);
+  assert.match(body, /Serving Sugar Grove and nearby communities/);
+  assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i);
 });
 
 test("serves the Sugar Grove copy on /sugargrove2", async () => {
