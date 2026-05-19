@@ -325,7 +325,21 @@ a{color:inherit;text-decoration:none;}
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000016"],
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586275000017"]{top:678px!important;}
 }
+@media screen and (min-width:480px) and (max-width:639px){
+  .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045610727000020"]{left:calc(50% - 240px + 10px)!important;}
+  .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000010"]{top:613px!important;}
+  .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586275000018"]{top:571px!important;}
+  .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000013"],
+  .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000014"],
+  .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000015"],
+  .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000016"],
+  .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586275000017"]{top:613px!important;}
+  .clean-service-page #section1778719793 .clean-node-elem[data-clean-id="1768240056031"]{left:calc(50% - 240px + 10px)!important;width:460px!important;}
+  .clean-service-page #section1778719793 .clean-node-elem[data-clean-id="1768240056031"] .clean-node-atom{font-size:24px!important;white-space:normal!important;}
+  .clean-service-page #section1778719793 .clean-node-elem[data-clean-id="1768240056120"]{left:calc(50% - 240px + 10px)!important;}
+}
 @media screen and (max-width:479px){
+  .clean-service-page #section1777833793 .clean-node-elem[data-clean-id="1768231764218"]{left:calc(50% - 160px + 11px)!important;}
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000011"]{top:496px!important;width:87px!important;height:30px!important;}
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000010"]{top:528px!important;}
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586275000018"]{top:493px!important;width:58px!important;height:30px!important;}
@@ -336,6 +350,7 @@ a{color:inherit;text-decoration:none;}
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000015"],
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586274000016"],
   .clean-service-page #section1777833773 .clean-node-elem[data-clean-id="1768045586275000017"]{top:526px!important;}
+  .clean-service-page #section1778719793 .clean-node-elem[data-clean-id="1768240056120"]{left:calc(50% - 160px + 10px)!important;}
 }
 .clean-block123,.clean-container_100,.clean-width_100{width:100%;}
 .clean-modal{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;}
