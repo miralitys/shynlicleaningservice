@@ -515,45 +515,13 @@ test("serves the clean Sugar Grove copy on /sugargrove", async () => {
   assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i);
 });
 
-test("serves the Sugar Grove copy on /sugargrove2", async () => {
-  const response = await fetch(`${BASE_URL}/sugargrove2`);
-  const body = await response.text();
+test("redirects the removed /sugargrove2 duplicate to /sugargrove", async () => {
+  const response = await fetch(`${BASE_URL}/sugargrove2`, {
+    redirect: "manual",
+  });
 
-  assert.equal(response.status, 200);
-  assert.match(
-    body,
-    /<title>House Cleaning Services in Sugar Grove, IL \| Shynli Cleaning<\/title>/
-  );
-  assert.match(
-    body,
-    /<meta property="og:url" content="https:\/\/shynlicleaningservice\.com\/sugargrove2" \/>/
-  );
-  assert.match(
-    body,
-    /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/sugargrove2">/
-  );
-  assert.match(
-    body,
-    /<h1>House Cleaning Services in <span class="sg-accent">Sugar Grove<\/span>, IL<\/h1>/
-  );
-  assert.match(
-    body,
-    /Reliable regular, deep, and move-in\/move-out cleaning for homes in Sugar Grove and nearby areas\./
-  );
-  assert.match(
-    body,
-    /Local cleaning team &bull; Transparent pricing &bull; Weekly, bi-weekly, and one-time service/
-  );
-  assert.match(body, /<a class="sg-button sg-hero-panel__cta" href="\/quote">Get Free Quote<\/a>/);
-  assert.match(body, /Looking for a reliable house cleaning service in <strong>Sugar Grove\?<\/strong>/);
-  assert.match(body, /Shynli Cleaning helps Sugar Grove homeowners keep their homes clean, fresh, and easier to maintain\./);
-  assert.match(body, /regular house cleaning, deep cleaning, move-in\/move-out cleaning, and one-time cleaning/);
-  assert.match(body, /Whether you need weekly cleaning, bi-weekly cleaning, or a full deep clean before guests/);
-  assert.match(body, /<section id="sugargrove-residential-services"/);
-  assert.match(body, /<section id="sugargrove-recurring-cleaning"/);
-  assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
-  assert.match(body, /Serving Sugar Grove and nearby communities/);
-  assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i);
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.get("location"), "/sugargrove");
 });
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
@@ -589,7 +557,6 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     ["/stcharles", /St\.? Charles/i],
     ["/streamwood", /Streamwood/i],
     ["/sugargrove", /Sugar Grove/i],
-    ["/sugargrove2", /Sugar Grove/i],
     ["/villapark", /Villa Park/i],
     ["/warrenville", /Warrenville/i],
     ["/wayne", /Wayne/i],

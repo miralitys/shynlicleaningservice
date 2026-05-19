@@ -274,6 +274,7 @@ const REDIRECT_ROUTES = new Map([
   ["/home-simple", "/"],
   ["/действуй", "/quote"],
   ["/post-construction-cleaning", "/services/post-construction-cleaning"],
+  ["/sugargrove2", "/sugargrove"],
   [QUOTE_V2_PUBLIC_PATH, QUOTE_PUBLIC_PATH],
   ["/admin/setup", ADMIN_ROOT_PATH],
   ["/admin/users", ADMIN_ROOT_PATH],
@@ -488,7 +489,6 @@ const BREADCRUMB_LABELS = new Map([
   ["/quote2", "Quote"],
   ["/service-areas", "Service Areas"],
   ["/service-areas-v2", "Service Areas"],
-  ["/sugargrove2", "Sugar Grove"],
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
   ["/services/deep-cleaning/ads", "Deep Cleaning"],
@@ -611,15 +611,6 @@ const ROUTE_META_OVERRIDES = {
     ogDescription:
       "Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
     canonical: `${SITE_ORIGIN}/sugargrove`,
-  },
-  "/sugargrove2": {
-    title: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
-    description:
-      "Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
-    ogTitle: "House Cleaning Services in Sugar Grove, IL | Shynli Cleaning",
-    ogDescription:
-      "Professional house cleaning services in Sugar Grove, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
-    canonical: `${SITE_ORIGIN}/sugargrove2`,
   },
   "/quote": {
     title: "Get a Free Quote | Shynli Cleaning",
