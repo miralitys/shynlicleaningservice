@@ -917,8 +917,7 @@ test("removes duplicate copy from the shared benefits block", () => {
     { route: "/home-calculator", file: "page110230356.html" },
     { route: "/services/regular-cleaning", file: "page109653016.html" },
     { route: "/services/deep-cleaning", file: "page109721366.html" },
-    { route: "/services/move-in-move-out-cleaning", file: "page109993436.html" },
-    { route: "/services/airbnb-cleaning", file: "page110326416.html" },
+    { route: "/services/move-in-move-out-cleaning/ads", file: "page109993436.html" },
   ];
 
   for (const fixture of sharedBenefitFixtures) {
@@ -986,6 +985,23 @@ test("keeps the regular-cleaning main route hand-coded without Tilda runtime", (
   assert.match(html, /href="\/services\/regular-cleaning#city"/);
 });
 
+test("keeps the move-in move-out main route hand-coded without Tilda runtime", () => {
+  const html = sanitizeHtml(readFixture("page109993436-copy.html"), "/services/move-in-move-out-cleaning");
+  const tildaMarkers = /(?:tild|tilda|data-tilda|allrecords|\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i;
+
+  assert.match(html, /class="[^"]*\bmove-page\b[^"]*"/);
+  assert.match(html, /Cleaning for Moving In or Moving Out/i);
+  assert.match(html, /<meta name="robots" content="index,follow"\s*\/?>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/move-in-move-out-cleaning"\s*\/?>/);
+  assert.match(html, /\/images\/shynli-move-cleaning-hero\.png/);
+  assert.match(html, /\/images\/shynli-icon-32\.png/);
+  assert.doesNotMatch(html, tildaMarkers);
+  assert.doesNotMatch(html, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);
+  assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
+  assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
+  assert.doesNotMatch(html, /id="shynli-menu-widgeticons-runtime-stub"/);
+});
+
 test("keeps the commercial-cleaning main route hand-coded without Tilda runtime", () => {
   const html = sanitizeHtml(readFixture("page110512356.html"), "/services/commercial-cleaning");
 
@@ -1015,8 +1031,15 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
   const serviceFixtures = [
     { route: "/services/regular-cleaning", file: "page109653016-copy.html", cleanHandCoded: true },
     { route: "/services/deep-cleaning", file: "page109721366.html" },
-    { route: "/services/move-in-move-out-cleaning", file: "page109993436.html" },
-    { route: "/services/airbnb-cleaning", file: "page110326416.html" },
+    { route: "/services/move-in-move-out-cleaning", file: "page109993436-copy.html", cleanHandCoded: true },
+    {
+      route: "/services/airbnb-cleaning",
+      file: "page110326416-copy.html",
+      cleanHandCoded: true,
+      handCodedPattern: /<main>/,
+      cityHrefPattern: /class="city-trigger"/,
+      cleanerHrefPattern: /href="\/become-a-cleaner"/,
+    },
     {
       route: "/services/commercial-cleaning",
       file: "page110512356.html",

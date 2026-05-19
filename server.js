@@ -634,6 +634,14 @@ const ROUTE_META_OVERRIDES = {
   },
   "/services/move-in-move-out-cleaning": {
     title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
+    description:
+      "Professional move-in and move-out cleaning services for apartments and homes. Perfect for tenants, landlords, and homeowners. Get a free quote today.",
+    canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning`,
+    ogUrl: `${SITE_ORIGIN}/services/move-in-move-out-cleaning`,
+    ogTitle: "Move-In & Move-Out Cleaning | Shynli Cleaning",
+    ogDescription:
+      "Professional move-in and move-out cleaning services for apartments and homes. Perfect for tenants, landlords, and homeowners. Get a free quote today.",
+    robots: "index,follow",
   },
   "/services/move-in-move-out-cleaning-copy": {
     title: "Move-In & Move-Out Cleaning | Shynli Cleaning",

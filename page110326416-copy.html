@@ -6,13 +6,13 @@
   <!--metatextblock-->
   <title>Airbnb Cleaning Services | Shynli Cleaning</title>
   <meta name="description" content="Fast, reliable Airbnb cleaning and guest turnover services from Shynli Cleaning. Keep your rental clean, ready, and guest-friendly between stays.">
-  <meta property="og:url" content="https://shynlicleaningservice.com/services/airbnb-cleaning-copy">
+  <meta property="og:url" content="https://shynlicleaningservice.com/services/airbnb-cleaning">
   <meta property="og:title" content="Airbnb Cleaning Services | Shynli Cleaning">
   <meta property="og:description" content="Fast, reliable turnovers that keep your guests happy and your ratings high.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://shynlicleaningservice.com/images/shynli-og-photo.png">
   <link rel="canonical" href="https://shynlicleaningservice.com/services/airbnb-cleaning">
-  <meta name="robots" content="noindex,follow">
+  <meta name="robots" content="index,follow">
   <!--/metatextblock-->
   <meta name="format-detection" content="telephone=no">
   <link rel="shortcut icon" href="images/shynli-icon-32.png" type="image/x-icon">
@@ -336,7 +336,7 @@
     .hero__lead {
       margin: 10px 0 0;
       color: #3f3c3a;
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1.2;
     }
 
@@ -369,7 +369,10 @@
       position: absolute;
       inset: 0;
       z-index: 1;
-      background: rgba(250, 249, 246, 0.14);
+      background:
+        linear-gradient(180deg, var(--page-bg) 0%, rgba(250, 249, 246, 0.72) 42%, rgba(250, 249, 246, 0) 100%) top center / 100% 92px no-repeat,
+        linear-gradient(90deg, var(--page-bg) 0%, rgba(250, 249, 246, 0) 100%) left center / 116px 100% no-repeat,
+        linear-gradient(270deg, var(--page-bg) 0%, rgba(250, 249, 246, 0) 100%) right center / 116px 100% no-repeat;
       pointer-events: none;
     }
 
@@ -389,6 +392,23 @@
       position: relative;
       min-height: 82px;
       margin-top: -6px;
+    }
+
+    .hero__bottom::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -160px;
+      width: 100vw;
+      height: 302px;
+      z-index: 0;
+      transform: translateX(-50%);
+      background: linear-gradient(0deg, var(--page-bg) 50%, rgba(250, 249, 246, 0) 100%);
+      pointer-events: none;
+    }
+
+    .hero__bottom > * {
+      z-index: 1;
     }
 
     .primary-cta,
@@ -464,6 +484,7 @@
       width: 80px;
       min-width: 80px;
       text-align: center;
+      transform: translateY(-1px);
     }
 
     .review-bubbles {
@@ -513,33 +534,36 @@
     .hero-stat__number,
     .rating-number {
       display: block;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Playfair Display", Georgia, serif;
       font-style: italic;
-      font-size: 40px;
+      font-size: 31px;
+      font-weight: 400;
       line-height: 1;
       color: var(--ink);
     }
 
     .hero-stat__number {
       display: block;
-      width: auto;
-      height: auto;
-      line-height: 1;
-      transform: none;
+      width: 58px;
+      height: 24px;
+      line-height: 24px;
     }
 
     .rating-number {
-      font-size: 40px;
-      line-height: 1;
+      width: 80px;
+      height: 33px;
+      font-size: 37px;
+      line-height: 33px;
+      text-align: center;
     }
 
     .hero-stat__label,
     .rating-label {
       display: block;
       margin-top: 1px;
-      color: #4f4a47;
+      color: #313131;
       font-size: 12px;
-      line-height: 1.1;
+      line-height: 14.4px;
     }
 
     .rating-stars {
@@ -548,6 +572,72 @@
       color: var(--rose);
       font-size: 12px;
       letter-spacing: 2px;
+    }
+
+    @media (min-width: 960px) {
+      .site-header__inner,
+      .hero__copy,
+      .hero__bottom {
+        width: min(1040px, calc(100% - 120px));
+      }
+
+      .site-header__inner {
+        gap: 28px;
+      }
+
+      .nav {
+        gap: 12px;
+      }
+
+      .nav__left {
+        gap: 22px;
+      }
+
+      .nav__right {
+        gap: 14px;
+      }
+
+      .nav__accent,
+      .nav .nav__accent {
+        font-size: 16px;
+      }
+
+      .header-quote {
+        min-width: 152px;
+        padding: 0 20px;
+      }
+
+      .nav a.header-quote {
+        padding: 0 20px;
+      }
+
+      .city-trigger {
+        min-width: 94px;
+        padding: 0 17px;
+      }
+
+      .hero {
+        padding-top: 22px;
+      }
+
+      .hero h1 {
+        font-size: 48px;
+      }
+
+      .hero__media {
+        height: 400px;
+        margin-top: 8px;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .site-header__inner {
+        overflow: visible;
+      }
+
+      .nav {
+        flex: 0 0 920px;
+      }
     }
 
     .section-title {
@@ -1853,8 +1943,29 @@
         object-position: center center;
       }
 
+      .hero__edge {
+        display: none;
+      }
+
+      .hero__media::before {
+        inset: 0;
+        width: auto;
+        height: auto;
+        left: 0;
+        top: 0;
+        transform: none;
+        background:
+          linear-gradient(180deg, var(--page-bg) 0%, rgba(250, 249, 246, 0.62) 42%, rgba(250, 249, 246, 0) 100%) top center / 100% 48px no-repeat,
+          rgba(250, 249, 246, 0.14);
+      }
+
       .hero__media::after {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: auto;
         height: 78px;
+        background: linear-gradient(180deg, rgba(250, 249, 246, 0) 0%, var(--page-bg) 86%);
       }
 
       .hero__bottom {
@@ -1863,9 +1974,10 @@
       }
 
       .hero__cta {
-        position: static;
+        position: relative;
         display: flex;
         left: auto;
+        top: auto;
         width: 305px;
         min-height: 22px;
         margin: 0 auto;
@@ -1880,13 +1992,13 @@
       }
 
       .hero-stat {
-        top: 94px;
+        top: 91px;
         gap: 9px;
         min-width: 0;
       }
 
       .hero-stat--reviews {
-        left: 30px;
+        left: 14px;
         width: auto;
         height: auto;
         align-items: flex-end;
@@ -1922,7 +2034,7 @@
 
       .hero-stat__number,
       .rating-number {
-        font-size: 30px;
+        font-family: "Playfair Display", Georgia, serif;
       }
 
       .hero-stat__label,
@@ -1932,10 +2044,20 @@
       }
 
       .hero-stat__number {
-        width: auto;
-        height: auto;
-        line-height: 1;
+        width: 43px;
+        height: 24px;
+        font-size: 22px;
+        line-height: 24px;
         transform: none;
+      }
+
+      .rating-number {
+        width: 58px;
+        height: 33px;
+        font-size: 27px;
+        line-height: 33px;
+        margin-left: 9px;
+        text-align: left;
       }
 
       .rating-stars {
@@ -2116,8 +2238,18 @@
 
       .quote-widget {
         width: 100%;
+        max-width: 100%;
         min-height: 0;
         padding: 28px 31px 25px;
+        overflow: visible;
+      }
+
+      .quote-widget__title,
+      .quote-widget__subtitle,
+      .quote-widget__hint {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: break-word;
       }
 
       .quote-content {
@@ -2155,7 +2287,15 @@
       }
 
       .site-logo img {
-        width: 151px;
+        width: 150px;
+      }
+
+      .site-logo {
+        transform: translateX(5px);
+      }
+
+      .mobile-toggle {
+        transform: translateX(-5px);
       }
 
       .hero {
@@ -2187,13 +2327,13 @@
       }
 
       .hero__copy {
-        width: 358px;
+        width: min(318px, calc(100% - 72px));
         max-width: none;
-        margin-right: 0;
-        margin-left: 20px;
+        margin-right: auto;
+        margin-left: auto;
         padding-right: 0;
         padding-left: 0;
-        transform: translateY(-2px);
+        transform: none;
       }
 
       .hero__lead {
@@ -2201,6 +2341,10 @@
         margin-top: 10px;
         font-size: 16px;
         line-height: 1.22;
+      }
+
+      .hero__media {
+        margin-top: 23px;
       }
 
       .section-subtitle {
@@ -2671,7 +2815,7 @@
         position: absolute;
         top: 25px;
         left: 21px;
-        width: 320px;
+        width: calc(100% - 42px);
         min-width: 0;
         padding: 24px 20px 20px;
       }
@@ -2686,7 +2830,7 @@
 
       .quote .container {
         position: relative;
-        width: 320px;
+        width: calc(100% - 30px);
         max-width: none;
         height: 100%;
       }
@@ -2694,19 +2838,21 @@
       .quote .section-title {
         position: absolute;
         top: 0;
-        left: 0;
-        width: 320px;
+        left: 50%;
+        width: min(360px, 100%);
         margin: 0;
+        transform: translateX(-50%);
       }
 
       .quote-panel {
         position: absolute;
         top: 103px;
-        left: -21px;
-        width: 363px;
+        left: 50%;
+        width: min(363px, calc(100vw - 30px));
         height: 906px;
         margin: 0;
         padding: 0;
+        transform: translateX(-50%);
       }
 
       .quote-widget__title {
@@ -2734,7 +2880,7 @@
 
       .quote-widget__hint {
         font-size: 12px;
-        white-space: nowrap;
+        white-space: normal;
       }
 
       .quote-content__title {
@@ -2868,6 +3014,54 @@
 
       body.show-mobile-sticky .mobile-sticky {
         display: grid;
+      }
+    }
+
+    @media (max-width: 959px) {
+      .quote-panel,
+      .quote-widget,
+      .quote-widget * {
+        box-sizing: border-box;
+        min-width: 0;
+      }
+
+      .quote-panel {
+        max-width: calc(100vw - 30px);
+      }
+
+      .quote-widget {
+        max-width: 100%;
+        overflow: hidden;
+      }
+
+      .quote-widget__title,
+      .quote-widget__subtitle,
+      .quote-widget__hint {
+        max-width: 100%;
+        white-space: normal !important;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: break-word;
+      }
+
+      .quote-widget__title {
+        width: 100%;
+        font-size: clamp(20px, 5.2vw, 24px);
+        line-height: 1.28;
+      }
+
+      .quote-widget__input,
+      .quote-widget__button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 479px) {
+      .quote-widget {
+        left: 21px;
+        right: 21px;
+        width: auto;
+        max-width: none;
       }
     }
   </style>

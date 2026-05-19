@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Move-In &amp; Move-Out Cleaning | Shynli Cleaning</title>
 <meta name="description" content="Professional move-in and move-out cleaning services for apartments and homes. Perfect for tenants, landlords, and homeowners. Get a free quote today.">
-<meta name="robots" content="noindex,follow">
+<meta name="robots" content="index,follow">
 <meta property="og:url" content="https://shynlicleaningservice.com/services/move-in-move-out-cleaning">
 <meta property="og:title" content="Move-In &amp; Move-Out Cleaning | Shynli Cleaning">
 <meta property="og:description" content="Professional move-in and move-out cleaning services for apartments and homes. Perfect for tenants, landlords, and homeowners. Get a free quote today.">
@@ -14,6 +14,84 @@
 <meta property="og:image" content="/images/shynli-og-photo.png">
 <link rel="canonical" href="https://shynlicleaningservice.com/services/move-in-move-out-cleaning">
 <link rel="icon" href="/images/shynli-icon-32.png" type="image/png">
+<script>
+(function () {
+  if (window.location.protocol !== "file:") return;
+  var assetRoot = new URL("images/", window.location.href).href;
+  function localAsset(value) {
+    if (!value || value.indexOf("/images/") === -1) return value;
+    return value.replace(/(^|["'(])\/images\//g, "$1" + assetRoot);
+  }
+  function patchElement(node) {
+    if (!node || node.nodeType !== 1) return;
+    ["src", "href", "poster", "content"].forEach(function (attr) {
+      if (node.hasAttribute && node.hasAttribute(attr)) {
+        var value = node.getAttribute(attr);
+        if (value && value.indexOf("/images/") !== -1) {
+          var nextValue = localAsset(value);
+          if (nextValue !== value) node.setAttribute(attr, nextValue);
+        }
+      }
+      node.querySelectorAll && node.querySelectorAll("[" + attr + "]").forEach(function (child) {
+        var childValue = child.getAttribute(attr);
+        if (childValue && childValue.indexOf("/images/") !== -1) {
+          var nextChildValue = localAsset(childValue);
+          if (nextChildValue !== childValue) child.setAttribute(attr, nextChildValue);
+        }
+      });
+    });
+    if (node.hasAttribute && node.hasAttribute("style")) {
+      var value = node.getAttribute("style");
+      if (value && value.indexOf("/images/") !== -1) {
+        var nextStyleValue = localAsset(value);
+        if (nextStyleValue !== value) node.setAttribute("style", nextStyleValue);
+      }
+    }
+    node.querySelectorAll && node.querySelectorAll("[style]").forEach(function (child) {
+      var childValue = child.getAttribute("style");
+      if (childValue && childValue.indexOf("/images/") !== -1) {
+        var nextChildStyleValue = localAsset(childValue);
+        if (nextChildStyleValue !== childValue) child.setAttribute("style", nextChildStyleValue);
+      }
+    });
+    if (node.tagName === "STYLE" && node.textContent.indexOf("/images/") !== -1) {
+      var nextText = localAsset(node.textContent);
+      if (nextText !== node.textContent) node.textContent = nextText;
+    }
+    node.querySelectorAll && node.querySelectorAll("style").forEach(function (child) {
+      if (child.textContent.indexOf("/images/") !== -1) {
+        var nextChildText = localAsset(child.textContent);
+        if (nextChildText !== child.textContent) child.textContent = nextChildText;
+      }
+    });
+  }
+  function patchFileAssets() {
+    patchElement(document.documentElement);
+  }
+  if ("MutationObserver" in window) {
+    new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        if (mutation.type === "attributes") {
+          patchElement(mutation.target);
+          return;
+        }
+        mutation.addedNodes.forEach(patchElement);
+      });
+    }).observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["src", "href", "poster", "content", "style"]
+    });
+  }
+  patchFileAssets();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", patchFileAssets);
+  } else {
+    patchFileAssets();
+  }
+})();
+</script>
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..900&family=Montserrat:wght@100..900&subset=latin,cyrillic" rel="stylesheet">
 
@@ -87,6 +165,9 @@ a{color:inherit;text-decoration:none;}
 @media screen and (max-width:959px){.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586274000011"]{top:619px!important;left:calc(50% - 320px + 237px)!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586274000010"]{top:663px!important;left:calc(50% - 320px + 237px)!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586275000018"]{top:619px!important;left:calc(50% - 320px + 433px)!important;}}
 @media screen and (max-width:639px){.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586274000011"]{top:624px!important;left:calc(50% - 240px + 157px)!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586274000010"]{top:668px!important;left:calc(50% - 240px + 157px)!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586275000018"]{top:624px!important;left:calc(50% - 240px + 353px)!important;}}
 @media screen and (max-width:479px){.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586274000011"]{top:541px!important;left:calc(50% - 160px + 89px)!important;width:84px!important;height:30px!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586274000011"] .clean-node-atom{font-size:30px!important;line-height:30px!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586274000010"]{top:571px!important;left:calc(50% - 160px + 89px)!important;width:112px!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586275000018"]{top:541px!important;left:calc(50% - 160px + 252px)!important;width:60px!important;height:45px!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586275000018"] .clean-node-atom{height:30px!important;font-size:30px!important;line-height:30px!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045586275000018"]::after{top:30px;}}
+@media screen and (max-width:639px){.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045610727000020"]{left:50%!important;transform:translateX(-50%)!important;width:min(390px,calc(100vw - 56px))!important;text-align:left!important;}.clean-service-page #section1782880863 .clean-node-elem[data-clean-id="1768045610727000020"] .clean-node-atom{font-size:clamp(30px,8.2vw,32px)!important;line-height:1.14!important;letter-spacing:0!important;word-break:normal!important;overflow-wrap:normal!important;}}
+@media screen and (max-width:639px){.clean-service-page #section1782880933 .clean-stage__artboard,.clean-service-page #section1782880933 .clean-stage__filter,.clean-service-page #section1782880933 .clean-stage__carrier{height:805px!important;}.clean-service-page #section1782880933 .clean-node-elem[data-clean-id="1768327140430"]{top:32px!important;left:50%!important;transform:translateX(-50%)!important;width:calc(100vw - 40px)!important;}.clean-service-page #section1782880933 .clean-node-elem[data-clean-id="1768327140430"] .clean-node-atom{white-space:normal!important;}.clean-service-page #section1782880933 .clean-node-elem:not([data-clean-id="1768327140430"]){transform:translateY(-86px)!important;}}
+@media screen and (max-width:479px){.clean-service-page #section1782880933 .clean-stage__artboard,.clean-service-page #section1782880933 .clean-stage__filter,.clean-service-page #section1782880933 .clean-stage__carrier{height:1135px!important;}.clean-service-page #section1782880933 .clean-node-elem[data-clean-id="1768327140430"]{top:34px!important;}.clean-service-page #section1782880933 .clean-node-elem:not([data-clean-id="1768327140430"]){transform:translateY(-58px)!important;}}
 .clean-node-elem[data-clean-type="button"]{display:block;}
 .clean-node-elem[data-clean-type="button"] .clean-node-atom{display:flex;width:100%;height:100%;align-items:center;justify-content:center;box-sizing:border-box;overflow:hidden;}
 .clean-node-atom__button-content{display:flex;align-items:center;justify-content:center;min-width:0;width:100%;}
@@ -94,7 +175,8 @@ a{color:inherit;text-decoration:none;}
 .clean-node-atom__button-border{position:absolute;inset:0;border-radius:inherit;pointer-events:none;}
 .clean-block123,.clean-container_100,.clean-width_100{width:100%;}
 .clean-modal{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;}
-.clean-modal:target{display:flex;}
+.clean-modal:target,.clean-modal.is-open{display:flex;}
+.clean-body.clean-city-modal-open{overflow:hidden;}
 .clean-modal__backdrop{position:absolute;inset:0;background:rgba(49,49,49,.42);}
 .clean-modal__panel{position:relative;width:min(560px,100%);max-height:86vh;overflow:auto;background:#faf9f6;border-radius:22px;padding:34px;color:#313131;box-shadow:0 30px 80px rgba(0,0,0,.22);}
 .clean-modal__panel--wide{width:min(880px,100%);}
@@ -104,6 +186,18 @@ a{color:inherit;text-decoration:none;}
 .clean-city-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 16px;}
 .clean-city-grid a{display:block;padding:9px 10px;border-radius:10px;background:#e8e1d9;text-decoration:none;font-size:14px;line-height:1.2;transition:background-color .2s ease,color .2s ease;}
 .clean-city-grid a:hover{background:#9e435a;color:#faf9f6;}
+.clean-modal--city{align-items:flex-start;justify-content:center;padding:0;}
+.clean-modal--city .clean-modal__backdrop{background:rgba(49,49,49,.35);backdrop-filter:blur(4px);}
+.clean-modal__panel--city{width:min(960px,calc(100vw - 72px));max-height:calc(100vh - 18px);overflow:auto;margin:0 auto 18px;border-radius:0 0 18px 18px;background:#faf9f6;padding:36px 36px 30px;box-shadow:0 18px 48px rgba(49,49,49,.12);}
+.clean-modal__close--city{position:fixed;top:24px;right:28px;z-index:1;width:36px;height:36px;padding:0;color:#313131;font-size:0;line-height:1;background:transparent;}
+.clean-modal__close--city::before,.clean-modal__close--city::after{content:"";position:absolute;left:3px;right:3px;top:17px;height:2px;background:#313131;}
+.clean-modal__close--city::before{transform:rotate(45deg);}
+.clean-modal__close--city::after{transform:rotate(-45deg);}
+.clean-city-columns{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
+.clean-modal--city h2{margin:0 0 16px;font-family:var(--clean-headline-font);font-size:36px;font-weight:400;line-height:1;color:#313131;}
+.clean-city-list{display:grid;gap:9px;}
+.clean-city-list a{display:flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid #9e435a;border-radius:999px;color:#64605b;background:#faf9f6;font-family:var(--clean-text-font);font-size:16px;font-weight:400;line-height:1.2;text-align:center;text-decoration:none;transition:background-color .2s ease,color .2s ease,border-color .2s ease;}
+.clean-city-list a:hover,.clean-city-list a:focus-visible{background:#9e435a;border-color:#9e435a;color:#faf9f6;}
 .clean-application-form{display:grid;gap:14px;}
 .clean-application-form label{display:grid;gap:7px;font-size:14px;}
 .clean-application-form input{width:100%;min-height:46px;border:1px solid #d8cfc4;border-radius:10px;background:#e8e1d9;padding:0 14px;font:inherit;}
@@ -127,6 +221,8 @@ a{color:inherit;text-decoration:none;}
   .clean-header__buttons .clean-button{width:100%;}
   .clean-button{min-height:44px;}
   .clean-city-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .clean-modal__panel--city{width:min(760px,calc(100vw - 32px));}
+  .clean-city-columns{grid-template-columns:repeat(2,1fr);}
 }
 @media (max-width:479px){
   .clean-header__mobile{padding:15px 20px;}
@@ -135,6 +231,11 @@ a{color:inherit;text-decoration:none;}
   .clean-modal__panel{border-radius:18px;padding:28px 20px;}
   .clean-modal h2{font-size:28px;}
   .clean-city-grid{grid-template-columns:1fr;}
+  .clean-modal--city{padding:0;}
+  .clean-modal__panel--city{width:calc(100% - 22px);max-height:calc(100vh - 24px);margin:12px auto;padding:58px 18px 26px;}
+  .clean-city-columns{grid-template-columns:1fr;gap:18px;}
+  .clean-modal--city h2{font-size:28px;}
+  .clean-city-list a{min-height:42px;font-size:14px;}
 }
 </style>
 </head>
@@ -167,7 +268,7 @@ a{color:inherit;text-decoration:none;}
         <div class="clean-header__right-text"><p><a class="clean-header__cleaner" href="#clean">Become a Cleaner</a><span class="clean-header__spacer">////</span><span class="clean-header__phone"><strong>📞</strong> Call Us</span></p></div>
         <div class="clean-header__buttons">
           <a class="clean-button clean-button--primary" href="/quote">Get Free Quote</a>
-          <a class="clean-button clean-button--secondary" href="#city">City ▾</a>
+          <a class="clean-button clean-button--secondary" href="#city" data-city-open aria-haspopup="dialog" aria-expanded="false">City ▾</a>
         </div>
       </div>
     </div>
@@ -246,13 +347,11 @@ const formattedPhone='+1 ' + phoneInput.value;sessionStorage.setItem('homeWidget
 alt='' src="/images/shynli-footer-logo-light.png" loading="lazy"> </a> </div> <div class='clean-stage__elem clean-node-elem clean-node-elem__17954046931475160436130' data-clean-id="1475160436130" data-clean-type="text"> <div class='clean-node-atom'>Clean Home. Clear Mind.</div> </div> <div class='clean-stage__elem clean-node-elem clean-node-elem__17954046931768565064538000001' data-clean-id="1768565064538000001" data-clean-type="text"> <div class='clean-node-atom'>© 2026 Shynli Cleaning.<br>All rights reserved.</div> </div> </div> </div> </div> </footer> </div>
 </main>
 
-<aside class="clean-modal" id="city" aria-label="Choose your city">
-  <a class="clean-modal__backdrop" href="#" aria-label="Close city chooser"></a>
-  <div class="clean-modal__panel clean-modal__panel--wide">
-    <a class="clean-modal__close" href="#" aria-label="Close">×</a>
-    <h2>Choose Your City</h2>
-    <p>Select a service area to continue booking with the right local page.</p>
-    <div class="clean-city-grid"><a href="/addison">Addison</a><a href="/aurora">Aurora</a><a href="/bartlett">Bartlett</a><a href="/batavia">Batavia</a><a href="/bolingbrook">Bolingbrook</a><a href="/bristol">Bristol</a><a href="/burrridge">Burr Ridge</a><a href="/carolstream">Carol Stream</a><a href="/clarendonhills">Clarendon Hills</a><a href="/darien">Darien</a><a href="/downersgrove">Downers Grove</a><a href="/elmhurst">Elmhurst</a><a href="/geneva">Geneva</a><a href="/glenellyn">Glen Ellyn</a><a href="/hinsdale">Hinsdale</a><a href="/homerglen">Homer Glen</a><a href="/itasca">Itasca</a><a href="/lemont">Lemont</a><a href="/lisle">Lisle</a><a href="/lockport">Lockport</a><a href="/lombard">Lombard</a><a href="/montgomery">Montgomery</a><a href="/naperville">Naperville</a><a href="/northaurora">North Aurora</a><a href="/oakbrook">Oak Brook</a><a href="/oswego">Oswego</a><a href="/plainfield">Plainfield</a><a href="/romeoville">Romeoville</a><a href="/stcharles">St. Charles</a><a href="/streamwood">Streamwood</a><a href="/villapark">Villa Park</a><a href="/warrenville">Warrenville</a><a href="/wayne">Wayne</a><a href="/westchicago">West Chicago</a><a href="/westmont">Westmont</a><a href="/wheaton">Wheaton</a><a href="/willowbrook">Willowbrook</a><a href="/winfield">Winfield</a><a href="/wooddale">Wood Dale</a><a href="/woodridge">Woodridge</a><a href="/yorkville">Yorkville</a></div>
+<aside class="clean-modal clean-modal--city" id="city" data-city-modal aria-hidden="true" aria-label="Choose your city">
+  <a class="clean-modal__backdrop" href="#" data-city-close aria-label="Close city chooser"></a>
+  <a class="clean-modal__close clean-modal__close--city" href="#" data-city-close aria-label="Close">Close</a>
+  <div class="clean-modal__panel clean-modal__panel--city" role="dialog" aria-modal="true" aria-label="Service areas by city">
+    <div class="clean-city-columns"><div class="clean-city-column"><h2>A-D:</h2><div class="clean-city-list"><a href="/addison">Addison</a><a href="/aurora">Aurora</a><a href="/bartlett">Bartlett</a><a href="/batavia">Batavia</a><a href="/bolingbrook">Bolingbrook</a><a href="/bristol">Bristol</a><a href="/burrridge">Burr Ridge</a><a href="/carolstream">Carol Stream</a><a href="/clarendonhills">Clarendon Hills</a><a href="/darien">Darien</a><a href="/downersgrove">Downers Grove</a></div></div><div class="clean-city-column"><h2>E-L:</h2><div class="clean-city-list"><a href="/elmhurst">Elmhurst</a><a href="/geneva">Geneva</a><a href="/glenellyn">Glen Ellyn</a><a href="/hinsdale">Hinsdale</a><a href="/homerglen">Homer Glen</a><a href="/itasca">Itasca</a><a href="/lemont">Lemont</a><a href="/lisle">Lisle</a><a href="/lockport">Lockport</a><a href="/lombard">Lombard</a></div></div><div class="clean-city-column"><h2>M-S:</h2><div class="clean-city-list"><a href="/montgomery">Montgomery</a><a href="/naperville">Naperville</a><a href="/northaurora">North Aurora</a><a href="/oakbrook">Oak Brook</a><a href="/oswego">Oswego</a><a href="/plainfield">Plainfield</a><a href="/romeoville">Romeoville</a><a href="/stcharles">St. Charles</a><a href="/streamwood">Streamwood</a><a href="/sugargrove">Sugar Grove</a></div></div><div class="clean-city-column"><h2>V-Y:</h2><div class="clean-city-list"><a href="/villapark">Villa Park</a><a href="/warrenville">Warrenville</a><a href="/wayne">Wayne</a><a href="/westchicago">West Chicago</a><a href="/westmont">Westmont</a><a href="/wheaton">Wheaton</a><a href="/willowbrook">Willowbrook</a><a href="/winfield">Winfield</a><a href="/wooddale">Wood Dale</a><a href="/woodridge">Woodridge</a><a href="/yorkville">Yorkville</a></div></div></div>
   </div>
 </aside>
 
@@ -288,6 +387,37 @@ alt='' src="/images/shynli-footer-logo-light.png" loading="lazy"> </a> </div> <d
       toggle.setAttribute('aria-expanded', 'false');
     }
   });
+  var cityModal = document.querySelector('[data-city-modal]');
+  var cityOpeners = document.querySelectorAll('[data-city-open]');
+  var cityClosers = document.querySelectorAll('[data-city-close]');
+  function setCityOpen(isOpen) {
+    if (!cityModal) return;
+    cityModal.classList.toggle('is-open', isOpen);
+    cityModal.setAttribute('aria-hidden', String(!isOpen));
+    document.body.classList.toggle('clean-city-modal-open', isOpen);
+    cityOpeners.forEach(function(opener){
+      opener.setAttribute('aria-expanded', String(isOpen));
+    });
+    if (!isOpen && window.location.hash === '#city' && window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }
+  cityOpeners.forEach(function(opener){
+    opener.addEventListener('click', function(event){
+      event.preventDefault();
+      setCityOpen(true);
+    });
+  });
+  cityClosers.forEach(function(closer){
+    closer.addEventListener('click', function(event){
+      event.preventDefault();
+      setCityOpen(false);
+    });
+  });
+  document.addEventListener('keydown', function(event){
+    if (event.key === 'Escape') setCityOpen(false);
+  });
+  if (window.location.hash === '#city') setCityOpen(true);
 })();
 </script>
 </body>

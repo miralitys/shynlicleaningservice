@@ -923,6 +923,29 @@ test("serves the move-in move-out copy as clean hand-coded markup", async () => 
   );
 });
 
+test("serves the move-in move-out main route as the clean hand-coded page", async () => {
+  const response = await fetch(`${BASE_URL}/services/move-in-move-out-cleaning`);
+  const body = await response.text();
+  const tildaMarkers = /(?:tild|tilda|data-tilda|allrecords|\bt-rec\b|\bt396\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i;
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.equal(response.headers.get("x-robots-tag"), null);
+  assert.match(body, /Cleaning for Moving In or Moving Out/i);
+  assert.match(body, /class="[^"]*\bmove-page\b[^"]*"/);
+  assert.match(body, /<meta name="robots" content="index,follow" \/>/);
+  assert.match(
+    body,
+    /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/move-in-move-out-cleaning"\s*\/?>/
+  );
+  assert.match(body, /\/images\/shynli-move-cleaning-hero\.png/);
+  assert.match(body, /\/images\/shynli-icon-32\.png/);
+  assert.doesNotMatch(body, tildaMarkers);
+  assert.doesNotMatch(body, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);
+  assert.doesNotMatch(body, /id="shynli-home-page-runtime"/);
+  assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
+});
+
 test("serves the regular-cleaning ads duplicate as an indexable sitemap route", async () => {
   const response = await fetch(`${BASE_URL}/services/regular-cleaning/ads/`);
   const body = await response.text();
@@ -1122,6 +1145,12 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
     ["/services/commercial-cleaning", /Commercial Cleaning/i],
     ["/services/post-construction-cleaning", /Post-Construction Cleaning|Post Construction Cleaning/i],
   ];
+  const cleanHandCodedRoutes = new Set([
+    "/services/regular-cleaning",
+    "/services/move-in-move-out-cleaning",
+    "/services/airbnb-cleaning",
+    "/services/commercial-cleaning",
+  ]);
 
   for (const [route, expectedTitle] of serviceRoutes) {
     const response = await fetch(`${BASE_URL}${route}`);
@@ -1134,7 +1163,7 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
     assert.doesNotMatch(body, /js\/tilda-zero-scale-1\.0\.min\.js/, route);
     assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/, route);
     assert.doesNotMatch(body, /data-original=/, route);
-    if (route === "/services/regular-cleaning" || route === "/services/commercial-cleaning") {
+    if (cleanHandCodedRoutes.has(route)) {
       if (route === "/services/regular-cleaning") {
         assert.match(body, /<main class="clean-service-page">/, route);
       }
@@ -1156,12 +1185,16 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
       body,
       route === "/services/commercial-cleaning"
         ? /data-city-open/
+        : route === "/services/airbnb-cleaning"
+          ? /class="city-trigger"/
         : /href="(?:#city|\/services\/regular-cleaning#city)"/,
       route
     );
     assert.match(
       body,
-      route === "/services/commercial-cleaning" ? /href="\/become-a-cleaner"/ : /href="#clean"/,
+      route === "/services/commercial-cleaning" || route === "/services/airbnb-cleaning"
+        ? /href="\/become-a-cleaner"/
+        : /href="#clean"/,
       route
     );
   }
