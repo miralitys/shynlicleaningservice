@@ -367,22 +367,23 @@
 
     .dc-city-modal__dialog {
       position: relative;
-      width: min(1365px, calc(100vw - 340px));
-      height: min(920px, 100vh);
-      max-height: 100vh;
+      width: min(960px, calc(100% - 72px));
+      height: auto;
+      max-height: calc(100dvh - 24px);
+      margin: 12px auto;
       overflow: auto;
       background: var(--dc-cream);
-      border-radius: 0 0 24px 24px;
-      padding: 38px 50px 56px;
+      border-radius: 20px;
+      padding: 36px 36px 46px;
       box-shadow: 0 30px 90px rgba(49,49,49,.18);
     }
 
     .dc-city-modal__close {
       position: fixed;
-      top: 28px;
-      right: 28px;
-      width: 48px;
-      height: 48px;
+      top: 21px;
+      right: 25px;
+      width: 42px;
+      height: 42px;
       border: 0;
       background: transparent;
       cursor: pointer;
@@ -393,10 +394,10 @@
     .dc-city-modal__close::after {
       content: "";
       position: absolute;
-      top: 22px;
+      top: 20px;
       left: 3px;
-      width: 42px;
-      height: 3px;
+      right: 3px;
+      height: 2px;
       background: var(--dc-ink);
       border-radius: 999px;
     }
@@ -407,14 +408,14 @@
     .dc-city-modal__grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: clamp(22px, 2vw, 32px);
+      gap: 22px;
     }
 
     .dc-city-modal__group h3 {
       margin: 0 0 16px;
       color: var(--dc-ink);
       font-family: "Playfair Display", Georgia, serif;
-      font-size: 48px;
+      font-size: 36px;
       font-weight: 400;
       line-height: 1;
     }
@@ -424,26 +425,32 @@
       margin: 0;
       padding: 0;
       display: grid;
-      gap: 14px;
+      gap: 9px;
     }
 
     .dc-city-modal__list a {
       width: 100%;
-      height: 56px;
+      min-height: 40px;
+      padding: 0 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid #a4475e;
+      border: 1px solid #a4475e;
       border-radius: 999px;
       color: #4b4b4b;
       text-decoration: none;
-      font-size: clamp(18px, 1.55vw, 22px);
-      line-height: 1;
-      white-space: nowrap;
+      font-size: 16px;
+      line-height: 1.2;
+      text-align: center;
+      box-sizing: border-box;
     }
 
     .dc-city-modal__list a:hover,
-    .dc-city-modal__list a:focus-visible { color: var(--dc-rose); }
+    .dc-city-modal__list a:focus-visible {
+      background: var(--dc-rose);
+      color: var(--dc-cream);
+      outline: 0;
+    }
 
     .dc-hero {
       position: relative;
@@ -1955,7 +1962,7 @@
         height: auto;
         max-height: calc(100vh - 32px);
         border-radius: 18px;
-        padding: 34px 28px;
+        padding: 38px 28px 34px;
       }
       .dc-city-modal__close {
         top: 18px;
@@ -1963,14 +1970,14 @@
       }
       .dc-city-modal__grid {
         grid-template-columns: repeat(2, minmax(0,1fr));
-        gap: 24px;
+        gap: 22px 18px;
       }
       .dc-city-modal__group h3 {
-        font-size: 32px;
+        font-size: 30px;
       }
       .dc-city-modal__list a {
         width: 100%;
-        height: 48px;
+        min-height: 44px;
         font-size: 16px;
       }
 
@@ -2316,7 +2323,7 @@
       .dc-header__inner { width: calc(100% - 40px); }
       .dc-city-modal { padding: 16px; }
       .dc-city-modal__dialog {
-        padding: 42px 24px 30px;
+        padding: 58px 18px 26px;
         border-radius: 14px;
       }
       .dc-city-modal__grid { grid-template-columns: 1fr; gap: 20px; }
