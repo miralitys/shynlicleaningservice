@@ -1,0 +1,3312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--metatextblock-->
+  <title>Airbnb Cleaning Services | Shynli Cleaning</title>
+  <meta name="description" content="Fast, reliable Airbnb cleaning and guest turnover services from Shynli Cleaning. Keep your rental clean, ready, and guest-friendly between stays.">
+  <meta property="og:url" content="https://shynlicleaningservice.com/services/airbnb-cleaning-copy">
+  <meta property="og:title" content="Airbnb Cleaning Services | Shynli Cleaning">
+  <meta property="og:description" content="Fast, reliable turnovers that keep your guests happy and your ratings high.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://shynlicleaningservice.com/images/shynli-og-photo.png">
+  <link rel="canonical" href="https://shynlicleaningservice.com/services/airbnb-cleaning">
+  <meta name="robots" content="noindex,follow">
+  <!--/metatextblock-->
+  <meta name="format-detection" content="telephone=no">
+  <link rel="shortcut icon" href="images/shynli-icon-32.png" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --page-bg: #faf9f6;
+      --ink: #313131;
+      --muted: #5b5855;
+      --soft: #ebe8e4;
+      --soft-deep: #d8cfc4;
+      --soft-card: #e4ded6;
+      --soft-card-alt: #c8c2bc;
+      --rose: #9e435a;
+      --rose-dark: #6e2e3e;
+      --footer: #303030;
+      --footer-text: #d8cfc4;
+      --shadow: 0 24px 50px rgba(49, 49, 49, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: auto;
+      background: var(--page-bg);
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--ink);
+      font-family: "Montserrat", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.35;
+      letter-spacing: 0;
+      overflow-x: hidden;
+    }
+
+    body.menu-open {
+      overflow: hidden;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    button,
+    input {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    .page {
+      min-height: 100vh;
+      overflow: visible;
+    }
+
+    .container {
+      width: min(1160px, calc(100% - 120px));
+      margin: 0 auto;
+    }
+
+    .serif {
+      font-family: "Playfair Display", Georgia, serif;
+      font-weight: 400;
+      line-height: 1.05;
+    }
+
+    .rose {
+      color: var(--rose);
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--page-bg);
+    }
+
+    .site-header__inner {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .site-logo {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      text-decoration: none;
+    }
+
+    .site-logo img {
+      width: 152px;
+      height: auto;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .nav__left,
+    .nav__right {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      min-width: 0;
+    }
+
+    .nav__right {
+      gap: 20px;
+    }
+
+    .nav a,
+    .service-menu__trigger,
+    .city-trigger {
+      border: 0;
+      background: transparent;
+      color: #111;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 15px;
+      line-height: 1;
+      white-space: nowrap;
+      padding: 8px 0;
+    }
+
+    .nav__accent,
+    .nav .nav__accent {
+      color: var(--rose);
+      font-size: 17px;
+      font-weight: 500;
+    }
+
+    .service-menu {
+      position: relative;
+      --menu-gap: 15px;
+      --menu-width: 400px;
+    }
+
+    .service-menu::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      width: var(--menu-width);
+      max-width: calc(100vw - 40px);
+      height: var(--menu-gap);
+      transform: translateX(-50%);
+    }
+
+    .service-menu__chevron {
+      width: 8px;
+      height: 5px;
+      margin-left: 5px;
+      vertical-align: 2px;
+      fill: currentColor;
+    }
+
+    .service-menu__list {
+      position: absolute;
+      top: calc(100% + var(--menu-gap));
+      left: 50%;
+      width: var(--menu-width);
+      max-width: calc(100vw - 40px);
+      display: grid;
+      gap: 12px;
+      padding: 18px 20px;
+      margin: 0;
+      list-style: none;
+      background: var(--soft);
+      border: 1px solid #eee;
+      border-radius: 10px;
+      box-shadow: 0 15px 30px -10px rgba(0, 11, 48, 0.2);
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transform: translate(-50%, 6px);
+      transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
+    }
+
+    .service-menu__list::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 10px solid var(--soft);
+      transform: translateX(-50%);
+    }
+
+    .service-menu:hover .service-menu__list,
+    .service-menu:focus-within .service-menu__list {
+      opacity: 1;
+      pointer-events: auto;
+      visibility: visible;
+      transform: translate(-50%, 0);
+      transition-delay: 0s;
+    }
+
+    .service-menu__list a {
+      display: block;
+      padding: 4px 0;
+      color: #111;
+      text-decoration: none;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .header-phone {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--rose);
+      text-decoration: none;
+      font-size: 17px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .header-quote,
+    .city-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 39px;
+      border-radius: 50px;
+      text-decoration: none;
+      line-height: 1;
+    }
+
+    .header-quote {
+      min-width: 166px;
+      padding: 0 25px;
+      background: var(--rose);
+      color: var(--page-bg);
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .nav a.header-quote {
+      padding: 0 25px;
+      background: var(--rose);
+      color: var(--page-bg);
+    }
+
+    .nav a.header-phone {
+      color: var(--rose);
+    }
+
+    .city-trigger {
+      min-width: 102px;
+      padding: 0 20px;
+      border: 1px solid var(--rose);
+      color: #111;
+      background: transparent;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    .city-trigger svg,
+    .mobile-toggle svg {
+      width: 12px;
+      height: 8px;
+      fill: currentColor;
+    }
+
+    .mobile-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 33px;
+      height: 33px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--rose);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .mobile-toggle svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .hero {
+      position: relative;
+      padding-top: 32px;
+    }
+
+    .hero__copy {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 52px;
+      line-height: 1.2;
+      color: #2f2f2f;
+    }
+
+    .hero__lead {
+      margin: 10px 0 0;
+      color: #3f3c3a;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .hero__media {
+      position: relative;
+      margin-top: 10px;
+      height: 451px;
+      width: 100vw;
+      left: 50%;
+      transform: translateX(-50%);
+      overflow: hidden;
+      background: #f7f3ef;
+    }
+
+    .hero__media img {
+      position: absolute;
+      top: -79px;
+      left: 50%;
+      width: 1414px;
+      height: 724px;
+      object-fit: cover;
+      object-position: center center;
+      filter: blur(0.95px) brightness(1.1) saturate(0.8) contrast(0.9);
+      max-width: none;
+      transform: translateX(-50%);
+    }
+
+    .hero__media::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: rgba(250, 249, 246, 0.14);
+      pointer-events: none;
+    }
+
+    .hero__media::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      height: 155px;
+      background: linear-gradient(180deg, rgba(250, 249, 246, 0) 0%, var(--page-bg) 86%);
+      pointer-events: none;
+    }
+
+    .hero__bottom {
+      position: relative;
+      min-height: 82px;
+      margin-top: -6px;
+    }
+
+    .primary-cta,
+    .secondary-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 70px;
+      padding: 0 36px;
+      border: 0;
+      border-radius: 50px;
+      background: var(--rose);
+      color: var(--page-bg);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 400;
+      text-decoration: none;
+      line-height: 1;
+      transition: background-color 180ms ease;
+    }
+
+    .primary-cta:hover,
+    .secondary-cta:hover,
+    .header-quote:hover,
+    .service-card__link:hover {
+      background: var(--rose-dark);
+    }
+
+    .hero__cta {
+      position: absolute;
+      left: calc(50% + 7px);
+      top: 0;
+      width: 400px;
+      transform: translateX(-50%);
+    }
+
+    .hero__hint {
+      position: absolute;
+      left: 50%;
+      top: 82px;
+      margin: 0;
+      color: #3f3c3a;
+      font-size: 12px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    .hero-stat {
+      position: absolute;
+      top: 15px;
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      min-width: 230px;
+    }
+
+    .hero-stat--reviews {
+      left: 0;
+      width: 230px;
+      height: 50px;
+      align-items: initial;
+    }
+
+    .hero-stat--reviews > div:last-child {
+      position: absolute;
+      left: 111px;
+      top: 6px;
+    }
+
+    .hero-stat--rating {
+      right: -1px;
+      display: block;
+      width: 80px;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .review-bubbles {
+      display: flex;
+      align-items: center;
+      width: 100px;
+      height: 50px;
+    }
+
+    .review-bubbles span {
+      position: relative;
+      flex: 0 0 50px;
+      width: 50px;
+      height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: #d8d3cc;
+    }
+
+    .review-bubbles span:not(:last-child) {
+      margin-right: -25px;
+    }
+
+    .review-bubbles span:nth-child(1) {
+      background: var(--rose);
+      z-index: 3;
+    }
+
+    .review-bubbles span:nth-child(2) {
+      background: #bfbab4;
+      z-index: 2;
+    }
+
+    .review-bubbles span:nth-child(3) {
+      background: #d8d3cc;
+      z-index: 1;
+    }
+
+    .review-bubbles svg {
+      width: 25px;
+      height: 25px;
+      fill: #fff;
+    }
+
+    .hero-stat__number,
+    .rating-number {
+      display: block;
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
+      font-size: 40px;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .hero-stat__number {
+      display: block;
+      width: auto;
+      height: auto;
+      line-height: 1;
+      transform: none;
+    }
+
+    .rating-number {
+      font-size: 40px;
+      line-height: 1;
+    }
+
+    .hero-stat__label,
+    .rating-label {
+      display: block;
+      margin-top: 1px;
+      color: #4f4a47;
+      font-size: 12px;
+      line-height: 1.1;
+    }
+
+    .rating-stars {
+      display: block;
+      margin-top: 0;
+      color: var(--rose);
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    .section-title {
+      margin: 0;
+      text-align: center;
+      font-size: 48px;
+      color: #303030;
+    }
+
+    .section-subtitle {
+      margin: 18px auto 0;
+      text-align: center;
+      color: #343232;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .included {
+      padding: 139px 0 0;
+    }
+
+    .included__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-top: 52px;
+    }
+
+    .area-card {
+      overflow: hidden;
+      border-radius: 19px;
+      background: var(--soft);
+    }
+
+    .area-card__button {
+      width: 100%;
+      min-height: 146px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 20px 40px 20px 48px;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .area-card__left {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      min-width: 0;
+    }
+
+    .area-card__image {
+      flex: 0 0 100px;
+      width: 100px;
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .area-card__image img {
+      width: 132px;
+      height: auto;
+      max-width: none;
+    }
+
+    .area-card__title {
+      margin: 0;
+      font-family: "Playfair Display", Georgia, serif;
+      font-weight: 400;
+      font-size: 23px;
+      line-height: 1.15;
+      color: #333;
+      white-space: nowrap;
+    }
+
+    .area-card__arrow {
+      flex: 0 0 auto;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 12px solid var(--rose);
+      transition: transform 160ms ease;
+    }
+
+    .area-card.is-open .area-card__arrow {
+      transform: rotate(180deg);
+    }
+
+    .area-card__content {
+      display: none;
+      padding: 0 42px 28px 176px;
+      color: #3e3b38;
+      font-size: 15px;
+    }
+
+    .area-card.is-open .area-card__content {
+      display: block;
+    }
+
+    .area-card__content ul {
+      margin: 0;
+      padding-left: 19px;
+    }
+
+    .area-card__content li + li {
+      margin-top: 7px;
+    }
+
+    .included__cta {
+      display: flex;
+      width: 400px;
+      margin: 45px auto 0;
+      position: relative;
+      left: 7px;
+      font-weight: 400;
+    }
+
+    .services {
+      padding: 85px 0 0;
+    }
+
+    .services .section-title {
+      transform: translateY(-13px);
+    }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 34px 20px;
+      width: min(1080px, 100%);
+      margin-top: 64px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .service-card {
+      min-height: 459px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px 40px;
+      border-radius: 20px;
+      background: var(--soft-card);
+      text-align: center;
+    }
+
+    .service-card__image {
+      width: min(370px, 88%);
+      height: 180px;
+      margin-top: -35px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .service-card__image img {
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 190px;
+      object-fit: contain;
+    }
+
+    .service-card__title {
+      width: min(390px, 100%);
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 14px auto 6px;
+      font-family: "Playfair Display", Georgia, serif;
+      font-weight: 400;
+      font-size: 26px;
+      line-height: 1.12;
+      color: #333;
+    }
+
+    .service-card__note {
+      min-height: 16px;
+      margin: 0 0 26px;
+      color: #77716d;
+      font-size: 10px;
+      line-height: 1.2;
+    }
+
+    .service-card__body {
+      width: 100%;
+      max-width: 490px;
+      margin: 0 auto;
+      text-align: left;
+      color: #45413e;
+      font-size: 15px;
+      line-height: 1.14;
+    }
+
+    .service-card__body p {
+      margin: 0;
+    }
+
+    .service-card__body p + p {
+      margin-top: 14px;
+    }
+
+    .service-card__body strong {
+      color: var(--rose);
+      font-weight: 700;
+    }
+
+    .service-card__pill {
+      width: 100%;
+      max-width: 490px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 22px auto 0;
+      padding: 10px 22px;
+      border-radius: 9px;
+      background: #fffdfa;
+      color: var(--rose);
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 20px;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .service-card__link {
+      width: 252px;
+      min-height: 50px;
+      margin-top: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50px;
+      background: var(--rose);
+      color: var(--page-bg);
+      text-decoration: none;
+      font-size: 16px;
+      line-height: 24.8px;
+    }
+
+    @media (min-width: 960px) {
+      .services {
+        position: relative;
+        height: 1220px;
+        padding: 0;
+      }
+
+      .services .container {
+        position: relative;
+        width: 1200px;
+        max-width: none;
+        height: 100%;
+      }
+
+      .services .section-title {
+        position: absolute;
+        top: 72px;
+        left: 221px;
+        width: 758px;
+        height: 58px;
+        transform: none;
+      }
+
+      .service-grid {
+        position: absolute;
+        top: 12px;
+        left: 0;
+        display: block;
+        width: 1200px;
+        height: 1208px;
+        margin: 0;
+      }
+
+      .service-card {
+        position: absolute;
+        display: block;
+        width: 530px;
+        min-height: 0;
+        padding: 0;
+        border-radius: 20px;
+      }
+
+      .service-card:nth-child(1) {
+        top: 186px;
+        left: 60px;
+        height: 526px;
+      }
+
+      .service-card:nth-child(2) {
+        top: 184px;
+        left: 610px;
+        height: 526px;
+      }
+
+      .service-card:nth-child(3) {
+        top: 750px;
+        left: 60px;
+        height: 458px;
+      }
+
+      .service-card:nth-child(4) {
+        top: 750px;
+        left: 610px;
+        height: 458px;
+      }
+
+      .service-card__image {
+        position: absolute;
+        width: auto;
+        height: auto;
+        margin: 0;
+        display: block;
+      }
+
+      .service-card__image img {
+        display: block;
+        max-width: none;
+        max-height: none;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .service-card:nth-child(1) .service-card__image {
+        top: -50px;
+        left: 115px;
+        width: 280px;
+        height: 207px;
+      }
+
+      .service-card:nth-child(1) .service-card__image img {
+        transform: none;
+      }
+
+      .service-card:nth-child(2) .service-card__image {
+        top: -40px;
+        left: 114px;
+        width: 303px;
+        height: 217px;
+      }
+
+      .service-card:nth-child(2) .service-card__image img {
+        transform: none;
+      }
+
+      .service-card:nth-child(3) .service-card__image {
+        top: -40px;
+        left: 125px;
+        width: 291px;
+        height: 217px;
+      }
+
+      .service-card:nth-child(3) .service-card__image img {
+        transform: none;
+      }
+
+      .service-card:nth-child(4) .service-card__image {
+        top: -30px;
+        left: 125px;
+        width: 280px;
+        height: 207px;
+      }
+
+      .service-card:nth-child(4) .service-card__image img {
+        transform: none;
+      }
+
+      .service-card__title {
+        position: absolute;
+        top: 177px;
+        left: 122px;
+        width: 287px;
+        min-height: 0;
+        display: block;
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      .service-card__note {
+        position: absolute;
+        top: 219px;
+        left: 21px;
+        width: 489px;
+        min-height: 0;
+        margin: 0;
+        font-size: 10px;
+        line-height: 12px;
+        text-align: center;
+      }
+
+      .service-card__note:empty {
+        display: none;
+      }
+
+      .service-card__body {
+        position: absolute;
+        top: 261px;
+        left: 20px;
+        width: 490px;
+        max-width: none;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .service-card:nth-child(1) .service-card__body {
+        top: 259px;
+      }
+
+      .service-card__body p + p {
+        margin-top: 10.4px;
+      }
+
+      .service-card:nth-child(1) .service-card__body p + p {
+        margin-top: 12.4px;
+      }
+
+      .service-card__pill {
+        position: absolute;
+        top: 342px;
+        left: 20px;
+        width: 489px;
+        max-width: none;
+        min-height: 54px;
+        height: 54px;
+        margin: 0;
+        padding: 0 22px;
+        border-radius: 10px;
+        font-size: 18px;
+        line-height: 1.2;
+      }
+
+      .service-card__link {
+        position: absolute;
+        left: 139px;
+        width: 252px;
+        min-height: 50px;
+        height: 50px;
+        margin: 0;
+        font-size: 16px;
+        line-height: 24.8px;
+      }
+
+      .service-card:nth-child(1) .service-card__link {
+        top: 434px;
+      }
+
+      .service-card:nth-child(2) .service-card__link {
+        top: 436px;
+      }
+
+      .service-card:nth-child(3) .service-card__link,
+      .service-card:nth-child(4) .service-card__link {
+        top: 368px;
+      }
+    }
+
+    .why {
+      padding: 155px 0 58px;
+    }
+
+    .why .section-title {
+      transform: translateY(-34px);
+    }
+
+    .why-grid {
+      position: relative;
+      display: block;
+      height: 500px;
+      margin-top: 56px;
+    }
+
+    .why-card {
+      display: grid;
+      align-content: space-between;
+      min-width: 0;
+      padding: 20px 15px 16px;
+      border-radius: 18px;
+      background: var(--soft-card);
+      color: var(--ink);
+    }
+
+    .why-card--dark {
+      background: var(--soft-card-alt);
+    }
+
+    .why-card--stat {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 360px;
+      height: 165px;
+    }
+
+    .why-card--price {
+      position: absolute;
+      top: 185px;
+      left: 0;
+      width: 360px;
+      height: 210px;
+    }
+
+    .why-card--team {
+      position: absolute;
+      top: 0;
+      left: 380px;
+      width: 380px;
+      height: 236px;
+    }
+
+    .why-card--rating {
+      position: absolute;
+      top: 256px;
+      left: 380px;
+      width: 380px;
+      height: 140px;
+    }
+
+    .why-card--safe {
+      position: absolute;
+      top: 0;
+      left: 780px;
+      width: 380px;
+      height: 182px;
+    }
+
+    .why-card--custom {
+      position: absolute;
+      top: 203px;
+      left: 780px;
+      width: 380px;
+      height: 192px;
+    }
+
+    .why-card--wide {
+      position: absolute;
+      top: 415px;
+      left: 0;
+      width: 100%;
+      height: 85px;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      align-content: center;
+      column-gap: 18px;
+      padding: 18px 28px 18px 16px;
+    }
+
+    .why-card__head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .why-card__icon {
+      flex: 0 0 auto;
+      width: 45px;
+      height: 45px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--rose);
+      color: #fff;
+    }
+
+    .why-card__icon svg {
+      width: 23px;
+      height: 23px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .why-card__icon .filled {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .why-card__title {
+      margin: 10px 0 0;
+      font-family: "Playfair Display", Georgia, serif;
+      font-weight: 400;
+      font-size: 23px;
+      line-height: 1.08;
+      color: #333;
+    }
+
+    .why-card__copy {
+      margin: 0;
+      color: #3f3b38;
+      font-size: 15px;
+      line-height: 1.14;
+    }
+
+    .why-card--wide .why-card__title {
+      margin: 0;
+      font-size: 23px;
+    }
+
+    .why-card--wide .why-card__copy {
+      margin-top: 8px;
+    }
+
+    @media (min-width: 960px) {
+      .why {
+        position: relative;
+        height: 817px;
+        padding: 0;
+      }
+
+      .why .container {
+        position: relative;
+        width: 1200px;
+        max-width: none;
+        height: 100%;
+      }
+
+      .why .section-title {
+        position: absolute;
+        top: 120px;
+        left: 251px;
+        width: 699px;
+        height: 58px;
+        transform: none;
+      }
+
+      .why-grid {
+        position: absolute;
+        top: 60px;
+        left: 0;
+        display: block;
+        width: 1200px;
+        height: 757px;
+        margin: 0;
+      }
+
+      .why-card {
+        position: absolute;
+        display: block;
+        padding: 0;
+        border-radius: 20px;
+      }
+
+      .why-card--stat {
+        top: 197px;
+        left: 20px;
+        width: 360px;
+        height: 164px;
+      }
+
+      .why-card--team {
+        top: 197px;
+        left: 400px;
+        width: 380px;
+        height: 235px;
+      }
+
+      .why-card--safe {
+        top: 197px;
+        left: 800px;
+        width: 380px;
+        height: 183px;
+      }
+
+      .why-card--price {
+        top: 381px;
+        left: 20px;
+        width: 360px;
+        height: 211px;
+      }
+
+      .why-card--rating {
+        top: 451px;
+        left: 400px;
+        width: 380px;
+        height: 141px;
+      }
+
+      .why-card--custom {
+        top: 400px;
+        left: 800px;
+        width: 380px;
+        height: 192px;
+      }
+
+      .why-card--wide {
+        top: 612px;
+        left: 20px;
+        width: 1161px;
+        height: 85px;
+      }
+
+      .why-card__head {
+        display: block;
+      }
+
+      .why-card__icon {
+        position: absolute;
+        top: 21px;
+        left: 15px;
+        width: 44px;
+        height: 44px;
+      }
+
+      .why-card--wide .why-card__icon {
+        left: 16px;
+        width: 47px;
+      }
+
+      .why-card__icon svg {
+        width: 23px;
+        height: 23px;
+      }
+
+      .why-card__title {
+        position: absolute;
+        margin: 0;
+        color: var(--ink);
+        font-size: 21px;
+        line-height: 1.2;
+      }
+
+      .why-card__copy {
+        position: absolute;
+        margin: 0;
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .why-card--stat .why-card__title {
+        top: 27px;
+        left: 69px;
+        width: 263px;
+      }
+
+      .why-card--stat .why-card__copy {
+        top: 115px;
+        left: 15px;
+        width: 317px;
+      }
+
+      .why-card--team .why-card__title {
+        top: 109px;
+        left: 15px;
+        width: 263px;
+      }
+
+      .why-card--team .why-card__copy {
+        top: 185px;
+        left: 15px;
+        width: 317px;
+      }
+
+      .why-card--safe .why-card__title {
+        top: 15px;
+        left: 69px;
+        width: 263px;
+      }
+
+      .why-card--safe .why-card__copy {
+        top: 134px;
+        left: 15px;
+        width: 332px;
+      }
+
+      .why-card--price .why-card__title {
+        top: 86px;
+        left: 15px;
+        width: 302px;
+      }
+
+      .why-card--price .why-card__copy {
+        top: 162px;
+        left: 15px;
+        width: 317px;
+      }
+
+      .why-card--rating .why-card__title {
+        top: 28px;
+        left: 69px;
+        width: 263px;
+      }
+
+      .why-card--rating .why-card__copy {
+        top: 92px;
+        left: 15px;
+        width: 317px;
+      }
+
+      .why-card--custom .why-card__title {
+        top: 95px;
+        left: 15px;
+        width: 308px;
+      }
+
+      .why-card--custom .why-card__copy {
+        top: 143px;
+        left: 15px;
+        width: 332px;
+      }
+
+      .why-card--wide .why-card__title {
+        top: 15px;
+        left: 74px;
+        width: 393px;
+        font-size: 21px;
+      }
+
+      .why-card--wide .why-card__copy {
+        top: 53px;
+        left: 74px;
+        width: 420px;
+        margin: 0;
+      }
+    }
+
+    .quote {
+      padding: 56px 0 60px;
+    }
+
+    .quote .section-title {
+      margin-bottom: 64px;
+    }
+
+    .quote-panel {
+      position: relative;
+      min-height: 485px;
+      display: grid;
+      grid-template-columns: 410px 1fr;
+      gap: 54px;
+      align-items: start;
+      overflow: hidden;
+      padding: 30px 0 0 70px;
+      border-radius: 18px;
+      background: var(--rose);
+      color: #fff;
+    }
+
+    .quote-widget {
+      position: relative;
+      z-index: 2;
+      width: 409px;
+      min-height: 0;
+      padding: 30px;
+      border-radius: 12px;
+      background: #d8cfc4;
+      color: #2c2c2c;
+    }
+
+    .quote-widget__title {
+      margin: 0 0 8px;
+      text-align: center;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 1.3;
+    }
+
+    .quote-widget__subtitle {
+      margin: 0 0 24px;
+      text-align: center;
+      color: #6d675f;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .quote-widget__group {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .quote-widget__label {
+      color: #2c2c2c;
+      font-size: 14px;
+    }
+
+    .quote-widget__input {
+      width: 100%;
+      min-height: 0;
+      padding: 12px 16px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      background: #e8e1d9;
+      color: #2c2c2c;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .quote-widget__input::placeholder {
+      color: #bbb5ae;
+      opacity: 1;
+    }
+
+    .quote-widget__button {
+      width: 100%;
+      min-height: 0;
+      margin-top: 0;
+      padding: 14px 20px;
+      border: 0;
+      border-radius: 50px;
+      background: var(--rose);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .quote-widget__hint {
+      margin: 10px 0 0;
+      text-align: center;
+      color: #918b84;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .quote-content {
+      position: relative;
+      z-index: 1;
+      min-height: 455px;
+      padding: 2px 0 0;
+    }
+
+    .quote-content__title {
+      width: 582px;
+      max-width: 100%;
+      margin: 0 0 0 -16px;
+      text-align: center;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 31px;
+      font-weight: 400;
+      line-height: 1.08;
+      color: #fff;
+    }
+
+    .quote-contact {
+      display: grid;
+      gap: 19px;
+      margin: 54px 0 0 -14px;
+      color: #fff;
+      font-size: 17px;
+    }
+
+    .quote-contact a {
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+      text-decoration: none;
+    }
+
+    .quote-contact svg {
+      width: 26px;
+      height: 26px;
+      fill: currentColor;
+    }
+
+    .quote-art {
+      position: absolute;
+      right: 0;
+      bottom: 7px;
+      width: 474px;
+      max-width: none;
+    }
+
+    .quote-spark {
+      display: none;
+    }
+
+    .quote-spark::before,
+    .quote-spark::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      background: #bd4b5a;
+      box-shadow: inset -7px -7px 10px rgba(87, 28, 42, 0.25);
+    }
+
+    .quote-spark::before {
+      width: 18px;
+      height: 50px;
+      border-radius: 999px;
+    }
+
+    .quote-spark::after {
+      width: 50px;
+      height: 18px;
+      border-radius: 999px;
+    }
+
+    @media (min-width: 960px) {
+      .quote {
+        position: relative;
+        height: 719px;
+        padding: 0;
+      }
+
+      .quote .container {
+        position: relative;
+        width: 1200px;
+        max-width: none;
+        height: 100%;
+      }
+
+      .quote .section-title {
+        position: absolute;
+        top: 60px;
+        left: 172px;
+        width: 856px;
+        height: auto;
+        margin: 0;
+        font-size: 48px;
+        line-height: 1.2;
+      }
+
+      .quote-panel {
+        position: absolute;
+        top: 174px;
+        left: 20px;
+        width: 1160px;
+        height: 485px;
+        min-height: 0;
+        display: block;
+        padding: 0;
+        border-radius: 20px;
+      }
+
+      .quote-widget {
+        position: absolute;
+        top: 30px;
+        left: 70px;
+        width: 409px;
+      }
+
+      .quote-content {
+        position: static;
+        min-height: 0;
+        padding: 0;
+      }
+
+      .quote-content__title {
+        position: absolute;
+        top: 30px;
+        left: 518px;
+        width: 582px;
+        max-width: none;
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.2;
+      }
+
+      .quote-contact {
+        position: absolute;
+        top: 151px;
+        left: 525px;
+        display: grid;
+        gap: 17px;
+        margin: 0;
+        color: #e8e1d9;
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .quote-contact a {
+        gap: 14px;
+      }
+
+      .quote-contact svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .quote-art {
+        top: 134px;
+        left: 686px;
+        right: auto;
+        bottom: auto;
+        width: 474px;
+        height: 351px;
+        object-fit: cover;
+        object-position: center center;
+      }
+    }
+
+    .site-footer {
+      background: var(--footer);
+      color: var(--footer-text);
+      padding: 74px 0 64px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 260px repeat(3, 1fr);
+      gap: 40px;
+    }
+
+    .footer-logo img {
+      width: 200px;
+      height: auto;
+    }
+
+    .footer-tagline {
+      margin: 14px 0 0;
+      color: #c9c2ba;
+      font-size: 17px;
+    }
+
+    .footer-copy {
+      margin: 14px 0 0;
+      color: #5a5a5a;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .footer-title {
+      margin: 0 0 18px;
+      color: #444;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 24px;
+      font-weight: 400;
+    }
+
+    .footer-links {
+      display: grid;
+      gap: 13px;
+    }
+
+    .footer-links a {
+      color: var(--footer-text);
+      text-decoration: none;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .mobile-sticky {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      left: 10px;
+      z-index: 60;
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .mobile-sticky a {
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 700;
+      pointer-events: auto;
+      box-shadow: 0 12px 24px rgba(49, 49, 49, 0.12);
+    }
+
+    .mobile-sticky a:first-child {
+      background: var(--rose);
+      color: #fff;
+    }
+
+    .mobile-sticky a:last-child {
+      border: 1px solid var(--rose);
+      background: var(--page-bg);
+      color: var(--rose);
+    }
+
+    body.show-mobile-sticky .mobile-sticky {
+      display: none;
+    }
+
+    @media (max-width: 1199px) {
+      .container {
+        width: min(960px, calc(100% - 40px));
+      }
+
+      .site-header__inner {
+        gap: 34px;
+      }
+
+      .nav,
+      .nav__left,
+      .nav__right {
+        gap: 20px;
+      }
+
+      .hero h1 {
+        font-size: 52px;
+      }
+
+      .why-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 959px) {
+      .container {
+        width: min(640px, calc(100% - 32px));
+      }
+
+      .site-header__inner {
+        min-height: 73px;
+        justify-content: space-between;
+      }
+
+      .site-logo img {
+        width: 153px;
+      }
+
+      .mobile-toggle {
+        display: inline-flex;
+      }
+
+      .nav {
+        position: fixed;
+        inset: 73px 0 auto 0;
+        max-height: calc(100vh - 73px);
+        overflow: auto;
+        display: none;
+        padding: 24px 20px 34px;
+        background: var(--page-bg);
+        box-shadow: 0 20px 45px rgba(49, 49, 49, 0.14);
+      }
+
+      body.menu-open .nav {
+        display: grid;
+        gap: 18px;
+      }
+
+      .nav__left,
+      .nav__right {
+        display: grid;
+        justify-items: start;
+        gap: 18px;
+      }
+
+      .service-menu::after,
+      .service-menu__list::before {
+        display: none;
+      }
+
+      .service-menu__list {
+        position: static;
+        width: min(360px, calc(100vw - 40px));
+        max-width: none;
+        margin-top: 10px;
+        opacity: 1;
+        pointer-events: auto;
+        visibility: visible;
+        transform: none;
+        display: none;
+      }
+
+      .service-menu:hover .service-menu__list,
+      .service-menu:focus-within .service-menu__list {
+        display: grid;
+        transform: none;
+      }
+
+      .hero {
+        padding-top: 9px;
+      }
+
+      .hero__copy {
+        width: min(318px, calc(100% - 72px));
+        margin: 0 auto;
+      }
+
+      .hero h1 {
+        font-size: 31px;
+      }
+
+      .hero__lead {
+        max-width: 335px;
+        margin-top: 7px;
+        font-size: 17px;
+        line-height: 1.2;
+      }
+
+      .hero__media {
+        height: 194px;
+        margin-top: 21px;
+      }
+
+      .hero__media img {
+        position: static;
+        width: 112%;
+        height: 100%;
+        transform: translateX(-6%);
+        object-position: center center;
+      }
+
+      .hero__media::after {
+        height: 78px;
+      }
+
+      .hero__bottom {
+        min-height: 172px;
+        margin-top: 7px;
+      }
+
+      .hero__cta {
+        position: static;
+        display: flex;
+        left: auto;
+        width: 305px;
+        min-height: 22px;
+        margin: 0 auto;
+        transform: none;
+        padding: 0 16px;
+        font-size: 14px;
+      }
+
+      .hero__hint {
+        top: 60px;
+        font-size: 12px;
+      }
+
+      .hero-stat {
+        top: 94px;
+        gap: 9px;
+        min-width: 0;
+      }
+
+      .hero-stat--reviews {
+        left: 30px;
+        width: auto;
+        height: auto;
+        align-items: flex-end;
+      }
+
+      .hero-stat--reviews > div:last-child {
+        position: static;
+      }
+
+      .hero-stat--rating {
+        right: 0;
+      }
+
+      .review-bubbles {
+        width: 72px;
+        height: 36px;
+      }
+
+      .review-bubbles span {
+        flex-basis: 36px;
+        width: 36px;
+        height: 36px;
+      }
+
+      .review-bubbles span:not(:last-child) {
+        margin-right: -18px;
+      }
+
+      .review-bubbles svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .hero-stat__number,
+      .rating-number {
+        font-size: 30px;
+      }
+
+      .hero-stat__label,
+      .rating-label {
+        width: 112px;
+        font-size: 12px;
+      }
+
+      .hero-stat__number {
+        width: auto;
+        height: auto;
+        line-height: 1;
+        transform: none;
+      }
+
+      .rating-stars {
+        font-size: 11px;
+      }
+
+      .section-title {
+        font-size: 36px;
+      }
+
+      .included {
+        padding-top: 12px;
+      }
+
+      .section-subtitle {
+        width: min(310px, 100%);
+        margin-top: 21px;
+        font-size: 18px;
+      }
+
+      .included__grid,
+      .service-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .included__grid {
+        gap: 16px;
+        margin-top: 30px;
+      }
+
+      .area-card__button {
+        min-height: 84px;
+        padding: 8px 19px 8px 32px;
+      }
+
+      .area-card__left {
+        gap: 18px;
+      }
+
+      .area-card__image {
+        flex-basis: 56px;
+        width: 56px;
+        height: 56px;
+      }
+
+      .area-card__image img {
+        width: 58px;
+        max-width: 100%;
+      }
+
+      .area-card__title {
+        font-size: 21px;
+        line-height: 1.18;
+        white-space: normal;
+      }
+
+      .area-card__arrow {
+        border-left-width: 8px;
+        border-right-width: 8px;
+        border-top-width: 10px;
+      }
+
+      .area-card__content {
+        padding: 0 24px 22px 105px;
+        font-size: 14px;
+      }
+
+      .included__cta {
+        width: 305px;
+        min-height: 50px;
+        margin-top: 28px;
+        left: 0;
+      }
+
+      .services {
+        padding-top: 72px;
+      }
+
+      .service-grid {
+        gap: 46px;
+        margin-top: 54px;
+      }
+
+      .service-card {
+        min-height: 0;
+        padding: 0 20px 36px;
+      }
+
+      .service-card__image {
+        height: 178px;
+        width: min(308px, 94%);
+        margin-top: -26px;
+      }
+
+      .service-card__image img {
+        max-height: 178px;
+      }
+
+      .service-card__title {
+        min-height: auto;
+        margin-top: 8px;
+        font-size: 25px;
+      }
+
+      .service-card__note {
+        margin-bottom: 24px;
+      }
+
+      .service-card__body {
+        font-size: 15px;
+        line-height: 1.1;
+      }
+
+      .service-card__pill {
+        font-size: 19px;
+      }
+
+      .service-card__link {
+        width: 200px;
+        min-height: 52px;
+        margin-top: 28px;
+      }
+
+      .why {
+        padding-top: 72px;
+      }
+
+      .why .section-title {
+        transform: none;
+      }
+
+      .why-grid {
+        display: grid;
+        height: auto;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .why-card,
+      .why-card--wide,
+      .why-card--stat,
+      .why-card--price,
+      .why-card--team,
+      .why-card--rating,
+      .why-card--safe,
+      .why-card--custom {
+        position: static;
+        width: auto;
+        height: auto;
+        grid-column: auto;
+        grid-row: auto;
+      }
+
+      .why-card {
+        min-height: 144px;
+      }
+
+      .why-card--wide {
+        display: grid;
+        grid-template-columns: auto 1fr;
+      }
+
+      .quote {
+        padding-bottom: 54px;
+      }
+
+      .quote .section-title {
+        margin-bottom: 38px;
+      }
+
+      .quote-panel {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        min-height: 0;
+        padding: 24px 20px 260px;
+        border-radius: 18px;
+      }
+
+      .quote-widget {
+        width: 100%;
+        min-height: 0;
+        padding: 28px 31px 25px;
+      }
+
+      .quote-content {
+        min-height: 0;
+      }
+
+      .quote-content__title {
+        font-size: 27px;
+      }
+
+      .quote-contact {
+        margin: 30px 0 0;
+      }
+
+      .quote-art {
+        right: -110px;
+        bottom: -16px;
+        width: 430px;
+      }
+
+      .quote-spark {
+        left: auto;
+        right: 170px;
+        bottom: 220px;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 479px) {
+      .container {
+        width: calc(100% - 30px);
+      }
+
+      .site-logo img {
+        width: 151px;
+      }
+
+      .hero {
+        overflow: hidden;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .section-title {
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      .included .section-title {
+        width: 299px;
+        max-width: none;
+        margin-left: -63px;
+        transform: none;
+      }
+
+      .service-card {
+        border-radius: 18px;
+      }
+
+      .quote-panel {
+        padding: 24px 20px 248px;
+      }
+
+      .hero__copy {
+        width: 358px;
+        max-width: none;
+        margin-right: 0;
+        margin-left: 20px;
+        padding-right: 0;
+        padding-left: 0;
+        transform: translateY(-2px);
+      }
+
+      .hero__lead {
+        max-width: 320px;
+        margin-top: 10px;
+        font-size: 16px;
+        line-height: 1.22;
+      }
+
+      .section-subtitle {
+        margin-top: 24px;
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .area-card__title {
+        font-size: 18px;
+        line-height: 1.333;
+      }
+
+      .included__cta {
+        min-height: 22px;
+        margin-top: 66px;
+        padding: 0 16px;
+        font-size: 14px;
+        line-height: 14px;
+      }
+
+      .services {
+        height: 2159px;
+        padding-top: 0;
+        overflow-x: clip;
+        overflow-y: visible;
+      }
+
+      .services .container {
+        position: relative;
+        width: 390px;
+        max-width: none;
+        height: 100%;
+        margin-left: -15px;
+        margin-right: 0;
+      }
+
+      .services .section-title {
+        position: absolute;
+        top: 63px;
+        left: 44px;
+        width: 302px;
+        height: 29px;
+        margin: 0;
+        transform: none;
+      }
+
+      .service-grid {
+        position: absolute;
+        top: 63px;
+        left: 0;
+        display: block;
+        width: 390px;
+        height: 2169px;
+        margin: 0;
+      }
+
+      .service-card {
+        position: absolute;
+        width: 320px;
+        min-height: 0;
+        padding: 0;
+        border-radius: 20px;
+        display: block;
+      }
+
+      .service-card:nth-child(1) {
+        top: 134px;
+        left: 35px;
+        height: 429px;
+      }
+
+      .service-card:nth-child(2) {
+        top: 607px;
+        left: 35px;
+        height: 508px;
+      }
+
+      .service-card:nth-child(3) {
+        top: 1155px;
+        left: 35px;
+        height: 458px;
+      }
+
+      .service-card:nth-child(4) {
+        top: 1682px;
+        left: 35px;
+        height: 427px;
+      }
+
+      .service-card__image {
+        position: absolute;
+        width: auto;
+        height: auto;
+        margin: 0;
+        display: block;
+      }
+
+      .service-card__image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        object-fit: cover;
+        transform: none;
+      }
+
+      .service-card:nth-child(1) .service-card__image {
+        top: -66px;
+        left: 32px;
+        width: 237px;
+        height: 175px;
+      }
+
+      .service-card:nth-child(2) .service-card__image {
+        top: -44px;
+        left: 32px;
+        width: 257px;
+        height: 184px;
+      }
+
+      .service-card:nth-child(3) .service-card__image {
+        top: -40px;
+        left: 42px;
+        width: 237px;
+        height: 175px;
+      }
+
+      .service-card:nth-child(4) .service-card__image {
+        top: -69px;
+        left: 42px;
+        width: 237px;
+        height: 175px;
+      }
+
+      .service-card__title {
+        position: absolute;
+        top: 140px;
+        left: 35px;
+        width: 250px;
+        min-height: 0;
+        display: block;
+        margin: 0;
+        font-size: 21px;
+        line-height: 1.2;
+      }
+
+      .service-card:nth-child(3) .service-card__title {
+        top: 156px;
+        left: 52px;
+        width: 224px;
+      }
+
+      .service-card:nth-child(4) .service-card__title {
+        top: 146px;
+        left: 17px;
+        width: 287px;
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      .service-card__note {
+        position: absolute;
+        top: 175px;
+        left: 20px;
+        width: 286px;
+        min-height: 0;
+        margin: 0;
+        font-size: 10px;
+        line-height: 12px;
+        text-align: center;
+      }
+
+      .service-card__note:empty {
+        display: none;
+      }
+
+      .service-card__body {
+        position: absolute;
+        top: 217px;
+        left: 20px;
+        width: 286px;
+        max-width: none;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .service-card:nth-child(2) .service-card__body {
+        top: 230px;
+      }
+
+      .service-card:nth-child(3) .service-card__body {
+        top: 246px;
+      }
+
+      .service-card:nth-child(4) .service-card__body {
+        top: 215px;
+      }
+
+      .service-card__body p + p {
+        margin-top: 20.4px;
+      }
+
+      .service-card__pill {
+        position: absolute;
+        top: 338px;
+        left: 20px;
+        width: 286px;
+        max-width: none;
+        min-height: 66px;
+        height: 66px;
+        margin: 0;
+        padding: 0 15px;
+        border-radius: 10px;
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .service-card__link {
+        position: absolute;
+        left: 60px;
+        width: 200px;
+        min-height: 21.7px;
+        height: 21.7px;
+        margin: 0;
+        padding: 0;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 21.7px;
+      }
+
+      .service-card:nth-child(1) .service-card__link {
+        top: 345px;
+      }
+
+      .service-card:nth-child(2) .service-card__link {
+        top: 424px;
+      }
+
+      .service-card:nth-child(3) .service-card__link {
+        top: 374px;
+      }
+
+      .service-card:nth-child(4) .service-card__link {
+        top: 343px;
+      }
+
+      .why {
+        position: relative;
+        height: 1134px;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .why .container {
+        position: relative;
+        width: 390px;
+        max-width: none;
+        height: 100%;
+        margin-left: -15px;
+        margin-right: 0;
+      }
+
+      .why .section-title {
+        position: absolute;
+        top: 72px;
+        left: 21px;
+        width: 349.1px;
+        height: 29px;
+        margin: 0;
+        transform: none;
+        text-align: left;
+        font-size: 24px;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+
+      .why-grid {
+        position: absolute;
+        top: 72px;
+        left: 0;
+        display: block;
+        width: 390px;
+        height: 1062px;
+        margin: 0;
+      }
+
+      .why-card,
+      .why-card--wide,
+      .why-card--stat,
+      .why-card--price,
+      .why-card--team,
+      .why-card--rating,
+      .why-card--safe,
+      .why-card--custom {
+        position: absolute;
+        display: block;
+        width: 320px;
+        min-height: 0;
+        padding: 0;
+        border-radius: 20px;
+      }
+
+      .why-card--stat {
+        top: 107px;
+        left: 35px;
+        height: 114px;
+      }
+
+      .why-card--team {
+        top: 241px;
+        left: 35px;
+        height: 121px;
+      }
+
+      .why-card--price {
+        top: 382px;
+        left: 35px;
+        height: 107px;
+      }
+
+      .why-card--safe {
+        top: 509px;
+        left: 35px;
+        height: 107px;
+      }
+
+      .why-card--rating {
+        top: 636px;
+        left: 35px;
+        height: 100px;
+      }
+
+      .why-card--custom {
+        top: 756px;
+        left: 35px;
+        height: 106px;
+      }
+
+      .why-card--wide {
+        top: 881px;
+        left: 35px;
+        height: 121px;
+      }
+
+      .why-card__head {
+        display: block;
+      }
+
+      .why-card__icon {
+        position: absolute;
+        top: 20px;
+        left: 12px;
+        width: 36px;
+        height: 36px;
+      }
+
+      .why-card__icon svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .why-card__title {
+        position: absolute;
+        margin: 0;
+        color: var(--ink);
+        font-size: 18px;
+        line-height: 1.2;
+      }
+
+      .why-card__copy {
+        position: absolute;
+        margin: 0;
+        color: var(--ink);
+        font-size: 12px;
+        line-height: 1.2;
+      }
+
+      .why-card--stat .why-card__title {
+        top: 23px;
+        left: 56px;
+        width: 213px;
+      }
+
+      .why-card--stat .why-card__copy {
+        top: 66px;
+        left: 12px;
+        width: 300px;
+      }
+
+      .why-card--team .why-card__title {
+        top: 13px;
+        left: 56px;
+        width: 266px;
+      }
+
+      .why-card--team .why-card__copy {
+        top: 73px;
+        left: 12px;
+        width: 300px;
+      }
+
+      .why-card--price .why-card__title {
+        top: 17px;
+        left: 56px;
+        width: 248px;
+      }
+
+      .why-card--price .why-card__copy {
+        top: 71px;
+        left: 12px;
+        width: 276px;
+      }
+
+      .why-card--safe .why-card__title {
+        top: 13px;
+        left: 56px;
+        width: 214px;
+      }
+
+      .why-card--safe .why-card__copy {
+        top: 73px;
+        left: 12px;
+        width: 284px;
+      }
+
+      .why-card--rating .why-card__title {
+        top: 25px;
+        left: 56px;
+        width: 214px;
+      }
+
+      .why-card--rating .why-card__copy {
+        top: 67px;
+        left: 12px;
+        width: 285px;
+      }
+
+      .why-card--custom .why-card__title {
+        top: 17px;
+        left: 57px;
+        width: 251px;
+      }
+
+      .why-card--custom .why-card__copy {
+        top: 77px;
+        left: 12px;
+        width: 293px;
+      }
+
+      .why-card--wide .why-card__title {
+        top: 13px;
+        left: 56px;
+        width: 253px;
+        font-size: 18px;
+      }
+
+      .why-card--wide .why-card__copy {
+        top: 73px;
+        left: 12px;
+        width: 300px;
+        margin: 0;
+      }
+
+      .quote-widget {
+        position: absolute;
+        top: 25px;
+        left: 21px;
+        width: 320px;
+        min-width: 0;
+        padding: 24px 20px 20px;
+      }
+
+      .quote {
+        position: relative;
+        height: 1069px;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+      }
+
+      .quote .container {
+        position: relative;
+        width: 320px;
+        max-width: none;
+        height: 100%;
+      }
+
+      .quote .section-title {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 320px;
+        margin: 0;
+      }
+
+      .quote-panel {
+        position: absolute;
+        top: 103px;
+        left: -21px;
+        width: 363px;
+        height: 906px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .quote-widget__title {
+        font-size: 22px;
+        line-height: 1.3;
+      }
+
+      .quote-widget__subtitle {
+        margin: 8px 0 20px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .quote-widget__group {
+        margin-bottom: 16px;
+      }
+
+      .quote-widget__input {
+        min-height: 50px;
+      }
+
+      .quote-widget__button {
+        min-height: 52px;
+      }
+
+      .quote-widget__hint {
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .quote-content__title {
+        position: absolute;
+        top: 463px;
+        left: 44px;
+        width: 276px;
+        max-width: none;
+        margin: 0;
+        color: #e8e1d9;
+        font-size: 21px;
+        line-height: 1.2;
+      }
+
+      .quote-contact {
+        position: absolute;
+        top: 572px;
+        left: 45px;
+        gap: 16px;
+        margin: 0;
+        color: #e8e1d9;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .quote-contact a {
+        gap: 15px;
+      }
+
+      .quote-contact svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .quote-art {
+        top: 660px;
+        left: 43px;
+        right: auto;
+        bottom: auto;
+        width: 320px;
+        height: 246px;
+        object-fit: cover;
+        object-position: center center;
+      }
+
+      .quote-spark {
+        display: none;
+      }
+
+      .footer-grid {
+        position: relative;
+        display: block;
+        height: 100%;
+      }
+
+      .site-footer {
+        height: 798px;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .site-footer .container {
+        position: relative;
+        width: 320px;
+        max-width: none;
+        height: 100%;
+      }
+
+      .footer-brand,
+      .footer-grid > section:nth-child(1) {
+        position: absolute;
+        top: 60px;
+        left: 10px;
+        width: 300px;
+      }
+
+      .footer-logo img {
+        width: 200px;
+      }
+
+      .footer-tagline {
+        margin: 1px 0 0;
+        color: #b9b4ae;
+        font-size: 16px;
+        line-height: 1.55;
+      }
+
+      .footer-copy {
+        margin: 5px 0 0;
+        width: 300px;
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .footer-grid > section:nth-child(2),
+      .footer-grid > section:nth-child(3),
+      .footer-grid > section:nth-child(4) {
+        position: absolute;
+        left: 10px;
+        width: 300px;
+      }
+
+      .footer-grid > section:nth-child(2) {
+        top: 207px;
+      }
+
+      .footer-grid > section:nth-child(3) {
+        top: 400px;
+      }
+
+      .footer-grid > section:nth-child(4) {
+        top: 570px;
+        left: 11px;
+      }
+
+      .footer-title {
+        margin: 0 0 3px;
+        font-size: 24px;
+        line-height: 1.1;
+      }
+
+      .footer-links {
+        display: block;
+      }
+
+      .footer-links a {
+        display: block;
+        font-size: 12px;
+        line-height: 2.2;
+      }
+
+      body.show-mobile-sticky .mobile-sticky {
+        display: grid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header" aria-label="Primary navigation">
+      <div class="container site-header__inner">
+        <a class="site-logo" href="/" aria-label="Shynli Cleaning home">
+          <img src="images/shynli-logo-primary.png" alt="Shynli Cleaning">
+        </a>
+        <button class="mobile-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z"/>
+          </svg>
+        </button>
+        <nav class="nav" aria-label="Site">
+          <div class="nav__left">
+            <div class="service-menu">
+              <button class="service-menu__trigger" type="button">
+                Services
+                <svg class="service-menu__chevron" viewBox="0 0 8 5" aria-hidden="true">
+                  <path d="M0 0h8L4 5z"/>
+                </svg>
+              </button>
+              <ul class="service-menu__list">
+                <li><a href="/services/regular-cleaning">Regular House Cleaning</a></li>
+                <li><a href="/services/deep-cleaning">Deep Cleaning for Homes That Need Extra Care</a></li>
+                <li><a href="/services/move-in-move-out-cleaning">Cleaning for Moving In or Moving Out</a></li>
+                <li><a href="/services/airbnb-cleaning">Airbnb cleaning</a></li>
+                <li><a href="/services/commercial-cleaning">Commercial cleaning</a></li>
+              </ul>
+            </div>
+            <a href="/service-areas">Service Areas</a>
+            <a href="/about-us">About Us</a>
+            <a href="/faq">FAQ</a>
+          </div>
+          <div class="nav__right">
+            <a class="nav__accent" href="/become-a-cleaner">Become a Cleaner</a>
+            <a class="header-phone" href="tel:+16308127077" aria-label="Call Shynli Cleaning">
+              <span aria-hidden="true">📞</span>
+              <span>Call Us</span>
+            </a>
+            <a class="header-quote" href="/quote">Get Free Quote</a>
+            <button class="city-trigger" type="button">
+              City
+              <svg viewBox="0 0 8 5" aria-hidden="true">
+                <path d="M0 0h8L4 5z"/>
+              </svg>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container hero__copy">
+          <h1 id="hero-title" class="serif">Airbnb Cleaning Services</h1>
+          <p class="hero__lead">Fast, reliable turnovers that keep your guests happy and your ratings high</p>
+        </div>
+        <div class="hero__media" aria-hidden="true">
+          <img src="images/shynli-airbnb-cleaning-hero.png" alt="">
+        </div>
+        <div class="container hero__bottom">
+          <a class="primary-cta hero__cta" href="/quote">Get Instant Quote</a>
+          <p class="hero__hint">Takes less than 60 seconds</p>
+          <div class="hero-stat hero-stat--reviews">
+            <div class="review-bubbles" aria-hidden="true">
+              <span><svg viewBox="0 0 25 25" focusable="false" aria-hidden="true"><path d="M22.5 0H2.5C1.125 0 0 1.125 0 2.5V25L5 20H22.5C23.875 20 25 18.875 25 17.5V2.5C25 1.125 23.875 0 22.5 0ZM14.4625 11.9625L12.5 16.25L10.5375 11.9625L6.25 10L10.5375 8.0375L12.5 3.75L14.4625 8.0375L18.75 10L14.4625 11.9625Z"/></svg></span><span><svg viewBox="0 0 25 25" focusable="false" aria-hidden="true"><path d="M22.5 0H2.5C1.125 0 0 1.125 0 2.5V25L5 20H22.5C23.875 20 25 18.875 25 17.5V2.5C25 1.125 23.875 0 22.5 0ZM14.4625 11.9625L12.5 16.25L10.5375 11.9625L6.25 10L10.5375 8.0375L12.5 3.75L14.4625 8.0375L18.75 10L14.4625 11.9625Z"/></svg></span><span><svg viewBox="0 0 25 25" focusable="false" aria-hidden="true"><path d="M22.5 0H2.5C1.125 0 0 1.125 0 2.5V25L5 20H22.5C23.875 20 25 18.875 25 17.5V2.5C25 1.125 23.875 0 22.5 0ZM14.4625 11.9625L12.5 16.25L10.5375 11.9625L6.25 10L10.5375 8.0375L12.5 3.75L14.4625 8.0375L18.75 10L14.4625 11.9625Z"/></svg></span>
+            </div>
+            <div>
+              <span class="hero-stat__number">300+</span>
+              <span class="hero-stat__label">Customer Reviews</span>
+            </div>
+          </div>
+          <div class="hero-stat hero-stat--rating">
+            <span class="rating-number">5/5</span>
+            <span class="rating-stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="included" aria-labelledby="included-title">
+        <div class="container">
+          <h2 id="included-title" class="section-title serif">What's Included in <span class="rose">Every Airbnb Turnover</span></h2>
+          <p class="section-subtitle">Complete cleaning between guests &mdash; ready for check-in</p>
+          <div class="included__grid">
+            <article class="area-card">
+              <button class="area-card__button" type="button" aria-expanded="false">
+                <span class="area-card__left">
+                  <span class="area-card__image"><img src="images/shynli-move-area-living-room.png" alt=""></span>
+                  <span class="area-card__title">Living Areas &amp; Common Spaces</span>
+                </span>
+                <span class="area-card__arrow" aria-hidden="true"></span>
+              </button>
+              <div class="area-card__content">
+                <ul>
+                  <li>All surfaces dusted</li>
+                  <li>Furniture straightened</li>
+                  <li>Floors vacuumed and mopped</li>
+                  <li>Windows and glass cleaned</li>
+                  <li>Remote controls wiped</li>
+                  <li>Light switches and door handles disinfected</li>
+                  <li>Trash removed</li>
+                </ul>
+              </div>
+            </article>
+            <article class="area-card">
+              <button class="area-card__button" type="button" aria-expanded="false">
+                <span class="area-card__left">
+                  <span class="area-card__image"><img src="images/shynli-move-area-bedroom.png" alt=""></span>
+                  <span class="area-card__title">Bedroom</span>
+                </span>
+                <span class="area-card__arrow" aria-hidden="true"></span>
+              </button>
+              <div class="area-card__content">
+                <ul>
+                  <li>Bed linens changed (with fresh linens provided by host)</li>
+                  <li>Bed making with hotel-style presentation</li>
+                  <li>All surfaces dusted</li>
+                  <li>Floors vacuumed and mopped</li>
+                  <li>Closets checked and tidied</li>
+                  <li>Windows and mirrors cleaned</li>
+                  <li>Trash removed</li>
+                </ul>
+              </div>
+            </article>
+            <article class="area-card">
+              <button class="area-card__button" type="button" aria-expanded="false">
+                <span class="area-card__left">
+                  <span class="area-card__image"><img src="images/shynli-move-area-bathroom.png" alt=""></span>
+                  <span class="area-card__title">Bathroom</span>
+                </span>
+                <span class="area-card__arrow" aria-hidden="true"></span>
+              </button>
+              <div class="area-card__content">
+                <ul>
+                  <li>Toilet, sink, shower/tub fully cleaned and disinfected</li>
+                  <li>Mirrors polished</li>
+                  <li>Fixtures shined</li>
+                  <li>Towels replaced (if provided)</li>
+                  <li>Toiletries restocked (if requested)</li>
+                  <li>Floor cleaned</li>
+                  <li>Trash removed</li>
+                </ul>
+              </div>
+            </article>
+            <article class="area-card">
+              <button class="area-card__button" type="button" aria-expanded="false">
+                <span class="area-card__left">
+                  <span class="area-card__image"><img src="images/shynli-move-area-kitchen.png" alt=""></span>
+                  <span class="area-card__title">Kitchen</span>
+                </span>
+                <span class="area-card__arrow" aria-hidden="true"></span>
+              </button>
+              <div class="area-card__content">
+                <ul>
+                  <li>Countertops wiped and disinfected</li>
+                  <li>Sink scrubbed</li>
+                  <li>Appliance exteriors cleaned</li>
+                  <li>Microwave cleaned inside</li>
+                  <li>Stovetop cleaned</li>
+                  <li>Dishes washed (if any left by guest)</li>
+                  <li>Trash and recycling removed</li>
+                  <li>Floor swept and mopped</li>
+                </ul>
+              </div>
+            </article>
+          </div>
+          <a class="primary-cta included__cta" href="/quote">Get Instant Quote</a>
+        </div>
+      </section>
+
+      <section class="services" aria-labelledby="services-title">
+        <div class="container">
+          <h2 id="services-title" class="section-title serif">Explore <span class="rose">Other</span> Services</h2>
+          <div class="service-grid">
+            <article class="service-card">
+              <div class="service-card__image"><img src="images/shynli-service-regular-cleaning.png" alt=""></div>
+              <h3 class="service-card__title">Regular House Cleaning</h3>
+              <p class="service-card__note">Ongoing weekly &amp; bi-weekly service</p>
+              <div class="service-card__body">
+                <p><strong>When:</strong> regular upkeep, maintaining cleanliness, staying ahead of mess</p>
+                <p><strong>For:</strong> busy families, professionals, anyone who values their time over chores</p>
+              </div>
+              <a class="service-card__link" href="/services/regular-cleaning">More about service</a>
+            </article>
+            <article class="service-card">
+              <div class="service-card__image"><img src="images/shynli-service-deep-cleaning.png" alt=""></div>
+              <h3 class="service-card__title">Deep Cleaning for Homes That Need Extra Care</h3>
+              <p class="service-card__note"></p>
+              <div class="service-card__body">
+                <p><strong>When:</strong> seasonal refresh, after guests, home hasn't been cleaned in months</p>
+                <p><strong>For:</strong> homeowners needing a reset, pre-sale prep, post-event cleanup</p>
+              </div>
+              <div class="service-card__pill">Deep Cleaning as first-time service before recurring</div>
+              <a class="service-card__link" href="/services/deep-cleaning">More about service</a>
+            </article>
+            <article class="service-card">
+              <div class="service-card__image"><img src="images/shynli-service-move-cleaning.png" alt=""></div>
+              <h3 class="service-card__title">Cleaning for Moving In or Moving Out</h3>
+              <p class="service-card__note"></p>
+              <div class="service-card__body">
+                <p><strong>When:</strong> moving in or out, end of lease, property turnover, getting deposit back</p>
+                <p><strong>For:</strong> renters, home buyers/sellers, property managers, real estate agents</p>
+              </div>
+              <a class="service-card__link" href="/services/move-in-move-out-cleaning">More about service</a>
+            </article>
+            <article class="service-card">
+              <div class="service-card__image"><img src="images/shynli-service-commercial-cleaning.png" alt=""></div>
+              <h3 class="service-card__title">Commercial Cleaning</h3>
+              <p class="service-card__note"></p>
+              <div class="service-card__body">
+                <p><strong>When:</strong> maintaining office spaces, after-hours cleaning, weekly maintenance</p>
+                <p><strong>For:</strong> offices, retail stores, medical facilities, coworkings, small businesses</p>
+              </div>
+              <a class="service-card__link" href="/services/commercial-cleaning">More about service</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="why" aria-labelledby="why-title">
+        <div class="container">
+          <h2 id="why-title" class="section-title serif">Why <span class="rose">Shynli Cleaning</span> Is Different</h2>
+          <div class="why-grid">
+            <article class="why-card why-card--dark why-card--stat">
+              <div class="why-card__head">
+                <span class="why-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 10.5V20h12v-9.5"/><path d="M9 20v-6h6v6"/><path d="M11.5 9.5h1"/></svg>
+                </span>
+                <h3 class="why-card__title"><span class="rose">300+</span> cleanings completed</h3>
+              </div>
+              <p class="why-card__copy">No rushing. No corners cut. Real attention to every detail.</p>
+            </article>
+            <article class="why-card why-card--price">
+              <div class="why-card__head">
+                <span class="why-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M16 7.5c-.7-.9-1.8-1.4-3.4-1.4-2 0-3.4 1-3.4 2.6 0 3.8 7.2 1.7 7.2 5.8 0 1.6-1.4 2.8-3.8 2.8-1.8 0-3.1-.5-4.2-1.7"/></svg>
+                </span>
+              </div>
+              <h3 class="why-card__title">Honest &amp; transparent pricing, fully insured up to <span class="rose">$1M</span></h3>
+              <p class="why-card__copy">What you see is what you pay.<br>No hidden fees.</p>
+            </article>
+            <article class="why-card why-card--team">
+              <div class="why-card__head">
+                <span class="why-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="2.4"/><circle cx="16" cy="8" r="2.4"/><circle cx="12" cy="13" r="2.6"/><path d="M4.5 18c.4-2.3 2-3.5 4.2-3.5"/><path d="M19.5 18c-.4-2.3-2-3.5-4.2-3.5"/><path d="M8 20c.4-2.7 1.8-4 4-4s3.6 1.3 4 4"/></svg>
+                </span>
+              </div>
+              <h3 class="why-card__title">Local team</h3>
+              <p class="why-card__copy">Carefully selected professionals you can trust in your home.</p>
+            </article>
+            <article class="why-card why-card--rating">
+              <div class="why-card__head">
+                <span class="why-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path class="filled" d="m12 3 2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4L12 3Z"/></svg>
+                </span>
+                <h3 class="why-card__title">Average rating <span class="rose">5/5</span></h3>
+              </div>
+              <p class="why-card__copy">Same quality, same standards,<br>every single visit.</p>
+            </article>
+            <article class="why-card why-card--safe">
+              <div class="why-card__head">
+                <span class="why-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M10 4h4"/><path d="M11 4v4l-3 3v8h8v-8l-3-3V4"/><path d="M9 14h6"/></svg>
+                </span>
+                <h3 class="why-card__title">Safe products<br>for families &amp; pets</h3>
+              </div>
+              <p class="why-card__copy">Eco-friendly, effective, and safe for everyday life.</p>
+            </article>
+            <article class="why-card why-card--custom why-card--dark">
+              <div class="why-card__head">
+                <span class="why-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>
+                </span>
+              </div>
+              <h3 class="why-card__title">Customized for your lifestyle</h3>
+              <p class="why-card__copy">We adjust to your needs, priorities, and schedule.</p>
+            </article>
+            <article class="why-card why-card--wide why-card--dark">
+              <span class="why-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 3v4"/><path d="M17 3v4"/><path d="M4 9h16"/><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 13h.01M12 13h.01M16 13h.01"/></svg>
+              </span>
+              <div>
+                <h3 class="why-card__title">Easy scheduling &amp; fast communication</h3>
+                <p class="why-card__copy">Simple booking. Real human support when you need it.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="quote" aria-labelledby="quote-title">
+        <div class="container">
+          <h2 id="quote-title" class="section-title serif">Ready for a Cleaner, Stress-Free Home?</h2>
+          <div class="quote-panel">
+            <form id="homeWidgetForm" class="quote-widget" action="/quote" method="get">
+              <h3 class="quote-widget__title">Get Your Home Professionally Cleaned</h3>
+              <p class="quote-widget__subtitle">We'll confirm details in 2 minutes</p>
+              <div class="quote-widget__group">
+                <label class="quote-widget__label" for="homeWidgetName">Your name</label>
+                <input class="quote-widget__input" id="homeWidgetName" name="name" type="text" placeholder="Enter your name" required>
+              </div>
+              <div class="quote-widget__group">
+                <label class="quote-widget__label" for="homeWidgetPhone">Your phone</label>
+                <input class="quote-widget__input" id="homeWidgetPhone" name="phone" type="tel" placeholder="(000) 000-0000" maxlength="14" required>
+              </div>
+              <button class="quote-widget__button" type="submit">Submit</button>
+              <p class="quote-widget__hint">By submitting, you agree to our <a href="/terms-of-service">Terms of Service</a></p>
+            </form>
+            <div class="quote-content">
+              <h3 class="quote-content__title">Join hundreds of Chicagoland families who trust Shynli Cleaning</h3>
+              <div class="quote-contact">
+                <a href="tel:+16309493768">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8c1.7 3.3 3.3 4.9 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.3 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.7 21 3 13.3 3 3.7c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1l-2.2 2.2Z"/></svg>
+                  <span>+1(630)949-3768</span>
+                </a>
+                <a href="mailto:info@shynli.com">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.8c0-1 .8-1.8 1.8-1.8h14.4c1 0 1.8.8 1.8 1.8v12.4c0 1-.8 1.8-1.8 1.8H4.8c-1 0-1.8-.8-1.8-1.8V5.8Zm2.5.2 6.5 5 6.5-5h-13Zm13.5 2.2-6.4 4.9c-.4.3-.8.3-1.2 0L5 8.2v9.3h14V8.2Z"/></svg>
+                  <span>info@shynli.com</span>
+                </a>
+              </div>
+              <span class="quote-spark" aria-hidden="true"></span>
+              <img class="quote-art" src="images/shynli-quote-house.png" alt="">
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <section>
+          <a class="footer-logo" href="/" aria-label="Shynli Cleaning home">
+            <img src="images/shynli-footer-logo-light.png" alt="Shynli Cleaning">
+          </a>
+          <p class="footer-tagline">Clean Home. Clear Mind.</p>
+          <p class="footer-copy">&copy; 2026 Shynli Cleaning.<br>All rights reserved.</p>
+        </section>
+        <section>
+          <h2 class="footer-title">Services</h2>
+          <div class="footer-links">
+            <a href="/services/regular-cleaning">Regular Cleaning</a>
+            <a href="/services/deep-cleaning">Deep Cleaning</a>
+            <a href="/services/move-in-move-out-cleaning">Move In/Move Out Cleaning</a>
+            <a href="/services/airbnb-cleaning">Airbnb Cleaning</a>
+            <a href="/services/commercial-cleaning">Commercial Cleaning</a>
+            <a href="/service-areas">Service Areas</a>
+          </div>
+        </section>
+        <section>
+          <h2 class="footer-title">Company</h2>
+          <div class="footer-links">
+            <a href="/about-us">About Us</a>
+            <a href="/pricing">Pricing</a>
+            <a href="/blog">Blog</a>
+            <a href="/faq">FAQ</a>
+            <a href="/contacts">Contacts</a>
+          </div>
+        </section>
+        <section>
+          <h2 class="footer-title">Legal</h2>
+          <div class="footer-links">
+            <a href="/privacy-policy">Privacy Policy</a>
+            <a href="/terms-of-service">Terms of Service</a>
+            <a href="/cancellation-policy">Cancellation Policy</a>
+          </div>
+        </section>
+      </div>
+    </footer>
+
+    <div class="mobile-sticky" aria-label="Quick actions">
+      <a href="/quote">Book Now</a>
+      <a href="tel:+16308127077">Call Us</a>
+    </div>
+  </div>
+
+  <script id="mobile-sticky-cta">
+    (function () {
+      var body = document.body;
+      var menuButton = document.querySelector(".mobile-toggle");
+      var cards = Array.prototype.slice.call(document.querySelectorAll(".area-card"));
+      var phoneInput = document.getElementById("homeWidgetPhone");
+
+      function updateSticky() {
+        body.classList.toggle("show-mobile-sticky", window.innerWidth <= 479 && window.scrollY > 900);
+      }
+
+      if (menuButton) {
+        menuButton.addEventListener("click", function () {
+          var isOpen = body.classList.toggle("menu-open");
+          menuButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        });
+      }
+
+      cards.forEach(function (card) {
+        var button = card.querySelector(".area-card__button");
+        if (!button) return;
+        button.addEventListener("click", function () {
+          cards.forEach(function (other) {
+            if (other !== card) {
+              other.classList.remove("is-open");
+              var otherButton = other.querySelector(".area-card__button");
+              if (otherButton) otherButton.setAttribute("aria-expanded", "false");
+            }
+          });
+          var isOpen = card.classList.toggle("is-open");
+          button.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        });
+      });
+
+      if (phoneInput) {
+        phoneInput.addEventListener("input", function () {
+          var digits = phoneInput.value.replace(/\D/g, "").slice(0, 10);
+          if (!digits) {
+            phoneInput.value = "";
+          } else if (digits.length <= 3) {
+            phoneInput.value = "(" + digits;
+          } else if (digits.length <= 6) {
+            phoneInput.value = "(" + digits.slice(0, 3) + ") " + digits.slice(3);
+          } else {
+            phoneInput.value = "(" + digits.slice(0, 3) + ") " + digits.slice(3, 6) + "-" + digits.slice(6);
+          }
+        });
+      }
+
+      window.addEventListener("scroll", updateSticky, { passive: true });
+      window.addEventListener("resize", updateSticky);
+      updateSticky();
+    })();
+  </script>
+  <script id="shynli-quote-start-widget-runtime"></script>
+  <script id="shynli-form-attribution-runtime"></script>
+  <script id="full-card-click-handler"></script>
+  <script id="deep-cleaning-addons-rebuild"></script>
+  <script id="mobile-contact-details-fix"></script>
+  <script id="pricing-calculator-scroll"></script>
+  <script id="safari-home-layout-fix"></script>
+</body>
+</html>

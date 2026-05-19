@@ -473,11 +473,17 @@ const MANAGED_BLOG_HTML_ROUTES = Object.freeze([
 ]);
 const NOINDEX_ROUTES = new Set([
   "/home-calculator",
+  "/home2",
   "/oauth/callback",
   "/quote",
   "/quote-no-calculator",
   "/quote-no-price",
   "/quote2",
+  "/services/airbnb-cleaning-copy",
+  "/services/commercial-cleaning-copy",
+  "/services/deep-cleaning-copy",
+  "/services/move-in-move-out-cleaning-copy",
+  "/services/regular-cleaning-copy",
   ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
@@ -515,12 +521,17 @@ const BREADCRUMB_LABELS = new Map([
   ...CITY_ROUTE_LABELS,
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
+  ["/services/airbnb-cleaning-copy", "Airbnb Cleaning"],
+  ["/services/commercial-cleaning-copy", "Commercial Cleaning Copy"],
+  ["/services/deep-cleaning-copy", "Deep Cleaning"],
   ["/services/deep-cleaning/ads", "Deep Cleaning"],
   ["/services/deep-cleaning/ads-v2", "Deep Cleaning"],
   ["/services/move-in-move-out-cleaning/ads", "Move-In & Move-Out Cleaning"],
   ["/services/move-in-move-out-cleaning/ads-v2", "Move-In & Move-Out Cleaning"],
+  ["/services/move-in-move-out-cleaning-copy", "Move-In & Move-Out Cleaning"],
   ["/services/regular-cleaning/ads", "Regular Cleaning"],
   ["/services/regular-cleaning/ads-v2", "Regular Cleaning"],
+  ["/services/regular-cleaning-copy", "Regular Cleaning Copy"],
 ]);
 const ROUTE_META_OVERRIDES = {
   "/": {
@@ -562,6 +573,17 @@ const ROUTE_META_OVERRIDES = {
     canonical: `${SITE_ORIGIN}/home-calculator`,
     robots: "noindex,follow",
   },
+  "/home2": {
+    title: "House Cleaning Services in Naperville & Chicago Suburbs | Shynli Cleaning",
+    description:
+      "Professional house cleaning in Naperville, Aurora, Sugar Grove, and nearby Chicago suburbs. Regular, deep, and move-out cleaning with fast free quotes.",
+    canonical: `${SITE_ORIGIN}/`,
+    ogUrl: `${SITE_ORIGIN}/`,
+    ogTitle: "House Cleaning Services in Naperville & Chicago Suburbs | Shynli Cleaning",
+    ogDescription:
+      "Professional house cleaning in Naperville, Aurora, Sugar Grove, and nearby Chicago suburbs. Regular, deep, and move-out cleaning with fast free quotes.",
+    robots: "noindex,follow",
+  },
   "/services/post-construction-cleaning": {
     title: "Post-Construction Cleaning Services | Shynli Cleaning",
     description:
@@ -573,11 +595,34 @@ const ROUTE_META_OVERRIDES = {
   "/services/airbnb-cleaning": {
     title: "Airbnb Cleaning Services | Shynli Cleaning",
   },
+  "/services/airbnb-cleaning-copy": {
+    title: "Airbnb Cleaning Services | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/services/airbnb-cleaning`,
+    ogUrl: `${SITE_ORIGIN}/services/airbnb-cleaning`,
+    robots: "noindex,follow",
+  },
   "/services/commercial-cleaning": {
     title: "Commercial Cleaning Services | Shynli Cleaning",
   },
+  "/services/commercial-cleaning-copy": {
+    title: "Commercial Cleaning Services | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/services/commercial-cleaning`,
+    ogUrl: `${SITE_ORIGIN}/services/commercial-cleaning`,
+    robots: "noindex,follow",
+  },
   "/services/deep-cleaning": {
     title: "Deep Cleaning Services | Shynli Cleaning",
+  },
+  "/services/deep-cleaning-copy": {
+    title: "Deep Cleaning Services | Shynli Cleaning",
+    description:
+      "Thorough deep cleaning services for homes that need extra attention. Ideal for first-time cleaning, seasonal resets, or special occasions. Get a free quote today.",
+    canonical: `${SITE_ORIGIN}/services/deep-cleaning`,
+    ogUrl: `${SITE_ORIGIN}/services/deep-cleaning`,
+    ogTitle: "Deep Cleaning Services | Shynli Cleaning",
+    ogDescription:
+      "Thorough deep cleaning services for homes that need extra attention. Ideal for first-time cleaning, seasonal resets, or special occasions. Get a free quote today.",
+    robots: "noindex,follow",
   },
   "/services/deep-cleaning/ads": {
     title: "Deep Cleaning Services | Shynli Cleaning",
@@ -589,6 +634,17 @@ const ROUTE_META_OVERRIDES = {
   },
   "/services/move-in-move-out-cleaning": {
     title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
+  },
+  "/services/move-in-move-out-cleaning-copy": {
+    title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
+    description:
+      "Professional move-in and move-out cleaning services for apartments and homes. Perfect for tenants, landlords, and homeowners. Get a free quote today.",
+    canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning`,
+    ogUrl: `${SITE_ORIGIN}/services/move-in-move-out-cleaning`,
+    ogTitle: "Move-In & Move-Out Cleaning | Shynli Cleaning",
+    ogDescription:
+      "Professional move-in and move-out cleaning services for apartments and homes. Perfect for tenants, landlords, and homeowners. Get a free quote today.",
+    robots: "noindex,follow",
   },
   "/services/move-in-move-out-cleaning/ads": {
     title: "Move-In & Move-Out Cleaning Service | Shynli Cleaning",
@@ -604,6 +660,12 @@ const ROUTE_META_OVERRIDES = {
   },
   "/services/regular-cleaning": {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
+  },
+  "/services/regular-cleaning-copy": {
+    title: "Recurring House Cleaning Services | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/services/regular-cleaning`,
+    ogUrl: `${SITE_ORIGIN}/services/regular-cleaning`,
+    robots: "noindex,follow",
   },
   "/services/regular-cleaning/ads": {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
