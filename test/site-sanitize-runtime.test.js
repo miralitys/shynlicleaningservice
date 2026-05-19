@@ -730,6 +730,15 @@ test("keeps city-specific copy aligned on every city page", () => {
     Woodridge: ["Bolingbrook", "Downers Grove", "Darien", "Lisle", "Naperville", "Westmont", "Romeoville"],
     Yorkville: ["Bristol", "Oswego", "Montgomery", "Sugar Grove", "Aurora", "Plainfield", "North Aurora"],
   };
+  const teamRegionByCity = new Map(
+    [
+      [["Addison", "Carol Stream", "Downers Grove", "Elmhurst", "Glen Ellyn", "Lisle", "Lombard", "Naperville", "Villa Park", "Warrenville", "West Chicago", "Wheaton", "Winfield"], "DuPage County communities"],
+      [["Aurora", "Batavia", "Bristol", "Geneva", "Montgomery", "North Aurora", "Oswego", "St. Charles", "Sugar Grove", "Yorkville"], "Fox Valley communities"],
+      [["Bartlett", "Itasca", "Streamwood", "Wayne", "Wood Dale"], "northwest suburban communities"],
+      [["Bolingbrook", "Darien", "Homer Glen", "Lemont", "Lockport", "Plainfield", "Romeoville", "Woodridge"], "southwest suburban communities"],
+      [["Burr Ridge", "Clarendon Hills", "Hinsdale", "Oak Brook", "Westmont", "Willowbrook"], "western suburbs"],
+    ].flatMap(([cities, region]) => cities.map((city) => [city, region]))
+  );
   const routeByCity = new Map(fixtures.map((fixture) => [fixture.city, fixture.route]));
   const extractAreaLinks = (html, route) => {
     const match = html.match(
@@ -828,9 +837,7 @@ test("keeps city-specific copy aligned on every city page", () => {
     );
     assert.match(
       text,
-      new RegExp(
-        `We serve\\s+${cityPattern}\\s+and nearby (?:DuPage County communities|Fox Valley communities|northwest suburban communities|southwest suburban communities|western suburbs) with clear, reliable scheduling\\.`
-      ),
+      new RegExp(`We serve\\s+${cityPattern}\\s+and nearby ${teamRegionByCity.get(fixture.city)} with clear, reliable scheduling\\.`),
       fixture.route
     );
     const expectedAreas = expectedNearbyCities[fixture.city];
