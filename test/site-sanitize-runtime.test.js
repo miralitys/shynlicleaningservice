@@ -568,7 +568,6 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
 test("replaces heavy zero runtimes across static marketing page pilots", () => {
   const staticFixtures = [
     { route: "/about-us", file: "page109184776.html", expected: /About/i },
-    { route: "/contacts", file: "page109085526.html", expected: /Contact/i },
     { route: "/faq", file: "page109088646.html", expected: /FAQ|pricing calculated/i },
     { route: "/pricing", file: "page110278596.html", expected: /Pricing|Instant Quote/i },
     { route: "/service-areas", file: "page108912616.html", expected: /Service Areas/i },
@@ -587,6 +586,17 @@ test("replaces heavy zero runtimes across static marketing page pilots", () => {
     assert.match(html, fixture.expected, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
+});
+
+test("keeps the contacts main route hand-coded without Tilda runtime", () => {
+  const html = sanitizeHtml(readFixture("page109085526-copy.html"), "/contacts");
+
+  assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/contacts"\s*\/?>/);
+  assert.match(html, /Get in Touch With Shynli Cleaning/);
+  assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
+  assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
+  assert.doesNotMatch(html, /(?:css|js)\/tilda/i);
+  assert.doesNotMatch(html, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
 });
 
 test("strips the legacy safety intro copy from marketing pages", () => {

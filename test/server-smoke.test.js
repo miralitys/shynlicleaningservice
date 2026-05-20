@@ -715,7 +715,7 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
     ["/pricing", /Pricing|Instant Quote/i],
     ["/service-areas", /Service Areas/i],
   ];
-  const cleanStaticRoutes = new Set(["/faq", "/service-areas"]);
+  const cleanStaticRoutes = new Set(["/contacts", "/faq", "/service-areas"]);
 
   for (const [route, expectedTitle] of staticRoutes) {
     const response = await fetch(`${BASE_URL}${route}`);
