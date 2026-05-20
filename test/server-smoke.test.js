@@ -731,7 +731,7 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
     if (route === "/service-areas") {
       assert.equal(response.headers.get("x-robots-tag"), null, route);
       assert.match(body, /<main class="sa-page"/, route);
-      assert.match(body, /href="\/css\/service-areas-copy\.css\?v=9"/, route);
+      assert.match(body, /href="\/css\/service-areas-copy\.css\?v=10"/, route);
       assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/, route);
       assert.doesNotMatch(body, /id="shynli-home-page-runtime"/, route);
       assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/, route);
@@ -762,6 +762,8 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
 
   assert.equal(response.status, 200);
   assert.match(body, /sa-city-modal__grid/);
+  assert.match(body, /sa-city-modal__group/);
+  assert.match(body, /sa-city-modal__list/);
   assert.match(body, /sa-city-grid/);
   assert.match(body, /V-Y:/);
   assert.match(body, /North Aurora/);
@@ -773,6 +775,7 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
   assert.match(body, /data-zip-form/);
   assert.match(body, /Find your area by ZIP code/);
   assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
+  assert.doesNotMatch(body, /<h2 id="city-modal-title">Choose your city<\/h2>/);
   assert.doesNotMatch(body, /const serviceZips=/);
 });
 
@@ -866,11 +869,14 @@ test("serves the service areas main route as clean hand-coded markup", async () 
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/service-areas"\s*\/?>/);
   assert.doesNotMatch(body, /<meta name="robots"[^>]+noindex/i);
   assert.match(body, /<main class="sa-page"/);
-  assert.match(body, /href="\/css\/service-areas-copy\.css\?v=9"/);
+  assert.match(body, /href="\/css\/service-areas-copy\.css\?v=10"/);
   assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
   assert.match(body, /src="\/images\/shynli-sugargrove-area-map\.svg"/);
   assert.match(body, /Serving <span>Chicagoland<\/span> Communities/i);
   assert.match(body, /Get Your Home Professionally Cleaned/i);
+  assert.match(body, /<h2 class="sa-sr-only" id="city-modal-title">Choose your city<\/h2>/);
+  assert.match(body, /<h3>A-D:<\/h3>/);
+  assert.match(body, /<ul class="sa-city-modal__list">/);
   assert.match(body, /data-city-open/);
   assert.match(body, /href="#clean"/);
   assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|allrecords|t-body/i);
@@ -889,11 +895,13 @@ test("serves the service areas copy as a noindex duplicate", async () => {
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
   assert.match(body, /<main class="sa-page"/);
-  assert.match(body, /href="\/css\/service-areas-copy\.css\?v=9"/);
+  assert.match(body, /href="\/css\/service-areas-copy\.css\?v=10"/);
   assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
   assert.match(body, /src="\/images\/shynli-sugargrove-area-map\.svg"/);
   assert.match(body, /Find your area/i);
   assert.match(body, /Get Your Home Professionally Cleaned/i);
+  assert.match(body, /<h3>V-Y:<\/h3>/);
+  assert.match(body, /<ul class="sa-city-modal__list">/);
   assert.match(body, /<meta name="robots" content="noindex,follow"\s*\/?>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/service-areas"\s*\/?>/);
   assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|allrecords|t-body/i);

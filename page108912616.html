@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/service-areas-copy.css?v=9">
+  <link rel="stylesheet" href="/css/service-areas-copy.css?v=10">
 </head>
 <body>
   <header class="sa-header">
@@ -279,50 +279,70 @@
     <div class="sa-city-modal__backdrop" data-city-close></div>
     <div class="sa-city-modal__dialog" role="document">
       <button class="sa-city-modal__close" type="button" data-city-close aria-label="Close city selector"></button>
-      <h2 id="city-modal-title">Choose your city</h2>
+      <h2 class="sa-sr-only" id="city-modal-title">Choose your city</h2>
       <div class="sa-city-modal__grid">
-        <a href="/addison">Addison</a>
-        <a href="/aurora">Aurora</a>
-        <a href="/bartlett">Bartlett</a>
-        <a href="/batavia">Batavia</a>
-        <a href="/bolingbrook">Bolingbrook</a>
-        <a href="/bristol">Bristol</a>
-        <a href="/burrridge">Burr Ridge</a>
-        <a href="/carolstream">Carol Stream</a>
-        <a href="/clarendonhills">Clarendon Hills</a>
-        <a href="/darien">Darien</a>
-        <a href="/downersgrove">Downers Grove</a>
-        <a href="/elmhurst">Elmhurst</a>
-        <a href="/geneva">Geneva</a>
-        <a href="/glenellyn">Glen Ellyn</a>
-        <a href="/hinsdale">Hinsdale</a>
-        <a href="/homerglen">Homer Glen</a>
-        <a href="/itasca">Itasca</a>
-        <a href="/lemont">Lemont</a>
-        <a href="/lisle">Lisle</a>
-        <a href="/lockport">Lockport</a>
-        <a href="/lombard">Lombard</a>
-        <a href="/montgomery">Montgomery</a>
-        <a href="/naperville">Naperville</a>
-        <a href="/northaurora">North Aurora</a>
-        <a href="/oakbrook">Oak Brook</a>
-        <a href="/oswego">Oswego</a>
-        <a href="/plainfield">Plainfield</a>
-        <a href="/romeoville">Romeoville</a>
-        <a href="/stcharles">St. Charles</a>
-        <a href="/streamwood">Streamwood</a>
-        <a href="/sugargrove">Sugar Grove</a>
-        <a href="/villapark">Villa Park</a>
-        <a href="/warrenville">Warrenville</a>
-        <a href="/wayne">Wayne</a>
-        <a href="/westchicago">West Chicago</a>
-        <a href="/westmont">Westmont</a>
-        <a href="/wheaton">Wheaton</a>
-        <a href="/willowbrook">Willowbrook</a>
-        <a href="/winfield">Winfield</a>
-        <a href="/wooddale">Wood Dale</a>
-        <a href="/woodridge">Woodridge</a>
-        <a href="/yorkville">Yorkville</a>
+        <section class="sa-city-modal__group">
+          <h3>A-D:</h3>
+          <ul class="sa-city-modal__list">
+            <li><a href="/addison">Addison</a></li>
+            <li><a href="/aurora">Aurora</a></li>
+            <li><a href="/bartlett">Bartlett</a></li>
+            <li><a href="/batavia">Batavia</a></li>
+            <li><a href="/bolingbrook">Bolingbrook</a></li>
+            <li><a href="/bristol">Bristol</a></li>
+            <li><a href="/burrridge">Burr Ridge</a></li>
+            <li><a href="/carolstream">Carol Stream</a></li>
+            <li><a href="/clarendonhills">Clarendon Hills</a></li>
+            <li><a href="/darien">Darien</a></li>
+            <li><a href="/downersgrove">Downers Grove</a></li>
+          </ul>
+        </section>
+        <section class="sa-city-modal__group">
+          <h3>E-L:</h3>
+          <ul class="sa-city-modal__list">
+            <li><a href="/elmhurst">Elmhurst</a></li>
+            <li><a href="/geneva">Geneva</a></li>
+            <li><a href="/glenellyn">Glen Ellyn</a></li>
+            <li><a href="/hinsdale">Hinsdale</a></li>
+            <li><a href="/homerglen">Homer Glen</a></li>
+            <li><a href="/itasca">Itasca</a></li>
+            <li><a href="/lemont">Lemont</a></li>
+            <li><a href="/lisle">Lisle</a></li>
+            <li><a href="/lockport">Lockport</a></li>
+            <li><a href="/lombard">Lombard</a></li>
+          </ul>
+        </section>
+        <section class="sa-city-modal__group">
+          <h3>M-S:</h3>
+          <ul class="sa-city-modal__list">
+            <li><a href="/montgomery">Montgomery</a></li>
+            <li><a href="/naperville">Naperville</a></li>
+            <li><a href="/northaurora">North Aurora</a></li>
+            <li><a href="/oakbrook">Oak Brook</a></li>
+            <li><a href="/oswego">Oswego</a></li>
+            <li><a href="/plainfield">Plainfield</a></li>
+            <li><a href="/romeoville">Romeoville</a></li>
+            <li><a href="/stcharles">St. Charles</a></li>
+            <li><a href="/streamwood">Streamwood</a></li>
+            <li><a href="/sugargrove">Sugar Grove</a></li>
+          </ul>
+        </section>
+        <section class="sa-city-modal__group">
+          <h3>V-Y:</h3>
+          <ul class="sa-city-modal__list">
+            <li><a href="/villapark">Villa Park</a></li>
+            <li><a href="/warrenville">Warrenville</a></li>
+            <li><a href="/wayne">Wayne</a></li>
+            <li><a href="/westchicago">West Chicago</a></li>
+            <li><a href="/westmont">Westmont</a></li>
+            <li><a href="/wheaton">Wheaton</a></li>
+            <li><a href="/willowbrook">Willowbrook</a></li>
+            <li><a href="/winfield">Winfield</a></li>
+            <li><a href="/wooddale">Wood Dale</a></li>
+            <li><a href="/woodridge">Woodridge</a></li>
+            <li><a href="/yorkville">Yorkville</a></li>
+          </ul>
+        </section>
       </div>
     </div>
   </div>
