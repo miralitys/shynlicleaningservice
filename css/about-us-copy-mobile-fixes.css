@@ -1,0 +1,19 @@
+@media screen and (min-width: 480px) and (max-width: 639px) {
+  .clean-rec--1770996013 .clean-elem--1768045610727000020 {
+    left: calc(50% - 240px + 0px);
+  }
+
+  .clean-rec--1771003273 .clean-artboard,
+  .clean-rec--1771003273 .clean-filter,
+  .clean-rec--1771003273 .clean-carrier {
+    height: 760px;
+  }
+
+  .clean-rec--1771003273 .clean-elem--1768046521078 {
+    height: 780px;
+  }
+
+  .clean-rec--1771003273 .clean-elem--1768046521085 {
+    display: none;
+  }
+}
