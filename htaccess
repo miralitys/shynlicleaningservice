@@ -73,6 +73,9 @@ RewriteRule ^elmhurst/$ page111639506.html [NC]
 RewriteRule ^service-areas$ page108912616.html [NC]
 RewriteRule ^service-areas/$ page108912616.html [NC]
 
+RewriteRule ^service-areas-copy$ page108912616-copy.html [NC]
+RewriteRule ^service-areas-copy/$ page108912616-copy.html [NC]
+
 RewriteRule ^geneva$ page111639596.html [NC]
 RewriteRule ^geneva/$ page111639596.html [NC]
 

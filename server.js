@@ -484,6 +484,7 @@ const NOINDEX_ROUTES = new Set([
   "/services/deep-cleaning-copy",
   "/services/move-in-move-out-cleaning-copy",
   "/services/regular-cleaning-copy",
+  "/service-areas-copy",
   ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
@@ -517,6 +518,7 @@ const BREADCRUMB_LABELS = new Map([
   ["/quote-no-price", "Quote"],
   ["/quote2", "Quote"],
   ["/service-areas", "Service Areas"],
+  ["/service-areas-copy", "Service Areas"],
   ["/service-areas-v2", "Service Areas"],
   ...CITY_ROUTE_LABELS,
   ["/terms-of-service", "Terms of Service"],
@@ -696,6 +698,12 @@ const ROUTE_META_OVERRIDES = {
   "/service-areas-v2": {
     title: "Service Areas | Shynli Cleaning",
     canonical: `${SITE_ORIGIN}/service-areas-v2`,
+  },
+  "/service-areas-copy": {
+    title: "Service Areas | Shynli Cleaning",
+    canonical: `${SITE_ORIGIN}/service-areas`,
+    ogUrl: `${SITE_ORIGIN}/service-areas`,
+    robots: "noindex,follow",
   },
   ...CITY_ROUTE_META_OVERRIDES,
   "/quote": {

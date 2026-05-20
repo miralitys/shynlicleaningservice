@@ -2,11 +2,17 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const vm = require("node:vm");
 const { startServer, stopServer } = require("./server-test-helpers");
 
 let serverProcess = null;
 let BASE_URL = null;
+const SERVICE_AREAS_SCRIPT = fs.readFileSync(
+  path.join(__dirname, "..", "js", "service-areas-copy.js"),
+  "utf8"
+);
 
 function zipTargets(...entries) {
   return entries.map(([city, url]) => ({ city, url }));
@@ -73,50 +79,60 @@ const EXPECTED_SERVICE_ZIP_LOOKUP = {
   "60586": zipTargets(["Plainfield", "/plainfield"]),
 };
 
-function extractServiceZipLookupScript(html) {
-  const start = html.indexOf("const serviceZips=");
-  assert.notEqual(start, -1, "ZIP lookup script should be present");
-  const end = html.indexOf("</script>", start);
-  assert.notEqual(end, -1, "ZIP lookup script should close before </script>");
-  return html.slice(start, end);
+function extractServiceZipLookupData() {
+  const match = SERVICE_AREAS_SCRIPT.match(/const zipMap = Object\.freeze\((\{[\s\S]*?\n  \})\);/);
+  assert.ok(match, "ZIP lookup data should be present in service-areas-copy.js");
+  return JSON.parse(JSON.stringify(vm.runInNewContext(`(${match[1]})`)));
 }
 
-function extractServiceZipLookupData(html) {
-  const script = extractServiceZipLookupScript(html);
-  const match = script.match(/const serviceZips=(\{[\s\S]*\});function renderZipResultLinks/);
-  assert.ok(match, "ZIP lookup data should be embedded before renderZipResultLinks");
-  return JSON.parse(match[1]);
-}
-
-function createZipLookupRuntimeContext(initialZip = "") {
+function createServiceAreasZipRuntime(initialZip = "") {
+  const listeners = {};
   const elements = {
-    zipCode: {
+    zipForm: {
+      addEventListener(type, handler) {
+        listeners[type] = handler;
+      },
+    },
+    zipInput: {
       value: initialZip,
-      dataset: {},
-      style: {},
-      addEventListener() {},
-      closest() {
-        return null;
+      addEventListener(type, handler) {
+        listeners[`input:${type}`] = handler;
       },
       focus() {},
-      setSelectionRange() {},
     },
-    zipResult: {
-      className: "",
-      style: {},
+    zipMessage: {
+      textContent: "",
       innerHTML: "",
     },
   };
 
-  return {
-    context: {
-      document: {
-        getElementById(id) {
-          return elements[id];
-        },
+  const context = {
+    document: {
+      querySelector(selector) {
+        if (selector === "[data-zip-form]") return elements.zipForm;
+        if (selector === "[data-zip-input]") return elements.zipInput;
+        if (selector === "[data-zip-message]") return elements.zipMessage;
+        return null;
+      },
+      querySelectorAll() {
+        return [];
+      },
+      addEventListener() {},
+    },
+    window: {
+      location: {
+        href: "",
       },
     },
+    HTMLAnchorElement: function HTMLAnchorElement() {},
+  };
+
+  vm.runInNewContext(SERVICE_AREAS_SCRIPT, context);
+
+  return {
     elements,
+    listeners,
+    window: context.window,
   };
 }
 
@@ -699,6 +715,7 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
     ["/pricing", /Pricing|Instant Quote/i],
     ["/service-areas", /Service Areas/i],
   ];
+  const cleanStaticRoutes = new Set(["/faq", "/service-areas"]);
 
   for (const [route, expectedTitle] of staticRoutes) {
     const response = await fetch(`${BASE_URL}${route}`);
@@ -711,8 +728,11 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
     assert.doesNotMatch(body, /js\/tilda-zero-scale-1\.0\.min\.js/, route);
     assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/, route);
     assert.doesNotMatch(body, /data-original=/, route);
-    if (route === "/services/regular-cleaning") {
-      assert.match(body, /<main class="clean-service-page">/, route);
+    if (route === "/service-areas") {
+      assert.equal(response.headers.get("x-robots-tag"), null, route);
+      assert.match(body, /<main class="sa-page"/, route);
+      assert.match(body, /href="\/css\/service-areas-copy\.css\?v=9"/, route);
+      assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/, route);
       assert.doesNotMatch(body, /id="shynli-home-page-runtime"/, route);
       assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/, route);
       assert.doesNotMatch(
@@ -720,11 +740,18 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
         /(?:css|js)\/tilda|class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-/i,
         route
       );
+    } else if (cleanStaticRoutes.has(route)) {
+      assert.doesNotMatch(body, /id="shynli-home-page-runtime"/, route);
+      assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/, route);
     } else {
       assert.match(body, /id="shynli-home-page-runtime"/, route);
       assert.match(body, /id="shynli-zero-runtime-stub"/, route);
     }
-    assert.match(body, /href="#city"/, route);
+    if (cleanStaticRoutes.has(route)) {
+      assert.match(body, /data-city-open/, route);
+    } else {
+      assert.match(body, /href="#city"/, route);
+    }
     assert.match(body, /href="#clean"/, route);
   }
 });
@@ -734,8 +761,8 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
   const body = await response.text();
 
   assert.equal(response.status, 200);
-  assert.match(body, /shynli-city-popup-list__grid/);
-  assert.match(body, /shynli-service-areas-overview__grid/);
+  assert.match(body, /sa-city-modal__grid/);
+  assert.match(body, /sa-city-grid/);
   assert.match(body, /V-Y:/);
   assert.match(body, /North Aurora/);
   assert.match(body, /Sugar Grove/);
@@ -743,41 +770,35 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
   assert.match(body, /Bristol/);
   assert.doesNotMatch(body, /shynli-extra-service-areas/);
   assert.doesNotMatch(body, /Now serving these cities too/);
-  assert.match(body, /const serviceZips=/);
-  assert.match(body, /function renderZipResultLinks/);
-  assert.match(body, /Choose your city page to continue booking/);
+  assert.match(body, /data-zip-form/);
+  assert.match(body, /Find your area by ZIP code/);
+  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
+  assert.doesNotMatch(body, /const serviceZips=/);
 });
 
 test("uses the exact ZIP lookup map and supports shared ZIP matches", async () => {
   const response = await fetch(`${BASE_URL}/service-areas`);
   const body = await response.text();
-  const script = extractServiceZipLookupScript(body);
-  const zipLookupData = extractServiceZipLookupData(body);
-  const runtime = createZipLookupRuntimeContext();
+  const zipLookupData = extractServiceZipLookupData();
 
   assert.deepEqual(zipLookupData, EXPECTED_SERVICE_ZIP_LOOKUP);
+  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
 
-  vm.runInNewContext(script, runtime.context);
+  let runtime = createServiceAreasZipRuntime("60521");
+  runtime.listeners.submit({ preventDefault() {} });
+  assert.match(runtime.elements.zipMessage.innerHTML, /Hinsdale/);
+  assert.match(runtime.elements.zipMessage.innerHTML, /Oak Brook/);
+  assert.match(runtime.elements.zipMessage.innerHTML, /This ZIP covers/);
 
-  runtime.elements.zipCode.value = "60521";
-  runtime.context.checkZipArea();
-  assert.equal(runtime.elements.zipResult.className, "zip-result success");
-  assert.equal(runtime.elements.zipResult.style.display, "block");
-  assert.match(runtime.elements.zipResult.innerHTML, /Hinsdale/);
-  assert.match(runtime.elements.zipResult.innerHTML, /Oak Brook/);
-  assert.match(runtime.elements.zipResult.innerHTML, /Choose your city page to continue booking/);
+  runtime = createServiceAreasZipRuntime("60512");
+  runtime.listeners.submit({ preventDefault() {} });
+  assert.equal(runtime.elements.zipMessage.textContent, "Taking you to Bristol...");
+  assert.equal(runtime.window.location.href, "/bristol");
 
-  runtime.elements.zipCode.value = "60512";
-  runtime.context.checkZipArea();
-  assert.equal(runtime.elements.zipResult.className, "zip-result success");
-  assert.match(runtime.elements.zipResult.innerHTML, /Bristol/);
-  assert.match(runtime.elements.zipResult.innerHTML, /ZIP 60512/);
-  assert.doesNotMatch(runtime.elements.zipResult.innerHTML, /Choose your city page to continue booking/);
-
-  runtime.elements.zipCode.value = "60116";
-  runtime.context.checkZipArea();
-  assert.equal(runtime.elements.zipResult.className, "zip-result error");
-  assert.match(runtime.elements.zipResult.innerHTML, /outside our service area/);
+  runtime = createServiceAreasZipRuntime("60116");
+  runtime.listeners.submit({ preventDefault() {} });
+  assert.match(runtime.elements.zipMessage.innerHTML, /Request a quote/);
+  assert.match(runtime.elements.zipMessage.innerHTML, /60116/);
 });
 
 test("serves the regular-cleaning main route as clean hand-coded markup", async () => {
@@ -827,6 +848,60 @@ test("serves the regular-cleaning copy as a noindex duplicate", async () => {
   assert.doesNotMatch(
     sitemapBody,
     /<loc>https:\/\/shynlicleaningservice\.com\/services\/regular-cleaning-copy<\/loc>/
+  );
+});
+
+test("serves the service areas main route as clean hand-coded markup", async () => {
+  const response = await fetch(`${BASE_URL}/service-areas`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.equal(response.headers.get("x-robots-tag"), null);
+  assert.match(body, /<title>Service Areas \| Home Cleaning Services in Chicago Suburbs<\/title>/);
+  assert.match(
+    body,
+    /<meta name="description" content="Shynli Cleaning proudly serves homes across the Chicago suburbs\. View our full list of service areas and find cleaning services near you\."\s*\/?>/
+  );
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/service-areas"\s*\/?>/);
+  assert.doesNotMatch(body, /<meta name="robots"[^>]+noindex/i);
+  assert.match(body, /<main class="sa-page"/);
+  assert.match(body, /href="\/css\/service-areas-copy\.css\?v=9"/);
+  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
+  assert.match(body, /src="\/images\/shynli-sugargrove-area-map\.svg"/);
+  assert.match(body, /Serving <span>Chicagoland<\/span> Communities/i);
+  assert.match(body, /Get Your Home Professionally Cleaned/i);
+  assert.match(body, /data-city-open/);
+  assert.match(body, /href="#clean"/);
+  assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|allrecords|t-body/i);
+  assert.doesNotMatch(body, /js\/tilda|css\/tilda|data-original=/i);
+  assert.doesNotMatch(body, /id="shynli-home-page-runtime"/);
+  assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
+});
+
+test("serves the service areas copy as a noindex duplicate", async () => {
+  const response = await fetch(`${BASE_URL}/service-areas-copy`);
+  const body = await response.text();
+  const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
+  const sitemapBody = await sitemapResponse.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/html/);
+  assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
+  assert.match(body, /<main class="sa-page"/);
+  assert.match(body, /href="\/css\/service-areas-copy\.css\?v=9"/);
+  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
+  assert.match(body, /src="\/images\/shynli-sugargrove-area-map\.svg"/);
+  assert.match(body, /Find your area/i);
+  assert.match(body, /Get Your Home Professionally Cleaned/i);
+  assert.match(body, /<meta name="robots" content="noindex,follow"\s*\/?>/);
+  assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/service-areas"\s*\/?>/);
+  assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|allrecords|t-body/i);
+  assert.doesNotMatch(body, /js\/tilda|css\/tilda|data-original=/i);
+  assert.equal(sitemapResponse.status, 200);
+  assert.doesNotMatch(
+    sitemapBody,
+    /<loc>https:\/\/shynlicleaningservice\.com\/service-areas-copy<\/loc>/
   );
 });
 
