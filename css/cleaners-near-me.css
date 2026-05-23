@@ -85,13 +85,13 @@ body.near-page img {
 
 .near-hero__media {
   position: absolute;
-  inset: auto -4vw 0 32vw;
+  inset: auto -4vw 46px 32vw;
   z-index: -2;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   opacity: 0;
-  transform: translate3d(36px, 20px, 0);
+  transform: translate3d(36px, 0, 0);
   animation: nearHeroMedia 900ms 180ms ease forwards;
 }
 
