@@ -80,6 +80,8 @@ const siteSeoHelpers = {
 };
 
 const runtimeScriptIds = new Set([
+  "shynli-callrail-loader",
+  "shynli-tracking-bootstrap",
   "deep-cleaning-addons-rebuild",
   "full-card-click-handler",
   "shynli-blog-topic-hub-script",
@@ -106,7 +108,7 @@ const sanitizeHtml = createSiteSanitizer({
 }).sanitizeHtml;
 
 const CALLRAIL_SWAP_SCRIPT_PATTERN =
-  /<script id="shynli-callrail-loader">(?=[\s\S]*?\/js\/vendor\/callrail-swap\.20260523\.js[\s\S]*?<\/script>)(?=[\s\S]*?setTimeout\(idleLoad,9000\)[\s\S]*?<\/script>)[\s\S]*?<\/script>/;
+  /<script id="shynli-callrail-loader">(?=[\s\S]*?\/js\/vendor\/callrail-swap\.20260523\.js[\s\S]*?<\/script>)(?=[\s\S]*?setTimeout\(idleLoad,45000\)[\s\S]*?<\/script>)[\s\S]*?<\/script>/;
 const CALLRAIL_SWAP_SCRIPT_URL_PATTERN =
   /\/js\/vendor\/callrail-swap\.20260523\.js/g;
 const BENEFIT_HIDDEN_FEES_COPY_PATTERN =
@@ -187,9 +189,10 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
     assert.doesNotMatch(sanitized, /<script[^>]+src="\/js\/shynli-tracking\.js"/);
     assert.match(sanitized, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
     assert.match(sanitized, /requestIdleCallback/);
-    assert.match(sanitized, /setTimeout\(idleLoad,30000\)/);
-    assert.match(sanitized, /setTimeout\(idleLoad,4500\)/);
-    assert.match(sanitized, /\['pointerdown','keydown','touchstart'\]/);
+    assert.match(sanitized, /setTimeout\(idleLoad,45000\)/);
+    assert.match(sanitized, /setTimeout\(idleLoad,8000\)/);
+    assert.match(sanitized, /\['click','submit','focusin'\]/);
+    assert.doesNotMatch(sanitized, /visibilitychange/);
     assert.doesNotMatch(sanitized, /googletagmanager\.com\/gtag\/js\?id=/);
     assert.match(sanitized, /<body[^>]*><!-- Google Tag Manager \(noscript\) -->/);
     assert.match(sanitized, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/);

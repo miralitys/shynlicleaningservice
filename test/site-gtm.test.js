@@ -9,7 +9,7 @@ let serverProcess = null;
 let BASE_URL = null;
 
 const CALLRAIL_SWAP_SCRIPT_PATTERN =
-  /<script id="shynli-callrail-loader">(?=[\s\S]*?\/js\/vendor\/callrail-swap\.20260523\.js[\s\S]*?<\/script>)(?=[\s\S]*?setTimeout\(idleLoad,9000\)[\s\S]*?<\/script>)[\s\S]*?<\/script>/;
+  /<script id="shynli-callrail-loader">(?=[\s\S]*?\/js\/vendor\/callrail-swap\.20260523\.js[\s\S]*?<\/script>)(?=[\s\S]*?setTimeout\(idleLoad,45000\)[\s\S]*?<\/script>)[\s\S]*?<\/script>/;
 
 test.before(async () => {
   const started = await startServer();
@@ -34,9 +34,10 @@ test("serves GTM on public site routes", async () => {
     assert.match(body, /<!-- Google Tag Manager -->/, route);
     assert.match(body, /GTM-5P88N7LD/, route);
     assert.match(body, /requestIdleCallback/, route);
-    assert.match(body, /setTimeout\(idleLoad,30000\)/, route);
-    assert.match(body, /setTimeout\(idleLoad,4500\)/, route);
-    assert.match(body, /\['pointerdown','keydown','touchstart'\]/, route);
+    assert.match(body, /setTimeout\(idleLoad,45000\)/, route);
+    assert.match(body, /setTimeout\(idleLoad,8000\)/, route);
+    assert.match(body, /\['click','submit','focusin'\]/, route);
+    assert.doesNotMatch(body, /visibilitychange/, route);
     assert.doesNotMatch(body, /googletagmanager\.com\/gtag\/js\?id=/, route);
     if (route === "/") {
       assert.match(body, /<link rel="preload" href="\/fonts\/playfair-display-latin-400-900\.woff2" as="font"/, route);
