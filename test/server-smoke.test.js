@@ -229,6 +229,7 @@ test("serves the home page through the custom route layer", async () => {
   assert.match(body, /Lina Gonzales/);
   assert.match(body, /clients-say-home__track--top/);
   assert.match(body, /clients-say-home__track--bottom/);
+  assert.doesNotMatch(body, /clients-say-home__group--clone/);
   assert.doesNotMatch(body, /clients-say-home__group--ghost/);
   assert.doesNotMatch(body, /initClientsSayMarquee/);
   [

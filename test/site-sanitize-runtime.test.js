@@ -1016,7 +1016,7 @@ test("removes duplicate copy from the shared benefits block", () => {
 
 test("rebuilds the homepage review block with unique current reviews", () => {
   const html = sanitizeHtml(readFixture("page108488156.html"), "/");
-  const sectionMatch = html.match(/<div id="rec1892001001"[\s\S]*?(?=<div id="rec1766779523")/);
+  const sectionMatch = html.match(/<section class="clients-say-home"[\s\S]*?<\/section>/);
 
   assert.ok(sectionMatch, "homepage review section should be present");
 
@@ -1039,12 +1039,17 @@ test("rebuilds the homepage review block with unique current reviews", () => {
     "Igor Bych",
     "Lina Gonzales",
   ].forEach((name) => assert.ok(names.includes(name), name));
-  assert.equal((section.match(/clients-say-home__group--clone" aria-hidden="true"/g) || []).length, 2);
-  assert.match(section, /animation-name:clientsSayMoveRight/);
-  assert.match(section, /animation-name:clientsSayMoveLeft/);
-  assert.match(section, /animation-play-state:paused/);
+  assert.equal((section.match(/clients-say-home__group--primary/g) || []).length, 2);
+  assert.doesNotMatch(section, /clients-say-home__group--clone/);
+  assert.doesNotMatch(section, /clients-say-home__group[^"]*" aria-hidden="true"/);
   assert.doesNotMatch(section, /clients-say-home__group--ghost/);
   assert.doesNotMatch(section, /initClientsSayMarquee/);
+
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "home-copy-clean.css"), "utf8");
+  assert.match(css, /animation-name:\s*clientsSayDriftRight/);
+  assert.match(css, /animation-name:\s*clientsSayDriftLeft/);
+  assert.match(css, /animation-play-state:\s*paused/);
+  assert.doesNotMatch(css, /clientsSayMove/);
 });
 
 test("keeps the regular-cleaning main route hand-coded without Tilda runtime", () => {

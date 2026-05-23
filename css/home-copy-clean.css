@@ -1708,18 +1708,19 @@ body.home-copy-page .benefits-map-cta b {
   display: flex;
   width: max-content;
   animation-duration: 62s;
+  animation-direction: alternate;
   animation-iteration-count: infinite;
-  animation-timing-function: linear;
+  animation-timing-function: ease-in-out;
   will-change: transform;
 }
 
 .clients-say-home__track--top {
-  animation-name: clientsSayMoveRight;
-  transform: translate3d(-50%, 0, 0);
+  animation-name: clientsSayDriftRight;
+  transform: translate3d(-14%, 0, 0);
 }
 
 .clients-say-home__track--bottom {
-  animation-name: clientsSayMoveLeft;
+  animation-name: clientsSayDriftLeft;
   animation-duration: 58s;
 }
 
@@ -1826,19 +1827,19 @@ body.home-copy-page .benefits-map-cta b {
   line-height: 1.22;
 }
 
-@keyframes clientsSayMoveLeft {
+@keyframes clientsSayDriftLeft {
   from {
     transform: translate3d(0, 0, 0);
   }
 
   to {
-    transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-18%, 0, 0);
   }
 }
 
-@keyframes clientsSayMoveRight {
+@keyframes clientsSayDriftRight {
   from {
-    transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-14%, 0, 0);
   }
 
   to {
@@ -1852,7 +1853,7 @@ body.home-copy-page .benefits-map-cta b {
   }
 
   .clients-say-home__track--top {
-    transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-8%, 0, 0);
   }
 
   .clients-say-home__track--bottom {
