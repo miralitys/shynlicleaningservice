@@ -536,7 +536,7 @@ test("keeps the home copy hand-coded without Tilda runtime", () => {
   assert.match(html, /<main>/);
   assert.match(html, /<section class="hero"/);
   assert.match(html, /House Cleaning[\s\S]*Services in Naperville[\s\S]*&amp; Chicago Suburbs/i);
-  assert.match(html, /href="\/css\/home-copy-clean\.css\?v=20260523-dom1"/);
+  assert.match(html, /href="\/css\/home-copy-clean\.css\?v=20260523-cssmin1"/);
   assert.match(html, /src="\/js\/home-copy-clean\.js\?v=20260522-match67"/);
   assert.match(html, /src="\/images\/home-copy-team\.png"|srcset="\/images\/home-copy-team-480\.webp/);
   assert.match(html, /class="hero__team"[^>]*loading="eager"[^>]*decoding="sync"[^>]*fetchpriority="high"/);
