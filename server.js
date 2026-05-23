@@ -511,6 +511,7 @@ const BREADCRUMB_LABELS = new Map([
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, page.label]),
   ...BLOG_ARTICLE_PAGES.map((page) => [page.path, page.label]),
   ["/cancellation-policy", "Cancellation Policy"],
+  ["/cleaners-near-me", "Cleaners Near Me"],
   ["/contacts", "Contact Us"],
   ["/faq", "FAQ"],
   ["/home-calculator", "Home Calculator"],
@@ -563,6 +564,17 @@ const ROUTE_META_OVERRIDES = {
   },
   "/contacts": {
     title: "Contact Shynli Cleaning | Chicago Suburbs",
+  },
+  "/cleaners-near-me": {
+    title: "Cleaners Near You in Chicago Suburbs | Shynli Cleaning",
+    description:
+      "Looking for cleaners near you in Chicagoland? Trusted local house cleaners serving DuPage, Will & Kane counties. Free quote in 60 seconds.",
+    canonical: `${SITE_ORIGIN}/cleaners-near-me/`,
+    ogUrl: `${SITE_ORIGIN}/cleaners-near-me/`,
+    ogTitle: "Cleaners Near You in Chicago Suburbs | Shynli Cleaning",
+    ogDescription:
+      "Trusted local house cleaners serving DuPage, Will & Kane counties. Free quote in 60 seconds.",
+    robots: "index,follow",
   },
   "/home-calculator": {
     title: "Instant House Cleaning Cost Calculator | Shynli Cleaning",
@@ -787,7 +799,7 @@ const staffTravelEstimateService = createStaffTravelEstimateService({
   googleMapsApiKey: GOOGLE_PLACES_API_KEY,
   fetch: global.fetch,
 });
-const PUBLIC_ASSET_DIRECTORIES = new Set(["css", "images", "js"]);
+const PUBLIC_ASSET_DIRECTORIES = new Set(["css", "fonts", "images", "js"]);
 const PUBLIC_ASSET_FILES = new Set(["apple-touch-icon.png", "robots.txt", "site.webmanifest", "sitemap.xml"]);
 const STARTUP_ENV_INTEGRITY = evaluateStartupEnvIntegrity(process.env);
 const BASE_SECURITY_HEADERS = Object.freeze({

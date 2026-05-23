@@ -910,6 +910,7 @@
     const params = new URLSearchParams(window.location.search);
     const queryName = String(params.get("name") || "").trim();
     const queryPhone = String(params.get("phone") || "").trim();
+    const queryZip = normalizeZipCodeValue(params.get("zip") || params.get("zipcode") || "");
     const storedName = String(sessionStorage.getItem("homeWidgetName") || "").trim();
     const storedPhone = String(sessionStorage.getItem("homeWidgetPhone") || "").trim();
 
@@ -922,6 +923,10 @@
 
     if (prefilledPhone && !elements.phone.value.trim()) {
       elements.phone.value = formatPhoneProgressive(prefilledPhone);
+    }
+
+    if (queryZip && !elements.zipCode.value.trim()) {
+      elements.zipCode.value = queryZip;
     }
   }
 
