@@ -73,7 +73,7 @@ body.near-page img {
 
 .near-hero {
   position: relative;
-  min-height: clamp(640px, 78svh, 790px);
+  min-height: clamp(600px, 70svh, 720px);
   display: grid;
   align-items: center;
   isolation: isolate;
@@ -85,7 +85,7 @@ body.near-page img {
 
 .near-hero__media {
   position: absolute;
-  inset: auto -4vw 46px 32vw;
+  inset: auto -4vw 0 34vw;
   z-index: -2;
   display: flex;
   align-items: flex-end;
@@ -96,7 +96,7 @@ body.near-page img {
 }
 
 .near-hero__media img {
-  width: min(880px, 74vw);
+  width: min(990px, 82vw);
   height: auto;
   object-fit: contain;
 }
@@ -659,7 +659,8 @@ body.near-page a.near-button--light:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 50%;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 48px;
   padding: 0 10px;
   border: 1.5px solid var(--near-wine);
