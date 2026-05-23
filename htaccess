@@ -15,7 +15,19 @@ RewriteRule ^(.*)$ https://shynlicleaningservice\.com/$1 [R=301,L]
 RewriteCond %{REQUEST_FILENAME} /robots.txt
 RewriteCond "%{DOCUMENT_ROOT}/robots_%{HTTP_HOST}.txt" -f
 RewriteRule ^(.*)$ robots_%{HTTP_HOST}.txt [NC,L]
+RewriteRule ^home2/?$ https://shynlicleaningservice.com/ [R=301,L]
+RewriteRule ^home-copy/?$ https://shynlicleaningservice.com/ [R=301,L]
 RewriteRule ^home-simple/?$ https://shynlicleaningservice.com/ [R=301,L]
+RewriteRule ^about-us-copy/?$ https://shynlicleaningservice.com/about-us [R=301,L]
+RewriteRule ^blog-copy/?$ https://shynlicleaningservice.com/blog [R=301,L]
+RewriteRule ^contacts-copy/?$ https://shynlicleaningservice.com/contacts [R=301,L]
+RewriteRule ^pricing-copy/?$ https://shynlicleaningservice.com/pricing [R=301,L]
+RewriteRule ^service-areas-copy/?$ https://shynlicleaningservice.com/service-areas [R=301,L]
+RewriteRule ^services/airbnb-cleaning-copy/?$ https://shynlicleaningservice.com/services/airbnb-cleaning [R=301,L]
+RewriteRule ^services/commercial-cleaning-copy/?$ https://shynlicleaningservice.com/services/commercial-cleaning [R=301,L]
+RewriteRule ^services/deep-cleaning-copy/?$ https://shynlicleaningservice.com/services/deep-cleaning [R=301,L]
+RewriteRule ^services/move-in-move-out-cleaning-copy/?$ https://shynlicleaningservice.com/services/move-in-move-out-cleaning [R=301,L]
+RewriteRule ^services/regular-cleaning-copy/?$ https://shynlicleaningservice.com/services/regular-cleaning [R=301,L]
 RewriteRule ^addison$ page110524796.html [NC]
 RewriteRule ^addison/$ page110524796.html [NC]
 
@@ -72,9 +84,6 @@ RewriteRule ^elmhurst/$ page111639506.html [NC]
 
 RewriteRule ^service-areas$ page108912616.html [NC]
 RewriteRule ^service-areas/$ page108912616.html [NC]
-
-RewriteRule ^service-areas-copy$ page108912616-copy.html [NC]
-RewriteRule ^service-areas-copy/$ page108912616-copy.html [NC]
 
 RewriteRule ^geneva$ page111639596.html [NC]
 RewriteRule ^geneva/$ page111639596.html [NC]

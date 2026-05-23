@@ -13,7 +13,6 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
     ["/northaurora", "/site/page123500105.html"],
     ["/quote", "/site/quote2.html"],
     ["/sugargrove", "/site/page123500105.html"],
-    ["/home2", "/site/page108488156-home2.html"],
     ["/home-simple", "/site/page108488156.html"],
     ["/yorkville", "/site/page123500105.html"],
     ["/admin", "/site/page-admin.html"],
@@ -21,7 +20,6 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
   ]);
   const fileMetaByPath = new Map([
     ["/site/page108488156.html", { mtimeMs: Date.parse("2026-01-27T15:35:20Z") }],
-    ["/site/page108488156-home2.html", { mtimeMs: Date.parse("2026-05-19T00:00:00Z") }],
     ["/site/page108872586.html", { mtimeMs: Date.parse("2026-01-27T18:26:27Z") }],
     ["/site/page123500105.html", { mtimeMs: Date.parse("2026-05-03T15:00:00Z") }],
   ]);
@@ -30,7 +28,7 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
     siteOrigin: "https://shynlicleaningservice.com/",
     routeFileByPath,
     fileMetaByPath,
-    excludedRoutes: new Set(["/quote", "/home2", "/home-simple"]),
+    excludedRoutes: new Set(["/quote", "/home-simple"]),
     lastmodOverrides: new Map([
       ["/blog", "2026-04-18"],
       ["/blog/seasonal", "2026-04-18"],
@@ -51,7 +49,6 @@ test("buildSitemapXml includes public blog routes and excludes internal routes",
   assert.match(xml, /<loc>https:\/\/shynlicleaningservice\.com\/yorkville<\/loc>/);
   assert.match(xml, /<lastmod>2026-04-18T00:00:00\.000Z<\/lastmod>/);
   assert.doesNotMatch(xml, /https:\/\/shynlicleaningservice\.com\/quote/);
-  assert.doesNotMatch(xml, /https:\/\/shynlicleaningservice\.com\/home2/);
   assert.doesNotMatch(xml, /https:\/\/shynlicleaningservice\.com\/home-simple/);
   assert.doesNotMatch(xml, /https:\/\/shynlicleaningservice\.com\/sugargrove2/);
   assert.doesNotMatch(xml, /https:\/\/shynlicleaningservice\.com\/admin/);

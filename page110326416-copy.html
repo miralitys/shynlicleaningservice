@@ -59,6 +59,10 @@
       overflow: hidden;
     }
 
+    body.city-modal-open {
+      overflow: hidden;
+    }
+
     img {
       display: block;
       max-width: 100%;
@@ -296,6 +300,105 @@
       width: 12px;
       height: 8px;
       fill: currentColor;
+    }
+
+    .city-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: none;
+    }
+
+    .city-modal.is-open {
+      display: block;
+    }
+
+    .city-modal__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(49, 49, 49, 0.3);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .city-modal__panel {
+      position: relative;
+      width: min(960px, calc(100% - 72px));
+      max-height: calc(100vh - 160px);
+      overflow: auto;
+      margin: 108px auto 36px;
+      border-radius: 18px;
+      background: var(--page-bg);
+      padding: 36px 36px 30px;
+      box-shadow: var(--shadow);
+    }
+
+    .city-modal__close {
+      position: fixed;
+      top: 16px;
+      right: 18px;
+      width: 44px;
+      height: 44px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .city-modal__close::before,
+    .city-modal__close::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      right: 7px;
+      top: 21px;
+      height: 2px;
+      background: var(--ink);
+      transform-origin: center;
+    }
+
+    .city-modal__close::before {
+      transform: rotate(45deg);
+    }
+
+    .city-modal__close::after {
+      transform: rotate(-45deg);
+    }
+
+    .city-modal__grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
+    }
+
+    .city-modal h2 {
+      margin: 0 0 16px;
+      color: var(--ink);
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 36px;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .city-modal a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      margin-bottom: 9px;
+      border: 1px solid var(--rose);
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 16px;
+      line-height: 1.2;
+      transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    .city-modal a:hover,
+    .city-modal a:focus-visible {
+      background: var(--rose);
+      color: var(--page-bg);
+      outline: 0;
     }
 
     .mobile-toggle {

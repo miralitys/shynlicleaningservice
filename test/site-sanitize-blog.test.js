@@ -146,6 +146,17 @@ test("renders blog hub topic links and stable CTA button styles on /blog", () =>
   );
 });
 
+test("renders /blog-copy as a managed copy of the main blog hub", () => {
+  const html = sanitizeHtml(sourceHtml, "/blog-copy");
+
+  assert.match(html, /Shynli Cleaning <span>Blog<\/span>/);
+  assert.match(html, /Find the cleaning guide you actually need\./);
+  assert.match(html, /href="\/blog\/checklists"/);
+  assert.match(html, /data-blog-quote-form/);
+  assert.doesNotMatch(html, /Recent Posts/);
+  assert.doesNotMatch(html, /data-feed-recid="1769860233"/);
+});
+
 test("renders category-specific heading and hub copy on /blog/bathroom", () => {
   const html = sanitizeHtml(sourceHtml, "/blog/bathroom");
 

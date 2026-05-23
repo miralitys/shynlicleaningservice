@@ -16,17 +16,21 @@
   <!--/metatextblock-->
   <meta name="format-detection" content="telephone=no">
   <link rel="icon" href="/images/home-copy-icon-32.png" type="image/png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..900&amp;family=Montserrat:wght@300..800&amp;subset=latin,cyrillic" rel="stylesheet">
-  <link rel="stylesheet" href="/css/home-copy-clean.css?v=20260522-match67">
+  <link rel="preload" href="/fonts/playfair-display-latin-400-900.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/montserrat-latin-300-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" as="image" href="/images/home-copy-team-480.webp" imagesrcset="/images/home-copy-team-480.webp 480w, /images/home-copy-team-720.webp 720w, /images/home-copy-team-960.webp 960w, /images/home-copy-team-1280.webp 1280w, /images/home-copy-team-1680.webp 1680w" imagesizes="(max-width: 760px) 410px, 1188px" type="image/webp" fetchpriority="high">
+  <link rel="stylesheet" href="/css/shynli-fonts.css?v=20260522-local2">
+  <link rel="stylesheet" href="/css/home-copy-clean.css?v=20260522-imgopt1">
   <script src="/js/home-copy-clean.js?v=20260522-match67" defer></script>
 </head>
 <body class="home-copy-page">
   <header class="site-header">
     <div class="site-container site-header__inner">
       <a class="site-logo" href="/" aria-label="Shynli Cleaning home">
-        <img src="/images/home-copy-logo.png" alt="" width="2355" height="669">
+        <picture>
+          <source type="image/webp" srcset="/images/home-copy-logo-160.webp 160w, /images/home-copy-logo-320.webp 320w" sizes="(max-width: 1120px) 158px, 150px">
+          <img src="/images/home-copy-logo.png" alt="" width="2355" height="669" decoding="async">
+        </picture>
       </a>
 
       <nav class="site-nav" aria-label="Primary navigation">
@@ -86,7 +90,10 @@
       </div>
       <span class="hero__spark hero__spark--left" aria-hidden="true">*</span>
       <span class="hero__spark hero__spark--right" aria-hidden="true">*</span>
-      <img class="hero__team" src="/images/home-copy-team.png" alt="Shynli Cleaning team" width="1680" height="747">
+      <picture>
+        <source type="image/webp" srcset="/images/home-copy-team-480.webp 480w, /images/home-copy-team-720.webp 720w, /images/home-copy-team-960.webp 960w, /images/home-copy-team-1280.webp 1280w, /images/home-copy-team-1680.webp 1680w" sizes="(max-width: 760px) 410px, 1188px">
+        <img class="hero__team" src="/images/home-copy-team.png" alt="Shynli Cleaning team" width="1680" height="747" decoding="async" fetchpriority="high">
+      </picture>
     </section>
 
     <section class="services section section--warm" aria-labelledby="services-title">
@@ -112,7 +119,10 @@
 
         <div class="services-grid">
           <a class="service-card" href="/services/regular-cleaning">
-            <img src="/images/home-copy-service-regular.png" alt="Regular house cleaning illustration" width="750" height="555">
+            <picture>
+              <source type="image/webp" srcset="/images/home-copy-service-regular-320.webp 320w, /images/home-copy-service-regular-480.webp 480w, /images/home-copy-service-regular-640.webp 640w, /images/home-copy-service-regular-750.webp 750w" sizes="(max-width: 760px) calc(100vw - 44px), 303px">
+              <img src="/images/home-copy-service-regular.png" alt="Regular house cleaning illustration" width="750" height="555" loading="lazy" decoding="async">
+            </picture>
             <h3>Regular House<br>Cleaning</h3>
             <p><strong>When</strong>: regular upkeep, maintaining cleanliness, staying ahead of mess</p>
             <p><strong>For</strong>: busy families, professionals, anyone who values their time over chores</p>
@@ -120,7 +130,10 @@
           </a>
 
           <a class="service-card" href="/services/deep-cleaning">
-            <img src="/images/home-copy-service-deep.png" alt="Deep cleaning illustration" width="750" height="555">
+            <picture>
+              <source type="image/webp" srcset="/images/home-copy-service-deep-320.webp 320w, /images/home-copy-service-deep-480.webp 480w, /images/home-copy-service-deep-640.webp 640w, /images/home-copy-service-deep-750.webp 750w" sizes="(max-width: 760px) calc(100vw - 44px), 303px">
+              <img src="/images/home-copy-service-deep.png" alt="Deep cleaning illustration" width="750" height="555" loading="lazy" decoding="async">
+            </picture>
             <h3>Deep Cleaning for Homes<br>That Need Extra Care</h3>
             <p><strong>When</strong>: seasonal refresh, after guests, home hasn't been cleaned in months</p>
             <p><strong>For</strong>: homeowners needing a reset, pre-sale prep, post-event cleanup</p>
@@ -128,7 +141,10 @@
           </a>
 
           <a class="service-card" href="/services/move-in-move-out-cleaning">
-            <img src="/images/home-copy-service-move.png" alt="Move cleaning illustration" width="750" height="555">
+            <picture>
+              <source type="image/webp" srcset="/images/home-copy-service-move-320.webp 320w, /images/home-copy-service-move-480.webp 480w, /images/home-copy-service-move-640.webp 640w, /images/home-copy-service-move-750.webp 750w" sizes="(max-width: 760px) calc(100vw - 44px), 303px">
+              <img src="/images/home-copy-service-move.png" alt="Move cleaning illustration" width="750" height="555" loading="lazy" decoding="async">
+            </picture>
             <h3>Cleaning for Moving In or<br>Moving Out</h3>
             <p><strong>When</strong>: moving in or out, end of lease, property turnover, getting deposit back</p>
             <p><strong>For</strong>: renters, home buyers/sellers, property managers, real estate agents</p>
@@ -136,7 +152,10 @@
           </a>
 
           <a class="service-card" href="/services/airbnb-cleaning">
-            <img src="/images/home-copy-service-airbnb.png" alt="Airbnb cleaning illustration" width="750" height="555">
+            <picture>
+              <source type="image/webp" srcset="/images/home-copy-service-airbnb-320.webp 320w, /images/home-copy-service-airbnb-480.webp 480w, /images/home-copy-service-airbnb-640.webp 640w, /images/home-copy-service-airbnb-750.webp 750w" sizes="(max-width: 760px) calc(100vw - 44px), 303px">
+              <img src="/images/home-copy-service-airbnb.png" alt="Airbnb cleaning illustration" width="750" height="555" loading="lazy" decoding="async">
+            </picture>
             <h3>Airbnb Cleaning</h3>
             <p><strong>When</strong>: between guest stays, same-day turnovers, preparing for check-ins</p>
             <p><strong>For</strong>: vacation rental hosts, Airbnb owners, property managers</p>
@@ -144,7 +163,10 @@
           </a>
 
           <a class="service-card" href="/services/commercial-cleaning">
-            <img src="/images/home-copy-service-commercial.png" alt="Commercial cleaning illustration" width="750" height="555">
+            <picture>
+              <source type="image/webp" srcset="/images/home-copy-service-commercial-320.webp 320w, /images/home-copy-service-commercial-480.webp 480w, /images/home-copy-service-commercial-640.webp 640w, /images/home-copy-service-commercial-750.webp 750w" sizes="(max-width: 760px) calc(100vw - 44px), 303px">
+              <img src="/images/home-copy-service-commercial.png" alt="Commercial cleaning illustration" width="750" height="555" loading="lazy" decoding="async">
+            </picture>
             <h3>Commercial Cleaning</h3>
             <p><strong>When</strong>: maintaining office spaces, after-hours cleaning, weekly maintenance</p>
             <p><strong>For</strong>: offices, retail stores, medical facilities, coworkings, small businesses</p>
@@ -152,7 +174,10 @@
           </a>
 
           <a class="service-card" href="/services/post-construction-cleaning">
-            <img src="/images/home-copy-service-post-construction.png" alt="Post-construction cleaning illustration" width="750" height="555">
+            <picture>
+              <source type="image/webp" srcset="/images/home-copy-service-post-construction-320.webp 320w, /images/home-copy-service-post-construction-480.webp 480w, /images/home-copy-service-post-construction-640.webp 640w, /images/home-copy-service-post-construction-750.webp 750w" sizes="(max-width: 760px) calc(100vw - 44px), 303px">
+              <img src="/images/home-copy-service-post-construction.png" alt="Post-construction cleaning illustration" width="750" height="555" loading="lazy" decoding="async">
+            </picture>
             <h3>Post-Construction<br>Cleaning</h3>
             <p><strong>When</strong>: after renovation, construction completion, remodeling projects</p>
             <p><strong>For</strong>: contractors, homeowners, builders, developers, renovation projects</p>

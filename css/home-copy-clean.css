@@ -56,6 +56,10 @@ body.home-copy-page img {
   height: auto;
 }
 
+body.home-copy-page picture {
+  display: contents;
+}
+
 body.home-copy-page a {
   color: inherit;
   text-decoration: none;
@@ -605,6 +609,8 @@ body.home-copy-page .hero__team {
 }
 
 .service-card img {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 280px;
   max-width: 100%;

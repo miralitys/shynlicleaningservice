@@ -106,9 +106,9 @@ const sanitizeHtml = createSiteSanitizer({
 }).sanitizeHtml;
 
 const CALLRAIL_SWAP_SCRIPT_PATTERN =
-  /<script type="text\/javascript" src="\/\/cdn\.callrail\.com\/companies\/562095680\/7c306f50357be4c201eb\/12\/swap\.js"><\/script>/;
+  /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260522\.js" defer><\/script>/;
 const CALLRAIL_SWAP_SCRIPT_URL_PATTERN =
-  /cdn\.callrail\.com\/companies\/562095680\/7c306f50357be4c201eb\/12\/swap\.js/g;
+  /\/js\/vendor\/callrail-swap\.20260522\.js/g;
 const BENEFIT_HIDDEN_FEES_COPY_PATTERN =
   /What you see is what you pay\.(?:\s*<br\s*\/?>\s*|\s+)No hidden fees\./g;
 const BENEFIT_STANDARDS_COPY_PATTERN =
@@ -181,12 +181,68 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
     const sanitized = sanitizeHtml(fixture.html, fixture.route);
     assert.match(
       sanitized,
-      /<head><script id="shynli-tracking-script" src="\/js\/shynli-tracking\.js"><\/script><!-- Google Tag Manager -->/
+      /<head><script id="shynli-tracking-bootstrap">/
     );
+    assert.match(sanitized, /\/js\/shynli-tracking\.js/);
+    assert.doesNotMatch(sanitized, /<script[^>]+src="\/js\/shynli-tracking\.js"/);
     assert.match(sanitized, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
+    assert.match(sanitized, /requestIdleCallback/);
+    assert.match(sanitized, /setTimeout\(idleLoad,4500\)/);
+    assert.match(sanitized, /\['pointerdown','keydown','touchstart'\]/);
+    assert.doesNotMatch(sanitized, /googletagmanager\.com\/gtag\/js\?id=/);
     assert.match(sanitized, /<body[^>]*><!-- Google Tag Manager \(noscript\) -->/);
     assert.match(sanitized, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/);
   }
+});
+
+test("loads home fonts locally without adding Google Fonts to the critical chain", () => {
+  const sanitized = sanitizeHtml(readFixture("page108488156.html"), "/");
+
+  assert.match(sanitized, /<link rel="preload" href="\/fonts\/playfair-display-latin-400-900\.woff2" as="font"/);
+  assert.match(sanitized, /<link rel="preload" href="\/fonts\/montserrat-latin-300-800\.woff2" as="font"/);
+  assert.match(sanitized, /<link rel="stylesheet" href="\/css\/shynli-fonts\.css\?v=20260522-local2">/);
+  assert.doesNotMatch(sanitized, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
+});
+
+test("loads managed page fonts locally without adding Google Fonts to the critical chain", () => {
+  const fixtures = [
+    { route: "/blog", html: readFixture("page108872586.html") },
+    { route: "/quote", html: readFixture("quote2.html") },
+  ];
+
+  for (const fixture of fixtures) {
+    const sanitized = sanitizeHtml(fixture.html, fixture.route);
+    assert.match(sanitized, /<link rel="preload" href="\/fonts\/playfair-display-latin-400-900\.woff2" as="font"/, fixture.route);
+    assert.match(sanitized, /<link rel="preload" href="\/fonts\/montserrat-latin-300-800\.woff2" as="font"/, fixture.route);
+    assert.match(sanitized, /<link rel="stylesheet" href="\/css\/shynli-fonts\.css\?v=20260522-local2">/, fixture.route);
+    assert.doesNotMatch(
+      sanitized,
+      /fonts\.googleapis\.com|fonts\.gstatic\.com|data-shynli-font-async/,
+      fixture.route
+    );
+  }
+});
+
+test("removes Google Fonts even when legacy blocks inject them outside the head", () => {
+  const source = `<!doctype html>
+<html>
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap">
+</head>
+<body>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap">
+  <style>@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&amp;display=swap');</style>
+  <main style="font-family: Montserrat, sans-serif;">Hello</main>
+</body>
+</html>`;
+  const sanitized = sanitizeHtml(source, "/about-us");
+
+  assert.match(sanitized, /<link rel="preload" href="\/fonts\/playfair-display-latin-400-900\.woff2" as="font"/);
+  assert.match(sanitized, /<link rel="preload" href="\/fonts\/montserrat-latin-300-800\.woff2" as="font"/);
+  assert.match(sanitized, /<link rel="stylesheet" href="\/css\/shynli-fonts\.css\?v=20260522-local2">/);
+  assert.equal(countMatches(sanitized, /\/css\/shynli-fonts\.css\?v=20260522-local2/g), 1);
+  assert.doesNotMatch(sanitized, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
 });
 
 test("injects CallRail swap script before closing body on public site pages", () => {
@@ -345,6 +401,7 @@ test("replaces legacy tilda menu runtimes with the shared menu shell runtime", (
 test("renders managed blog routes through the standalone blog shell", () => {
   const fixtures = [
     { route: "/blog", expected: /Shynli Cleaning <span>Blog<\/span>/ },
+    { route: "/blog-copy", expected: /Shynli Cleaning <span>Blog<\/span>/ },
     { route: "/blog/checklists", expected: /Cleaning <span>Checklists<\/span>/ },
     {
       route: "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos",
@@ -446,7 +503,6 @@ test("replaces heavy zero runtimes across home-like routes", () => {
   const fixtures = [
     { route: "/", file: "page108488156.html" },
     { route: "/home-calculator", file: "page110230356.html" },
-    { route: "/home2", file: "page108488156-home2.html", cleanHandCoded: true },
     { route: "/home-simple", file: "page108488156.html" },
   ];
 
@@ -454,23 +510,38 @@ test("replaces heavy zero runtimes across home-like routes", () => {
     const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
     assert.doesNotMatch(html, /js\/tilda-zero-1\.1\.min\.js/, fixture.route);
     assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/, fixture.route);
+    assert.doesNotMatch(html, /js\/tilda-blocks-page[^"]+\.min\.js/, fixture.route);
     assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
     assert.doesNotMatch(html, /data-original=/, fixture.route);
-    if (fixture.cleanHandCoded) {
-      assert.match(html, /\/css\/home2-clean\.css/, fixture.route);
-      assert.match(html, /\/js\/home2-clean\.js/, fixture.route);
-      assert.doesNotMatch(html, /id="shynli-home-page-runtime"/, fixture.route);
-      assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-      assert.match(html, /data-city-open/, fixture.route);
-    } else {
-      assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
-      assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-      assert.match(html, /href="#city"/, fixture.route);
-    }
+    assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
+    assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
+    assert.match(html, /href="#city"/, fixture.route);
     assert.match(html, /href="#clean"/, fixture.route);
     assert.match(html, /Shynli Cleaning/i, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
+});
+
+test("keeps the home copy hand-coded without Tilda runtime", () => {
+  const html = sanitizeHtml(readFixture("page108488156-copy.html"), "/home-copy");
+  const tildaMarkers =
+    /(?:tild|tilda|data-tilda|id="allrecords"|\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i;
+
+  assert.match(html, /<main>/);
+  assert.match(html, /<section class="hero"/);
+  assert.match(html, /House Cleaning[\s\S]*Services in Naperville[\s\S]*&amp; Chicago Suburbs/i);
+  assert.match(html, /href="\/css\/home-copy-clean\.css\?v=20260522-imgopt1"/);
+  assert.match(html, /src="\/js\/home-copy-clean\.js\?v=20260522-match67"/);
+  assert.match(html, /src="\/images\/home-copy-team\.png"|srcset="\/images\/home-copy-team-480\.webp/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/">/);
+  assert.doesNotMatch(html, tildaMarkers);
+  assert.doesNotMatch(html, /(?:css|js)\/tilda/i);
+  assert.doesNotMatch(html, /data-original=/);
+  assert.doesNotMatch(html, /id="shynli-homepage-copy-fit-style"/);
+  assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
+  assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
+  assert.doesNotMatch(html, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN);
 });
 
 test("serves Romeoville from the clean shared city template", () => {
@@ -993,6 +1064,24 @@ test("keeps the regular-cleaning main route hand-coded without Tilda runtime", (
   assert.match(html, /href="\/services\/regular-cleaning"/);
   assert.match(html, /href="#clean"/);
   assert.match(html, /href="\/services\/regular-cleaning#city"/);
+});
+
+test("keeps the pricing copy hand-coded without Tilda runtime", () => {
+  const html = sanitizeHtml(readFixture("page110278596-copy.html"), "/pricing-copy");
+
+  assert.match(html, /<main class="clean-service-page clean-pricing-page">/);
+  assert.match(html, /Home Cleaning Prices in Chicagoland/);
+  assert.match(html, /Calculate <span style="color: rgb\(158, 68, 90\);">Your Cleaning Price<\/span>/);
+  assert.match(html, /<meta name="robots" content="noindex,follow"\s*\/?>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/pricing"\s*\/?>/);
+  assert.doesNotMatch(html, /(?:css|js)\/tilda/i);
+  assert.doesNotMatch(html, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
+  assert.doesNotMatch(html, /data-original=/);
+  assert.doesNotMatch(html, /__resize__20x__/);
+  assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
+  assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
+  assert.match(html, /href="#clean"/);
+  assert.match(html, /href="#city"/);
 });
 
 test("keeps the move-in move-out main route hand-coded without Tilda runtime", () => {

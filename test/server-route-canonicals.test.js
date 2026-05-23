@@ -36,6 +36,15 @@ test("redirects legacy flat post-construction URLs to the service canonical", as
   assert.equal(response.headers.get("location"), "/services/post-construction-cleaning?utm_source=test");
 });
 
+test("redirects blog copy to the original blog canonical", async () => {
+  const response = await fetch(`${BASE_URL}/blog-copy?utm_source=test`, {
+    redirect: "manual",
+  });
+
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.get("location"), "/blog?utm_source=test");
+});
+
 test("serves the 404 page without uppercase city links", async () => {
   const response = await fetch(`${BASE_URL}/definitely-missing-page`);
   const body = await response.text();

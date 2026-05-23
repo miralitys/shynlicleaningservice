@@ -350,6 +350,12 @@
 
   function init() {
     captureAttribution();
+    if (typeof ns._bootstrapDetach === "function") {
+      try {
+        ns._bootstrapDetach();
+      } catch (e) {}
+      ns._bootstrapDetach = null;
+    }
     attachCallClickListener();
   }
 
