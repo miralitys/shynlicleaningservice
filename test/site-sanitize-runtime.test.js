@@ -106,9 +106,9 @@ const sanitizeHtml = createSiteSanitizer({
 }).sanitizeHtml;
 
 const CALLRAIL_SWAP_SCRIPT_PATTERN =
-  /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260522\.js" defer><\/script>/;
+  /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260523\.js" defer><\/script>/;
 const CALLRAIL_SWAP_SCRIPT_URL_PATTERN =
-  /\/js\/vendor\/callrail-swap\.20260522\.js/g;
+  /\/js\/vendor\/callrail-swap\.20260523\.js/g;
 const BENEFIT_HIDDEN_FEES_COPY_PATTERN =
   /What you see is what you pay\.(?:\s*<br\s*\/?>\s*|\s+)No hidden fees\./g;
 const BENEFIT_STANDARDS_COPY_PATTERN =
