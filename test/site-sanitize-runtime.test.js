@@ -435,6 +435,31 @@ test("renders managed blog routes through the standalone blog shell", () => {
   }
 });
 
+test("uses the shared blog-style footer across public pages", () => {
+  const fixtures = [
+    { route: "/", file: "page108488156.html" },
+    { route: "/blog", file: "page108872586.html" },
+    { route: "/romeoville", file: "page111640886.html" },
+    { route: "/services/regular-cleaning", file: "page109085526.html" },
+    { route: "/quote", file: "quote2.html" },
+    { route: "/privacy-policy", file: "privacy-policy.html" },
+  ];
+
+  for (const fixture of fixtures) {
+    const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+
+    assert.match(html, /id="shynli-site-footer"/, fixture.route);
+    assert.match(html, /Practical cleaning guidance when you want to learn/, fixture.route);
+    assert.match(html, /href="\/services\/regular-cleaning">Regular Cleaning/, fixture.route);
+    assert.match(html, /href="\/blog">Blog/, fixture.route);
+    assert.match(html, /href="tel:\+16304466235">\+1 \(630\) 446-6235/, fixture.route);
+    assert.match(html, /Serving Chicago suburbs with practical cleaning help online/, fixture.route);
+    assert.equal(countMatches(html, /id="shynli-site-footer"/g), 1, fixture.route);
+    assert.equal(countMatches(html, /id="shynli-site-footer-style"/g), 1, fixture.route);
+    assert.doesNotMatch(html, /id="t-footer"|clean-generated-footer/, fixture.route);
+  }
+});
+
 test("keeps separate desktop behaviors for blog Services hover and City modal", () => {
   const html = sanitizeHtml(readFixture("page108872586.html"), "/blog");
 
