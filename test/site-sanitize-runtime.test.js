@@ -187,7 +187,7 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
     assert.doesNotMatch(sanitized, /<script[^>]+src="\/js\/shynli-tracking\.js"/);
     assert.match(sanitized, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
     assert.match(sanitized, /requestIdleCallback/);
-    assert.match(sanitized, /setTimeout\(idleLoad,12000\)/);
+    assert.match(sanitized, /setTimeout\(idleLoad,30000\)/);
     assert.match(sanitized, /setTimeout\(idleLoad,4500\)/);
     assert.match(sanitized, /\['pointerdown','keydown','touchstart'\]/);
     assert.doesNotMatch(sanitized, /googletagmanager\.com\/gtag\/js\?id=/);

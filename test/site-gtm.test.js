@@ -34,7 +34,7 @@ test("serves GTM on public site routes", async () => {
     assert.match(body, /<!-- Google Tag Manager -->/, route);
     assert.match(body, /GTM-5P88N7LD/, route);
     assert.match(body, /requestIdleCallback/, route);
-    assert.match(body, /setTimeout\(idleLoad,12000\)/, route);
+    assert.match(body, /setTimeout\(idleLoad,30000\)/, route);
     assert.match(body, /setTimeout\(idleLoad,4500\)/, route);
     assert.match(body, /\['pointerdown','keydown','touchstart'\]/, route);
     assert.doesNotMatch(body, /googletagmanager\.com\/gtag\/js\?id=/, route);
