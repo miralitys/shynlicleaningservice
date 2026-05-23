@@ -374,24 +374,21 @@ test("strips unused menu widgeticon assets when no widgeticon nodes remain", () 
   assert.doesNotMatch(blogHtml, /id="shynli-menu-widgeticons-runtime-stub"/);
 });
 
-test("replaces the legacy menusub runtime on remaining Tilda pages", () => {
+test("removes legacy menusub markup when the shared header replaces Tilda navigation", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
   const cityHtml = sanitizeHtml(readFixture("page111640886.html"), "/romeoville");
   const blogHtml = sanitizeHtml(readFixture("page108872586.html"), "/blog");
 
-  for (const html of [homeHtml, cityHtml]) {
+  for (const html of [homeHtml, cityHtml, blogHtml]) {
     assert.doesNotMatch(html, /js\/tilda-menusub-1\.0\.min\.js/);
-    assert.match(html, /id="shynli-menusub-runtime"/);
-    assert.match(html, /class="t-menusub"/);
-    assert.match(html, /data-menu-submenu-hook="/);
+    assert.doesNotMatch(html, /id="shynli-menusub-runtime"/);
+    assert.doesNotMatch(html, /class="t-menusub"/);
+    assert.doesNotMatch(html, /data-menu-submenu-hook="/);
+    assert.match(html, /id="shynli-site-header"/);
   }
-
-  assert.doesNotMatch(blogHtml, /js\/tilda-menusub-1\.0\.min\.js/);
-  assert.doesNotMatch(blogHtml, /id="shynli-menusub-runtime"/);
-  assert.doesNotMatch(blogHtml, /class="t-menusub"/);
 });
 
-test("replaces legacy tilda menu runtimes with the shared menu shell runtime", () => {
+test("removes legacy tilda menu runtimes and markup after shared header insertion", () => {
   const fixtures = [
     { route: "/", file: "page108488156.html" },
     { route: "/romeoville", file: "page111640886.html" },
@@ -401,9 +398,10 @@ test("replaces legacy tilda menu runtimes with the shared menu shell runtime", (
     const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
     assert.doesNotMatch(html, /js\/tilda-menu-1\.1\.min\.js/);
     assert.doesNotMatch(html, /js\/tilda-menu-burger-1\.0\.min\.js/);
-    assert.match(html, /id="shynli-menu-shell-runtime"/);
-    assert.match(html, /class="t-menu-burger\b/);
-    assert.match(html, /class="t-menu-base\b/);
+    assert.doesNotMatch(html, /id="shynli-menu-shell-runtime"/);
+    assert.doesNotMatch(html, /class="t-menu-burger\b/);
+    assert.doesNotMatch(html, /class="t-menu-base\b/);
+    assert.match(html, /id="shynli-site-header"/);
   }
 });
 
@@ -429,9 +427,42 @@ test("renders managed blog routes through the standalone blog shell", () => {
     assert.doesNotMatch(html, /tilda-popup-1\.0\.min\.js/);
     assert.doesNotMatch(html, /tilda-menu-1\.1\.min\.js/);
     assert.doesNotMatch(html, /tilda-menu-burger-1\.0\.min\.js/);
+    assert.match(html, /id="shynli-site-header"/);
+    assert.match(html, /id="shynli-site-header-style"/);
+    assert.match(html, /id="shynli-site-header-runtime"/);
     assert.match(html, /class="shynli-blog-shell"/);
     assert.match(html, /id="shynli-blog-topic-hub-script"/);
     assert.match(html, fixture.expected);
+  }
+});
+
+test("uses the shared blog-style header across public pages", () => {
+  const fixtures = [
+    { route: "/", file: "page108488156.html" },
+    { route: "/blog", file: "page108872586.html" },
+    { route: "/romeoville", file: "page111640886.html" },
+    { route: "/services/regular-cleaning", file: "page109085526.html" },
+    { route: "/quote", file: "quote2.html" },
+    { route: "/privacy-policy", file: "privacy-policy.html" },
+  ];
+
+  for (const fixture of fixtures) {
+    const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
+
+    assert.match(html, /id="shynli-site-header"/, fixture.route);
+    assert.match(html, /id="shynli-site-header-style"/, fixture.route);
+    assert.match(html, /id="shynli-site-header-runtime"/, fixture.route);
+    assert.match(html, /href="\/service-areas">Service Areas/, fixture.route);
+    assert.match(html, /href="\/about-us">About Us/, fixture.route);
+    assert.match(html, /href="\/faq">FAQ/, fixture.route);
+    assert.match(html, /href="\/quote">Get Free Quote/, fixture.route);
+    assert.match(html, /href="tel:\+16304466235"/, fixture.route);
+    assert.match(html, /data-city-modal-open/, fixture.route);
+    assert.match(html, /id="shynli-site-city-modal"/, fixture.route);
+    assert.equal(countMatches(html, /id="shynli-site-header"/g), 1, fixture.route);
+    assert.equal(countMatches(html, /id="shynli-site-header-style"/g), 1, fixture.route);
+    assert.equal(countMatches(html, /id="shynli-site-header-runtime"/g), 1, fixture.route);
+    assert.doesNotMatch(html, /class="t-menu-(?:base|burger)\b/, fixture.route);
   }
 });
 
@@ -463,10 +494,10 @@ test("uses the shared blog-style footer across public pages", () => {
 test("keeps separate desktop behaviors for blog Services hover and City modal", () => {
   const html = sanitizeHtml(readFixture("page108872586.html"), "/blog");
 
-  assert.match(html, /shynli-blog-shell__details shynli-blog-shell__details--hoverable/);
+  assert.match(html, /shynli-site-header__details shynli-site-header__details--hoverable/);
   assert.match(html, /data-city-modal-open/);
-  assert.match(html, /data-city-modal/);
-  assert.match(html, /Service areas by city/);
+  assert.match(html, /id="shynli-site-city-modal"/);
+  assert.match(html, /Choose your city/);
   assert.match(html, /A-D:/);
   assert.match(html, /V-Y:/);
   assert.match(html, /Addison/);
@@ -518,8 +549,8 @@ test("preserves menu CTA wiring and submenu content after the menu shell replace
   assert.match(html, /id="shynli-home-page-runtime"/);
   assert.match(html, /id="shynli-zero-runtime-stub"/);
   assert.match(html, /href="\/quote"/);
-  assert.match(html, /href="#city"/);
-  assert.match(html, /href="#clean"/);
+  assert.match(html, /data-city-modal-open/);
+  assert.match(html, /href="\/#clean"/);
   assert.match(html, /data-tooltip-hook="#city"/);
   assert.match(html, /data-tooltip-hook="#clean"/);
   assert.match(html, /href="\/service-areas"/);
@@ -549,8 +580,8 @@ test("replaces heavy zero runtimes across home-like routes", () => {
     assert.doesNotMatch(html, /data-original=/, fixture.route);
     assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
     assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-    assert.match(html, /href="#city"/, fixture.route);
-    assert.match(html, /href="#clean"/, fixture.route);
+    assert.match(html, /data-city-modal-open/, fixture.route);
+    assert.match(html, /href="\/#clean"/, fixture.route);
     assert.match(html, /Shynli Cleaning/i, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
@@ -592,10 +623,10 @@ test("serves Romeoville from the clean shared city template", () => {
   assert.doesNotMatch(html, /data-original=/);
   assert.match(html, /id="shynli-home-page-runtime"/);
   assert.match(html, /id="shynli-zero-runtime-stub"/);
-  assert.match(html, /src="images\/shynli-logo-primary\.png"/);
+  assert.match(html, /src="\/images\/shynli-logo-primary\.png"/);
   assert.match(html, /href="\/images\/shynli-icon-32\.png"/);
-  assert.match(html, /href="#city"/);
-  assert.match(html, /href="#clean"/);
+  assert.match(html, /data-city-modal-open/);
+  assert.match(html, /href="\/#clean"/);
   assert.match(html, /House Cleaning Services in <span class="sg-accent">Romeoville<\/span>, IL/);
   assert.match(
     html,
@@ -660,9 +691,9 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
     assert.doesNotMatch(html, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i, fixture.route);
     assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
     assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-    assert.match(html, /src="images\/shynli-logo-primary\.png"/, fixture.route);
-    assert.match(html, /href="#city"/, fixture.route);
-    assert.match(html, /href="#clean"/, fixture.route);
+    assert.match(html, /src="\/images\/shynli-logo-primary\.png"/, fixture.route);
+    assert.match(html, /data-city-modal-open/, fixture.route);
+    assert.match(html, /href="\/#clean"/, fixture.route);
     assert.match(
       html,
       new RegExp(`<a class="sg-button sg-button--outline sg-city-button"[^>]*>${cityPattern}<\\/a>`),
@@ -687,8 +718,8 @@ test("replaces heavy zero runtimes across static marketing page pilots", () => {
     assert.doesNotMatch(html, /data-original=/, fixture.route);
     assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
     assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-    assert.match(html, /href="#city"/, fixture.route);
-    assert.match(html, /href="#clean"/, fixture.route);
+    assert.match(html, /data-city-modal-open/, fixture.route);
+    assert.match(html, /href="\/#clean"/, fixture.route);
     assert.match(html, fixture.expected, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }

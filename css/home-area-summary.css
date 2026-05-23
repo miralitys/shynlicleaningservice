@@ -1,0 +1,71 @@
+/* Homepage visual tune-ups. */
+.services-panel::after {
+  bottom: -22px;
+}
+
+/* Home service-area summary based on city pages. */
+.areas__summary--home {
+  width: 100%;
+  max-width: 980px;
+  margin: 56px auto 0;
+  padding: 28px 20px 0;
+  transform: none;
+  border-top: 1px solid rgba(216, 207, 196, 0.72);
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.9;
+  text-align: center;
+}
+
+.areas__summary--home .areas__summary-chunk {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.areas__summary--home .areas__summary-city {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 4px;
+  padding: 2px 12px 3px;
+  border: 1px solid rgba(158, 67, 90, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--rose);
+  font-size: 1em;
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.areas__summary--home .areas__summary-city:hover {
+  border-color: rgba(158, 67, 90, 0.3);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+@media (max-width: 1120px) {
+  .areas__summary--home {
+    max-width: 980px;
+    margin-top: 44px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 760px) {
+  .areas__summary--home {
+    width: 100%;
+    margin: 28px auto 0;
+    padding: 22px 12px 0;
+    transform: none;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .areas__summary--home .areas__summary-city {
+    margin: 3px 2px;
+    padding: 2px 10px 3px;
+    font-size: 1em;
+  }
+}
