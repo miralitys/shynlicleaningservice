@@ -106,7 +106,7 @@ const sanitizeHtml = createSiteSanitizer({
 }).sanitizeHtml;
 
 const CALLRAIL_SWAP_SCRIPT_PATTERN =
-  /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260523\.js" defer><\/script>/;
+  /<script id="shynli-callrail-loader">(?=[\s\S]*?\/js\/vendor\/callrail-swap\.20260523\.js[\s\S]*?<\/script>)(?=[\s\S]*?setTimeout\(idleLoad,9000\)[\s\S]*?<\/script>)[\s\S]*?<\/script>/;
 const CALLRAIL_SWAP_SCRIPT_URL_PATTERN =
   /\/js\/vendor\/callrail-swap\.20260523\.js/g;
 const BENEFIT_HIDDEN_FEES_COPY_PATTERN =
@@ -187,6 +187,7 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
     assert.doesNotMatch(sanitized, /<script[^>]+src="\/js\/shynli-tracking\.js"/);
     assert.match(sanitized, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
     assert.match(sanitized, /requestIdleCallback/);
+    assert.match(sanitized, /setTimeout\(idleLoad,12000\)/);
     assert.match(sanitized, /setTimeout\(idleLoad,4500\)/);
     assert.match(sanitized, /\['pointerdown','keydown','touchstart'\]/);
     assert.doesNotMatch(sanitized, /googletagmanager\.com\/gtag\/js\?id=/);
@@ -258,6 +259,11 @@ test("injects CallRail swap script before closing body on public site pages", ()
     assert.match(sanitized, CALLRAIL_SWAP_SCRIPT_PATTERN, fixture.route);
     assert.match(sanitized, new RegExp(`${CALLRAIL_SWAP_SCRIPT_PATTERN.source}<\\/body>`, "i"), fixture.route);
     assert.equal((sanitized.match(CALLRAIL_SWAP_SCRIPT_URL_PATTERN) || []).length, 1, fixture.route);
+    assert.doesNotMatch(
+      sanitized,
+      /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260523\.js" defer><\/script>/,
+      fixture.route
+    );
   }
 });
 

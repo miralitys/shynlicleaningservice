@@ -9,7 +9,7 @@ let serverProcess = null;
 let BASE_URL = null;
 
 const CALLRAIL_SWAP_SCRIPT_PATTERN =
-  /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260523\.js" defer><\/script>/;
+  /<script id="shynli-callrail-loader">(?=[\s\S]*?\/js\/vendor\/callrail-swap\.20260523\.js[\s\S]*?<\/script>)(?=[\s\S]*?setTimeout\(idleLoad,9000\)[\s\S]*?<\/script>)[\s\S]*?<\/script>/;
 
 test.before(async () => {
   const started = await startServer();
@@ -34,6 +34,7 @@ test("serves GTM on public site routes", async () => {
     assert.match(body, /<!-- Google Tag Manager -->/, route);
     assert.match(body, /GTM-5P88N7LD/, route);
     assert.match(body, /requestIdleCallback/, route);
+    assert.match(body, /setTimeout\(idleLoad,12000\)/, route);
     assert.match(body, /setTimeout\(idleLoad,4500\)/, route);
     assert.match(body, /\['pointerdown','keydown','touchstart'\]/, route);
     assert.doesNotMatch(body, /googletagmanager\.com\/gtag\/js\?id=/, route);
@@ -49,6 +50,11 @@ test("serves GTM on public site routes", async () => {
     assert.match(body, /<!-- Google Tag Manager \(noscript\) -->/, route);
     assert.match(body, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/, route);
     assert.match(body, CALLRAIL_SWAP_SCRIPT_PATTERN, route);
+    assert.doesNotMatch(
+      body,
+      /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260523\.js" defer><\/script>/,
+      route
+    );
   }
 });
 
