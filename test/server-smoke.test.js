@@ -1107,12 +1107,7 @@ test("points ads page quote CTAs to the no-calculator form", async () => {
   const routes = [
     "/ads",
     "/ads-v2",
-    "/services/regular-cleaning/ads",
-    "/services/regular-cleaning/ads-v2",
-    "/services/deep-cleaning/ads",
-    "/services/deep-cleaning/ads-v2",
     "/services/move-in-move-out-cleaning/ads",
-    "/services/move-in-move-out-cleaning/ads-v2",
   ];
 
   for (const route of routes) {
@@ -1123,6 +1118,55 @@ test("points ads page quote CTAs to the no-calculator form", async () => {
     assert.match(body, /href="\/quote-no-calculator"/, route);
     assert.doesNotMatch(body, /href="\/quote"/, route);
   }
+});
+
+test("points no-price ads quote CTAs to the no-price form", async () => {
+  const routes = [
+    "/services/regular-cleaning/ads",
+    "/services/regular-cleaning/ads-v2",
+    "/services/deep-cleaning/ads",
+    "/services/deep-cleaning/ads-v2",
+    "/services/move-in-move-out-cleaning/ads-v2",
+  ];
+
+  for (const route of routes) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
+
+    assert.equal(response.status, 200, route);
+    assert.match(body, /href="\/quote-no-price"/, route);
+    assert.doesNotMatch(body, /href="\/quote-no-calculator"/, route);
+    assert.doesNotMatch(body, /href="\/quote"/, route);
+  }
+});
+
+test("serves deep-cleaning ads-v2 guide updates", async () => {
+  const response = await fetch(`${BASE_URL}/services/deep-cleaning/ads-v2`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(body, /From <span class="shynli-service-ads-price-new">\$180<\/span>/);
+  assert.match(body, /Fully Insured up to \$1M/);
+  assert.match(body, /class="shynli-deep-ads-trust-strip"/);
+  assert.match(body, /Deep cleaning starts from \$180 for typical homes/);
+  assert.match(body, /final price based on size and condition &mdash; <a href="\/quote-no-price">get instant quote<\/a>/);
+  assert.match(body, /Deep cleaning is a great fit if:/);
+  assert.match(body, /id="whats-included"/);
+  assert.match(body, /Air vents dusted/);
+  assert.match(body, /Small appliances wiped \(toaster, coffee maker, etc\.\)/);
+  assert.match(body, /Shower doors and curtains cleaned/);
+  assert.match(body, /id="how-differs"/);
+  assert.match(body, /id="add-ons"/);
+  assert.match(body, /<h3 class="dc-addons__group-title">Extra Focus<\/h3>[\s\S]*Wet Baseboards[\s\S]*Doors[\s\S]*Polishing wooden furniture[\s\S]*Bed linen replacement/);
+  assert.match(body, /<h3 class="dc-addons__group-title">Interior Add-Ons<\/h3>[\s\S]*Inside Cabinets \(empty\)[\s\S]*Inside Fridge[\s\S]*Inside Oven[\s\S]*Interior Windows/);
+  assert.match(body, /href="\/services\/regular-cleaning\/ads-v2"/);
+  assert.match(body, /href="\/services\/move-in-move-out-cleaning\/ads-v2"/);
+  assert.match(body, /href="\/quote-no-price"/);
+  assert.match(body, /action="\/quote-no-price"/);
+  assert.match(body, /id="schema-deep-cleaning-item-list"/);
+  assert.match(body, /id="schema-deep-cleaning-addons"/);
+  assert.doesNotMatch(body, /href="\/quote-no-calculator"/);
+  assert.doesNotMatch(body, /Regular cleaning includes standard tasks only/);
 });
 
 test("serves all service page pilots without zero/lazyload runtimes", async () => {
