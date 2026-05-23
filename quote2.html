@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..900&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/quote2.css?v=20260516-submit-center" />
+    <link rel="stylesheet" href="css/quote2.css?v=20260523-progress-nav-places" />
   </head>
   <body class="quote2-body">
     <div class="quote2-page">
@@ -48,11 +48,19 @@
           <strong class="quote2-sticky-estimate-value" data-quote2-estimate="true">$145</strong>
         </div>
 
+        <div id="quote2Progress" class="quote2-progress" aria-live="polite">
+          <div class="quote2-progress__meta">
+            <span id="quote2ProgressStep" class="quote2-progress__step">Step 1 of ?</span>
+            <strong id="quote2ProgressTitle" class="quote2-progress__title">Contact info</strong>
+          </div>
+          <div id="quote2ProgressDots" class="quote2-progress__dots" aria-hidden="true"></div>
+        </div>
+
         <section id="quote2SuccessCard" class="quote2-card quote2-success-card" hidden>
           <p class="quote2-kicker">REQUEST RECEIVED</p>
-          <h2 class="quote2-section-title">Thank you. Your request has been sent.</h2>
+          <h2 class="quote2-section-title">Submitted</h2>
           <p class="quote2-section-copy">
-            Your request has been successfully submitted. We will contact you shortly.
+            Your request has been submitted. We'll be in touch shortly.
           </p>
           <div class="quote2-success-grid">
             <div class="quote2-success-panel">
@@ -92,7 +100,7 @@
 
         <section id="quote2CallbackSuccessCard" class="quote2-card quote2-callback-success-card" hidden>
           <p class="quote2-kicker">REQUEST RECEIVED</p>
-          <h2 class="quote2-section-title">Спасибо, мы свяжемся с вами в ближайшее время.</h2>
+          <h2 class="quote2-section-title">Thank you, we will be in touch shortly.</h2>
           <p class="quote2-section-copy">
             We will call to ask a few quick questions and give you the final quote.
           </p>
@@ -133,6 +141,9 @@
                 <span class="quote2-choice-label">I want to calculate online</span>
                 <span class="quote2-choice-copy">Answer a few questions to get a more accurate estimate.</span>
               </button>
+            </div>
+            <div class="quote2-inline-actions quote2-step-actions">
+              <button class="quote2-button quote2-button-secondary quote2-back-button" type="button" data-back-step="contact">Back</button>
             </div>
           </section>
 
@@ -227,7 +238,8 @@
               </label>
             </div>
 
-            <div class="quote2-inline-actions quote2-inline-actions-end">
+            <div class="quote2-inline-actions quote2-step-actions">
+              <button class="quote2-button quote2-button-secondary quote2-back-button" type="button" data-back-step="intent">Back</button>
               <button id="quote2ContinueToAddons" class="quote2-button quote2-button-secondary" type="button">Continue to add-ons</button>
             </div>
           </section>
@@ -327,7 +339,8 @@
               </div>
             </div>
 
-            <div class="quote2-inline-actions quote2-inline-actions-end">
+            <div class="quote2-inline-actions quote2-step-actions">
+              <button class="quote2-button quote2-button-secondary quote2-back-button" type="button" data-back-step="profile">Back</button>
               <button id="quote2ContinueToAddress" class="quote2-button quote2-button-secondary" type="button">Continue to address and schedule</button>
             </div>
           </section>
@@ -343,7 +356,7 @@
               <label class="quote2-field quote2-field-full">
                 <span>Service address</span>
                 <input id="quote2AddressInput" name="address" class="quote2-input" type="text" autocomplete="street-address" placeholder="215 North Elm Street, Naperville, IL" required />
-                <small class="quote2-field-note">Google Places will autocomplete when the browser key is configured. Otherwise you can type the address manually.</small>
+                <small class="quote2-field-note">Start typing your address and we'll suggest matches.</small>
               </label>
               <label class="quote2-field">
                 <span>Apartment / unit (optional)</span>
@@ -384,7 +397,8 @@
 
             <div id="quote2AddressError" class="quote2-form-error" hidden></div>
 
-            <div class="quote2-inline-actions quote2-inline-actions-end">
+            <div class="quote2-inline-actions quote2-step-actions">
+              <button class="quote2-button quote2-button-secondary quote2-back-button" type="button" data-back-step="addons">Back</button>
               <button id="quote2ContinueToNotes" class="quote2-button quote2-button-secondary" type="button">Continue to final notes</button>
             </div>
           </section>
@@ -413,13 +427,14 @@
             <div id="quote2FormError" class="quote2-form-error" hidden></div>
 
             <div class="quote2-inline-actions quote2-submit-actions">
-              <button id="quote2SubmitButton" class="quote2-button" type="submit">Send request</button>
+              <button class="quote2-button quote2-button-secondary quote2-back-button" type="button" data-back-step="address">Back</button>
+              <button id="quote2SubmitButton" class="quote2-button" type="submit">Submit Request</button>
             </div>
           </section>
         </form>
       </main>
     </div>
 
-    <script src="js/quote2-app.js?v=20260516-english-address"></script>
+    <script src="js/quote2-app.js?v=20260523-progress-nav-places"></script>
   </body>
 </html>

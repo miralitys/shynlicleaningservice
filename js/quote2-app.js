@@ -107,6 +107,15 @@
     monthly: "Monthly",
   };
 
+  const STEP_META = {
+    contact: { number: 1, title: "Contact info" },
+    intent: { number: 2, title: "Choose how to continue" },
+    profile: { number: 3, title: "Cleaning profile" },
+    addons: { number: 4, title: "Add-ons" },
+    address: { number: 5, title: "Address and schedule" },
+    notes: { number: 6, title: "Final notes" },
+  };
+
   const TRACKING_ADDON_LABELS = {
     ovenCleaning: "Inside oven",
     refrigeratorCleaning: "Inside fridge",
@@ -132,6 +141,15 @@
     lastAppleCalendarUrl: "",
     autocompleteRequested: false,
     autocompleteMounted: false,
+    addressFallbackMounted: false,
+    currentStepName: "contact",
+    currentStepStartedAt: Date.now(),
+    highestStepReached: 1,
+    completedStepKeys: {},
+    formStarted: false,
+    submitSucceeded: false,
+    abandonmentTracked: false,
+    lastTrackedBranchChoice: "",
   };
 
   const elements = {
@@ -146,6 +164,10 @@
     payNowButton: document.getElementById("quote2PayNowButton"),
     googleCalendarButton: document.getElementById("quote2GoogleCalendarButton"),
     appleCalendarButton: document.getElementById("quote2AppleCalendarButton"),
+    progress: document.getElementById("quote2Progress"),
+    progressStep: document.getElementById("quote2ProgressStep"),
+    progressTitle: document.getElementById("quote2ProgressTitle"),
+    progressDots: document.getElementById("quote2ProgressDots"),
     form: document.getElementById("quote2Form"),
     formError: document.getElementById("quote2FormError"),
     submitButton: document.getElementById("quote2SubmitButton"),
@@ -182,6 +204,7 @@
     continueToAddons: document.getElementById("quote2ContinueToAddons"),
     continueToAddress: document.getElementById("quote2ContinueToAddress"),
     continueToNotes: document.getElementById("quote2ContinueToNotes"),
+    backButtons: Array.from(document.querySelectorAll("[data-back-step]")),
     stickyEstimate: document.getElementById("quote2StickyEstimate"),
     estimateTargets: Array.from(document.querySelectorAll('[data-quote2-estimate="true"]')),
     stepCards: {
@@ -259,6 +282,164 @@
       utm_term: attribution.utm_term || "",
       landingPage,
     };
+  }
+
+  function getStepNumber(stepName) {
+    return STEP_META[stepName] ? STEP_META[stepName].number : 1;
+  }
+
+  function getTrackingBranch() {
+    if (state.contactIntent === "call") return "a_call_me";
+    if (state.contactIntent === "calculate") return "b_calculate_online";
+    return "unknown";
+  }
+
+  function getProgressTotal() {
+    if (state.contactIntent === "call") return 2;
+    if (state.contactIntent === "calculate") return 6;
+    return "?";
+  }
+
+  function getProgressDotCount() {
+    return state.contactIntent === "calculate" ? 6 : 2;
+  }
+
+  function getCurrentProgressNumber() {
+    const stepNumber = getStepNumber(state.currentStepName);
+    if (state.contactIntent === "calculate") return stepNumber;
+    return Math.min(stepNumber, 2);
+  }
+
+  function pushQuoteFunnelEvent(eventName, params) {
+    const attributionPayload = getQuoteAttributionPayload();
+    const attribution = attributionPayload.attribution || {};
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(
+      Object.assign(
+        {
+          event: eventName,
+          form_id: "quote2Form",
+          form_name: "Quote Form (Multi-step)",
+          form_location: window.location.pathname,
+          page_version: getFormHiddenValue("page_version"),
+          event_id: generateTrackingEventId(),
+          gclid: attributionPayload.gclid || getFormHiddenValue("gclid"),
+          utm_source: attributionPayload.utm_source || attribution.utm_source || getFormHiddenValue("utm_source"),
+          utm_medium: attributionPayload.utm_medium || attribution.utm_medium || getFormHiddenValue("utm_medium"),
+          utm_campaign: attributionPayload.utm_campaign || attribution.utm_campaign || getFormHiddenValue("utm_campaign"),
+          utm_term: attributionPayload.utm_term || attribution.utm_term || getFormHiddenValue("utm_term"),
+          landing_page: attributionPayload.landingPage || attribution.landing_page || getFormHiddenValue("landing_page"),
+        },
+        params || {}
+      )
+    );
+  }
+
+  function updateProgressIndicator() {
+    if (!elements.progress || !elements.progressStep || !elements.progressTitle || !elements.progressDots) return;
+
+    const currentNumber = getCurrentProgressNumber();
+    const total = getProgressTotal();
+    const stepMeta = STEP_META[state.currentStepName] || STEP_META.contact;
+    elements.progressStep.textContent = `Step ${currentNumber} of ${total}`;
+    elements.progressTitle.textContent = stepMeta.title;
+    elements.progressDots.innerHTML = "";
+
+    for (let index = 1; index <= getProgressDotCount(); index += 1) {
+      const dot = document.createElement("span");
+      dot.className = "quote2-progress__dot";
+      if (index < currentNumber) dot.classList.add("is-complete");
+      if (index === currentNumber) dot.classList.add("is-active");
+      elements.progressDots.appendChild(dot);
+    }
+  }
+
+  function markCurrentStep(stepName) {
+    if (!STEP_META[stepName]) return;
+    if (state.currentStepName !== stepName) {
+      state.currentStepName = stepName;
+      state.currentStepStartedAt = Date.now();
+    }
+    state.highestStepReached = Math.max(state.highestStepReached, getStepNumber(stepName));
+    updateProgressIndicator();
+  }
+
+  function trackFormStart() {
+    if (state.formStarted) return;
+    state.formStarted = true;
+    state.currentStepStartedAt = Date.now();
+    pushQuoteFunnelEvent("quote_form_start", {
+      step_number: 1,
+      step_name: "contact",
+      branch: getTrackingBranch(),
+    });
+  }
+
+  function trackStepComplete(stepName, extraParams) {
+    const branch = stepName === "contact" ? "unknown" : (extraParams && extraParams.branch) || getTrackingBranch();
+    const eventKey = stepName === "contact" ? stepName : `${stepName}:${branch}`;
+    if (state.completedStepKeys[eventKey]) return;
+    state.completedStepKeys[eventKey] = true;
+    pushQuoteFunnelEvent(
+      "quote_step_complete",
+      Object.assign(
+        {
+          step_number: getStepNumber(stepName),
+          step_name: stepName,
+          branch: branch,
+        },
+        extraParams || {}
+      )
+    );
+  }
+
+  function trackBranchSelected(branchChoice) {
+    if (state.lastTrackedBranchChoice === branchChoice) return;
+    state.lastTrackedBranchChoice = branchChoice;
+    pushQuoteFunnelEvent("quote_branch_selected", {
+      step_number: 2,
+      step_name: "intent",
+      branch_choice: branchChoice,
+      branch: branchChoice === "call_me" ? "a_call_me" : "b_calculate_online",
+    });
+  }
+
+  function trackValidationError(fieldName, stepName, message) {
+    pushQuoteFunnelEvent("quote_field_validation_error", {
+      field_name: fieldName,
+      step_number: getStepNumber(stepName),
+      step_name: stepName,
+      branch: getTrackingBranch(),
+      error_message: message || "",
+    });
+  }
+
+  function trackSubmitSuccess(branch, value) {
+    state.submitSucceeded = true;
+    pushQuoteFunnelEvent("quote_form_submit_success", {
+      branch: branch || getTrackingBranch(),
+      value: Number(value) || CALLBACK_CONVERSION_VALUE,
+      currency: "USD",
+    });
+  }
+
+  function trackSubmitError(branch, errorType) {
+    pushQuoteFunnelEvent("quote_form_submit_error", {
+      branch: branch || getTrackingBranch(),
+      error_type: errorType || "submission_error",
+    });
+  }
+
+  function trackStepAbandon() {
+    if (!state.formStarted || state.submitSucceeded || state.abandonmentTracked) return;
+    state.abandonmentTracked = true;
+    pushQuoteFunnelEvent("quote_step_abandon", {
+      last_step_reached: state.highestStepReached,
+      step_number: getStepNumber(state.currentStepName),
+      step_name: state.currentStepName,
+      branch: getTrackingBranch(),
+      time_on_step: Math.max(0, Math.round((Date.now() - state.currentStepStartedAt) / 1000)),
+    });
   }
 
   function extractZipCodeFromText(value) {
@@ -776,7 +957,7 @@
     elements.estimateTargets.forEach(function (target) {
       target.textContent = NO_PRICE_MODE ? "Free quote" : formatCurrency(pricing.totalPrice);
     });
-    elements.submitButton.textContent = NO_PRICE_MODE ? "Send request" : `Send request — ${formatCurrency(pricing.totalPrice)}`;
+    elements.submitButton.textContent = NO_PRICE_MODE ? "Submit Request" : `Submit Request — ${formatCurrency(pricing.totalPrice)}`;
     elements.continueToNotes.disabled = !isAddressStepComplete();
   }
 
@@ -798,6 +979,15 @@
   function scrollToCard(card) {
     if (!card) return;
     card.scrollIntoView({ behavior: "smooth", block: "start" });
+    const heading = card.querySelector(".quote2-section-title");
+    if (heading) {
+      if (!heading.hasAttribute("tabindex")) {
+        heading.setAttribute("tabindex", "-1");
+      }
+      window.requestAnimationFrame(function () {
+        heading.focus({ preventScroll: true });
+      });
+    }
   }
 
   function refreshStepVisibility(options) {
@@ -811,6 +1001,9 @@
       setContactIntent("");
       state.intentAutoOpened = false;
       state.profileAutoOpened = false;
+      markCurrentStep("contact");
+    } else if (state.formStarted) {
+      trackStepComplete("contact");
     }
 
     const intentVisible = contactReady;
@@ -834,14 +1027,18 @@
 
     if (intentVisible && intentWasHidden && !settings.skipScroll && !state.intentAutoOpened) {
       state.intentAutoOpened = true;
+      markCurrentStep("intent");
       scrollToCard(elements.stepCards.intent);
       return;
     }
 
     if (profileVisible && profileWasHidden && !settings.skipScroll && !state.profileAutoOpened) {
       state.profileAutoOpened = true;
+      markCurrentStep("profile");
       scrollToCard(elements.stepCards.profile);
     }
+
+    updateProgressIndicator();
   }
 
   function setSelectedTime(timeValue) {
@@ -1028,7 +1225,16 @@
   }
 
   function initAddressFallback() {
+    if (state.addressFallbackMounted) return;
+    state.addressFallbackMounted = true;
     elements.addressInput.addEventListener("input", updateEstimateTargets);
+  }
+
+  function refreshAutocompletePredictions() {
+    if (!elements.addressInput || elements.addressInput.value.trim().length < 3) return;
+    window.setTimeout(function () {
+      elements.addressInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }, 0);
   }
 
   function mountAutocomplete() {
@@ -1050,6 +1256,7 @@
         handlePlaceSelect(autocomplete.getPlace());
       });
       state.autocompleteMounted = true;
+      refreshAutocompletePredictions();
     } catch (error) {
       initAddressFallback();
     }
@@ -1098,6 +1305,7 @@
     };
 
     elements.addressInput.addEventListener("focus", requestAutocomplete, { once: true });
+    elements.addressInput.addEventListener("input", requestAutocomplete, { once: true });
     elements.addressInput.addEventListener("pointerdown", requestAutocomplete, { once: true });
     elements.addressInput.addEventListener("touchstart", requestAutocomplete, {
       once: true,
@@ -1107,7 +1315,9 @@
 
   function openAddonsStep() {
     state.profileConfirmed = true;
+    trackStepComplete("profile", { branch: "b_calculate_online" });
     refreshStepVisibility({ skipScroll: true });
+    markCurrentStep("addons");
     scrollToCard(elements.stepCards.addons);
   }
 
@@ -1115,8 +1325,13 @@
     state.contactIntent = intent || "";
     [elements.callMeButton, elements.calculateOnlineButton].forEach(function (button) {
       if (!button) return;
-      button.classList.toggle("is-active", button === elements.calculateOnlineButton && state.contactIntent === "calculate");
+      button.classList.toggle(
+        "is-active",
+        (button === elements.callMeButton && state.contactIntent === "call") ||
+          (button === elements.calculateOnlineButton && state.contactIntent === "calculate")
+      );
     });
+    updateProgressIndicator();
   }
 
   function buildCallMePayload() {
@@ -1181,6 +1396,7 @@
       form_id: "quote2Form",
       form_name: "quote2Form",
       form_type: "callback",
+      branch: "a_call_me",
       form_location: window.location.pathname,
       page_version: getFormHiddenValue("page_version"),
       event_id: generateTrackingEventId(),
@@ -1200,9 +1416,14 @@
   async function submitCallMeRequest() {
     if (!isContactStepComplete() || state.callMeSubmitting) {
       setNotice("Please enter your name and a valid US phone number first.", "warning");
+      trackValidationError("contact", "contact", "Please enter your name and a valid US phone number first.");
       return;
     }
 
+    setContactIntent("call");
+    markCurrentStep("intent");
+    trackBranchSelected("call_me");
+    trackStepComplete("intent", { branch: "a_call_me" });
     state.callMeSubmitting = true;
     setChoiceButtonsDisabled(true);
     const callMeLabel = elements.callMeButton ? elements.callMeButton.querySelector(".quote2-choice-label") : null;
@@ -1215,6 +1436,7 @@
       const payload = buildCallMePayload();
       await submitQuoteToBackend(payload);
       trackCallbackLeadSubmission();
+      trackSubmitSuccess("a_call_me", CALLBACK_CONVERSION_VALUE);
       if (elements.callbackSuccessCard) {
         elements.callbackSuccessCard.hidden = false;
       }
@@ -1222,11 +1444,15 @@
       if (elements.stickyEstimate) {
         elements.stickyEstimate.hidden = true;
       }
-      setNotice("Спасибо, мы свяжемся с вами в ближайшее время.", "success");
+      if (elements.progress) {
+        elements.progress.hidden = true;
+      }
+      setNotice("Your request has been submitted. We'll be in touch shortly.", "success");
       if (elements.callbackSuccessCard) {
         elements.callbackSuccessCard.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     } catch (error) {
+      trackSubmitError("a_call_me", error && error.message ? error.message : "callback_submission_error");
       setNotice(error && error.message ? error.message : "We could not send the request right now.", "error");
     } finally {
       state.callMeSubmitting = false;
@@ -1240,17 +1466,24 @@
   function openOnlineCalculator() {
     if (!isContactStepComplete()) {
       setNotice("Please enter your name and a valid US phone number first.", "warning");
+      trackValidationError("contact", "contact", "Please enter your name and a valid US phone number first.");
       return;
     }
     setContactIntent("calculate");
+    markCurrentStep("intent");
+    trackBranchSelected("calculate_online");
+    trackStepComplete("intent", { branch: "b_calculate_online" });
     refreshStepVisibility({ skipScroll: true });
+    markCurrentStep("profile");
     scrollToCard(elements.stepCards.profile);
   }
 
   function openAddressStep() {
     state.addonsConfirmed = true;
+    trackStepComplete("addons", { branch: "b_calculate_online" });
     refreshStepVisibility({ skipScroll: true });
     ensureAutocompleteReady();
+    markCurrentStep("address");
     scrollToCard(elements.stepCards.address);
   }
 
@@ -1259,12 +1492,15 @@
     if (addressStepMessage) {
       setAddressError(addressStepMessage);
       setFormError(addressStepMessage);
+      trackValidationError("address", "address", addressStepMessage);
       return;
     }
     setAddressError("");
     setFormError("");
     state.addressConfirmed = true;
+    trackStepComplete("address", { branch: "b_calculate_online" });
     refreshStepVisibility({ skipScroll: true });
+    markCurrentStep("notes");
     scrollToCard(elements.stepCards.notes);
   }
 
@@ -1274,12 +1510,16 @@
     const phoneComplete = isCompleteUsPhone(elements.phone.value);
 
     if (!fullName) {
-      setFormError("Please enter the customer's name.");
+      const message = "Please enter your name.";
+      setFormError(message);
+      trackValidationError("fullName", "contact", message);
       return false;
     }
 
     if (!phoneDigits || !phoneComplete) {
-      setFormError("Please enter a valid US phone number.");
+      const message = "Please enter a valid US phone number.";
+      setFormError(message);
+      trackValidationError("phone", "contact", message);
       return false;
     }
 
@@ -1287,11 +1527,14 @@
     if (addressStepMessage) {
       setAddressError(addressStepMessage);
       setFormError(addressStepMessage);
+      trackValidationError("address", "address", addressStepMessage);
       return false;
     }
 
     if (!elements.consentCheckbox.checked) {
-      setFormError("Please confirm consent so we can continue with the request.");
+      const message = "Please confirm consent so we can continue with the request.";
+      setFormError(message);
+      trackValidationError("sms_consent", "notes", message);
       return false;
     }
 
@@ -1377,6 +1620,7 @@
         event_id: generateTrackingEventId(),
         value: Number(totalValue) || 50,
         currency: "USD",
+        branch: "b_calculate_online",
         form_id: "quote2-form",
         form_name: "Quote Form (Multi-step)",
         form_type: "multi-step-quote",
@@ -1530,10 +1774,11 @@
     event.preventDefault();
 
     if (!validateForm()) return;
+    trackStepComplete("notes", { branch: "b_calculate_online" });
 
     const originalLabel = elements.submitButton.textContent;
     elements.submitButton.disabled = true;
-    elements.submitButton.textContent = "Sending...";
+    elements.submitButton.textContent = "Submitting...";
 
     try {
       const payload = buildQuotePayload();
@@ -1548,6 +1793,8 @@
       try {
         await trackQuoteLeadSubmission(payload, canonicalTotal);
       } catch (trackingError) {}
+
+      trackSubmitSuccess("b_calculate_online", canonicalTotal);
 
       state.latestCheckoutData = {
         contactData: payload.contactData,
@@ -1564,9 +1811,13 @@
       if (elements.stickyEstimate) {
         elements.stickyEstimate.hidden = true;
       }
-      setNotice("Quote request submitted successfully.", "success");
+      if (elements.progress) {
+        elements.progress.hidden = true;
+      }
+      setNotice("Your request has been submitted. We'll be in touch shortly.", "success");
       elements.successCard.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
+      trackSubmitError("b_calculate_online", error && error.message ? error.message : "quote_submission_error");
       setFormError(error && error.message ? error.message : "We could not send the request right now.");
     } finally {
       elements.submitButton.disabled = false;
@@ -1635,6 +1886,37 @@
     elements.continueToNotes.addEventListener("click", openNotesStep);
   }
 
+  function initBackButtons() {
+    elements.backButtons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        const stepName = button.getAttribute("data-back-step") || "contact";
+        const card = elements.stepCards[stepName];
+        if (!card) return;
+        markCurrentStep(stepName);
+        scrollToCard(card);
+      });
+    });
+  }
+
+  function initStepFocusTracking() {
+    Object.keys(elements.stepCards).forEach(function (stepName) {
+      const card = elements.stepCards[stepName];
+      if (!card) return;
+      card.addEventListener("focusin", function () {
+        markCurrentStep(stepName);
+      });
+    });
+  }
+
+  function initFormStartTracking() {
+    [elements.fullName, elements.phone].forEach(function (field) {
+      field.addEventListener("focus", trackFormStart, { once: true });
+      field.addEventListener("input", trackFormStart, { once: true });
+    });
+    window.addEventListener("pagehide", trackStepAbandon);
+    window.addEventListener("beforeunload", trackStepAbandon);
+  }
+
   function initNoPriceMode() {
     if (!NO_PRICE_MODE) return;
 
@@ -1672,10 +1954,14 @@
     initPhoneInput();
     initGeneralFieldListeners();
     initContinueButtons();
+    initBackButtons();
+    initStepFocusTracking();
+    initFormStartTracking();
     initAutocomplete();
     applyPrefilledContactData();
     setServiceType("regular");
     updateEstimateTargets();
+    updateProgressIndicator();
     refreshStepVisibility({ skipScroll: true });
     showPaymentStatusFromQuery();
 
