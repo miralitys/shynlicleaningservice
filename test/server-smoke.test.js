@@ -943,7 +943,10 @@ test("serves the regular-cleaning ads duplicate as an indexable sitemap route", 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /Recurring House Cleaning Services/i);
-  assert.match(body, /Recurring House Cleaning Service Near You &mdash; From \$135 Weekly &middot; \$145 Bi-Weekly/);
+  assert.match(
+    body,
+    /<span style="color: rgb\(158, 68, 90\);">Recurring House Cleaning Service<\/span> Near You &mdash; From \$135 Weekly &middot; \$145 Bi-Weekly/
+  );
   assert.doesNotMatch(body, /Keep your home consistently clean, calm, and comfortable with professional service/);
   assert.match(body, /Same cleaner each visit <span class="shynli-service-ads-benefits">&middot; No long-term contract &middot; Pay after we clean<\/span>/);
   assert.match(body, /Our regular house cleaning service includes weekly, bi-weekly, or monthly recurring visits/);
