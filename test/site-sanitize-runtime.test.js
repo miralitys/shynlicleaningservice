@@ -337,7 +337,7 @@ test("builds no-calculator v2 pages with static anchor pricing", () => {
   const homeAdsHtml = sanitizeHtml(readFixture("page108488156.html"), "/ads-v2");
   const serviceAreasHtml = sanitizeHtml(readFixture("page108912616.html"), "/service-areas-v2");
 
-  for (const html of [pricingHtml, regularAdsHtml, deepAdsHtml, moveAdsHtml, homeAdsHtml, serviceAreasHtml]) {
+  for (const html of [pricingHtml, moveAdsHtml]) {
     assert.match(html, /class="shynli-anchor-pricing"/);
     assert.match(html, /Regular Cleaning<\/span><span class="shynli-anchor-pricing__range">\$120 &ndash; \$200/);
     assert.match(html, /Deep Cleaning<\/span><span class="shynli-anchor-pricing__range">\$180 &ndash; \$350/);
@@ -346,8 +346,27 @@ test("builds no-calculator v2 pages with static anchor pricing", () => {
     assert.doesNotMatch(html, /id="cleaningCalculator"/);
   }
 
+  for (const html of [deepAdsHtml, homeAdsHtml, serviceAreasHtml]) {
+    assert.doesNotMatch(html, /id="cleaningCalculator"/);
+  }
+
+  assert.doesNotMatch(regularAdsHtml, /class="shynli-anchor-pricing"/);
+  assert.match(regularAdsHtml, /id="shynli-regular-trust-strip"/);
+  assert.match(regularAdsHtml, /id="shynli-regular-pricing"/);
+  assert.match(regularAdsHtml, /Weekly Cleaning[\s\S]*Bi-Weekly Cleaning[\s\S]*Monthly Cleaning/);
+  assert.match(regularAdsHtml, /href="\/quote-no-price"/);
+  assert.doesNotMatch(regularAdsHtml, /href="\/quote-no-calculator"/);
+  assert.doesNotMatch(regularAdsHtml, /Submit an Application/);
+
   assert.match(pricingHtml, /Get Your Free Quote/);
-  assert.match(pricingHtml, /Want to estimate your price online\? Use our calculator/);
+  assert.match(pricingHtml, /House Cleaning[\s\S]*Service Prices[\s\S]*in Chicagoland/);
+  assert.match(pricingHtml, /Transparent rates for regular cleaning, deep cleaning, and move-in\/move-out cleaning/);
+  assert.match(pricingHtml, /Get an exact price in 60 seconds/);
+  assert.match(pricingHtml, /Compare Recurring Cleaning Plans/);
+  assert.match(pricingHtml, /Inside Cabinets \(empty\)<\/span><span class="pricing-v2-addon__price">\$45/);
+  assert.match(pricingHtml, /href="\/quote-no-price"/);
+  assert.doesNotMatch(pricingHtml, /Submit an Application/);
+  assert.doesNotMatch(pricingHtml, /href="\/quote"/);
   assert.doesNotMatch(pricingHtml, /Calculate <span style="color: rgb\(158, 68, 90\);">Your Cleaning Price<\/span>/);
 });
 

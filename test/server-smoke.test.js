@@ -955,6 +955,27 @@ test("serves the regular-cleaning ads duplicate as an indexable sitemap route", 
   assert.doesNotMatch(body, /Offer ends in/);
   assert.doesNotMatch(body, /data-shynli-ads-countdown/);
   assert.match(body, /GET FREE QUOTE/);
+  assert.match(body, /id="shynli-regular-trust-strip"/);
+  assert.match(body, /300\+ cleanings completed/);
+  assert.match(body, /Regular cleaning is a great fit if:/);
+  assert.match(body, /id="whats-included"/);
+  assert.match(body, /Picture frames and decor dusted/);
+  assert.match(body, /id="shynli-regular-pricing"/);
+  assert.match(body, /Weekly Cleaning[\s\S]*Bi-Weekly Cleaning[\s\S]*Monthly Cleaning/);
+  assert.match(body, /MOST POPULAR/);
+  assert.match(body, /Compare recurring cleaning plans/);
+  assert.match(body, /Not sure which frequency\? Tell us about your home and we(?:&apos;|&#39;)ll recommend the right schedule\./);
+  assert.match(body, /id="shynli-regular-addons"/);
+  assert.match(body, /Interior Add-Ons:[\s\S]*Inside Fridge/);
+  assert.match(body, /href="\/services\/deep-cleaning\/ads-v2"/);
+  assert.match(body, /href="\/services\/move-in-move-out-cleaning\/ads-v2"/);
+  assert.match(body, /href="\/quote-no-price"/);
+  assert.doesNotMatch(body, /href="\/quote-no-calculator"/);
+  assert.doesNotMatch(body, /Submit an Application/);
+  assert.doesNotMatch(body, /\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\./);
+  assert.match(body, /id="schema-service"[\s\S]*Recurring House Cleaning Service/);
+  assert.match(body, /id="schema-regular-cleaning-item-list"[\s\S]*Light dusting of all surfaces/);
+  assert.match(body, /id="schema-regular-cleaning-addons"[\s\S]*Interior Windows/);
   assert.doesNotMatch(body, /id="shynli-ads-countdown-runtime"/);
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
@@ -1075,10 +1096,13 @@ test("serves ads v2 no-calculator variants as indexable routes", async () => {
     "/ads-v2",
     "/service-areas-v2",
     "/pricing-v2",
-    "/services/regular-cleaning/ads-v2",
     "/services/deep-cleaning/ads-v2",
     "/services/move-in-move-out-cleaning/ads-v2",
   ];
+  const anchorPricingRoutes = new Set([
+    "/pricing-v2",
+    "/services/move-in-move-out-cleaning/ads-v2",
+  ]);
   const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
   const sitemapBody = await sitemapResponse.text();
 
@@ -1088,25 +1112,39 @@ test("serves ads v2 no-calculator variants as indexable routes", async () => {
 
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("content-type") || "", /text\/html/, route);
-    assert.match(body, /class="shynli-anchor-pricing"/, route);
-    assert.match(body, /Most homes &mdash; final price after free quote/, route);
-    assert.match(body, /Free quote in 60 seconds &mdash; no obligation/, route);
-    assert.match(body, /id="shynli-form-attribution-runtime"/, route);
+    if (anchorPricingRoutes.has(route)) {
+      assert.match(body, /class="shynli-anchor-pricing"/, route);
+      assert.match(body, /Most homes &mdash; final price after free quote/, route);
+      assert.match(body, /Free quote in 60 seconds &mdash; no obligation/, route);
+    }
+    if (route !== "/service-areas-v2") {
+      assert.match(body, /id="shynli-form-attribution-runtime"/, route);
+    }
     assert.doesNotMatch(body, /id="cleaningCalculator"/, route);
     assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/, route);
     assert.match(sitemapBody, new RegExp(`<loc>https://shynlicleaningservice\\.com${route}</loc>`), route);
   }
 
+  const pricingV2Response = await fetch(`${BASE_URL}/pricing-v2`);
+  const pricingV2Body = await pricingV2Response.text();
+  assert.match(pricingV2Body, /House Cleaning[\s\S]*Service Prices[\s\S]*in Chicagoland/);
+  assert.match(pricingV2Body, /Compare Recurring Cleaning Plans/);
+  assert.match(pricingV2Body, /Get an exact price in 60 seconds/);
+  assert.match(pricingV2Body, /href="\/quote-no-price"/);
+  assert.doesNotMatch(pricingV2Body, /href="\/quote"/);
+  assert.match(pricingV2Body, /"@type":"HouseCleaningBusiness"/);
+  assert.match(pricingV2Body, /"@type":"OfferCatalog"/);
+  assert.match(pricingV2Body, /"serviceType":"Weekly Home Cleaning"/);
+
   const pricingResponse = await fetch(`${BASE_URL}/pricing`);
   const pricingBody = await pricingResponse.text();
-  assert.match(pricingBody, /Prefer a quick quote instead\? Get a free quote/);
-  assert.match(pricingBody, /href="\/pricing-v2"/);
+  assert.equal(pricingResponse.status, 200);
+  assert.match(pricingBody, /House Cleaning Prices/);
 });
 
 test("points ads page quote CTAs to the no-calculator form", async () => {
   const routes = [
     "/ads",
-    "/ads-v2",
     "/services/move-in-move-out-cleaning/ads",
   ];
 
@@ -1122,6 +1160,7 @@ test("points ads page quote CTAs to the no-calculator form", async () => {
 
 test("points no-price ads quote CTAs to the no-price form", async () => {
   const routes = [
+    "/ads-v2",
     "/services/regular-cleaning/ads",
     "/services/regular-cleaning/ads-v2",
     "/services/deep-cleaning/ads",

@@ -652,11 +652,20 @@ const ROUTE_META_OVERRIDES = {
     title: "House Cleaning Prices | Shynli Cleaning",
   },
   "/pricing-v2": {
-    title: "House Cleaning Prices | Shynli Cleaning",
+    title: "House Cleaning Service Prices in Chicagoland | Shynli Cleaning",
+    description:
+      "Compare Shynli Cleaning rates for weekly, bi-weekly, monthly, regular, deep, and move-in/move-out cleaning in Chicago suburbs. Free quote in 60 seconds.",
     canonical: `${SITE_ORIGIN}/pricing-v2`,
+    ogTitle: "House Cleaning Service Prices in Chicagoland | Shynli Cleaning",
+    ogDescription:
+      "Transparent house cleaning rates from $135 per visit with no contracts, no hidden fees, and insured local cleaners.",
   },
   "/service-areas-v2": {
     title: "Service Areas | Shynli Cleaning",
+    description:
+      "Browse all 40+ Chicago suburb service areas for Shynli Cleaning. Find local pricing by city across DuPage, Will, and Kane counties.",
+    ogDescription:
+      "Browse all 40+ Chicago suburb service areas for Shynli Cleaning. Find local pricing by city across DuPage, Will, and Kane counties.",
     canonical: `${SITE_ORIGIN}/service-areas-v2`,
   },
   ...CITY_ROUTE_META_OVERRIDES,
