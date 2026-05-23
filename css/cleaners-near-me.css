@@ -111,10 +111,10 @@ body.near-page img {
 }
 
 .near-hero__content {
-  width: min(760px, calc(100% - 48px));
+  width: min(670px, calc(100% - 48px));
   margin-left: clamp(24px, 9.5vw, 184px);
   margin-right: auto;
-  padding: clamp(34px, 5vw, 64px) 0 clamp(30px, 5vw, 56px);
+  padding: clamp(28px, 4vw, 48px) 0 clamp(26px, 4vw, 44px);
   opacity: 0;
   transform: translate3d(0, 18px, 0);
   animation: nearRise 700ms 90ms ease forwards;
@@ -133,32 +133,32 @@ body.near-page img {
 }
 
 .near-hero__title {
-  max-width: 11.8em;
+  max-width: 10.7em;
   margin: 14px 0 0;
   color: var(--near-ink);
   font-family: var(--near-display);
-  font-size: clamp(46px, 4.9vw, 66px);
+  font-size: clamp(40px, 4.05vw, 56px);
   font-weight: 700;
-  line-height: 0.96;
+  line-height: 0.98;
   letter-spacing: 0;
   text-wrap: balance;
 }
 
 .near-hero__subhead {
-  max-width: 650px;
-  margin: 22px 0 0;
+  max-width: 600px;
+  margin: 18px 0 0;
   color: var(--near-ink);
-  font-size: clamp(18px, 1.55vw, 22px);
+  font-size: clamp(17px, 1.28vw, 20px);
   font-weight: 700;
-  line-height: 1.42;
+  line-height: 1.38;
 }
 
 .near-hero__copy {
-  max-width: 610px;
-  margin: 16px 0 0;
+  max-width: 560px;
+  margin: 14px 0 0;
   color: var(--near-muted);
-  font-size: 17px;
-  line-height: 1.72;
+  font-size: 16px;
+  line-height: 1.64;
 }
 
 .near-hero__actions {
