@@ -137,6 +137,20 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(createdOrderBody, /Bi-weekly/);
     assert.match(createdOrderBody, /2 ч 30 мин/);
     assert.match(createdOrderBody, /215 North Elm Street, Naperville, IL 60563/);
+    assert.match(createdOrderBody, /data-admin-manual-client-search/);
+    assert.match(createdOrderBody, /data-admin-manual-client-suggestions/);
+    assert.match(createdOrderBody, /name="selectedClientContactId"/);
+    assert.match(createdOrderBody, /name="selectedClientAddressPropertyType"/);
+    const clientLookupDataMatch = createdOrderBody.match(
+      /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
+    );
+    assert.ok(clientLookupDataMatch);
+    const clientLookupData = JSON.parse(clientLookupDataMatch[1]);
+    const manualLookupClient = clientLookupData.find((client) => client.name === "Manual Customer");
+    assert.ok(manualLookupClient);
+    assert.equal(manualLookupClient.phone, "3125557711");
+    assert.equal(manualLookupClient.email, "manual.customer@example.com");
+    assert.equal(manualLookupClient.address, "215 North Elm Street, Naperville, IL 60563");
     assert.match(createdOrderBody, /\$240\.00/);
     assert.match(createdOrderBody, new RegExp(`name="entryId" value="${escapeRegex(createdOrderId)}"`));
     assert.match(
