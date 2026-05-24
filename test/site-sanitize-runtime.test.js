@@ -1134,6 +1134,10 @@ test("rebuilds the homepage review block with unique current reviews", () => {
   assert.match(css, /animation-name:\s*clientsSayDriftRight/);
   assert.match(css, /animation-name:\s*clientsSayDriftLeft/);
   assert.match(css, /animation-play-state:\s*paused/);
+  assert.match(css, /@media \(max-width:639px\)\{[\s\S]*?overflow-x:auto/);
+  assert.match(css, /scroll-snap-type:x mandatory/);
+  assert.match(css, /-webkit-overflow-scrolling:touch/);
+  assert.match(css, /clients-say-home__track\{width:max-content;animation:none!important;transform:none!important/);
   assert.doesNotMatch(css, /clientsSayMove/);
 });
 
