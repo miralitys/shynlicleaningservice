@@ -1814,6 +1814,101 @@ test("sends Telegram notifications for inbound SMS webhooks without a message bo
   }
 });
 
+test("does not match inbound SMS webhooks to unrelated active orders", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "api.telegram.org",
+      status: 200,
+      body: {
+        ok: true,
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_LOCATION_ID: "location-123",
+    WEB_LEADS_TELEGRAM_BOT_TOKEN: "telegram-test-token",
+    WEB_LEADS_TELEGRAM_CHAT_ID: "123456",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Mona Existing Order",
+        customerPhone: "7808858185",
+        customerEmail: "mona.existing@example.com",
+        serviceType: "regular",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "0",
+        totalPrice: "155.00",
+        fullAddress: "904 Follow Up Drive, Bolingbrook, IL 60440",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const entryId = new URL(createOrderResponse.headers.get("location") || "", started.baseUrl).searchParams.get("order");
+    assert.ok(entryId);
+
+    const webhookResponse = await fetch(`${started.baseUrl}/api/ghl/inbound-sms`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType: "InboundMessage",
+        messageType: "SMS",
+        direction: "inbound",
+        from: "+1 (424) 419-9102",
+        contactName: "Ramis Test 2",
+        body: "",
+      }),
+    });
+
+    assert.equal(webhookResponse.status, 202);
+    const webhookPayload = await webhookResponse.json();
+    assert.equal(webhookPayload.received, true);
+    assert.equal(webhookPayload.ignored, true);
+    assert.equal(webhookPayload.reason, "target-not-found");
+
+    const telegramCalls = await waitFor(async () => {
+      const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8").catch(() => "");
+      const parsedCalls = captureRaw
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      return parsedCalls.some((call) => String(call.url).includes("api.telegram.org"))
+        ? parsedCalls.filter((call) => String(call.url).includes("api.telegram.org"))
+        : null;
+    });
+    const telegramPayload = JSON.parse(telegramCalls[0].body);
+    assert.match(telegramPayload.text, /New inbound SMS/);
+    assert.match(telegramPayload.text, /Ramis Test 2/);
+    assert.match(telegramPayload.text, /\+1 \(424\) 419-9102/);
+    assert.match(telegramPayload.text, /Matched: Unmatched contact/);
+    assert.doesNotMatch(telegramPayload.text, /Mona Existing Order/);
+    assert.doesNotMatch(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("sends Telegram notifications for missed call webhooks from GHL", async () => {
   const fetchStub = createFetchStub([
     {
