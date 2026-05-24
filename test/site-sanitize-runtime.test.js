@@ -614,8 +614,8 @@ test("keeps the home copy hand-coded without Tilda runtime", () => {
   assert.match(html, /<main>/);
   assert.match(html, /<section class="hero"/);
   assert.match(html, /House Cleaning[\s\S]*Services in Naperville[\s\S]*&amp; Chicago Suburbs/i);
-  assert.match(html, /href="\/css\/home-copy-clean\.css\?v=20260523-cssmin1"/);
-  assert.match(html, /src="\/js\/home-copy-clean\.js\?v=20260522-match67"/);
+  assert.match(html, /href="\/css\/home-copy-clean\.css\?v=20260524-reviews2"/);
+  assert.match(html, /src="\/js\/home-copy-clean\.js\?v=20260524-reviews2"/);
   assert.match(html, /src="\/images\/home-copy-team\.png"|srcset="\/images\/home-copy-team-480\.webp/);
   assert.match(html, /class="hero__team"[^>]*loading="eager"[^>]*decoding="sync"[^>]*fetchpriority="high"/);
   assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/">/);
@@ -1133,12 +1133,21 @@ test("rebuilds the homepage review block with unique current reviews", () => {
   const css = fs.readFileSync(path.join(__dirname, "..", "css", "home-copy-clean.css"), "utf8");
   assert.match(css, /animation-name:\s*clientsSayDriftRight/);
   assert.match(css, /animation-name:\s*clientsSayDriftLeft/);
+  assert.match(css, /animation-duration:\s*31s/);
+  assert.match(css, /animation-duration:\s*29s/);
   assert.match(css, /animation-play-state:\s*paused/);
   assert.match(css, /@media \(max-width:639px\)\{[\s\S]*?overflow-x:auto/);
-  assert.match(css, /scroll-snap-type:x mandatory/);
+  assert.match(css, /scroll-snap-type:none/);
   assert.match(css, /-webkit-overflow-scrolling:touch/);
   assert.match(css, /clients-say-home__track\{width:max-content;animation:none!important;transform:none!important/);
   assert.doesNotMatch(css, /clientsSayMove/);
+
+  const js = fs.readFileSync(path.join(__dirname, "..", "js", "home-copy-clean.js"), "utf8");
+  assert.match(js, /function initClientsSayMobileScroll/);
+  assert.match(js, /clients-say-home__rail/);
+  assert.match(js, /max-width: 639px/);
+  assert.match(js, /setAutoScrollLeft/);
+  assert.match(js, /addEventListener\("pointerdown", pause/);
 });
 
 test("keeps the regular-cleaning main route hand-coded without Tilda runtime", () => {

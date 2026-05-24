@@ -178,6 +178,83 @@
     });
   }
 
+  function initClientsSayMobileScroll() {
+    const rails = Array.from(document.querySelectorAll(".clients-say-home__rail"));
+    if (!rails.length || !window.matchMedia) return;
+
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const states = rails.map((rail, index) => ({
+      rail,
+      direction: index % 2 === 0 ? -1 : 1,
+      pausedUntil: 0,
+      initialized: false,
+    }));
+    let rafId = 0;
+    let lastTime = 0;
+
+    function pauseRail(state, duration = 1400) {
+      state.pausedUntil = performance.now() + duration;
+    }
+
+    function setAutoScrollLeft(state, value) {
+      state.rail.scrollLeft = value;
+    }
+
+    states.forEach((state) => {
+      const pause = () => pauseRail(state);
+      state.rail.addEventListener("pointerdown", pause, { passive: true });
+      state.rail.addEventListener("touchstart", pause, { passive: true });
+      state.rail.addEventListener("mousedown", pause, { passive: true });
+    });
+
+    function syncInitialPosition(state) {
+      if (state.initialized) return;
+      const maxScroll = state.rail.scrollWidth - state.rail.clientWidth;
+      if (maxScroll <= 0) return;
+      if (state.direction < 0) {
+        setAutoScrollLeft(state, Math.min(maxScroll, Math.round(maxScroll * 0.18)));
+      }
+      state.initialized = true;
+    }
+
+    function tick(timestamp) {
+      const enabled = mobileQuery.matches && !reducedMotionQuery.matches;
+      const delta = Math.min(48, timestamp - (lastTime || timestamp));
+      lastTime = timestamp;
+
+      if (enabled) {
+        states.forEach((state) => {
+          syncInitialPosition(state);
+          const maxScroll = state.rail.scrollWidth - state.rail.clientWidth;
+          if (maxScroll <= 0 || timestamp < state.pausedUntil) return;
+
+          const next = state.rail.scrollLeft + state.direction * 0.075 * delta;
+          if (next <= 0) {
+            setAutoScrollLeft(state, 0);
+            state.direction = 1;
+          } else if (next >= maxScroll) {
+            setAutoScrollLeft(state, maxScroll);
+            state.direction = -1;
+          } else {
+            setAutoScrollLeft(state, next);
+          }
+        });
+      }
+
+      rafId = window.requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (rafId || !window.requestAnimationFrame) return;
+      rafId = window.requestAnimationFrame(tick);
+    }
+
+    start();
+  }
+
+  initClientsSayMobileScroll();
+
   document.addEventListener("pointerdown", (event) => {
     const interactive = event.target.closest("a, button");
     if (!interactive) {
