@@ -1687,7 +1687,11 @@ test("records inbound SMS replies from the GHL webhook into the order dialog his
     assert.match(telegramPayload.text, /New inbound SMS/);
     assert.match(telegramPayload.text, /Webhook SMS Lead/);
     assert.match(telegramPayload.text, /Webhook says hello\./);
-    assert.match(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
+    assert.match(
+      telegramPayload.text,
+      /GHL: https:\/\/app\.gohighlevel\.com\/v2\/location\/location-123\/conversations\/conversations\/conversation-webhook-order-1/
+    );
+    assert.doesNotMatch(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
 
     const historyResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -1723,6 +1727,47 @@ test("records inbound SMS replies from the GHL webhook into the order dialog his
 test("sends Telegram notifications for inbound SMS webhooks without a message body", async () => {
   const fetchStub = createFetchStub([
     {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [
+          {
+            id: "contact-bodyless-sms-1",
+            phone: "+1 (424) 419-9104",
+          },
+        ],
+      },
+    },
+    {
+      method: "GET",
+      match: "/conversations/search",
+      status: 200,
+      body: {
+        conversations: [
+          {
+            id: "conversation-bodyless-sms-1",
+          },
+        ],
+      },
+    },
+    {
+      method: "GET",
+      match: "/conversations/conversation-bodyless-sms-1/messages?limit=100",
+      status: 200,
+      body: {
+        messages: [
+          {
+            id: "message-bodyless-sms-1",
+            conversationId: "conversation-bodyless-sms-1",
+            body: "",
+            direction: "inbound",
+            dateAdded: "2026-04-18T15:10:00.000Z",
+          },
+        ],
+      },
+    },
+    {
       method: "POST",
       match: "api.telegram.org",
       status: 200,
@@ -1733,6 +1778,7 @@ test("sends Telegram notifications for inbound SMS webhooks without a message bo
   ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
     GHL_LOCATION_ID: "location-123",
     WEB_LEADS_TELEGRAM_BOT_TOKEN: "telegram-test-token",
     WEB_LEADS_TELEGRAM_CHAT_ID: "123456",
@@ -1807,7 +1853,11 @@ test("sends Telegram notifications for inbound SMS webhooks without a message bo
     assert.match(telegramPayload.text, /New inbound SMS/);
     assert.match(telegramPayload.text, /Bodyless SMS Lead/);
     assert.match(telegramPayload.text, /Message: -/);
-    assert.match(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
+    assert.match(
+      telegramPayload.text,
+      /GHL: https:\/\/app\.gohighlevel\.com\/v2\/location\/location-123\/conversations\/conversations\/conversation-bodyless-sms-1/
+    );
+    assert.doesNotMatch(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -1901,6 +1951,10 @@ test("does not match inbound SMS webhooks to unrelated active orders", async () 
     assert.match(telegramPayload.text, /Ramis Test 2/);
     assert.match(telegramPayload.text, /\+1 \(424\) 419-9102/);
     assert.match(telegramPayload.text, /Matched: Unmatched contact/);
+    assert.match(
+      telegramPayload.text,
+      /GHL: https:\/\/app\.gohighlevel\.com\/v2\/location\/location-123\/conversations/
+    );
     assert.doesNotMatch(telegramPayload.text, /Mona Existing Order/);
     assert.doesNotMatch(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
   } finally {
@@ -1999,7 +2053,11 @@ test("sends Telegram notifications for missed call webhooks from GHL", async () 
     assert.match(telegramPayload.text, /Missed call/);
     assert.match(telegramPayload.text, /Missed Call Lead/);
     assert.match(telegramPayload.text, /Status: missed/);
-    assert.match(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
+    assert.match(
+      telegramPayload.text,
+      /GHL: https:\/\/app\.gohighlevel\.com\/v2\/location\/location-123\/conversations\/conversations\/conversation-webhook-missed-call-1/
+    );
+    assert.doesNotMatch(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
     assert.doesNotMatch(telegramPayload.text, /Message:/);
   } finally {
     await stopServer(started.child);
