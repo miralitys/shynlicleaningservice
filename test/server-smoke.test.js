@@ -1184,10 +1184,10 @@ test("serves deep-cleaning ads-v2 guide updates", async () => {
   const body = await response.text();
 
   assert.equal(response.status, 200);
-  assert.match(body, /From <span class="shynli-service-ads-price-new">\$180<\/span>/);
+  assert.match(body, /From <span class="shynli-service-ads-price-new">\$195<\/span>/);
   assert.match(body, /Fully Insured up to \$1M/);
   assert.match(body, /class="shynli-deep-ads-trust-strip"/);
-  assert.match(body, /Deep cleaning starts from \$180 for typical homes/);
+  assert.match(body, /Deep cleaning starts from \$195 for typical homes/);
   assert.match(body, /final price based on size and condition &mdash; <a href="\/quote-no-price">get instant quote<\/a>/);
   assert.match(body, /Deep cleaning is a great fit if:/);
   assert.match(body, /id="whats-included"/);
