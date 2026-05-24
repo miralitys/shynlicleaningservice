@@ -337,12 +337,21 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(funnelBody, /admin-orders-filter-toggle/);
     assert.match(funnelBody, /admin-clients-search-form/);
     assert.match(funnelBody, /data-lead-dropzone="new"/);
+    assert.match(
+      funnelBody,
+      /data-lead-dropzone="confirmed"[\s\S]*data-lead-dropzone="completed"[\s\S]*data-lead-dropzone="declined"/
+    );
+    assert.match(
+      funnelBody,
+      /<option value="confirmed"[^>]*>Подтверждено<\/option>\s*<option value="completed"[^>]*>Выполнено<\/option>\s*<option value="declined"[^>]*>Отказ<\/option>/
+    );
     assert.match(funnelBody, /data-quote-funnel-stage-form="true"/);
     assert.match(funnelBody, /admin-quote-funnel-discussion-dialog/);
     assert.match(funnelBody, /data-quote-funnel-discussion-form="true"/);
     assert.match(funnelBody, /X-SHYNLI-ADMIN-AJAX/);
     assert.doesNotMatch(funnelBody, /stageForm\.submit\(\)/);
     assert.match(funnelBody, /\.admin-quote-funnel-board\s*\{[^}]*align-items:\s*stretch;/);
+    assert.match(funnelBody, /grid-template-columns:\s*repeat\(6,\s*minmax\(260px,\s*1fr\)\)/);
     assert.match(funnelBody, /\.admin-quote-funnel-list\s*\{[^}]*flex:\s*1 1 auto;/);
     assert.match(funnelBody, /\.admin-quote-funnel-card-detail\[hidden\]\s*\{\s*display:\s*none !important;/);
     assert.doesNotMatch(funnelBody, /Найдено \d+ из \d+ заявок/);
@@ -553,6 +562,37 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Funnel Lead/);
+
+    const completeLeadResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update-lead-status",
+        entryId,
+        leadStatus: "completed",
+        returnTo: "/admin/quote-ops?section=funnel",
+      }),
+    });
+    assert.equal(completeLeadResponse.status, 303);
+    assert.match(completeLeadResponse.headers.get("location") || "", /notice=lead-stage-saved/);
+
+    const completedFunnelResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=funnel&leadStatus=completed&q=${encodeURIComponent("funnel-request-1")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const completedFunnelBody = await completedFunnelResponse.text();
+    assert.equal(completedFunnelResponse.status, 200);
+    assert.match(completedFunnelBody, /Выполнено/);
+    assert.match(completedFunnelBody, /data-quote-entry-status="completed"/);
+    assert.match(completedFunnelBody, /data-quote-card-deadline-row="true" hidden/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
