@@ -166,6 +166,107 @@ test("allows admins to add a manual order from the orders page", async () => {
   }
 });
 
+test("sorts scheduled orders in the funnel by visit date", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    async function createScheduledManualOrder({ customerName, selectedDate, selectedTime }) {
+      const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+        method: "POST",
+        redirect: "manual",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+        body: new URLSearchParams({
+          action: "create-manual-order",
+          returnTo: "/admin/orders",
+          customerName,
+          customerPhone: "3125557788",
+          customerEmail: "scheduled.sort@example.com",
+          serviceType: "standard",
+          selectedDate,
+          selectedTime,
+          serviceDurationHours: "2",
+          serviceDurationMinutes: "0",
+          frequency: "",
+          totalPrice: "180.00",
+          fullAddress: "100 Schedule Sort Avenue, Chicago, IL 60601",
+        }),
+      });
+
+      assert.equal(createOrderResponse.status, 303);
+      const createdOrderId = new URL(
+        createOrderResponse.headers.get("location") || "",
+        started.baseUrl
+      ).searchParams.get("order");
+      assert.ok(createdOrderId);
+
+      const scheduleOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+        method: "POST",
+        redirect: "manual",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+        body: new URLSearchParams({
+          entryId: createdOrderId,
+          returnTo: "/admin/orders",
+          orderStatus: "scheduled",
+        }),
+      });
+
+      assert.equal(scheduleOrderResponse.status, 303);
+      return createdOrderId;
+    }
+
+    await createScheduledManualOrder({
+      customerName: "Scheduled Sort May Visit",
+      selectedDate: "2026-05-26",
+      selectedTime: "09:00",
+    });
+    await createScheduledManualOrder({
+      customerName: "Scheduled Sort June Thirteen Visit",
+      selectedDate: "2026-06-13",
+      selectedTime: "14:00",
+    });
+    await createScheduledManualOrder({
+      customerName: "Scheduled Sort June Second Visit",
+      selectedDate: "2026-06-02",
+      selectedTime: "09:00",
+    });
+
+    const ordersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Scheduled Sort")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+
+    const scheduledLane = getOrderFunnelLaneSlice(ordersBody, "scheduled", "en-route");
+    const mayVisitIndex = scheduledLane.indexOf("Scheduled Sort May Visit");
+    const juneSecondVisitIndex = scheduledLane.indexOf("Scheduled Sort June Second Visit");
+    const juneThirteenVisitIndex = scheduledLane.indexOf("Scheduled Sort June Thirteen Visit");
+    assert.ok(mayVisitIndex !== -1);
+    assert.ok(juneSecondVisitIndex !== -1);
+    assert.ok(juneThirteenVisitIndex !== -1);
+    assert.ok(mayVisitIndex < juneSecondVisitIndex);
+    assert.ok(juneSecondVisitIndex < juneThirteenVisitIndex);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
 test("requires service duration when admins add a manual order", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
