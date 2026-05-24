@@ -295,6 +295,109 @@ test("allows admins to edit client form fields inside an order", async () => {
   }
 });
 
+test("allows admins to edit visit date and time from the order summary card", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Editable Schedule Customer",
+        customerPhone: "3125558833",
+        customerEmail: "editable.schedule@example.com",
+        serviceType: "standard",
+        selectedDate: "2026-04-22",
+        selectedTime: "13:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
+        frequency: "",
+        totalPrice: "240.00",
+        fullAddress: "215 North Elm Street, Naperville, IL 60563",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const createdOrderId = new URL(
+      createOrderResponse.headers.get("location") || "",
+      started.baseUrl
+    ).searchParams.get("order");
+    assert.ok(createdOrderId);
+
+    const focusedOrderResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(createdOrderId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const focusedOrderBody = await focusedOrderResponse.text();
+    assert.equal(focusedOrderResponse.status, 200);
+    assert.match(focusedOrderBody, /Дата и время/);
+    assert.match(
+      focusedOrderBody,
+      /data-admin-order-schedule-open="admin-order-detail-dialog-[^"]+-schedule-edit-panel"/
+    );
+    assert.match(
+      focusedOrderBody,
+      /data-admin-order-schedule-editor="admin-order-detail-dialog-[^"]+-schedule-edit-panel"[\s\S]*name="selectedDate"[\s\S]*value="04\/22\/2026"[\s\S]*name="selectedTime"[\s\S]*value="1:30 PM"/
+    );
+
+    const saveScheduleResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: createdOrderId,
+        returnTo: `/admin/orders?order=${createdOrderId}`,
+        selectedDate: "2026-07-04",
+        selectedTime: "14:15",
+      }),
+    });
+
+    assert.equal(saveScheduleResponse.status, 303);
+    assert.match(
+      saveScheduleResponse.headers.get("location") || "",
+      new RegExp(`(?=.*notice=order-saved)(?=.*order=${escapeRegex(createdOrderId)})`)
+    );
+
+    const updatedOrderResponse = await fetch(
+      `${started.baseUrl}${saveScheduleResponse.headers.get("location") || ""}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const updatedOrderBody = await updatedOrderResponse.text();
+    assert.equal(updatedOrderResponse.status, 200);
+    assert.match(updatedOrderBody, /Заказ обновлён/);
+    assert.match(updatedOrderBody, /Дата и время[\s\S]*07\/04\/2026, 02:15 PM/);
+    assert.match(
+      updatedOrderBody,
+      /data-admin-order-schedule-editor="admin-order-detail-dialog-[^"]+-schedule-edit-panel"[\s\S]*name="selectedDate"[\s\S]*value="07\/04\/2026"[\s\S]*name="selectedTime"[\s\S]*value="2:15 PM"/
+    );
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
 test("sorts scheduled orders in the funnel by visit date", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
