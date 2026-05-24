@@ -225,6 +225,102 @@ test("persists service duration and carries it into recurring orders", () => {
   assert.equal(recurringSubmission.payloadForRetry.adminOrder.serviceDurationMinutes, 150);
 });
 
+test("persists editable client form fields into quote calculator data", () => {
+  const { applyOrderEntryUpdates } = createMutationDomain();
+  const entry = {
+    id: "order-quote-fields-1",
+    requestId: "quote-fields-1",
+    customerName: "Quote Fields Customer",
+    customerPhone: "3125550101",
+    serviceType: "standard",
+    serviceName: "Standard",
+    fullAddress: "100 Old St, Chicago, IL 60601",
+    selectedDate: "2026-04-20",
+    selectedTime: "10:00",
+    totalPrice: 240,
+    payloadForRetry: {
+      calculatorData: {
+        serviceType: "standard",
+        frequency: "weekly",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:00",
+        fullAddress: "100 Old St, Chicago, IL 60601",
+        services: ["ovenCleaning"],
+        addOns: ["insideCabinets"],
+        quantityServices: {
+          interiorWindowsCleaning: 1,
+        },
+      },
+      adminOrder: {
+        isCreated: true,
+        status: "scheduled",
+        frequency: "weekly",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:00",
+        paymentStatus: "unpaid",
+        totalPrice: 240,
+      },
+    },
+  };
+
+  applyOrderEntryUpdates(entry, {
+    serviceType: "deep",
+    serviceName: "Deep",
+    selectedDate: "2026-05-02",
+    selectedTime: "14:30",
+    frequency: "biweekly",
+    fullAddress: "200 New Ave, Naperville, IL 60540",
+    quoteCalculatorData: {
+      serviceType: "deep",
+      frequency: "biweekly",
+      selectedDate: "2026-05-02",
+      selectedTime: "14:30",
+      formattedDateTime: "",
+      rooms: "4",
+      bathrooms: "3",
+      squareMeters: "2250",
+      hasPets: "dog",
+      basementCleaning: "yes",
+      consent: "no",
+      services: ["insideCabinets", "refrigeratorCleaning"],
+      quantityServices: {
+        interiorWindowsCleaning: "5",
+        blindsCleaning: "2",
+        bedLinenChange: "1",
+      },
+      fullAddress: "200 New Ave, Naperville, IL 60540",
+      address: "200 New Ave",
+      addressLine2: "Suite 8",
+      city: "Naperville",
+      state: "IL",
+      zipCode: "60540",
+    },
+  });
+
+  const payload = getEntryPayload(entry);
+  assert.equal(entry.serviceType, "deep");
+  assert.equal(entry.serviceName, "Deep");
+  assert.equal(entry.fullAddress, "200 New Ave, Naperville, IL 60540");
+  assert.equal(entry.selectedDate, "2026-05-02");
+  assert.equal(entry.selectedTime, "14:30");
+  assert.equal(getEntryOrderState(entry).frequency, "");
+  assert.equal(payload.calculatorData.serviceType, "deep");
+  assert.equal(payload.calculatorData.frequency, undefined);
+  assert.equal(payload.calculatorData.rooms, "4");
+  assert.equal(payload.calculatorData.bathrooms, "3");
+  assert.equal(payload.calculatorData.hasPets, "dog");
+  assert.equal(payload.calculatorData.basementCleaning, "yes");
+  assert.equal(payload.calculatorData.consent, "no");
+  assert.deepEqual(payload.calculatorData.services, ["insideCabinets", "refrigeratorCleaning"]);
+  assert.equal(payload.calculatorData.addOns, undefined);
+  assert.deepEqual(payload.calculatorData.quantityServices, {
+    interiorWindowsCleaning: 5,
+    blindsCleaning: 2,
+    bedLinenChange: 1,
+  });
+  assert.equal(payload.calculatorData.addressLine2, "Suite 8");
+});
+
 test("clears recurring frequency for deep cleaning orders", () => {
   const { applyOrderEntryUpdates, buildRecurringOrderSubmission } = createMutationDomain();
   const entry = {

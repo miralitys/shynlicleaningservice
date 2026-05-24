@@ -166,6 +166,135 @@ test("allows admins to add a manual order from the orders page", async () => {
   }
 });
 
+test("allows admins to edit client form fields inside an order", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Editable Form Customer",
+        customerPhone: "3125558811",
+        customerEmail: "editable.form@example.com",
+        serviceType: "standard",
+        selectedDate: "2026-04-22",
+        selectedTime: "13:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
+        frequency: "weekly",
+        totalPrice: "240.00",
+        fullAddress: "215 North Elm Street, Naperville, IL 60563",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const createdOrderId = new URL(
+      createOrderResponse.headers.get("location") || "",
+      started.baseUrl
+    ).searchParams.get("order");
+    assert.ok(createdOrderId);
+
+    const focusedOrderResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(createdOrderId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const focusedOrderBody = await focusedOrderResponse.text();
+    assert.equal(focusedOrderResponse.status, 200);
+    assert.match(focusedOrderBody, /Поля из формы клиента/);
+    assert.match(
+      focusedOrderBody,
+      /data-admin-toggle-target="admin-order-detail-dialog-[^"]+-quote-fields-edit-panel"/
+    );
+    assert.match(focusedOrderBody, /name="action" value="update-order-quote-fields"/);
+    assert.match(focusedOrderBody, /name="quoteRooms"/);
+    assert.match(focusedOrderBody, /name="quoteServices"/);
+    assert.match(focusedOrderBody, /name="quoteFullAddress"/);
+
+    const saveQuoteFieldsForm = new URLSearchParams();
+    saveQuoteFieldsForm.set("action", "update-order-quote-fields");
+    saveQuoteFieldsForm.set("entryId", createdOrderId);
+    saveQuoteFieldsForm.set("returnTo", `/admin/orders?order=${createdOrderId}`);
+    saveQuoteFieldsForm.set("quoteServiceType", "standard");
+    saveQuoteFieldsForm.set("quoteFrequency", "monthly");
+    saveQuoteFieldsForm.set("quoteSelectedDate", "2026-06-03");
+    saveQuoteFieldsForm.set("quoteSelectedTime", "09:00");
+    saveQuoteFieldsForm.set("quoteConsent", "yes");
+    saveQuoteFieldsForm.set("quoteRooms", "4");
+    saveQuoteFieldsForm.set("quoteBathrooms", "3");
+    saveQuoteFieldsForm.set("quoteSquareMeters", "2250");
+    saveQuoteFieldsForm.set("quoteHasPets", "dog");
+    saveQuoteFieldsForm.set("quoteBasementCleaning", "no");
+    saveQuoteFieldsForm.append("quoteServices", "insideCabinets");
+    saveQuoteFieldsForm.append("quoteServices", "refrigeratorCleaning");
+    saveQuoteFieldsForm.set("quoteInteriorWindowsCleaning", "5");
+    saveQuoteFieldsForm.set("quoteBlindsCleaning", "2");
+    saveQuoteFieldsForm.set("quoteBedLinenChange", "1");
+    saveQuoteFieldsForm.set("quoteFullAddress", "500 New Quote Lane, Naperville, IL 60540");
+    saveQuoteFieldsForm.set("quoteAddress", "500 New Quote Lane");
+    saveQuoteFieldsForm.set("quoteAddressLine2", "Suite 8");
+    saveQuoteFieldsForm.set("quoteCity", "Naperville");
+    saveQuoteFieldsForm.set("quoteState", "IL");
+    saveQuoteFieldsForm.set("quoteZipCode", "60540");
+
+    const saveQuoteFieldsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: saveQuoteFieldsForm,
+    });
+    assert.equal(saveQuoteFieldsResponse.status, 303);
+    assert.match(
+      saveQuoteFieldsResponse.headers.get("location") || "",
+      new RegExp(`(?=.*notice=order-form-fields-saved)(?=.*order=${escapeRegex(createdOrderId)})`)
+    );
+
+    const updatedOrderResponse = await fetch(
+      `${started.baseUrl}${saveQuoteFieldsResponse.headers.get("location") || ""}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const updatedOrderBody = await updatedOrderResponse.text();
+    assert.equal(updatedOrderResponse.status, 200);
+    assert.match(updatedOrderBody, /Поля из формы клиента обновлены/);
+    assert.match(updatedOrderBody, /500 New Quote Lane, Naperville, IL 60540/);
+    assert.match(updatedOrderBody, /Повторяемость[\s\S]*Monthly/);
+    assert.match(updatedOrderBody, /Запрошенный слот[\s\S]*06\/03\/2026, 09:00 AM/);
+    assert.match(updatedOrderBody, /Спальни[\s\S]*4/);
+    assert.match(updatedOrderBody, /Санузлы[\s\S]*3/);
+    assert.match(updatedOrderBody, /Питомцы[\s\S]*Собака/);
+    assert.match(updatedOrderBody, /Inside Cabinets Cleaning/);
+    assert.match(updatedOrderBody, /Inside Refrigerator Cleaning/);
+    assert.match(updatedOrderBody, /Interior Windows Cleaning[\s\S]*5/);
+    assert.match(updatedOrderBody, /Apt \/ suite[\s\S]*Suite 8/);
+    assert.match(updatedOrderBody, /ZIP[\s\S]*60540/);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
 test("sorts scheduled orders in the funnel by visit date", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
