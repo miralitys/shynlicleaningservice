@@ -24,19 +24,25 @@ function getInlineScripts(html) {
 }
 
 test("serves the admin login page when admin secrets are configured", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
   const started = await startServer({
-    env: {
-      ADMIN_MASTER_SECRET: "admin_secret_test",
-    },
+    env,
   });
+  const config = loadAdminConfig(env);
 
   try {
     const response = await fetch(`${started.baseUrl}/admin/login`);
     const body = await response.text();
+    const emailInput = body.match(/<input class="admin-input" type="email" name="email" value="([^"]*)"/);
 
     assert.equal(response.status, 200);
     assert.match(body, /Вход в админку/i);
     assert.match(body, /Продолжить/i);
+    assert.ok(emailInput);
+    assert.equal(emailInput[1], "");
+    assert.doesNotMatch(body, new RegExp(`value="${config.email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`, "i"));
     for (const script of getInlineScripts(body)) {
       assert.doesNotThrow(() => new Function(script));
     }
