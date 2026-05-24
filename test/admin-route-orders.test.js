@@ -37,6 +37,20 @@ const { createStripeStub } = require("./server-test-helpers");
 const DIRECT_REVIEW_URL_PATTERN =
   /https:\/\/g\.page\/r\/CUxwaxYdaymBEAI\/review/;
 
+async function waitFor(predicate, options = {}) {
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : 3000;
+  const intervalMs = Number.isFinite(options.intervalMs) ? options.intervalMs : 50;
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const result = await predicate();
+    if (result) return result;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+
+  return predicate();
+}
+
 function getChicagoDateTimeValueFromNow(offsetMs = 0) {
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Chicago",
@@ -1582,9 +1596,22 @@ test("loads inbound SMS replies into the order dialog history", async () => {
 });
 
 test("records inbound SMS replies from the GHL webhook into the order dialog history", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "api.telegram.org",
+      status: 200,
+      body: {
+        ok: true,
+      },
+    },
+  ]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
     GHL_LOCATION_ID: "location-123",
+    WEB_LEADS_TELEGRAM_BOT_TOKEN: "telegram-test-token",
+    WEB_LEADS_TELEGRAM_CHAT_ID: "123456",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
   };
   const started = await startServer({ env });
   const config = loadAdminConfig(env);
@@ -1645,6 +1672,23 @@ test("records inbound SMS replies from the GHL webhook into the order dialog his
     assert.equal(webhookPayload.target, "entry");
     assert.equal(webhookPayload.targetId, entryId);
 
+    const telegramCalls = await waitFor(async () => {
+      const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8").catch(() => "");
+      const parsedCalls = captureRaw
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      return parsedCalls.some((call) => String(call.url).includes("api.telegram.org"))
+        ? parsedCalls.filter((call) => String(call.url).includes("api.telegram.org"))
+        : null;
+    });
+    const telegramPayload = JSON.parse(telegramCalls[0].body);
+    assert.match(telegramPayload.text, /New inbound SMS/);
+    assert.match(telegramPayload.text, /Webhook SMS Lead/);
+    assert.match(telegramPayload.text, /Webhook says hello\./);
+    assert.match(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
+
     const historyResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
       headers: {
@@ -1672,6 +1716,199 @@ test("records inbound SMS replies from the GHL webhook into the order dialog his
     assert.equal(historyPayload.sms.history[0].message, "Webhook says hello.");
   } finally {
     await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
+test("sends Telegram notifications for inbound SMS webhooks without a message body", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "api.telegram.org",
+      status: 200,
+      body: {
+        ok: true,
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_LOCATION_ID: "location-123",
+    WEB_LEADS_TELEGRAM_BOT_TOKEN: "telegram-test-token",
+    WEB_LEADS_TELEGRAM_CHAT_ID: "123456",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Bodyless SMS Lead",
+        customerPhone: "4244199104",
+        customerEmail: "bodyless.sms@example.com",
+        serviceType: "regular",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "0",
+        totalPrice: "155.00",
+        fullAddress: "903 Follow Up Drive, Bolingbrook, IL 60440",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const entryId = new URL(createOrderResponse.headers.get("location") || "", started.baseUrl).searchParams.get("order");
+    assert.ok(entryId);
+
+    const webhookResponse = await fetch(`${started.baseUrl}/api/ghl/inbound-sms`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType: "InboundMessage",
+        messageType: "SMS",
+        direction: "inbound",
+        from: "+1 (424) 419-9104",
+        contactName: "Bodyless SMS Lead",
+        body: "",
+      }),
+    });
+
+    assert.equal(webhookResponse.status, 200);
+    const webhookPayload = await webhookResponse.json();
+    assert.equal(webhookPayload.received, true);
+    assert.equal(webhookPayload.matched, true);
+    assert.equal(webhookPayload.target, "entry");
+    assert.equal(webhookPayload.targetId, entryId);
+
+    const telegramCalls = await waitFor(async () => {
+      const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8").catch(() => "");
+      const parsedCalls = captureRaw
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      return parsedCalls.some((call) => String(call.url).includes("api.telegram.org"))
+        ? parsedCalls.filter((call) => String(call.url).includes("api.telegram.org"))
+        : null;
+    });
+    const telegramPayload = JSON.parse(telegramCalls[0].body);
+    assert.match(telegramPayload.text, /New inbound SMS/);
+    assert.match(telegramPayload.text, /Bodyless SMS Lead/);
+    assert.match(telegramPayload.text, /Message: -/);
+    assert.match(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
+test("sends Telegram notifications for missed call webhooks from GHL", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "api.telegram.org",
+      status: 200,
+      body: {
+        ok: true,
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_LOCATION_ID: "location-123",
+    WEB_LEADS_TELEGRAM_BOT_TOKEN: "telegram-test-token",
+    WEB_LEADS_TELEGRAM_CHAT_ID: "123456",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Missed Call Lead",
+        customerPhone: "4244199103",
+        customerEmail: "missed.call@example.com",
+        serviceType: "regular",
+        selectedDate: "2026-04-20",
+        selectedTime: "10:30",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "0",
+        totalPrice: "155.00",
+        fullAddress: "902 Follow Up Drive, Bolingbrook, IL 60440",
+      }),
+    });
+
+    assert.equal(createOrderResponse.status, 303);
+    const entryId = new URL(createOrderResponse.headers.get("location") || "", started.baseUrl).searchParams.get("order");
+    assert.ok(entryId);
+
+    const webhookResponse = await fetch(`${started.baseUrl}/api/ghl/inbound-sms`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType: "MissedCall",
+        messageType: "CALL",
+        direction: "inbound",
+        from: "+1 (424) 419-9103",
+        callStatus: "missed",
+        dateAdded: "2026-04-18T16:05:00.000Z",
+        conversationId: "conversation-webhook-missed-call-1",
+        contactId: "contact-webhook-missed-call-1",
+        locationId: "location-123",
+      }),
+    });
+
+    assert.equal(webhookResponse.status, 200);
+    const webhookPayload = await webhookResponse.json();
+    assert.equal(webhookPayload.received, true);
+    assert.equal(webhookPayload.matched, true);
+    assert.equal(webhookPayload.target, "entry");
+    assert.equal(webhookPayload.targetId, entryId);
+
+    const telegramCalls = await waitFor(async () => {
+      const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8").catch(() => "");
+      const parsedCalls = captureRaw
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      return parsedCalls.some((call) => String(call.url).includes("api.telegram.org"))
+        ? parsedCalls.filter((call) => String(call.url).includes("api.telegram.org"))
+        : null;
+    });
+    const telegramPayload = JSON.parse(telegramCalls[0].body);
+    assert.match(telegramPayload.text, /Missed call/);
+    assert.match(telegramPayload.text, /Missed Call Lead/);
+    assert.match(telegramPayload.text, /Status: missed/);
+    assert.match(telegramPayload.text, new RegExp(`/admin/orders\\?order=${escapeRegex(entryId)}`));
+    assert.doesNotMatch(telegramPayload.text, /Message:/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
   }
 });
 
