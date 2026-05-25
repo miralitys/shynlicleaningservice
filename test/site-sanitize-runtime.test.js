@@ -475,7 +475,7 @@ test("uses the shared blog-style header across public pages", () => {
     assert.match(html, /href="\/about-us">About Us/, fixture.route);
     assert.match(html, /href="\/faq">FAQ/, fixture.route);
     assert.match(html, /href="\/quote">Get Free Quote/, fixture.route);
-    assert.match(html, /href="tel:\+16304466235"/, fixture.route);
+    assert.match(html, /href="tel:\+16308127077"/, fixture.route);
     assert.match(html, /data-city-modal-open/, fixture.route);
     assert.match(html, /id="shynli-site-city-modal"/, fixture.route);
     assert.equal(countMatches(html, /id="shynli-site-header"/g), 1, fixture.route);
@@ -502,7 +502,7 @@ test("uses the shared blog-style footer across public pages", () => {
     assert.match(html, /Practical cleaning guidance when you want to learn/, fixture.route);
     assert.match(html, /href="\/services\/regular-cleaning">Regular Cleaning/, fixture.route);
     assert.match(html, /href="\/blog">Blog/, fixture.route);
-    assert.match(html, /href="tel:\+16304466235">\+1 \(630\) 446-6235/, fixture.route);
+    assert.match(html, /href="tel:\+16308127077">\+1 \(630\) 812-7077/, fixture.route);
     assert.match(html, /Serving Chicago suburbs with practical cleaning help online/, fixture.route);
     assert.equal(countMatches(html, /id="shynli-site-footer"/g), 1, fixture.route);
     assert.equal(countMatches(html, /id="shynli-site-footer-style"/g), 1, fixture.route);
