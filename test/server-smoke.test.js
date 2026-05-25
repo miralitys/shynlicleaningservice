@@ -22,6 +22,51 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function normalizePathname(pathname) {
+  const pathValue = String(pathname || "/").replace(/\/+$/g, "");
+  return pathValue || "/";
+}
+
+function extractAnchorAndFormTargets(body) {
+  const html = String(body || "").replace(
+    /<(?:script|style)\b[\s\S]*?<\/(?:script|style)>/gi,
+    ""
+  );
+  const targets = [];
+  const tagPattern = /<(?:a|area|form)\b[^>]*>/gi;
+  for (const tagMatch of html.matchAll(tagPattern)) {
+    const tag = tagMatch[0];
+    const targetMatch = tag.match(/\b(?:href|action)=(["'])(.*?)\1/i);
+    if (targetMatch) targets.push(targetMatch[2]);
+  }
+  return targets;
+}
+
+function toInternalLinkTarget(rawTarget) {
+  const target = String(rawTarget || "").trim();
+  if (
+    !target ||
+    target.startsWith("#") ||
+    /^(?:tel|mailto|sms|javascript|data):/i.test(target)
+  ) {
+    return null;
+  }
+  let parsed;
+  try {
+    parsed = new URL(target, "https://shynlicleaningservice.com");
+  } catch {
+    return null;
+  }
+  const hostname = parsed.hostname.replace(/^www\./i, "");
+  if (!/^https?:$/i.test(parsed.protocol) || hostname !== "shynlicleaningservice.com") {
+    return null;
+  }
+  return {
+    pathname: normalizePathname(parsed.pathname),
+    target: `${normalizePathname(parsed.pathname)}${parsed.search}${parsed.hash}`,
+  };
+}
+
 const EXPECTED_SERVICE_ZIP_LOOKUP = {
   "60101": zipTargets(["Addison", "/addison"]),
   "60103": zipTargets(["Bartlett", "/bartlett"]),
@@ -1140,6 +1185,73 @@ test("serves ads v2 no-calculator variants as indexable routes", async () => {
   const pricingBody = await pricingResponse.text();
   assert.equal(pricingResponse.status, 200);
   assert.match(pricingBody, /House Cleaning Prices/);
+});
+
+test("keeps v2 pages inside the v2 link environment", async () => {
+  const routes = [
+    "/ads-v2",
+    "/service-areas-v2",
+    "/pricing-v2",
+    "/services/regular-cleaning/ads-v2",
+    "/services/deep-cleaning/ads-v2",
+    "/services/move-in-move-out-cleaning/ads-v2",
+    "/quote-no-price",
+  ];
+  const allowedPrefixes = [
+    "/ads-v2",
+    "/pricing-v2",
+    "/service-areas-v2",
+    "/services/regular-cleaning/ads-v2",
+    "/services/deep-cleaning/ads-v2",
+    "/services/move-in-move-out-cleaning/ads-v2",
+    "/quote-no-price",
+  ];
+  const forbiddenPaths = new Set([
+    "/",
+    "/ads",
+    "/pricing",
+    "/service-areas",
+    "/cleaners-near-me",
+    "/services/regular-cleaning",
+    "/services/regular-cleaning/ads",
+    "/services/deep-cleaning",
+    "/services/deep-cleaning/ads",
+    "/services/move-in-move-out-cleaning",
+    "/services/move-in-move-out-cleaning/ads",
+    "/services/airbnb-cleaning",
+    "/services/commercial-cleaning",
+    "/services/post-construction-cleaning",
+    "/about-us",
+    "/faq",
+    "/blog",
+    "/contacts",
+    "/privacy-policy",
+    "/terms-of-service",
+    "/cancellation-policy",
+    "/quote",
+    "/quote-no-calculator",
+    "/quote2",
+  ]);
+
+  for (const route of routes) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
+    const targets = extractAnchorAndFormTargets(body).map(toInternalLinkTarget).filter(Boolean);
+
+    assert.equal(response.status, 200, route);
+    assert.ok(targets.length > 0, `${route} should expose navigable links or forms`);
+    for (const { pathname, target } of targets) {
+      const isAllowed = allowedPrefixes.some(
+        (prefix) =>
+          target === prefix ||
+          target.startsWith(`${prefix}/`) ||
+          target.startsWith(`${prefix}?`) ||
+          target.startsWith(`${prefix}#`)
+      );
+      assert.ok(isAllowed, `${route} has a non-v2 link target: ${target}`);
+      assert.ok(!forbiddenPaths.has(pathname), `${route} still links to legacy path: ${target}`);
+    }
+  }
 });
 
 test("points ads page quote CTAs to the no-calculator form", async () => {
