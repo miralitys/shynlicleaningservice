@@ -245,6 +245,7 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(focusedOrderBody, /name="quoteRooms"/);
     assert.match(focusedOrderBody, /name="quoteServices"/);
     assert.match(focusedOrderBody, /name="quoteFullAddress"/);
+    assert.match(focusedOrderBody, /name="quoteAdditionalDetails"/);
 
     const saveQuoteFieldsForm = new URLSearchParams();
     saveQuoteFieldsForm.set("action", "update-order-quote-fields");
@@ -271,6 +272,7 @@ test("allows admins to edit client form fields inside an order", async () => {
     saveQuoteFieldsForm.set("quoteCity", "Naperville");
     saveQuoteFieldsForm.set("quoteState", "IL");
     saveQuoteFieldsForm.set("quoteZipCode", "60540");
+    saveQuoteFieldsForm.set("quoteAdditionalDetails", "Please focus on the basement shelves.");
 
     const saveQuoteFieldsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -309,6 +311,7 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(updatedOrderBody, /Interior Windows Cleaning[\s\S]*5/);
     assert.match(updatedOrderBody, /Apt \/ suite[\s\S]*Suite 8/);
     assert.match(updatedOrderBody, /ZIP[\s\S]*60540/);
+    assert.match(updatedOrderBody, /Комментарий клиента[\s\S]*Please focus on the basement shelves\./);
   } finally {
     await stopServer(started.child);
   }
