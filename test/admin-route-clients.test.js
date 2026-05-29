@@ -585,6 +585,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updatedClientDialog, /\+1\(312\)555-0111/);
     assert.match(updatedClientDialog, /\+1\(312\)555-0112/);
     assert.match(updatedClientDialog, /name="secondaryPhone"/);
+    assert.match(updatedClientDialog, /name="primaryPhone" value="secondary"/);
     assert.match(updatedClientDialog, /jane\.cooper@example\.com/i);
     assert.match(updatedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.match(updatedClientDialog, /500 River Rd, Naperville, IL 60540/);
@@ -798,6 +799,108 @@ test("renders the clients table with filters and request history", async () => {
     );
     assert.equal(contactCalls.length, 3);
     assert.equal(autoSmsCalls.length, 4);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+    fetchStub.cleanup();
+  }
+});
+
+test("allows admins to make the secondary client phone primary", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-client-primary-phone-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-primary-phone-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: path.join(tempDir, "admin-staff-store.json"),
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "client-primary-phone-request",
+      fullName: "Priya Phone",
+      phone: "312-555-0201",
+      email: "priya.phone@example.com",
+      fullAddress: "101 Primary Ave, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "client-primary-phone-request");
+
+    const updateClientForm = new URLSearchParams({
+      action: "update-client",
+      clientKey: "3125550201",
+      returnTo: "/admin/clients?client=3125550201",
+      name: "Priya Phone",
+      phone: "3125550201",
+      secondaryPhone: "3125550202",
+      primaryPhone: "secondary",
+      email: "priya.phone@example.com",
+    });
+    updateClientForm.append("addresses", "101 Primary Ave, Naperville, IL 60540");
+    updateClientForm.append("addressPropertyTypes", "house");
+    updateClientForm.append("addressSquareFootages", "1600 sq ft");
+    updateClientForm.append("addressRoomCounts", "3 rooms");
+    updateClientForm.append("addressBathroomCounts", "2 baths");
+    updateClientForm.append("addressPets", "none");
+    updateClientForm.append("addressNotes", "");
+
+    const updateClientResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+      },
+      body: updateClientForm,
+    });
+    assert.equal(updateClientResponse.status, 200);
+    const updateClientPayload = await updateClientResponse.json();
+    assert.equal(updateClientPayload.ok, true);
+    assert.equal(updateClientPayload.notice, "client-saved");
+    assert.equal(updateClientPayload.clientKey, "3125550202");
+    assert.match(updateClientPayload.redirectUrl, /notice=client-saved/);
+    assert.equal(new URL(updateClientPayload.redirectUrl, started.baseUrl).searchParams.get("client"), "3125550202");
+
+    const updatedClientResponse = await fetch(`${started.baseUrl}${updateClientPayload.redirectUrl}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const updatedClientBody = await updatedClientResponse.text();
+    assert.equal(updatedClientResponse.status, 200);
+    assert.match(updatedClientBody, /name="phone" value="3125550202"/);
+    assert.match(updatedClientBody, /name="secondaryPhone" value="3125550201"/);
+    assert.match(updatedClientBody, /\+1\(312\)555-0202 • \+1\(312\)555-0201 • priya\.phone@example\.com/i);
+    assert.match(updatedClientBody, /2-й: \+1\(312\)555-0201/i);
+
+    const oldPhoneFilterResponse = await fetch(`${started.baseUrl}/admin/clients?phone=3125550201`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const oldPhoneFilterBody = await oldPhoneFilterResponse.text();
+    assert.equal(oldPhoneFilterResponse.status, 200);
+    assert.match(oldPhoneFilterBody, /Priya Phone/);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
