@@ -1165,6 +1165,10 @@ test("creates a completed-order follow-up task and records the next cleaning out
     assert.match(agreedTasksBody, /Договорились/);
     assert.match(agreedTasksBody, /Не договорились/);
     assert.match(agreedTasksBody, /data-quote-task-agreed-toggle=/);
+    assert.match(
+      agreedTasksBody,
+      /class="admin-label admin-quote-task-dialog-field" data-visible="true">[\s\S]*?name="nextCleaningAt"/
+    );
     const agreedTaskId = getLeadTaskIdByEntryId(agreedTasksBody, agreedEntryId);
     assert.ok(agreedTaskId);
 
