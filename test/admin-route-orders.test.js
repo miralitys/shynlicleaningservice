@@ -99,6 +99,11 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(ordersBody, /data-admin-save-confirm-accept="true"/);
     assert.match(
       ordersBody,
+      /id="admin-manual-order-create-dialog"[^>]*data-admin-dialog-dirty-confirm="true"/
+    );
+    assert.match(ordersBody, /В форме есть несохранённые данные\. Закрыть окно и сбросить их\?/);
+    assert.match(
+      ordersBody,
       /<form class="admin-form-grid" method="post" action="\/admin\/orders" data-admin-save-confirm="true">[\s\S]*?name="action" value="create-manual-order"/
     );
     assert.match(ordersBody, /id="admin-manual-order-address"/);
