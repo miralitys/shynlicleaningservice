@@ -499,6 +499,20 @@ test("sorts scheduled orders in the funnel by visit date", async () => {
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
 
+    const ordersTableStart = ordersBody.indexOf("<tbody>");
+    const ordersTableEnd = ordersBody.indexOf("</tbody>", ordersTableStart);
+    assert.ok(ordersTableStart !== -1);
+    assert.ok(ordersTableEnd !== -1);
+    const ordersTableBody = ordersBody.slice(ordersTableStart, ordersTableEnd);
+    const tableMayVisitIndex = ordersTableBody.indexOf("Scheduled Sort May Visit");
+    const tableJuneSecondVisitIndex = ordersTableBody.indexOf("Scheduled Sort June Second Visit");
+    const tableJuneThirteenVisitIndex = ordersTableBody.indexOf("Scheduled Sort June Thirteen Visit");
+    assert.ok(tableMayVisitIndex !== -1);
+    assert.ok(tableJuneSecondVisitIndex !== -1);
+    assert.ok(tableJuneThirteenVisitIndex !== -1);
+    assert.ok(tableMayVisitIndex < tableJuneSecondVisitIndex);
+    assert.ok(tableJuneSecondVisitIndex < tableJuneThirteenVisitIndex);
+
     const scheduledLane = getOrderFunnelLaneSlice(ordersBody, "scheduled", "en-route");
     const mayVisitIndex = scheduledLane.indexOf("Scheduled Sort May Visit");
     const juneSecondVisitIndex = scheduledLane.indexOf("Scheduled Sort June Second Visit");
