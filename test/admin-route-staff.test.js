@@ -399,6 +399,8 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(calendarSectionBody, /data-admin-team-calendar="true"/);
     assert.match(calendarSectionBody, /data-admin-team-calendar-scroll="true"/);
     assert.match(calendarSectionBody, /admin-team-calendar-wrap-dragging/);
+    assert.match(calendarSectionBody, /calendarView=month/);
+    assert.match(calendarSectionBody, />1 месяц<\/a>/);
     assert.match(calendarSectionBody, /class="admin-team-calendar-entry admin-team-calendar-entry-button admin-team-calendar-entry-order/);
     assert.match(calendarSectionBody, /data-admin-dialog-open="admin-staff-assignment-dialog-/);
     assert.match(calendarSectionBody, /aria-label="Открыть заказ Jane Doe"/);

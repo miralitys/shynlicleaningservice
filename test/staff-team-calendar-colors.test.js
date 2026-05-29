@@ -50,6 +50,32 @@ test("assigns unique team calendar colors to each cleaner", () => {
   assert.equal(new Set(colors).size, staffSummaries.length);
 });
 
+test("renders a one month team calendar view toggle", () => {
+  const helpers = createCalendarHelpers();
+  const days = helpers.buildStaffTeamCalendarWindow("2026-05-28", "month");
+  const html = helpers.renderStaffTeamCalendarTable(
+    [
+      {
+        id: "ramis",
+        name: "Ramis Iaparov",
+        role: "Клинер",
+        assignedOrders: [],
+      },
+    ],
+    "2026-05-28",
+    { view: "month" }
+  );
+
+  assert.equal(helpers.normalizeStaffTeamCalendarView("month"), "month");
+  assert.equal(helpers.getStaffTeamCalendarViewDayCount("month"), 31);
+  assert.equal(days.length, 31);
+  assert.equal(days[0].dateValue, "2026-05-28");
+  assert.equal(days[30].dateValue, "2026-06-27");
+  assert.match(html, /1 месяц/);
+  assert.match(html, /calendarView=month/);
+  assert.match(html, /admin-team-calendar-view-link-active[^>]*>1 месяц/);
+});
+
 test("renders an assigned order only under the assigned cleaner with that cleaner color", () => {
   const helpers = createCalendarHelpers();
   const html = helpers.renderStaffTeamCalendarTable(
