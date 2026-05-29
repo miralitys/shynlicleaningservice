@@ -52,7 +52,7 @@ test("assigns unique team calendar colors to each cleaner", () => {
 
 test("renders a one month team calendar view toggle", () => {
   const helpers = createCalendarHelpers();
-  const days = helpers.buildStaffTeamCalendarWindow("2026-05-28", "month");
+  const days = helpers.buildStaffTeamCalendarWindow("2026-05-29", "month");
   const requestedDayWindow = helpers.buildStaffTeamCalendarWindow("2026-05-29", "month");
   const html = helpers.renderStaffTeamCalendarTable(
     [
@@ -60,26 +60,46 @@ test("renders a one month team calendar view toggle", () => {
         id: "ramis",
         name: "Ramis Iaparov",
         role: "Клинер",
-        assignedOrders: [],
+        assignedOrders: [
+          {
+            scheduleDate: "2026-05-29",
+            scheduleTime: "10:00",
+            scheduleTimestamp: Date.UTC(2026, 4, 29, 15, 0, 0),
+            assignmentStatus: "confirmed",
+            entry: {
+              id: "order-month",
+              customerName: "Month Customer",
+              serviceName: "Standard",
+            },
+          },
+        ],
       },
     ],
-    "2026-05-28",
+    "2026-05-29",
     { view: "month" }
   );
 
   assert.equal(helpers.normalizeStaffTeamCalendarView("month"), "month");
-  assert.equal(helpers.getStaffTeamCalendarViewDayCount("month"), 63);
-  assert.equal(days.length, 62);
-  assert.equal(days[0].dateValue, "2026-04-28");
-  assert.equal(days[30].dateValue, "2026-05-28");
-  assert.equal(days[61].dateValue, "2026-06-28");
-  assert.equal(requestedDayWindow[0].dateValue, "2026-04-29");
-  assert.equal(requestedDayWindow[requestedDayWindow.length - 1].dateValue, "2026-06-29");
+  assert.equal(helpers.getStaffTeamCalendarViewDayCount("month"), 42);
+  assert.equal(days.length, 35);
+  assert.equal(days[0].dateValue, "2026-04-27");
+  assert.equal(days[4].dateValue, "2026-05-01");
+  assert.equal(days[32].dateValue, "2026-05-29");
+  assert.equal(days[34].dateValue, "2026-05-31");
+  assert.equal(requestedDayWindow[0].dateValue, "2026-04-27");
+  assert.equal(requestedDayWindow[requestedDayWindow.length - 1].dateValue, "2026-05-31");
+  assert.match(html, /Май 2026/);
   assert.match(html, /1 месяц/);
   assert.match(html, /calendarView=month/);
-  assert.match(html, /calendarStart=2026-04-28&amp;calendarView=month/);
-  assert.match(html, /calendarStart=2026-06-28&amp;calendarView=month/);
+  assert.match(html, /calendarStart=2026-04-29&amp;calendarView=month/);
+  assert.match(html, /calendarStart=2026-06-29&amp;calendarView=month/);
   assert.match(html, /admin-team-calendar-view-link-active[^>]*>1 месяц/);
+  assert.match(html, /admin-team-calendar-month-grid/);
+  assert.match(html, /admin-team-calendar-month-day-outside/);
+  assert.match(html, /admin-team-calendar-month-day-anchor/);
+  assert.match(html, /admin-team-calendar-month-event/);
+  assert.match(html, /Month Customer/);
+  assert.doesNotMatch(html, /class="admin-table admin-team-calendar-table"/);
 });
 
 test("marks today in the team calendar date column", () => {

@@ -411,6 +411,23 @@ test("creates staff members and assigns them to orders through the staff workspa
     );
     assert.match(calendarSectionBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/staff\?section=calendar">Календарь<\/a>/);
 
+    const monthCalendarResponse = await fetch(
+      `${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-03-25&calendarView=month`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const monthCalendarBody = await monthCalendarResponse.text();
+    assert.equal(monthCalendarResponse.status, 200);
+    assert.match(monthCalendarBody, /admin-team-calendar-month-grid/);
+    assert.match(monthCalendarBody, /admin-team-calendar-month-weekdays/);
+    assert.match(monthCalendarBody, /admin-team-calendar-month-day-anchor/);
+    assert.match(monthCalendarBody, /admin-team-calendar-month-event/);
+    assert.match(monthCalendarBody, /Jane Doe/);
+    assert.doesNotMatch(monthCalendarBody, /class="admin-table admin-team-calendar-table"/);
+
     const assignmentsSectionResponse = await fetch(`${started.baseUrl}/admin/staff?section=assignments`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
