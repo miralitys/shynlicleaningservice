@@ -76,6 +76,27 @@ test("renders a one month team calendar view toggle", () => {
   assert.match(html, /admin-team-calendar-view-link-active[^>]*>1 месяц/);
 });
 
+test("marks today in the team calendar date column", () => {
+  const helpers = createCalendarHelpers();
+  const todayDate = helpers.getStaffCalendarTodayDateValue();
+  const html = helpers.renderStaffTeamCalendarTable(
+    [
+      {
+        id: "ramis",
+        name: "Ramis Iaparov",
+        role: "Клинер",
+        assignedOrders: [],
+      },
+    ],
+    todayDate,
+    { view: "day" }
+  );
+
+  assert.match(html, /class="admin-team-calendar-today-row"/);
+  assert.match(html, /data-admin-team-calendar-today="true"/);
+  assert.match(html, /class="admin-team-calendar-today-label">сегодня<\/span>/);
+});
+
 test("renders an assigned order only under the assigned cleaner with that cleaner color", () => {
   const helpers = createCalendarHelpers();
   const html = helpers.renderStaffTeamCalendarTable(
