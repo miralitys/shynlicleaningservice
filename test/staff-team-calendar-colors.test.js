@@ -53,6 +53,7 @@ test("assigns unique team calendar colors to each cleaner", () => {
 test("renders a one month team calendar view toggle", () => {
   const helpers = createCalendarHelpers();
   const days = helpers.buildStaffTeamCalendarWindow("2026-05-28", "month");
+  const requestedDayWindow = helpers.buildStaffTeamCalendarWindow("2026-05-29", "month");
   const html = helpers.renderStaffTeamCalendarTable(
     [
       {
@@ -67,12 +68,17 @@ test("renders a one month team calendar view toggle", () => {
   );
 
   assert.equal(helpers.normalizeStaffTeamCalendarView("month"), "month");
-  assert.equal(helpers.getStaffTeamCalendarViewDayCount("month"), 31);
-  assert.equal(days.length, 31);
-  assert.equal(days[0].dateValue, "2026-05-28");
-  assert.equal(days[30].dateValue, "2026-06-27");
+  assert.equal(helpers.getStaffTeamCalendarViewDayCount("month"), 63);
+  assert.equal(days.length, 62);
+  assert.equal(days[0].dateValue, "2026-04-28");
+  assert.equal(days[30].dateValue, "2026-05-28");
+  assert.equal(days[61].dateValue, "2026-06-28");
+  assert.equal(requestedDayWindow[0].dateValue, "2026-04-29");
+  assert.equal(requestedDayWindow[requestedDayWindow.length - 1].dateValue, "2026-06-29");
   assert.match(html, /1 месяц/);
   assert.match(html, /calendarView=month/);
+  assert.match(html, /calendarStart=2026-04-28&amp;calendarView=month/);
+  assert.match(html, /calendarStart=2026-06-28&amp;calendarView=month/);
   assert.match(html, /admin-team-calendar-view-link-active[^>]*>1 месяц/);
 });
 
