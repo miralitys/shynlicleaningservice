@@ -484,6 +484,7 @@ test("renders the clients table with filters and request history", async () => {
       returnTo: `/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}&addressKey=${encodeURIComponent(romeovilleAddressKey)}`,
       name: "Jane Cooper",
       phone: "+1(312)555-0111",
+      secondaryPhone: "(312) 555-0112",
       email: "jane.cooper@example.com",
     });
     [
@@ -582,6 +583,8 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updatedClientBody, /Карточка клиента обновлена/i);
     assert.match(updatedClientDialog, /Jane Cooper/);
     assert.match(updatedClientDialog, /\+1\(312\)555-0111/);
+    assert.match(updatedClientDialog, /\+1\(312\)555-0112/);
+    assert.match(updatedClientDialog, /name="secondaryPhone"/);
     assert.match(updatedClientDialog, /jane\.cooper@example\.com/i);
     assert.match(updatedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.match(updatedClientDialog, /500 River Rd, Naperville, IL 60540/);
@@ -604,7 +607,18 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updatedClientsTableBody, /123 Main St, Romeoville, IL 60446/i);
     assert.match(updatedClientsTableBody, /789 Cedar Ln, Plainfield, IL 60544/i);
     assert.match(updatedClientsTableBody, /500 River Rd, Naperville, IL 60540/i);
+    assert.match(updatedClientsTableBody, /2-й: \+1\(312\)555-0112/i);
     assert.match(updatedClientsTableBody, /class="admin-client-address-preview-more"[^>]*>\+1<\/span>/i);
+
+    const secondaryPhoneFilterResponse = await fetch(`${started.baseUrl}/admin/clients?phone=3125550112`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const secondaryPhoneFilterBody = await secondaryPhoneFilterResponse.text();
+    assert.equal(secondaryPhoneFilterResponse.status, 200);
+    assert.match(secondaryPhoneFilterBody, /Jane Cooper/);
+    assert.doesNotMatch(secondaryPhoneFilterBody, /John Smith/);
 
     const napervilleClientResponse = await fetch(
       `${started.baseUrl}/admin/clients?client=${encodeURIComponent(currentJaneClientKey)}&addressKey=${encodeURIComponent(napervilleAddressKey)}`,
