@@ -154,6 +154,11 @@ body.adlp-page--move {
   transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
 }
 
+body.adlp-page a.adlp-button,
+body.adlp-page button.adlp-button {
+  color: var(--adlp-white);
+}
+
 .adlp-button:hover,
 .adlp-button:focus-visible {
   background: var(--adlp-rose-dark);
@@ -167,10 +172,21 @@ body.adlp-page--move {
   color: var(--adlp-rose);
 }
 
+body.adlp-page a.adlp-button--ghost,
+body.adlp-page button.adlp-button--ghost {
+  color: var(--adlp-rose);
+}
+
 .adlp-button--ghost:hover,
 .adlp-button--ghost:focus-visible {
   background: var(--adlp-white);
   color: var(--adlp-rose-dark);
+}
+
+.adlp-button:disabled {
+  opacity: 0.72;
+  cursor: wait;
+  transform: none;
 }
 
 .adlp-main {
@@ -410,6 +426,99 @@ body.adlp-page--move {
   min-height: 16px;
   color: var(--adlp-rose-dark);
   font-weight: 750;
+}
+
+body.adlp-page.adlp-modal-open {
+  overflow: hidden;
+}
+
+.adlp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.adlp-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.adlp-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(37, 33, 36, 0.48);
+  backdrop-filter: blur(8px);
+}
+
+.adlp-modal__dialog {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 30px;
+  border: 1px solid rgba(158, 67, 90, 0.24);
+  border-radius: 8px;
+  background: var(--adlp-white);
+  box-shadow: 0 28px 80px rgba(37, 33, 36, 0.24);
+  transform: translateY(16px) scale(0.98);
+  transition: transform 180ms ease;
+}
+
+.adlp-modal.is-open .adlp-modal__dialog {
+  transform: translateY(0) scale(1);
+}
+
+.adlp-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(37, 33, 36, 0.06);
+  color: var(--adlp-ink);
+  cursor: pointer;
+}
+
+.adlp-modal__close span {
+  display: block;
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 38px;
+}
+
+.adlp-modal__close:hover,
+.adlp-modal__close:focus-visible {
+  background: rgba(158, 67, 90, 0.12);
+  outline: none;
+}
+
+.adlp-modal h2 {
+  max-width: 320px;
+  margin: 8px 0 0;
+  color: var(--adlp-ink);
+  font-family: var(--adlp-display);
+  font-size: 36px;
+  font-weight: 750;
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.adlp-modal__copy {
+  margin: 10px 0 0;
+  color: var(--adlp-muted);
+  line-height: 1.48;
+}
+
+.adlp-modal__form {
+  margin-top: 20px;
 }
 
 .adlp-proof {
@@ -1302,11 +1411,30 @@ body.adlp-page--move {
   .adlp-final {
     padding-bottom: 34px;
   }
+
+  .adlp-modal {
+    padding: 14px;
+  }
+
+  .adlp-modal__dialog {
+    max-height: calc(100vh - 28px);
+    padding: 24px 20px;
+  }
+
+  .adlp-modal h2 {
+    max-width: 260px;
+    font-size: 30px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .adlp-review-track {
     animation: none;
     transform: none;
+  }
+
+  .adlp-modal,
+  .adlp-modal__dialog {
+    transition: none;
   }
 }
