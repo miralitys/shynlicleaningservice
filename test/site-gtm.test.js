@@ -28,13 +28,17 @@ test("serves GTM on public site routes", async () => {
 
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("content-type") || "", /text\/html/, route);
-    assert.match(body, /<head><script id="shynli-tracking-bootstrap">/, route);
+    assert.match(body, /<head><!-- Google Tag Manager --><script>\(function\(w,d,s,l,i\)/, route);
+    assert.match(body, /<!-- End Google Tag Manager --><script id="shynli-tracking-bootstrap">/, route);
     assert.match(body, /\/js\/shynli-tracking\.js/, route);
     assert.doesNotMatch(body, /<script[^>]+src="\/js\/shynli-tracking\.js"/, route);
     assert.match(body, /<!-- Google Tag Manager -->/, route);
     assert.match(body, /GTM-5P88N7LD/, route);
-    assert.match(body, /requestIdleCallback/, route);
-    assert.match(body, /setTimeout\(idleLoad,45000\)/, route);
+    assert.doesNotMatch(
+      body,
+      /<!-- Google Tag Manager -->[\s\S]*?(requestIdleCallback|setTimeout\(idleLoad,45000\)|addEventListener\('load')[\s\S]*?<!-- End Google Tag Manager -->/,
+      route
+    );
     assert.match(body, /setTimeout\(idleLoad,8000\)/, route);
     assert.match(body, /\['click','submit','focusin'\]/, route);
     assert.doesNotMatch(body, /visibilitychange/, route);

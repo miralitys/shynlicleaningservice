@@ -183,13 +183,16 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
     const sanitized = sanitizeHtml(fixture.html, fixture.route);
     assert.match(
       sanitized,
-      /<head><script id="shynli-tracking-bootstrap">/
+      /<head><!-- Google Tag Manager --><script>\(function\(w,d,s,l,i\)/
     );
+    assert.match(sanitized, /<!-- End Google Tag Manager --><script id="shynli-tracking-bootstrap">/);
     assert.match(sanitized, /\/js\/shynli-tracking\.js/);
     assert.doesNotMatch(sanitized, /<script[^>]+src="\/js\/shynli-tracking\.js"/);
     assert.match(sanitized, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl|googletagmanager\.com\/gtm\.js\?id=/);
-    assert.match(sanitized, /requestIdleCallback/);
-    assert.match(sanitized, /setTimeout\(idleLoad,45000\)/);
+    assert.doesNotMatch(
+      sanitized,
+      /<!-- Google Tag Manager -->[\s\S]*?(requestIdleCallback|setTimeout\(idleLoad,45000\)|addEventListener\('load')[\s\S]*?<!-- End Google Tag Manager -->/
+    );
     assert.match(sanitized, /setTimeout\(idleLoad,8000\)/);
     assert.match(sanitized, /\['click','submit','focusin'\]/);
     assert.doesNotMatch(sanitized, /visibilitychange/);
