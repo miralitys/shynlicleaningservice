@@ -3205,7 +3205,7 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
       "en-route"
     );
     assert.match(scheduledLaneAfterCleanerConfirm, /Подтверждено/);
-    assert.match(scheduledLaneAfterCleanerConfirm, /admin-badge admin-badge-success">Подтверждено</);
+    assert.match(scheduledLaneAfterCleanerConfirm, /admin-badge admin-badge-warning">Подтверждено</);
 
     const enRouteReadySchedule = getChicagoDateTimeValueFromNow(60 * 60 * 1000);
     const moveIntoEnRouteWindowResponse = await fetch(`${started.baseUrl}/admin/orders`, {

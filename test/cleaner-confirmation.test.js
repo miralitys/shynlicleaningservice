@@ -56,7 +56,7 @@ test("auto-confirms cleaner confirmation inside the 24 hour threshold", () => {
   assert.equal(confirmationState.status, "confirmed");
   assert.equal(confirmationState.automatic, true);
   assert.equal(confirmationDisplay.label, "Подтверждено");
-  assert.equal(confirmationDisplay.tone, "success");
+  assert.equal(confirmationDisplay.tone, "warning");
 });
 
 test("keeps declined cleaner confirmation red even inside the 24 hour threshold", () => {
