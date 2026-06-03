@@ -136,6 +136,13 @@ test("stores staff cards and assignment planning in the file-backed store", asyn
       "evt-anna-1"
     );
 
+    await store.setAssignment("entry-1", {
+      status: "canceled",
+    });
+    snapshot = await store.getSnapshot();
+    assert.equal(snapshot.assignments[0].status, "canceled");
+    assert.deepEqual(snapshot.assignments[0].staffIds.sort(), [anna.id, olga.id].sort());
+
     await store.updateStaff(olga.id, {
       contract: {
         contractorName: "Olga Martinez",
@@ -278,6 +285,13 @@ test("uses the Supabase-backed store implementation when the client is configure
   assert.equal(snapshot.staff[0].smsHistory.length, 1);
   assert.equal(snapshot.staff[0].smsHistory[0].message, "Remote onboarding reminder");
   assert.equal(snapshot.assignments[0].calendarSync.google.byStaffId[anna.id].eventId, "evt-remote-1");
+
+  await store.setAssignment("entry-remote-1", {
+    status: "canceled",
+  });
+  snapshot = await store.getSnapshot();
+  assert.equal(snapshot.assignments[0].status, "canceled");
+  assert.deepEqual(snapshot.assignments[0].staffIds.sort(), [anna.id, diana.id].sort());
 
   await store.deleteStaff(anna.id);
   snapshot = await store.getSnapshot();
