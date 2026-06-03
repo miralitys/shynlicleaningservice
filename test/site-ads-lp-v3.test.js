@@ -65,7 +65,7 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /<meta name="robots" content="noindex,follow"\s*\/?>/, landing.route);
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
-    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-6/, landing.route);
+    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-7/, landing.route);
     assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-1/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
@@ -76,6 +76,9 @@ test("serves ad-only v3 landing pages", async () => {
     assert.doesNotMatch(body, /id="shynli-site-footer"/, landing.route);
     assert.doesNotMatch(body, /tilda-blocks-page|tilda-scripts|fonts\.googleapis\.com|fonts\.gstatic\.com/, landing.route);
     assert.doesNotMatch(body, /alert\(/, landing.route);
+    if (landing.route === "/cleaners-near-me/ads-lp") {
+      assert.doesNotMatch(body, /adlp-hero__media|home-copy-team|Local team, local routes/, landing.route);
+    }
   }
 });
 

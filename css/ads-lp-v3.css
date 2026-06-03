@@ -55,7 +55,7 @@ body.adlp-page img {
 }
 
 body.adlp-page--near {
-  --adlp-mobile-hero-image: url("/images/home-copy-team-720.webp");
+  --adlp-mobile-hero-image: linear-gradient(135deg, rgba(232, 241, 234, 0.86), rgba(255, 250, 247, 0.98));
 }
 
 body.adlp-page--regular {
@@ -984,6 +984,15 @@ body.adlp-page--move {
 
   .adlp-quote-panel .adlp-form__disclaimer {
     font-size: 10px;
+  }
+
+  .adlp-page--near .adlp-hero__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(336px, 420px);
+    align-items: center;
+  }
+
+  .adlp-page--near .adlp-quote-panel {
+    grid-column: 2;
   }
 }
 
