@@ -490,6 +490,10 @@ const NOINDEX_ROUTES = new Set([
   "/quote-no-calculator",
   "/quote-no-price",
   "/quote2",
+  "/cleaners-near-me/ads-lp",
+  "/services/deep-cleaning/ads-lp",
+  "/services/move-in-move-out-cleaning/ads-lp",
+  "/services/regular-cleaning/ads-lp",
   ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH,
   ADMIN_GOOGLE_CALENDAR_CALLBACK_PATH,
   ADMIN_GOOGLE_MAIL_CALLBACK_PATH,
@@ -529,10 +533,13 @@ const BREADCRUMB_LABELS = new Map([
   ["/terms-of-service", "Terms of Service"],
   ["/services", "Services"],
   ["/services/deep-cleaning/ads", "Deep Cleaning"],
+  ["/services/deep-cleaning/ads-lp", "Deep Cleaning"],
   ["/services/deep-cleaning/ads-v2", "Deep Cleaning"],
   ["/services/move-in-move-out-cleaning/ads", "Move-In & Move-Out Cleaning"],
+  ["/services/move-in-move-out-cleaning/ads-lp", "Move-In & Move-Out Cleaning"],
   ["/services/move-in-move-out-cleaning/ads-v2", "Move-In & Move-Out Cleaning"],
   ["/services/regular-cleaning/ads", "Regular Cleaning"],
+  ["/services/regular-cleaning/ads-lp", "Regular Cleaning"],
   ["/services/regular-cleaning/ads-v2", "Regular Cleaning"],
 ]);
 const ROUTE_META_OVERRIDES = {
@@ -576,6 +583,17 @@ const ROUTE_META_OVERRIDES = {
       "Trusted local house cleaners serving DuPage, Will & Kane counties. Free quote in 60 seconds.",
     robots: "index,follow",
   },
+  "/cleaners-near-me/ads-lp": {
+    title: "House Cleaners Near You in Chicago Suburbs - From $135 | Shynli Cleaning",
+    description:
+      "Looking for house cleaners near you in Chicagoland? Trusted local cleaners serving DuPage, Will and Kane counties. Weekly from $135. Free quote in 60 seconds.",
+    canonical: `${SITE_ORIGIN}/cleaners-near-me/ads-lp`,
+    ogUrl: `${SITE_ORIGIN}/cleaners-near-me/ads-lp`,
+    ogTitle: "House Cleaners Near You in Chicago Suburbs - From $135 | Shynli Cleaning",
+    ogDescription:
+      "Trusted local house cleaners serving 40+ Chicago suburbs with regular, deep, and move cleaning quotes by text.",
+    robots: "noindex,follow",
+  },
   "/home-calculator": {
     title: "Instant House Cleaning Cost Calculator | Shynli Cleaning",
     description:
@@ -611,6 +629,17 @@ const ROUTE_META_OVERRIDES = {
     title: "Deep Cleaning Services | Shynli Cleaning",
     canonical: `${SITE_ORIGIN}/services/deep-cleaning/ads-v2`,
   },
+  "/services/deep-cleaning/ads-lp": {
+    title: "Deep House Cleaning Service in Chicagoland - From $195 | Shynli Cleaning",
+    description:
+      "Deep house cleaning in Chicagoland from $195. A full home reset for kitchens, bathrooms, baseboards, dust, buildup, and detailed cleaning before recurring service.",
+    canonical: `${SITE_ORIGIN}/services/deep-cleaning/ads-lp`,
+    ogUrl: `${SITE_ORIGIN}/services/deep-cleaning/ads-lp`,
+    ogTitle: "Deep House Cleaning Service in Chicagoland - From $195 | Shynli Cleaning",
+    ogDescription:
+      "Detailed deep cleaning for homes that need a reset, renovation dust cleanup, seasonal refresh, or a first visit before recurring service.",
+    robots: "noindex,follow",
+  },
   "/services/move-in-move-out-cleaning": {
     title: "Move-In & Move-Out Cleaning | Shynli Cleaning",
     description:
@@ -634,6 +663,17 @@ const ROUTE_META_OVERRIDES = {
       "Professional move-in and move-out cleaning service in Chicagoland. Inspection-ready results. Get a free quote in 60 seconds.",
     canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning/ads-v2`,
   },
+  "/services/move-in-move-out-cleaning/ads-lp": {
+    title: "Move-In and Move-Out Cleaning - Deposit-Back Ready From $241 | Shynli Cleaning",
+    description:
+      "Professional move-in and move-out cleaning in Chicagoland. Inspection-ready results for renters, landlords, and buyers. Free quote in 60 seconds.",
+    canonical: `${SITE_ORIGIN}/services/move-in-move-out-cleaning/ads-lp`,
+    ogUrl: `${SITE_ORIGIN}/services/move-in-move-out-cleaning/ads-lp`,
+    ogTitle: "Move-In and Move-Out Cleaning - Deposit-Back Ready From $241 | Shynli Cleaning",
+    ogDescription:
+      "Move-in and move-out cleaning for inspections, security deposits, landlords, buyers, and fresh starts across Chicago suburbs.",
+    robots: "noindex,follow",
+  },
   "/services/regular-cleaning": {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
   },
@@ -644,6 +684,17 @@ const ROUTE_META_OVERRIDES = {
   "/services/regular-cleaning/ads-v2": {
     title: "Recurring House Cleaning Services | Shynli Cleaning",
     canonical: `${SITE_ORIGIN}/services/regular-cleaning/ads-v2`,
+  },
+  "/services/regular-cleaning/ads-lp": {
+    title: "House Cleaning Service in Chicagoland - From $135/Visit | Shynli Cleaning",
+    description:
+      "Recurring house cleaning service in Chicagoland from $135 per visit. Same cleaner whenever possible, no contract, no hidden fees, and pay after cleaning.",
+    canonical: `${SITE_ORIGIN}/services/regular-cleaning/ads-lp`,
+    ogUrl: `${SITE_ORIGIN}/services/regular-cleaning/ads-lp`,
+    ogTitle: "House Cleaning Service in Chicagoland - From $135/Visit | Shynli Cleaning",
+    ogDescription:
+      "Weekly, bi-weekly, and monthly recurring house cleaning in Chicago suburbs with no contracts and fast quote by text.",
+    robots: "noindex,follow",
   },
   "/oauth/callback": {
     robots: "noindex,nofollow",
