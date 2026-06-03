@@ -65,7 +65,7 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /<meta name="robots" content="noindex,follow"\s*\/?>/, landing.route);
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
-    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-8/, landing.route);
+    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-9/, landing.route);
     assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-1/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
