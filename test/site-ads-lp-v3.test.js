@@ -79,8 +79,8 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /<meta name="robots" content="noindex,follow"\s*\/?>/, landing.route);
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
-    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-11/, landing.route);
-    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-5/, landing.route);
+    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-12/, landing.route);
+    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-6/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
     const phoneInputTags = getPhoneInputTags(body);
@@ -110,15 +110,18 @@ test("excludes ad-only v3 landing pages from sitemap", async () => {
 });
 
 test("submits ad-only landing forms directly without quote-page redirects", async () => {
-  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-5`);
+  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-6`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
   assert.match(body, /\/api\/quote\/submit/);
   assert.match(body, /Thank you\. Our manager will call you shortly\./);
   assert.match(body, /data-adlp-success-modal/);
+  assert.match(body, /aria-live", "polite"/);
   assert.match(body, /Request received/);
-  assert.match(body, /Your request has been received\. Our manager will contact you shortly\./);
+  assert.match(body, /Thank you, we received your request\./);
+  assert.match(body, /Our manager will contact you shortly\./);
+  assert.match(body, /openLeadSuccessModal\(\);/);
   assert.match(body, /enhancePhoneInput/);
   assert.match(body, /enterkeyhint="done"/);
   assert.doesNotMatch(body, /\/quote-no-price/);

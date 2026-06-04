@@ -187,13 +187,14 @@
     modal.className = "adlp-modal adlp-success-modal";
     modal.setAttribute("data-adlp-success-modal", "");
     modal.setAttribute("aria-hidden", "true");
+    modal.setAttribute("aria-live", "polite");
     modal.innerHTML =
       '<div class="adlp-modal__backdrop" data-adlp-success-close></div>' +
       '<div class="adlp-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="adlp-success-title" aria-describedby="adlp-success-copy">' +
       '<button class="adlp-modal__close" type="button" data-adlp-success-close aria-label="Close thank you message"><span aria-hidden="true">&times;</span></button>' +
       '<p class="adlp-success-modal__eyebrow">Request received</p>' +
-      '<h2 id="adlp-success-title">Thank you!</h2>' +
-      '<p id="adlp-success-copy" class="adlp-modal__copy">Your request has been received. Our manager will contact you shortly.</p>' +
+      '<h2 id="adlp-success-title">Thank you, we received your request.</h2>' +
+      '<p id="adlp-success-copy" class="adlp-modal__copy">Our manager will contact you shortly.</p>' +
       '<button class="adlp-button adlp-success-modal__button" type="button" data-adlp-success-close>Close</button>' +
       "</div>";
 
