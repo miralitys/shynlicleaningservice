@@ -272,6 +272,15 @@ body.adlp-page button.adlp-button--ghost {
   color: var(--adlp-rose);
 }
 
+.adlp-price-disclaimer {
+  display: block;
+  margin-top: 7px;
+  color: var(--adlp-muted);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .adlp-trust-list {
   display: flex;
   flex-wrap: wrap;

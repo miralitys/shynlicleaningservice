@@ -11,7 +11,7 @@ let BASE_URL = null;
 const LANDING_ROUTES = [
   {
     route: "/cleaners-near-me/ads-lp",
-    title: "House Cleaners Near You in Chicago Suburbs - From $135 | Shynli Cleaning",
+    title: "House Cleaners Near You in Chicago Suburbs - $135 | Shynli Cleaning",
     canonical: "https://shynlicleaningservice.com/cleaners-near-me/ads-lp",
     bodyClass: "adlp-page--near",
     service: "Regular Cleaning",
@@ -19,7 +19,7 @@ const LANDING_ROUTES = [
   },
   {
     route: "/services/regular-cleaning/ads-lp",
-    title: "House Cleaning Service in Chicagoland - From $135/Visit | Shynli Cleaning",
+    title: "House Cleaning Service in Chicagoland - $135/Visit | Shynli Cleaning",
     canonical: "https://shynlicleaningservice.com/services/regular-cleaning/ads-lp",
     bodyClass: "adlp-page--regular",
     service: "Regular Cleaning",
@@ -27,7 +27,7 @@ const LANDING_ROUTES = [
   },
   {
     route: "/services/deep-cleaning/ads-lp",
-    title: "Deep House Cleaning Service in Chicagoland - From $195 | Shynli Cleaning",
+    title: "Deep House Cleaning Service in Chicagoland - $195 | Shynli Cleaning",
     canonical: "https://shynlicleaningservice.com/services/deep-cleaning/ads-lp",
     bodyClass: "adlp-page--deep",
     service: "Deep Cleaning",
@@ -35,7 +35,7 @@ const LANDING_ROUTES = [
   },
   {
     route: "/services/move-in-move-out-cleaning/ads-lp",
-    title: "Move-In and Move-Out Cleaning - Deposit-Back Ready From $241 | Shynli Cleaning",
+    title: "Move-In and Move-Out Cleaning - Deposit-Back Ready $241 | Shynli Cleaning",
     canonical: "https://shynlicleaningservice.com/services/move-in-move-out-cleaning/ads-lp",
     bodyClass: "adlp-page--move",
     service: "Move In / Move Out Cleaning",
@@ -79,10 +79,14 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /<meta name="robots" content="noindex,follow"\s*\/?>/, landing.route);
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
-    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-12/, landing.route);
+    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-13/, landing.route);
     assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-6/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
+    assert.match(body, /Price depends on home size and condition\./, landing.route);
+    assert.doesNotMatch(body, /from\s+\$/i, landing.route);
+    assert.doesNotMatch(body, /\$(?:120-\$200|180-\$350|250-\$500)/, landing.route);
+    assert.doesNotMatch(body, /\$(?:135|195|241)\+/, landing.route);
     const phoneInputTags = getPhoneInputTags(body);
     assert.ok(phoneInputTags.length > 0, `${landing.route} should include phone inputs`);
     phoneInputTags.forEach((tag) => assertPhoneInputMobileReady(tag, landing.route));
