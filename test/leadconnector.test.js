@@ -186,6 +186,81 @@ test("submits a quote, creates the contact, and can write a note when requested"
   assert.match(calls[2].body, /WEBSITE QUOTE SUBMISSION/);
 });
 
+test("passes site-specific lead type and landing metadata to CRM fields and notes", async () => {
+  const calls = [];
+  const fetch = async (url, options = {}) => {
+    calls.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+      redirect: options.redirect,
+    });
+
+    if (String(url).includes("/contacts/") && options.method === "POST") {
+      return createResponse(200, { contact: { id: "contact-1" } });
+    }
+
+    if (String(url).includes("/contacts/contact-1") && options.method === "PUT") {
+      return createResponse(200, { id: "contact-1" });
+    }
+
+    if (String(url).includes("/notes")) {
+      return createResponse(200, { id: "note-1" });
+    }
+
+    throw new Error(`Unexpected call: ${url}`);
+  };
+
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+      GHL_CUSTOM_FIELDS_JSON: JSON.stringify({
+        leadType: "cf-type",
+        sourceWebsite: "cf-source-website",
+        landingPageUrl: "cf-landing-page",
+        sourcePage: "cf-source-page",
+      }),
+      GHL_CREATE_OPPORTUNITY: "0",
+    },
+    fetch,
+  });
+
+  const result = await client.submitQuoteSubmission(
+    {
+      contactData: {
+        fullName: "Shynli Site Lead",
+        phone: "312-555-0100",
+      },
+      calculatorData: {
+        serviceType: "regular",
+        totalPrice: 0,
+      },
+      type: "shynli.com_website_contact",
+      sourceWebsite: "https://shynli.com/",
+      landing_page_url: "https://shynli.com/",
+      source_page: "/",
+    },
+    { syncQuoteCustomFields: true, syncQuoteNotes: true }
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.customFieldsUpdated, true);
+  assert.equal(result.noteCreated, true);
+  assert.equal(calls.length, 3);
+  assert.match(calls[1].body, /cf-type/);
+  assert.ok(calls[1].body.includes("shynli.com_website_contact"));
+  assert.match(calls[1].body, /cf-source-website/);
+  assert.ok(calls[1].body.includes("https://shynli.com/"));
+  assert.match(calls[1].body, /cf-landing-page/);
+  assert.match(calls[1].body, /cf-source-page/);
+  assert.ok(calls[2].body.includes("Type: shynli.com_website_contact"));
+  assert.ok(calls[2].body.includes("Website: https://shynli.com/"));
+  assert.ok(calls[2].body.includes("Landing: https://shynli.com/"));
+});
+
 test("submits a cleaner application, creates the contact, and writes a note", async () => {
   const calls = [];
   const fetch = async (url, options = {}) => {
