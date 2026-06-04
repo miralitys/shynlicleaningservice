@@ -902,6 +902,17 @@ body.adlp-page.adlp-modal-open {
   color: var(--adlp-rose);
 }
 
+body.adlp-page .adlp-mid-cta button.adlp-button {
+  color: var(--adlp-rose);
+}
+
+.adlp-mid-cta .adlp-button:hover,
+.adlp-mid-cta .adlp-button:focus-visible {
+  background: var(--adlp-white);
+  border-color: var(--adlp-white);
+  color: var(--adlp-rose-dark);
+}
+
 .adlp-step {
   min-height: 190px;
 }

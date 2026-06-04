@@ -90,7 +90,7 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /<meta name="robots" content="noindex,follow"\s*\/?>/, landing.route);
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
-    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-13/, landing.route);
+    assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-14/, landing.route);
     assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-7/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
@@ -116,6 +116,7 @@ test("serves ad-only v3 landing pages", async () => {
     assert.doesNotMatch(body, /tilda-blocks-page|tilda-scripts|fonts\.googleapis\.com|fonts\.gstatic\.com/, landing.route);
     assert.doesNotMatch(body, /alert\(/, landing.route);
     assert.match(body, /adlp-review-marquee/, landing.route);
+    assert.match(body, /Request a Call/, landing.route);
     assert.doesNotMatch(body, /adlp-hero__media|home-copy-team|Local team, local routes/, landing.route);
     assert.doesNotMatch(body, /\/services\/(?:regular-cleaning|deep-cleaning|move-in-move-out-cleaning)\/ads-v2/, landing.route);
 
@@ -160,4 +161,13 @@ test("submits ad-only landing forms directly without quote-page redirects", asyn
   assert.doesNotMatch(body, /\/quote-no-price/);
   assert.doesNotMatch(body, /window\.location\.href\s*=/);
   assert.doesNotMatch(body, /Opening your quote/);
+});
+
+test("keeps dark CTA callback buttons readable", async () => {
+  const response = await fetch(`${BASE_URL}/css/ads-lp-v3.css?v=20260603-14`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(body, /body\.adlp-page \.adlp-mid-cta button\.adlp-button\s*{\s*color: var\(--adlp-rose\);/);
+  assert.match(body, /\.adlp-mid-cta \.adlp-button:hover/);
 });
