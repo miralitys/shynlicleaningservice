@@ -521,6 +521,43 @@ body.adlp-page.adlp-modal-open {
   margin-top: 20px;
 }
 
+.adlp-success-modal .adlp-modal__dialog {
+  width: min(420px, 100%);
+  text-align: center;
+}
+
+.adlp-success-modal__eyebrow {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--adlp-sage-soft);
+  color: var(--adlp-sage);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.adlp-success-modal h2 {
+  max-width: none;
+  margin-top: 0;
+}
+
+.adlp-success-modal .adlp-modal__copy {
+  max-width: 320px;
+  margin: 12px auto 0;
+}
+
+.adlp-success-modal__button {
+  width: 100%;
+  margin-top: 22px;
+}
+
 .adlp-proof {
   background: var(--adlp-rose-deep);
   color: var(--adlp-white);

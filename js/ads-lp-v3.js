@@ -165,6 +165,68 @@
     }
   }
 
+  function createLeadSuccessModal() {
+    if (document.querySelector("[data-adlp-success-modal]")) return document.querySelector("[data-adlp-success-modal]");
+
+    var modal = document.createElement("div");
+    modal.className = "adlp-modal adlp-success-modal";
+    modal.setAttribute("data-adlp-success-modal", "");
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML =
+      '<div class="adlp-modal__backdrop" data-adlp-success-close></div>' +
+      '<div class="adlp-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="adlp-success-title" aria-describedby="adlp-success-copy">' +
+      '<button class="adlp-modal__close" type="button" data-adlp-success-close aria-label="Close thank you message"><span aria-hidden="true">&times;</span></button>' +
+      '<p class="adlp-success-modal__eyebrow">Request received</p>' +
+      '<h2 id="adlp-success-title">Thank you!</h2>' +
+      '<p id="adlp-success-copy" class="adlp-modal__copy">Your request has been received. Our manager will contact you shortly.</p>' +
+      '<button class="adlp-button adlp-success-modal__button" type="button" data-adlp-success-close>Close</button>' +
+      "</div>";
+
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function closeModalElement(modal) {
+    if (!modal) return;
+    modal.classList.remove("is-open");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  function openLeadSuccessModal() {
+    var quoteModal = document.querySelector("[data-adlp-quote-modal]");
+    var successModal = createLeadSuccessModal();
+    closeModalElement(quoteModal);
+    successModal.classList.add("is-open");
+    successModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("adlp-modal-open");
+
+    var closeButton = successModal.querySelector("[data-adlp-success-close]");
+    window.setTimeout(function () {
+      if (closeButton) closeButton.focus();
+    }, 80);
+  }
+
+  function bindLeadSuccessModal(modal) {
+    if (!modal || modal.getAttribute("data-adlp-success-bound") === "true") return;
+    modal.setAttribute("data-adlp-success-bound", "true");
+
+    function closeSuccessModal() {
+      closeModalElement(modal);
+      var quoteModalOpen = document.querySelector("[data-adlp-quote-modal].is-open");
+      if (!quoteModalOpen) document.body.classList.remove("adlp-modal-open");
+    }
+
+    Array.prototype.slice.call(modal.querySelectorAll("[data-adlp-success-close]")).forEach(function (button) {
+      button.addEventListener("click", closeSuccessModal);
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && modal.classList.contains("is-open")) {
+        closeSuccessModal();
+      }
+    });
+  }
+
   function bindForm(form) {
     if (form.getAttribute("data-adlp-bound") === "true") return;
     form.setAttribute("data-adlp-bound", "true");
@@ -209,6 +271,7 @@
         await submitLeadCapture(form, name, phoneDigits, service);
         setMessage(form, "Thank you. Our manager will call you shortly.");
         form.setAttribute("data-adlp-submitted", "true");
+        openLeadSuccessModal();
       } catch (error) {
         form.removeAttribute("data-adlp-submitting");
         if (submitButton) submitButton.disabled = false;
@@ -309,8 +372,10 @@
 
   function init() {
     var modal = createQuoteModal();
+    var successModal = createLeadSuccessModal();
     Array.prototype.slice.call(document.querySelectorAll("[data-adlp-quote-form]")).forEach(bindForm);
     bindQuoteModal(modal);
+    bindLeadSuccessModal(successModal);
   }
 
   if (document.readyState === "loading") {
