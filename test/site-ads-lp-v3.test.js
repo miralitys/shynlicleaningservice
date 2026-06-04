@@ -53,7 +53,7 @@ function getNameInputTags(body) {
 
 function assertPhoneInputMobileReady(tag, context) {
   assert.match(tag, /\btype="tel"/, context);
-  assert.match(tag, /\bautocomplete="tel"/, context);
+  assert.match(tag, /\bautocomplete="mobile tel"/, context);
   assert.match(tag, /\binputmode="tel"/, context);
   assert.match(tag, /\benterkeyhint="done"/, context);
   assert.match(tag, /\bautocapitalize="off"/, context);
@@ -91,7 +91,7 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
     assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-14/, landing.route);
-    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-8/, landing.route);
+    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-9/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
     assert.doesNotMatch(body, /<a\b[^>]*class="[^"]*\badlp-logo\b/i, landing.route);
@@ -147,7 +147,7 @@ test("excludes ad-only v3 landing pages from sitemap", async () => {
 });
 
 test("submits ad-only landing forms directly without quote-page redirects", async () => {
-  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-8`);
+  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-9`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
@@ -163,6 +163,9 @@ test("submits ad-only landing forms directly without quote-page redirects", asyn
   assert.match(body, /openLeadSuccessModal\(\);/);
   assert.match(body, /data-adlp-modal-trigger/);
   assert.match(body, /enhancePhoneInput/);
+  assert.match(body, /ensurePhoneInputId/);
+  assert.match(body, /setAttribute\("autocomplete", "mobile tel"\)/);
+  assert.match(body, /setAttribute\("autocomplete", "on"\)/);
   assert.match(body, /enterkeyhint="done"/);
   assert.doesNotMatch(body, /Last name|First name|name="lastName"|name="firstName"/);
   assert.doesNotMatch(body, /Please enter your first and last name/);

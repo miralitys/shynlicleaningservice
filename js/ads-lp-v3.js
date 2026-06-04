@@ -83,10 +83,23 @@
     } catch (error) {}
   }
 
+  var generatedPhoneInputCount = 0;
+
+  function ensurePhoneInputId(input) {
+    if (input.id) return;
+
+    generatedPhoneInputCount += 1;
+    var formId = input.form && input.form.id ? input.form.id : "adlp-form";
+    input.id = formId + "-phone-" + generatedPhoneInputCount;
+  }
+
   function enhancePhoneInput(input) {
     if (!input) return;
     input.type = "tel";
-    input.setAttribute("autocomplete", "tel");
+    ensurePhoneInputId(input);
+    if (input.form) input.form.setAttribute("autocomplete", "on");
+    if (!input.getAttribute("aria-label")) input.setAttribute("aria-label", "Phone number");
+    input.setAttribute("autocomplete", "mobile tel");
     input.setAttribute("inputmode", "tel");
     input.setAttribute("enterkeyhint", "done");
     input.setAttribute("autocapitalize", "off");
@@ -317,7 +330,7 @@
       '<p id="adlp-modal-copy" class="adlp-modal__copy">Leave your details and our manager will call you shortly.</p>' +
       '<form class="adlp-form adlp-modal__form" data-adlp-quote-form data-form-name="Ads LP Quote Popup">' +
       '<label class="adlp-field"><span>Full Name</span><input type="text" name="name" autocomplete="name" placeholder="Full Name"></label>' +
-      '<label class="adlp-field"><span>Phone</span><input type="tel" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="done" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="(630) 555-1234" required></label>' +
+      '<label class="adlp-field"><span>Phone</span><input type="tel" name="phone" autocomplete="mobile tel" inputmode="tel" enterkeyhint="done" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="(630) 555-1234" required></label>' +
       '<input type="hidden" name="service">' +
       '<button class="adlp-button" type="submit">Get Free Quote</button>' +
       '<p class="adlp-form__message" data-adlp-message aria-live="polite"></p>' +
