@@ -40,12 +40,7 @@
 
   function getSubmittedName(form) {
     var nameInput = form.querySelector('input[name="name"]');
-    var name = trimValue(nameInput && nameInput.value);
-    if (name) return name;
-
-    var firstName = trimValue(form.querySelector('input[name="firstName"]') && form.querySelector('input[name="firstName"]').value);
-    var lastName = trimValue(form.querySelector('input[name="lastName"]') && form.querySelector('input[name="lastName"]').value);
-    return [firstName, lastName].filter(Boolean).join(" ");
+    return trimValue(nameInput && nameInput.value);
   }
 
   function normalizeServiceKey(value) {
@@ -105,6 +100,7 @@
 
   function buildLeadCapturePayload(form, name, phoneDigits, service) {
     var formattedPhone = "+1 " + formatPhoneForDisplay(phoneDigits);
+    var submittedName = name || "Website Lead " + phoneDigits.slice(-4);
     var attribution = collectAttribution();
     var source = trimValue(form.getAttribute("data-source")) || "ads-lp-v3";
     var landingPage = window.location.href;
@@ -132,7 +128,7 @@
       zipCode: "",
     };
     var contactData = {
-      fullName: name,
+      fullName: submittedName,
       phone: formattedPhone,
       email: "",
     };
@@ -258,18 +254,11 @@
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
-      var nameInput = form.querySelector('input[name="name"], input[name="firstName"]');
       var phoneField = form.querySelector('input[name="phone"]');
       var name = getSubmittedName(form);
       var phoneDigits = normalizePhoneDigits(phoneField && phoneField.value);
       var service = getServiceValue(form);
       var submitButton = form.querySelector('button[type="submit"]');
-
-      if (!name) {
-        setMessage(form, "Please enter your first and last name.");
-        if (nameInput) nameInput.focus();
-        return;
-      }
 
       if (phoneDigits.length !== 10) {
         setMessage(form, "Please enter a valid 10-digit phone number.");
@@ -327,8 +316,7 @@
       '<h2 id="adlp-modal-title">Get your free quote</h2>' +
       '<p id="adlp-modal-copy" class="adlp-modal__copy">Leave your details and our manager will call you shortly.</p>' +
       '<form class="adlp-form adlp-modal__form" data-adlp-quote-form data-form-name="Ads LP Quote Popup">' +
-      '<label class="adlp-field"><span>Last name</span><input type="text" name="lastName" autocomplete="family-name" placeholder="Smith" required></label>' +
-      '<label class="adlp-field"><span>First name</span><input type="text" name="firstName" autocomplete="given-name" placeholder="Jane" required></label>' +
+      '<label class="adlp-field"><span>Full Name</span><input type="text" name="name" autocomplete="name" placeholder="Full Name"></label>' +
       '<label class="adlp-field"><span>Phone</span><input type="tel" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="done" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="(630) 555-1234" required></label>' +
       '<input type="hidden" name="service">' +
       '<button class="adlp-button" type="submit">Get Free Quote</button>' +

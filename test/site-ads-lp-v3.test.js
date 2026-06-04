@@ -47,6 +47,10 @@ function getPhoneInputTags(body) {
   return body.match(/<input\b(?=[^>]*\bname="phone")[^>]*>/g) || [];
 }
 
+function getNameInputTags(body) {
+  return body.match(/<input\b(?=[^>]*\bname="name")[^>]*>/g) || [];
+}
+
 function assertPhoneInputMobileReady(tag, context) {
   assert.match(tag, /\btype="tel"/, context);
   assert.match(tag, /\bautocomplete="tel"/, context);
@@ -55,6 +59,13 @@ function assertPhoneInputMobileReady(tag, context) {
   assert.match(tag, /\bautocapitalize="off"/, context);
   assert.match(tag, /\bautocorrect="off"/, context);
   assert.match(tag, /\bspellcheck="false"/, context);
+  assert.match(tag, /\brequired\b/, context);
+}
+
+function assertNameInputOptional(tag, context) {
+  assert.match(tag, /\bautocomplete="name"/, context);
+  assert.match(tag, /\bplaceholder="Full Name"/, context);
+  assert.doesNotMatch(tag, /\brequired\b/, context);
 }
 
 test.before(async () => {
@@ -80,7 +91,7 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
     assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-13/, landing.route);
-    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-6/, landing.route);
+    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-7/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
     assert.doesNotMatch(body, /<a\b[^>]*class="[^"]*\badlp-logo\b/i, landing.route);
@@ -91,6 +102,9 @@ test("serves ad-only v3 landing pages", async () => {
     assert.doesNotMatch(body, /from\s+\$/i, landing.route);
     assert.doesNotMatch(body, /\$(?:120-\$200|180-\$350|250-\$500)/, landing.route);
     assert.doesNotMatch(body, /\$(?:135|195|241)\+/, landing.route);
+    const nameInputTags = getNameInputTags(body);
+    assert.ok(nameInputTags.length > 0, `${landing.route} should include optional name inputs`);
+    nameInputTags.forEach((tag) => assertNameInputOptional(tag, landing.route));
     const phoneInputTags = getPhoneInputTags(body);
     assert.ok(phoneInputTags.length > 0, `${landing.route} should include phone inputs`);
     phoneInputTags.forEach((tag) => assertPhoneInputMobileReady(tag, landing.route));
@@ -118,12 +132,14 @@ test("excludes ad-only v3 landing pages from sitemap", async () => {
 });
 
 test("submits ad-only landing forms directly without quote-page redirects", async () => {
-  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-6`);
+  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-7`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
   assert.match(body, /\/api\/quote\/submit/);
   assert.match(body, /Thank you\. Our manager will call you shortly\./);
+  assert.match(body, /<span>Full Name<\/span><input type="text" name="name" autocomplete="name" placeholder="Full Name">/);
+  assert.match(body, /Website Lead /);
   assert.match(body, /data-adlp-success-modal/);
   assert.match(body, /aria-live", "polite"/);
   assert.match(body, /Request received/);
@@ -132,6 +148,8 @@ test("submits ad-only landing forms directly without quote-page redirects", asyn
   assert.match(body, /openLeadSuccessModal\(\);/);
   assert.match(body, /enhancePhoneInput/);
   assert.match(body, /enterkeyhint="done"/);
+  assert.doesNotMatch(body, /Last name|First name|name="lastName"|name="firstName"/);
+  assert.doesNotMatch(body, /Please enter your first and last name/);
   assert.doesNotMatch(body, /\/quote-no-price/);
   assert.doesNotMatch(body, /window\.location\.href\s*=/);
   assert.doesNotMatch(body, /Opening your quote/);
