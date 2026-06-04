@@ -99,7 +99,9 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /Carefully chosen supplies/i, landing.route);
     assert.doesNotMatch(body, /\beco[- ]?friendly\b|\bnon-toxic\b|\bpet[- ]safe\b/i, landing.route);
     assert.doesNotMatch(body, /bed making|linens are left out|make beds|make the bed/i, landing.route);
-    assert.doesNotMatch(body, /from\s+\$/i, landing.route);
+    assert.match(body, /from \$135/i, landing.route);
+    assert.match(body, /from \$195/i, landing.route);
+    assert.match(body, /from \$241/i, landing.route);
     assert.doesNotMatch(body, /\$(?:120-\$200|180-\$350|250-\$500)/, landing.route);
     assert.doesNotMatch(body, /\$(?:135|195|241)\+/, landing.route);
     const nameInputTags = getNameInputTags(body);
