@@ -83,6 +83,7 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-6/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
+    assert.doesNotMatch(body, /<a\b[^>]*class="[^"]*\badlp-logo\b/i, landing.route);
     assert.match(body, /Price depends on home size and condition\./, landing.route);
     assert.match(body, /Carefully chosen supplies/i, landing.route);
     assert.doesNotMatch(body, /\beco[- ]?friendly\b|\bnon-toxic\b|\bpet[- ]safe\b/i, landing.route);
