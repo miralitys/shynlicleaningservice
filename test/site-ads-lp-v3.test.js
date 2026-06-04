@@ -43,6 +43,20 @@ const LANDING_ROUTES = [
   },
 ];
 
+function getPhoneInputTags(body) {
+  return body.match(/<input\b(?=[^>]*\bname="phone")[^>]*>/g) || [];
+}
+
+function assertPhoneInputMobileReady(tag, context) {
+  assert.match(tag, /\btype="tel"/, context);
+  assert.match(tag, /\bautocomplete="tel"/, context);
+  assert.match(tag, /\binputmode="tel"/, context);
+  assert.match(tag, /\benterkeyhint="done"/, context);
+  assert.match(tag, /\bautocapitalize="off"/, context);
+  assert.match(tag, /\bautocorrect="off"/, context);
+  assert.match(tag, /\bspellcheck="false"/, context);
+}
+
 test.before(async () => {
   const started = await startServer();
   serverProcess = started.child;
@@ -66,9 +80,12 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
     assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-11/, landing.route);
-    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-4/, landing.route);
+    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-5/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
+    const phoneInputTags = getPhoneInputTags(body);
+    assert.ok(phoneInputTags.length > 0, `${landing.route} should include phone inputs`);
+    phoneInputTags.forEach((tag) => assertPhoneInputMobileReady(tag, landing.route));
     assert.match(body, /id="mobile-sticky-cta"/, landing.route);
     assert.match(body, /<!-- Google Tag Manager -->/, landing.route);
     assert.match(body, /GTM-5P88N7LD/, landing.route);
@@ -93,7 +110,7 @@ test("excludes ad-only v3 landing pages from sitemap", async () => {
 });
 
 test("submits ad-only landing forms directly without quote-page redirects", async () => {
-  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-4`);
+  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-5`);
   const body = await response.text();
 
   assert.equal(response.status, 200);
@@ -102,6 +119,8 @@ test("submits ad-only landing forms directly without quote-page redirects", asyn
   assert.match(body, /data-adlp-success-modal/);
   assert.match(body, /Request received/);
   assert.match(body, /Your request has been received\. Our manager will contact you shortly\./);
+  assert.match(body, /enhancePhoneInput/);
+  assert.match(body, /enterkeyhint="done"/);
   assert.doesNotMatch(body, /\/quote-no-price/);
   assert.doesNotMatch(body, /window\.location\.href\s*=/);
   assert.doesNotMatch(body, /Opening your quote/);

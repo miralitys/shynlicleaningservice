@@ -88,6 +88,21 @@
     } catch (error) {}
   }
 
+  function enhancePhoneInput(input) {
+    if (!input) return;
+    input.type = "tel";
+    input.setAttribute("autocomplete", "tel");
+    input.setAttribute("inputmode", "tel");
+    input.setAttribute("enterkeyhint", "done");
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("spellcheck", "false");
+  }
+
+  function enhancePhoneFields(root) {
+    Array.prototype.slice.call((root || document).querySelectorAll('input[name="phone"]')).forEach(enhancePhoneInput);
+  }
+
   function buildLeadCapturePayload(form, name, phoneDigits, service) {
     var formattedPhone = "+1 " + formatPhoneForDisplay(phoneDigits);
     var attribution = collectAttribution();
@@ -233,6 +248,7 @@
 
     var phoneInput = form.querySelector('input[name="phone"]');
     if (phoneInput) {
+      enhancePhoneInput(phoneInput);
       phoneInput.addEventListener("input", function () {
         phoneInput.value = formatPhoneForDisplay(phoneInput.value);
       });
@@ -312,7 +328,7 @@
       '<form class="adlp-form adlp-modal__form" data-adlp-quote-form data-form-name="Ads LP Quote Popup">' +
       '<label class="adlp-field"><span>Last name</span><input type="text" name="lastName" autocomplete="family-name" placeholder="Smith" required></label>' +
       '<label class="adlp-field"><span>First name</span><input type="text" name="firstName" autocomplete="given-name" placeholder="Jane" required></label>' +
-      '<label class="adlp-field"><span>Phone</span><input type="tel" name="phone" autocomplete="tel" inputmode="tel" placeholder="(630) 555-1234" required></label>' +
+      '<label class="adlp-field"><span>Phone</span><input type="tel" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="done" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="(630) 555-1234" required></label>' +
       '<input type="hidden" name="service">' +
       '<button class="adlp-button" type="submit">Get Free Quote</button>' +
       '<p class="adlp-form__message" data-adlp-message aria-live="polite"></p>' +
@@ -373,6 +389,7 @@
   function init() {
     var modal = createQuoteModal();
     var successModal = createLeadSuccessModal();
+    enhancePhoneFields(document);
     Array.prototype.slice.call(document.querySelectorAll("[data-adlp-quote-form]")).forEach(bindForm);
     bindQuoteModal(modal);
     bindLeadSuccessModal(successModal);
