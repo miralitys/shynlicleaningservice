@@ -358,8 +358,7 @@
       document.body.classList.remove("adlp-modal-open");
     }
 
-    Array.prototype.slice.call(document.querySelectorAll('a[href="#get-quote"]')).forEach(function (trigger) {
-      if (trimValue(trigger.textContent).toLowerCase().indexOf("get free quote") === -1) return;
+    Array.prototype.slice.call(document.querySelectorAll('a[href="#get-quote"], [data-adlp-modal-trigger]')).forEach(function (trigger) {
       trigger.addEventListener("click", openModal);
       trigger.setAttribute("aria-haspopup", "dialog");
     });
