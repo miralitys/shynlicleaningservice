@@ -842,7 +842,6 @@ body.adlp-page.adlp-modal-open {
   gap: 10px;
 }
 
-.adlp-city-grid a,
 .adlp-city-grid span {
   min-height: 48px;
   display: inline-flex;
@@ -858,16 +857,6 @@ body.adlp-page.adlp-modal-open {
   text-align: center;
   text-decoration: none;
   box-shadow: 0 10px 26px rgba(37, 33, 36, 0.035);
-  transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, background-color 160ms ease;
-}
-
-.adlp-city-grid a:hover,
-.adlp-city-grid a:focus-visible {
-  border-color: var(--adlp-rose);
-  background: var(--adlp-white);
-  color: var(--adlp-rose);
-  transform: translateY(-1px);
-  outline: none;
 }
 
 .adlp-mid-cta {
@@ -1450,7 +1439,6 @@ body.adlp-page.adlp-modal-open {
   }
 
   .adlp-proof__item span,
-  .adlp-city-grid a,
   .adlp-city-grid span {
     font-size: 12px;
   }

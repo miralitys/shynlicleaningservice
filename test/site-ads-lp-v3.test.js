@@ -118,6 +118,13 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /adlp-review-marquee/, landing.route);
     assert.doesNotMatch(body, /adlp-hero__media|home-copy-team|Local team, local routes/, landing.route);
     assert.doesNotMatch(body, /\/services\/(?:regular-cleaning|deep-cleaning|move-in-move-out-cleaning)\/ads-v2/, landing.route);
+
+    if (landing.route === "/cleaners-near-me/ads-lp") {
+      const cityGridMatch = body.match(/<div class="adlp-city-grid">([\s\S]*?)<\/div>/);
+      const cityGrid = cityGridMatch ? cityGridMatch[1] : "";
+      assert.match(cityGrid, /<span>Naperville<\/span>/, landing.route);
+      assert.doesNotMatch(cityGrid, /<a\b|href=/i, landing.route);
+    }
   }
 });
 
