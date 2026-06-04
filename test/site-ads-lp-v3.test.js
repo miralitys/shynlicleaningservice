@@ -84,6 +84,8 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
     assert.match(body, /Price depends on home size and condition\./, landing.route);
+    assert.match(body, /Carefully chosen supplies/i, landing.route);
+    assert.doesNotMatch(body, /\beco[- ]?friendly\b|\bnon-toxic\b|\bpet[- ]safe\b/i, landing.route);
     assert.doesNotMatch(body, /from\s+\$/i, landing.route);
     assert.doesNotMatch(body, /\$(?:120-\$200|180-\$350|250-\$500)/, landing.route);
     assert.doesNotMatch(body, /\$(?:135|195|241)\+/, landing.route);
