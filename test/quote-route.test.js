@@ -266,6 +266,8 @@ test("writes successful quote leads to Google Sheets and Telegram without blocki
           squareMeters: "1800",
           additionalDetails: "Please call before arrival.",
         }),
+        type: "shynli.com_website_contact",
+        sourceWebsite: "https://shynli.com/",
         source: "quote",
       }),
     });
@@ -297,7 +299,7 @@ test("writes successful quote leads to Google Sheets and Telegram without blocki
     const sheetsPayload = JSON.parse(sheetsCall.body);
     const row = sheetsPayload.values[0];
     assert.equal(row.length, 20);
-    assert.equal(row[1], "website_quiz");
+    assert.equal(row[1], "shynli.com_website_contact");
     assert.equal(row[2], "Test Run");
     assert.equal(row[3], "+15551234567");
     assert.equal(row[6], "Deep Cleaning");
@@ -313,6 +315,7 @@ test("writes successful quote leads to Google Sheets and Telegram without blocki
 
     const telegramPayload = JSON.parse(telegramCall.body);
     assert.match(telegramPayload.text, /New Shynli lead/);
+    assert.match(telegramPayload.text, /Type: shynli\.com_website_contact/);
     assert.match(telegramPayload.text, /Test Run/);
     assert.match(telegramPayload.text, /Deep Cleaning/);
     assert.match(telegramPayload.text, /Price: \$\d+\.\d{2}/);
