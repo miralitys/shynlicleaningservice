@@ -326,6 +326,130 @@ test("writes successful quote leads to Google Sheets and Telegram without blocki
   }
 });
 
+test("preserves explicit Facebook lead source in web lead delivery", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "GET",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contacts: [],
+      },
+    },
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-facebook-lead-123",
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "sheets.googleapis.com",
+      status: 200,
+      body: {
+        updates: {
+          updatedRows: 1,
+        },
+      },
+    },
+    {
+      method: "POST",
+      match: "api.telegram.org",
+      status: 200,
+      body: {
+        ok: true,
+      },
+    },
+  ]);
+
+  const started = await startServer({
+    env: {
+      GHL_API_KEY: "ghl_test_key",
+      GHL_LOCATION_ID: "location-123",
+      GHL_ENABLE_NOTES: "0",
+      GHL_CREATE_OPPORTUNITY: "0",
+      WEB_LEADS_SHEET_ID: "sheet-test-123",
+      WEB_LEADS_GOOGLE_ACCESS_TOKEN: "ya29.test-token",
+      WEB_LEADS_TELEGRAM_BOT_TOKEN: "telegram-test-token",
+      WEB_LEADS_TELEGRAM_CHAT_ID: "123456",
+      SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+    },
+  });
+
+  try {
+    const response = await fetch(`${started.baseUrl}/api/quote/submit`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        leadSource: "facebook_lead_form",
+        requestType: "call_me",
+        source: "Facebook Lead Form",
+        contact: {
+          fullName: "Facebook Test Lead",
+          phone: "(630) 555-0197",
+        },
+        quote: {
+          requestType: "call_me",
+          serviceType: "deep",
+          totalPrice: 0,
+          additionalDetails: "Meta Instant Form lead - New customers.",
+          consent: true,
+        },
+        landingPage: "https://facebook.com/shynli-cleaning-lead-form",
+        utm_source: "facebook",
+        utm_medium: "paid_social",
+        utm_campaign: "new-customers",
+      }),
+    });
+
+    assert.equal(response.status, 201);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.success, true);
+    assert.equal(payload.contactId, "contact-facebook-lead-123");
+
+    const calls = await waitFor(async () => {
+      const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8").catch(() => "");
+      const parsedCalls = captureRaw
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      return parsedCalls.some((call) => call.url.includes("sheets.googleapis.com")) &&
+        parsedCalls.some((call) => call.url.includes("api.telegram.org"))
+        ? parsedCalls
+        : null;
+    });
+
+    const sheetsCall = calls.find((call) => call.url.includes("sheets.googleapis.com"));
+    const telegramCall = calls.find((call) => call.url.includes("api.telegram.org"));
+    assert.ok(sheetsCall);
+    assert.ok(telegramCall);
+
+    const sheetsPayload = JSON.parse(sheetsCall.body);
+    const row = sheetsPayload.values[0];
+    assert.equal(row[1], "facebook_lead_form");
+    assert.equal(row[2], "Facebook Test Lead");
+    assert.equal(row[3], "+16305550197");
+    assert.equal(row[6], "Deep Cleaning");
+    assert.equal(row[10], "facebook / paid_social");
+    assert.equal(row[11], "new-customers");
+    assert.equal(row[13], "https://facebook.com/shynli-cleaning-lead-form");
+
+    const telegramPayload = JSON.parse(telegramCall.body);
+    assert.match(telegramPayload.text, /Type: facebook_lead_form/);
+    assert.match(telegramPayload.text, /Facebook Test Lead/);
+    assert.match(telegramPayload.text, /Deep Cleaning/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("writes successful quote leads through Apps Script webhook when configured", async () => {
   const fetchStub = createFetchStub([
     {
