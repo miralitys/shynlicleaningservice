@@ -36,6 +36,25 @@ function getLeadTaskIdByEntryId(html, entryId) {
   return match ? match[1] : "";
 }
 
+function getQuoteOpsLaneHtml(html, title) {
+  const marker = `<h2 class="admin-quote-lane-title">${title}</h2>`;
+  const titleIndex = String(html || "").indexOf(marker);
+  assert.notEqual(titleIndex, -1, `Expected quote ops lane ${title}`);
+  const sectionStart = String(html).lastIndexOf("<section", titleIndex);
+  const sectionEnd = String(html).indexOf("</section>", titleIndex);
+  assert.notEqual(sectionStart, -1, `Expected section start for ${title}`);
+  assert.notEqual(sectionEnd, -1, `Expected section end for ${title}`);
+  return String(html).slice(sectionStart, sectionEnd + "</section>".length);
+}
+
+function assertTextBefore(html, left, right, context = "HTML order") {
+  const leftIndex = String(html || "").indexOf(left);
+  const rightIndex = String(html || "").indexOf(right);
+  assert.notEqual(leftIndex, -1, `${context}: expected ${left}`);
+  assert.notEqual(rightIndex, -1, `${context}: expected ${right}`);
+  assert.ok(leftIndex < rightIndex, `${context}: expected ${left} before ${right}`);
+}
+
 async function createAdminSession(baseUrl, config) {
   const loginResponse = await fetch(`${baseUrl}/admin/login`, {
     method: "POST",
@@ -111,6 +130,26 @@ async function submitQuote(baseUrl, options) {
       },
     }),
   });
+}
+
+async function updateLeadStatus(baseUrl, sessionCookieValue, entryId, leadStatus) {
+  const response = await fetch(`${baseUrl}/admin/quote-ops`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      cookie: `shynli_admin_session=${sessionCookieValue}`,
+      accept: "application/json",
+      "x-shynli-admin-ajax": "1",
+    },
+    body: new URLSearchParams({
+      action: "update-lead-status",
+      entryId,
+      leadStatus,
+      returnTo: "/admin/quote-ops",
+    }),
+  });
+  assert.equal(response.status, 200);
+  return response;
 }
 
 async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
@@ -215,6 +254,92 @@ test("shows new quote and task badges in the sidebar until the lead leaves the n
     assert.doesNotMatch(updatedDashboardBody, /data-admin-nav-new-task-count=/);
     assert.doesNotMatch(updatedDashboardBody, />1 заявка</);
     assert.doesNotMatch(updatedDashboardBody, />1 задача</);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
+test("orders quote ops list by lead status and cleaning date", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-quote-list-sort",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  const quoteFixtures = [
+    ["sort-new-late", "Sort New Late", "2026-06-20", "09:00", "new"],
+    ["sort-confirmed-late", "Sort Confirmed Late", "2026-06-18", "09:00", "confirmed"],
+    ["sort-declined-late", "Sort Declined Late", "2026-06-16", "09:00", "declined"],
+    ["sort-completed-late", "Sort Completed Late", "2026-06-14", "09:00", "completed"],
+    ["sort-new-early", "Sort New Early", "2026-06-10", "09:00", "new"],
+    ["sort-confirmed-early", "Sort Confirmed Early", "2026-06-08", "09:00", "confirmed"],
+    ["sort-declined-early", "Sort Declined Early", "2026-06-06", "09:00", "declined"],
+    ["sort-completed-early", "Sort Completed Early", "2026-06-04", "09:00", "completed"],
+  ];
+
+  try {
+    for (const [requestId, fullName, selectedDate, selectedTime] of quoteFixtures) {
+      const quoteResponse = await submitQuote(started.baseUrl, {
+        requestId,
+        fullName,
+        phone: "312-555-0100",
+        email: `${requestId}@example.com`,
+        serviceType: "regular",
+        selectedDate,
+        selectedTime,
+        fullAddress: `${selectedDate} Test Ave, Naperville, IL 60563`,
+      });
+      assert.equal(quoteResponse.status, 201);
+    }
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    for (const [requestId, , , , leadStatus] of quoteFixtures) {
+      if (leadStatus === "new") continue;
+      const entryId = await getQuoteOpsEntryId(started.baseUrl, sessionCookieValue, requestId);
+      await updateLeadStatus(started.baseUrl, sessionCookieValue, entryId, leadStatus);
+    }
+
+    const quoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const quoteOpsBody = await quoteOpsResponse.text();
+    assert.equal(quoteOpsResponse.status, 200);
+
+    const laneTitles = Array.from(quoteOpsBody.matchAll(/<h2 class="admin-quote-lane-title">([^<]+)<\/h2>/g)).map(
+      (match) => match[1]
+    );
+    assert.deepEqual(laneTitles, ["Новые заявки", "Подтверждено", "Выполнено", "Отказ"]);
+
+    const newLane = getQuoteOpsLaneHtml(quoteOpsBody, "Новые заявки");
+    const confirmedLane = getQuoteOpsLaneHtml(quoteOpsBody, "Подтверждено");
+    const completedLane = getQuoteOpsLaneHtml(quoteOpsBody, "Выполнено");
+    const declinedLane = getQuoteOpsLaneHtml(quoteOpsBody, "Отказ");
+
+    assertTextBefore(newLane, "Sort New Early", "Sort New Late", "new lane cleaning dates");
+    assertTextBefore(confirmedLane, "Sort Confirmed Early", "Sort Confirmed Late", "confirmed lane cleaning dates");
+    assertTextBefore(completedLane, "Sort Completed Early", "Sort Completed Late", "completed lane cleaning dates");
+    assertTextBefore(declinedLane, "Sort Declined Early", "Sort Declined Late", "declined lane cleaning dates");
+    assert.doesNotMatch(quoteOpsBody, /Все заявки/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

@@ -670,7 +670,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /ops-request-1/);
     assert.match(quoteOpsBody, /Лента заявок/);
     assert.match(quoteOpsBody, /Быстро найти нужную заявку/);
-    assert.match(quoteOpsBody, /Все заявки/);
+    assert.match(quoteOpsBody, /Подтверждено/);
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
     assert.match(quoteOpsBody, /<th>Клиент<\/th>\s*<th>Статус<\/th>/);
     assert.match(quoteOpsBody, /\.admin-quote-success-table\s*\{[\s\S]*min-width: 1520px;/);
@@ -704,7 +704,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Адрес<\/span>/);
     assert.match(quoteOpsBody, /admin-client-info-grid admin-client-info-grid-three/);
     assert.match(quoteOpsBody, /<span class="admin-client-info-label">Создана<\/span>/);
-    assert.match(quoteOpsBody, /<span class="admin-client-info-label">Менеджер<\/span>/);
+    assert.match(quoteOpsBody, /<label class="admin-label">\s*Менеджер/);
     assert.match(quoteOpsBody, /Не назначен/);
     assert.match(quoteOpsBody, /Что заказал клиент/);
     assert.match(quoteOpsBody, /Поля из формы клиента/);
@@ -866,7 +866,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
   }
 });
 
-test("keeps quote requests in success lane when Go High Level opportunity sync is disabled", async () => {
+test("keeps quote requests visible when Go High Level opportunity sync is disabled", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-ops-warning-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const fetchStub = createFetchStub([
@@ -969,8 +969,7 @@ test("keeps quote requests in success lane when Go High Level opportunity sync i
     assert.equal(quoteOpsResponse.status, 200);
     assert.match(quoteOpsBody, /Warning Client/);
     assert.match(quoteOpsBody, /Новые заявки/);
-    assert.match(quoteOpsBody, /Все заявки/);
-    assert.ok(quoteOpsBody.indexOf("Новые заявки") < quoteOpsBody.indexOf("Все заявки"));
+    assert.doesNotMatch(quoteOpsBody, /Все заявки/);
     assert.match(quoteOpsBody, /<th>Клиент<\/th>\s*<th>Статус<\/th>/);
     assert.doesNotMatch(quoteOpsBody, /opportunity_failed/);
     assert.doesNotMatch(quoteOpsBody, /Missing permission: opportunities\.write/);
