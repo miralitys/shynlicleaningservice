@@ -19,6 +19,7 @@ test("creates and verifies scoped user session tokens", () => {
   });
 
   assert.equal(config.configured, true);
+  assert.equal(USER_SESSION_TTL_SECONDS, 24 * 60 * 60);
 
   const token = createUserSessionToken(
     config,

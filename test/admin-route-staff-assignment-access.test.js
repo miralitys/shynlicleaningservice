@@ -10,6 +10,7 @@ const {
   createFetchStub,
   startServer,
   stopServer,
+  getSetCookies,
   escapeRegex,
   createAdminSession,
   submitQuote,
@@ -378,6 +379,9 @@ test("updates linked user access role from the staff edit dialog", async () => {
     });
     assert.equal(accountLoginResponse.status, 303);
     assert.equal(accountLoginResponse.headers.get("location"), "/account");
+    const userSessionCookie =
+      getSetCookies(accountLoginResponse).find((cookie) => cookie.startsWith("shynli_user_session=")) || "";
+    assert.match(userSessionCookie, /Max-Age=86400/);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
