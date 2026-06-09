@@ -151,6 +151,16 @@ function getMobileOrdersSection(html) {
   return html.slice(startIndex, endIndex);
 }
 
+function getMobileCalendarSection(html) {
+  const startIndex = html.indexOf('class="account-mobile-calendar"');
+  assert.notEqual(startIndex, -1, "Expected mobile calendar section");
+  const detailIndex = html.indexOf('class="account-mobile-detail-view"', startIndex);
+  const desktopIndex = html.indexOf('<div class="account-desktop-stats">', startIndex);
+  const candidates = [detailIndex, desktopIndex].filter((index) => index > startIndex);
+  const endIndex = candidates.length ? Math.min(...candidates) : html.length;
+  return html.slice(startIndex, endIndex);
+}
+
 test("renders active cleaner orders first and moves completed orders into history", () => {
   const renderers = createRenderers();
   const html = renderers.renderDashboardPage({
@@ -471,4 +481,70 @@ test("renders cleaner calendar cards with the scheduled time range", () => {
 
   assert.match(html, /Calendar Range Client/);
   assert.match(html, /09:00 - 12:30/);
+});
+
+test("keeps the mobile month calendar list collapsed until a day is selected", () => {
+  const renderers = createRenderers();
+  const userContext = {
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    assignedOrders: [
+      buildOrder({
+        id: "past-completed-order",
+        customerName: "Cheryl Whitten",
+        status: "completed",
+        scheduleDate: "2099-06-02",
+        scheduleTime: "09:00",
+        updatedAt: "2099-01-04T12:00:00.000Z",
+        confirmed: true,
+      }),
+      buildOrder({
+        id: "future-confirmed-order",
+        customerName: "Mona Future",
+        scheduleDate: "2099-06-15",
+        scheduleTime: "08:00",
+        updatedAt: "2099-01-05T12:00:00.000Z",
+        confirmed: true,
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  };
+
+  const monthHtml = renderers.renderCalendarPage(userContext, {
+    calendarDate: "2099-06-08",
+    calendarView: "month",
+  });
+  const monthMobileCalendar = getMobileCalendarSection(monthHtml);
+  assert.match(monthMobileCalendar, /account-mobile-calendar-month-nav/);
+  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-05-01"/);
+  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-07-01"/);
+  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-06-02&amp;showDay=1"/);
+  assert.doesNotMatch(monthMobileCalendar, /account-mobile-calendar-order-card/);
+  assert.doesNotMatch(monthMobileCalendar, /Cheryl Whitten/);
+
+  const selectedDayHtml = renderers.renderCalendarPage(userContext, {
+    calendarDate: "2099-06-02",
+    calendarView: "month",
+    calendarShowDay: true,
+  });
+  const selectedDayMobileCalendar = getMobileCalendarSection(selectedDayHtml);
+  assert.match(selectedDayMobileCalendar, /account-mobile-calendar-order-card/);
+  assert.match(selectedDayMobileCalendar, /Cheryl Whitten/);
+  assert.doesNotMatch(selectedDayMobileCalendar, /Mona Future/);
 });
