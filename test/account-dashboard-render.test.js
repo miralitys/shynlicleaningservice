@@ -685,3 +685,59 @@ test("keeps the mobile month calendar list collapsed until a day is selected", (
   assert.match(selectedDayMobileCalendar, /Cheryl Whitten/);
   assert.doesNotMatch(selectedDayMobileCalendar, /Mona Future/);
 });
+
+test("shows payroll amount inside the mobile-visible payroll row", () => {
+  const renderers = createRenderers();
+  const html = renderers.renderPayrollPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    assignedOrders: [],
+    payrollSummary: {
+      rows: [
+        {
+          customerName: "Payroll Mobile Client",
+          serviceName: "Regular",
+          selectedDate: "2099-01-05",
+          selectedTime: "09:00",
+          amountCents: 4375,
+          compensationType: "percent",
+          compensationValue: "50",
+          appliedCompensationValue: "25",
+          teamSize: 2,
+          status: "owed",
+          paidAt: "",
+        },
+      ],
+      totals: {
+        owedCents: 4375,
+        paidCents: 0,
+        totalCents: 4375,
+        rowsCount: 1,
+        owedCount: 1,
+        paidCount: 0,
+      },
+    },
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+  });
+
+  assert.match(html, /account-payroll-mobile-amount/);
+  assert.match(html, /Payroll Mobile Client/);
+  assert.match(html, /К выплате/);
+  assert.match(html, /\$43\.75/);
+  assert.match(html, /Payroll Mobile Client[\s\S]*account-payroll-mobile-amount[\s\S]*\$43\.75/);
+});
