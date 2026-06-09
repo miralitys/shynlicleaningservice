@@ -742,6 +742,54 @@ test("renders mobile order details from the saved client address when calculator
   assert.match(detailView, /Gate code 2040\. Please use side entrance\./);
 });
 
+test("repairs legacy mobile bathroom data stored in the square footage slot", () => {
+  const { renderDashboardPage } = createRenderers();
+  const html = renderDashboardPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    staffSummary: null,
+    assignedOrders: [
+      buildOrder({
+        id: "legacy-bathroom-detail-order",
+        customerName: "Legacy Bathroom Detail",
+        status: "scheduled",
+        scheduleDate: "2099-01-05",
+        scheduleTime: "09:00",
+        updatedAt: "2099-01-03T12:00:00.000Z",
+        confirmed: true,
+        quoteData: {
+          rooms: "2",
+          squareMeters: "2",
+          hasPets: "none",
+        },
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  });
+
+  const detailView = getMobileDetailView(html, "account-mobile-order-detail-legacy-bathroom-detail-order");
+  assert.match(detailView, /Спальни[\s\S]*2/);
+  assert.match(detailView, /Ванные[\s\S]*2/);
+  assert.match(detailView, /Площадь[\s\S]*Не указано/);
+  assert.doesNotMatch(detailView, /2 sq ft/);
+});
+
 test("renders cleaner calendar cards with the scheduled time range", () => {
   const renderers = createRenderers();
   const html = renderers.renderCalendarPage(

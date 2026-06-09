@@ -301,6 +301,57 @@ test("copies client address and quote details into recurring orders", () => {
   });
 });
 
+test("repairs legacy bathroom counts stored as square footage in recurring orders", () => {
+  const { buildRecurringOrderSubmission } = createMutationDomain();
+  const entry = {
+    id: "order-recurring-legacy-bathrooms-1",
+    requestId: "recurring-legacy-bathrooms-1",
+    customerName: "Recurring Legacy Bathrooms",
+    customerPhone: "3125550103",
+    serviceType: "standard",
+    serviceName: "Standard",
+    fullAddress: "13800 S Autumn Wy, Plainfield, IL 60544, USA",
+    selectedDate: "2026-06-09",
+    selectedTime: "09:00",
+    totalPrice: 175,
+    payloadForRetry: {
+      calculatorData: {
+        rooms: "2",
+        squareMeters: "2",
+        hasPets: "none",
+        selectedDate: "2026-06-09",
+        selectedTime: "09:00",
+        frequency: "biweekly",
+        totalPrice: 175,
+      },
+      orderState: {
+        isCreated: true,
+        status: "completed",
+        frequency: "biweekly",
+        selectedDate: "2026-06-09",
+        selectedTime: "09:00",
+        paymentStatus: "unpaid",
+        totalPrice: 175,
+      },
+      adminOrder: {
+        isCreated: true,
+        status: "completed",
+        frequency: "biweekly",
+        selectedDate: "2026-06-09",
+        selectedTime: "09:00",
+        paymentStatus: "unpaid",
+        totalPrice: 175,
+      },
+    },
+  };
+
+  const recurringSubmission = buildRecurringOrderSubmission(entry);
+  assert.ok(recurringSubmission);
+  const calculatorData = recurringSubmission.payloadForRetry.calculatorData;
+  assert.equal(calculatorData.bathrooms, "2");
+  assert.equal(calculatorData.squareMeters, undefined);
+});
+
 test("persists editable client form fields into quote calculator data", () => {
   const { applyOrderEntryUpdates } = createMutationDomain();
   const entry = {
