@@ -141,12 +141,12 @@ function getMobileFocusCard(html) {
   const marker = `class="account-mobile-focus-card`;
   const startIndex = html.indexOf(marker);
   assert.notEqual(startIndex, -1, "Expected mobile focus card");
-  const nextIndex = html.indexOf(`<div class="account-mobile-section">`, startIndex);
+  const nextIndex = html.indexOf(`id="account-mobile-orders"`, startIndex);
   return html.slice(startIndex, nextIndex === -1 ? html.length : nextIndex);
 }
 
 function getMobileOrdersSection(html) {
-  const startIndex = html.indexOf("<h3>Мои заказы</h3>");
+  const startIndex = html.indexOf('id="account-mobile-orders"');
   assert.notEqual(startIndex, -1, "Expected mobile orders section");
   const completedIndex = html.indexOf("<h3>Выполненные заказы</h3>", startIndex);
   const detailIndex = html.indexOf(`class="account-mobile-detail-view"`, startIndex);
@@ -354,6 +354,109 @@ test("shows the nearest scheduled order in the mobile next order card", () => {
 
   const mobileOrdersSection = getMobileOrdersSection(html);
   assert.ok(mobileOrdersSection.indexOf("Mona") < mobileOrdersSection.indexOf("Mildred Walker"));
+});
+
+test("renders clickable mobile dashboard filters with a clear scheduled label", () => {
+  const renderers = createRenderers();
+  const html = renderers.renderDashboardPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    staffSummary: null,
+    assignedOrders: [
+      buildOrder({
+        id: "confirmed-scheduled-order",
+        customerName: "Confirmed Scheduled Client",
+        scheduleDate: "2099-06-10",
+        scheduleTime: "08:00",
+        updatedAt: "2099-01-02T12:00:00.000Z",
+        confirmed: true,
+      }),
+      buildOrder({
+        id: "pending-reply-order",
+        customerName: "Pending Reply Client",
+        scheduleDate: "2099-06-15",
+        scheduleTime: "09:00",
+        updatedAt: "2099-01-04T12:00:00.000Z",
+        confirmed: false,
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  });
+
+  assert.match(html, /href="\/account\?filter=active#account-mobile-orders" aria-current="true"/);
+  assert.match(html, /href="\/account\?filter=scheduled#account-mobile-orders"/);
+  assert.match(html, /href="\/account\?filter=pending#account-mobile-orders"/);
+  assert.match(html, /В расписании/);
+  assert.doesNotMatch(html, /Со временем/);
+});
+
+test("filters the mobile order list from dashboard metric links", () => {
+  const renderers = createRenderers();
+  const html = renderers.renderDashboardPage(
+    {
+      user: {
+        id: "user-1",
+        email: "ariana.cleaner@example.com",
+        phone: "3125550100",
+        staffId: "staff-1",
+        role: "cleaner",
+      },
+      staffRecord: {
+        id: "staff-1",
+        name: "Ariana Cleaner",
+        email: "ariana.cleaner@example.com",
+        phone: "3125550100",
+        status: "active",
+        w9: { document: { relativePath: "w9.pdf" } },
+        contract: { document: { relativePath: "contract.pdf" } },
+      },
+      staffSummary: null,
+      assignedOrders: [
+        buildOrder({
+          id: "confirmed-scheduled-order",
+          customerName: "Confirmed Scheduled Client",
+          scheduleDate: "2099-06-10",
+          scheduleTime: "08:00",
+          updatedAt: "2099-01-02T12:00:00.000Z",
+          confirmed: true,
+        }),
+        buildOrder({
+          id: "pending-reply-order",
+          customerName: "Pending Reply Client",
+          scheduleDate: "2099-06-15",
+          scheduleTime: "09:00",
+          updatedAt: "2099-01-04T12:00:00.000Z",
+          confirmed: false,
+        }),
+      ],
+      managerContact: null,
+      calendarMeta: { configured: false, connected: false },
+      payrollSummary: { records: [], totals: {} },
+    },
+    { dashboardFilter: "pending" }
+  );
+
+  const mobileOrdersSection = getMobileOrdersSection(html);
+  assert.match(html, /href="\/account\?filter=pending#account-mobile-orders" aria-current="true"/);
+  assert.match(mobileOrdersSection, /<h3>Нужно ответить<\/h3>/);
+  assert.match(mobileOrdersSection, /Pending Reply Client/);
+  assert.doesNotMatch(mobileOrdersSection, /Confirmed Scheduled Client/);
 });
 
 test("renders cleaner checklist completion without a photo upload step", () => {
