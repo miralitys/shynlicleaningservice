@@ -161,6 +161,33 @@ function getMobileCalendarSection(html) {
   return html.slice(startIndex, endIndex);
 }
 
+function getMobileDetailView(html, detailId) {
+  const idIndex = html.indexOf(`id="${detailId}"`);
+  assert.notEqual(idIndex, -1, `Expected mobile detail view ${detailId}`);
+  const startIndex = html.lastIndexOf("<section", idIndex);
+  assert.notEqual(startIndex, -1, `Expected section start for ${detailId}`);
+  let depth = 0;
+  let cursor = startIndex;
+  const tagPattern = /<\/?section\b[^>]*>/g;
+  tagPattern.lastIndex = startIndex;
+
+  while (true) {
+    const match = tagPattern.exec(html);
+    assert.ok(match, `Expected section end for ${detailId}`);
+    if (match[0].startsWith("</")) {
+      depth -= 1;
+      if (depth === 0) {
+        cursor = tagPattern.lastIndex;
+        break;
+      }
+    } else {
+      depth += 1;
+    }
+  }
+
+  return html.slice(startIndex, cursor);
+}
+
 test("renders active cleaner orders first and moves completed orders into history", () => {
   const renderers = createRenderers();
   const html = renderers.renderDashboardPage({
@@ -433,6 +460,48 @@ test("keeps cleaner en-route action disabled until two hours before the appointm
   assert.match(html, /Кнопка «Я в пути» станет активной за 2 часа до начала уборки\./);
   assert.match(html, /name="action" value="mark-assignment-en-route"/);
   assert.match(html, /<button[^>]*disabled[^>]*>Я в пути<\/button>/);
+});
+
+test("keeps confirmed mobile order detail actions from overlapping content", () => {
+  const renderers = createRenderers();
+  const html = renderers.renderDashboardPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    staffSummary: null,
+    assignedOrders: [
+      buildOrder({
+        id: "future-confirmed-order",
+        customerName: "Future Confirmed Client",
+        status: "scheduled",
+        scheduleDate: "2099-01-05",
+        scheduleTime: "09:00",
+        updatedAt: "2099-01-03T12:00:00.000Z",
+        confirmed: true,
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  });
+
+  const detailView = getMobileDetailView(html, "account-mobile-order-detail-future-confirmed-order");
+  assert.match(detailView, /account-mobile-detail-primary-button/);
+  assert.doesNotMatch(detailView, /account-mobile-action-stack-bottom/);
+  assert.equal((detailView.match(/account-mobile-detail-primary-button/g) || []).length, 1);
 });
 
 test("renders cleaner calendar cards with the scheduled time range", () => {
