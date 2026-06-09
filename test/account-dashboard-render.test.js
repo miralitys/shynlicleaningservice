@@ -133,6 +133,14 @@ function getDesktopCard(html, title) {
   return html.slice(startIndex, nextIndex === -1 ? html.length : nextIndex);
 }
 
+function getMobileFocusCard(html) {
+  const marker = `class="account-mobile-focus-card`;
+  const startIndex = html.indexOf(marker);
+  assert.notEqual(startIndex, -1, "Expected mobile focus card");
+  const nextIndex = html.indexOf(`<div class="account-mobile-section">`, startIndex);
+  return html.slice(startIndex, nextIndex === -1 ? html.length : nextIndex);
+}
+
 test("renders active cleaner orders first and moves completed orders into history", () => {
   const renderers = createRenderers();
   const html = renderers.renderDashboardPage({
@@ -240,6 +248,58 @@ test("prioritizes the cleaner order opened from an SMS link", () => {
   assert.match(html, /data-account-focused-detail-id="account-mobile-order-detail-sms-focused-order"/);
   assert.match(html, /Заказ из SMS/);
   assert.match(html, /Открыто из SMS\. Подтвердите или отклоните именно этот заказ\./);
+});
+
+test("shows the nearest scheduled order in the mobile next order card", () => {
+  const renderers = createRenderers();
+  const html = renderers.renderDashboardPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    staffSummary: null,
+    assignedOrders: [
+      buildOrder({
+        id: "later-needs-reply-order",
+        customerName: "Mildred Walker",
+        scheduleDate: "2099-06-15",
+        scheduleTime: "09:00",
+        updatedAt: "2099-01-04T12:00:00.000Z",
+        confirmed: false,
+      }),
+      buildOrder({
+        id: "nearest-confirmed-order",
+        customerName: "Mona",
+        scheduleDate: "2099-06-10",
+        scheduleTime: "08:00",
+        updatedAt: "2099-01-02T12:00:00.000Z",
+        confirmed: true,
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  });
+
+  const activeCard = getDesktopCard(html, "Мои заявки");
+  assert.ok(activeCard.indexOf("Mildred Walker") < activeCard.indexOf("Mona"));
+
+  const mobileFocusCard = getMobileFocusCard(html);
+  assert.match(mobileFocusCard, /Следующий заказ/);
+  assert.match(mobileFocusCard, /Mona/);
+  assert.doesNotMatch(mobileFocusCard, /Mildred Walker/);
 });
 
 test("renders cleaner checklist completion without a photo upload step", () => {
