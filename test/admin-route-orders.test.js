@@ -420,7 +420,7 @@ test("allows admins to edit visit date and time from the order summary card", as
   }
 });
 
-test("sorts scheduled orders in the funnel by visit date", async () => {
+test("sorts the orders table newest first and scheduled funnel by visit date", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
   };
@@ -518,8 +518,8 @@ test("sorts scheduled orders in the funnel by visit date", async () => {
     assert.ok(tableMayVisitIndex !== -1);
     assert.ok(tableJuneSecondVisitIndex !== -1);
     assert.ok(tableJuneThirteenVisitIndex !== -1);
-    assert.ok(tableMayVisitIndex < tableJuneSecondVisitIndex);
-    assert.ok(tableJuneSecondVisitIndex < tableJuneThirteenVisitIndex);
+    assert.ok(tableJuneThirteenVisitIndex < tableJuneSecondVisitIndex);
+    assert.ok(tableJuneSecondVisitIndex < tableMayVisitIndex);
 
     const scheduledLane = getOrderFunnelLaneSlice(ordersBody, "scheduled", "en-route");
     const mayVisitIndex = scheduledLane.indexOf("Scheduled Sort May Visit");
