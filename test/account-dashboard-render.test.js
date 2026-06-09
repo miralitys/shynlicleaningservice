@@ -141,6 +141,16 @@ function getMobileFocusCard(html) {
   return html.slice(startIndex, nextIndex === -1 ? html.length : nextIndex);
 }
 
+function getMobileOrdersSection(html) {
+  const startIndex = html.indexOf("<h3>Мои заказы</h3>");
+  assert.notEqual(startIndex, -1, "Expected mobile orders section");
+  const completedIndex = html.indexOf("<h3>Выполненные заказы</h3>", startIndex);
+  const detailIndex = html.indexOf(`class="account-mobile-detail-view"`, startIndex);
+  const candidates = [completedIndex, detailIndex].filter((index) => index > startIndex);
+  const endIndex = candidates.length ? Math.min(...candidates) : html.length;
+  return html.slice(startIndex, endIndex);
+}
+
 test("renders active cleaner orders first and moves completed orders into history", () => {
   const renderers = createRenderers();
   const html = renderers.renderDashboardPage({
@@ -300,6 +310,9 @@ test("shows the nearest scheduled order in the mobile next order card", () => {
   assert.match(mobileFocusCard, /Следующий заказ/);
   assert.match(mobileFocusCard, /Mona/);
   assert.doesNotMatch(mobileFocusCard, /Mildred Walker/);
+
+  const mobileOrdersSection = getMobileOrdersSection(html);
+  assert.ok(mobileOrdersSection.indexOf("Mona") < mobileOrdersSection.indexOf("Mildred Walker"));
 });
 
 test("renders cleaner checklist completion without a photo upload step", () => {
