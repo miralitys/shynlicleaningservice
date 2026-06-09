@@ -225,6 +225,82 @@ test("persists service duration and carries it into recurring orders", () => {
   assert.equal(recurringSubmission.payloadForRetry.adminOrder.serviceDurationMinutes, 150);
 });
 
+test("copies client address and quote details into recurring orders", () => {
+  const { buildRecurringOrderSubmission } = createMutationDomain();
+  const entry = {
+    id: "order-recurring-client-details-1",
+    requestId: "recurring-client-details-1",
+    customerName: "Recurring Details Customer",
+    customerPhone: "3125550102",
+    customerEmail: "details@example.com",
+    serviceType: "standard",
+    serviceName: "Standard",
+    fullAddress: "13800 S Autumn Wy, Plainfield, IL 60544, USA",
+    selectedDate: "2026-06-09",
+    selectedTime: "09:00",
+    totalPrice: 175,
+    totalPriceCents: 17500,
+    payloadForRetry: {
+      calculatorData: {
+        selectedDate: "2026-06-09",
+        selectedTime: "09:00",
+        frequency: "biweekly",
+        totalPrice: 175,
+      },
+      quoteData: {
+        services: ["insideCabinets", "refrigeratorCleaning"],
+        quantityServices: {
+          interiorWindowsCleaning: 4,
+        },
+      },
+      adminClient: {
+        addressBook: [
+          {
+            address: "13800 S Autumn Wy, Plainfield, IL 60544, USA",
+            roomCount: "2",
+            bathroomCount: "2",
+            squareFootage: "1500 sq ft",
+            pets: "dog",
+            notes: "Gate code 2040. Please use side entrance.",
+          },
+        ],
+      },
+      orderState: {
+        isCreated: true,
+        status: "completed",
+        frequency: "biweekly",
+        selectedDate: "2026-06-09",
+        selectedTime: "09:00",
+        paymentStatus: "unpaid",
+        totalPrice: 175,
+      },
+      adminOrder: {
+        isCreated: true,
+        status: "completed",
+        frequency: "biweekly",
+        selectedDate: "2026-06-09",
+        selectedTime: "09:00",
+        paymentStatus: "unpaid",
+        totalPrice: 175,
+      },
+    },
+  };
+
+  const recurringSubmission = buildRecurringOrderSubmission(entry);
+  assert.ok(recurringSubmission);
+  const calculatorData = recurringSubmission.payloadForRetry.calculatorData;
+  assert.equal(calculatorData.selectedDate, "2026-06-23");
+  assert.equal(calculatorData.rooms, "2");
+  assert.equal(calculatorData.bathrooms, "2");
+  assert.equal(calculatorData.squareMeters, "1500 sq ft");
+  assert.equal(calculatorData.hasPets, "dog");
+  assert.equal(calculatorData.additionalDetails, "Gate code 2040. Please use side entrance.");
+  assert.deepEqual(calculatorData.services, ["insideCabinets", "refrigeratorCleaning"]);
+  assert.deepEqual(calculatorData.quantityServices, {
+    interiorWindowsCleaning: 4,
+  });
+});
+
 test("persists editable client form fields into quote calculator data", () => {
   const { applyOrderEntryUpdates } = createMutationDomain();
   const entry = {

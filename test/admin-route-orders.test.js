@@ -180,6 +180,54 @@ test("allows admins to add a manual order from the orders page", async () => {
     const scheduledLane = getOrderFunnelLaneSlice(createdOrderBody, "scheduled", "en-route");
     assert.match(newLane, /Manual Customer/);
     assert.doesNotMatch(scheduledLane, /Manual Customer/);
+
+    const createOrderWithClientDetailsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Manual Details Customer",
+        customerPhone: "3125557722",
+        customerEmail: "manual.details@example.com",
+        selectedClientContactId: "contact-manual-details-1",
+        selectedClientAddress: "13800 S Autumn Wy, Plainfield, IL 60544, USA",
+        selectedClientAddressPropertyType: "house",
+        selectedClientAddressSquareFootage: "1500 sq ft",
+        selectedClientAddressRoomCount: "2",
+        selectedClientAddressBathroomCount: "2",
+        selectedClientAddressPets: "dog",
+        selectedClientAddressNotes: "Gate code 2040. Please use side entrance.",
+        serviceType: "standard",
+        selectedDate: "2026-06-23",
+        selectedTime: "09:00",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
+        frequency: "biweekly",
+        totalPrice: "175.00",
+        fullAddress: "13800 S Autumn Wy, Plainfield, IL 60544, USA",
+      }),
+    });
+
+    assert.equal(createOrderWithClientDetailsResponse.status, 303);
+    const detailsRedirectLocation = createOrderWithClientDetailsResponse.headers.get("location") || "";
+    const detailsOrderResponse = await fetch(`${started.baseUrl}${detailsRedirectLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const detailsOrderBody = await detailsOrderResponse.text();
+    assert.equal(detailsOrderResponse.status, 200);
+    assert.match(detailsOrderBody, /Manual Details Customer/);
+    assert.match(detailsOrderBody, /Спальни[\s\S]*2/);
+    assert.match(detailsOrderBody, /Санузлы[\s\S]*2/);
+    assert.match(detailsOrderBody, /Размер дома[\s\S]*1500 sq ft/);
+    assert.match(detailsOrderBody, /Питомцы[\s\S]*Собака/);
+    assert.match(detailsOrderBody, /Комментарий клиента[\s\S]*Gate code 2040\. Please use side entrance\./);
   } finally {
     await stopServer(started.child);
   }
