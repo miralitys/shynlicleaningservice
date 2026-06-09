@@ -68,6 +68,7 @@ function buildOrder({
   updatedAt,
   confirmed = false,
   quoteData = null,
+  payloadExtras = null,
 }) {
   const address = `${customerName} Address`;
   const serviceName = "Regular";
@@ -82,7 +83,10 @@ function buildOrder({
     adminOrder.cleanerConfirmation = buildCleanerConfirmation(scheduleDate, scheduleTime, address, serviceName);
   }
 
-  const payloadForRetry = { adminOrder };
+  const payloadForRetry = {
+    adminOrder,
+    ...(payloadExtras && typeof payloadExtras === "object" ? payloadExtras : {}),
+  };
   if (quoteData && typeof quoteData === "object") {
     payloadForRetry.calculatorData = quoteData;
   }
@@ -673,6 +677,69 @@ test("renders client quote options and comments in the mobile order detail", () 
   assert.match(detailView, /Basement Cleaning/);
   assert.match(detailView, /Комментарий клиента/);
   assert.match(detailView, /Gate code 1942\.<br>Please focus the kitchen first\./);
+});
+
+test("renders mobile order details from the saved client address when calculator data is sparse", () => {
+  const { renderDashboardPage } = createRenderers();
+  const html = renderDashboardPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    staffSummary: null,
+    assignedOrders: [
+      buildOrder({
+        id: "client-address-detail-order",
+        customerName: "Client Address Detail",
+        status: "scheduled",
+        scheduleDate: "2099-01-05",
+        scheduleTime: "09:00",
+        updatedAt: "2099-01-03T12:00:00.000Z",
+        confirmed: true,
+        payloadExtras: {
+          calculatorData: {
+            selectedDate: "2099-01-05",
+            selectedTime: "09:00",
+          },
+          adminClient: {
+            addressBook: [
+              {
+                address: "Client Address Detail Address",
+                roomCount: "2",
+                bathroomCount: "2",
+                squareFootage: "1500 sq ft",
+                pets: "dog",
+                notes: "Gate code 2040. Please use side entrance.",
+              },
+            ],
+          },
+        },
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  });
+
+  const detailView = getMobileDetailView(html, "account-mobile-order-detail-client-address-detail-order");
+  assert.match(detailView, /Спальни[\s\S]*2/);
+  assert.match(detailView, /Ванные[\s\S]*2/);
+  assert.match(detailView, /Площадь[\s\S]*1500 sq ft/);
+  assert.match(detailView, /Питомцы[\s\S]*dog/);
+  assert.match(detailView, /Комментарий клиента/);
+  assert.match(detailView, /Gate code 2040\. Please use side entrance\./);
 });
 
 test("renders cleaner calendar cards with the scheduled time range", () => {
