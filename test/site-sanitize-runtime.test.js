@@ -1153,6 +1153,50 @@ test("rebuilds the homepage review block with unique current reviews", () => {
   assert.match(js, /addEventListener\("pointerdown", pause/);
 });
 
+test("inserts homepage-style reviews before the regular-cleaning cross-sell block", () => {
+  const html = sanitizeHtml(readFixture("page109653016-copy.html"), "/services/regular-cleaning");
+
+  const reviewsIndex = html.indexOf('id="regular-cleaning-reviews"');
+  const needMoreIndex = html.indexOf("Need More Than Regular Cleaning?");
+  assert.notEqual(reviewsIndex, -1);
+  assert.notEqual(needMoreIndex, -1);
+  assert.ok(reviewsIndex < needMoreIndex);
+  assert.match(html, /What Our <span>Clients Say<\/span>/);
+  assert.match(html, /Mobile Legends Jek/);
+  assert.match(html, /Beksultan Bekbolotov/);
+  assert.doesNotMatch(html, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
+});
+
+test("inserts homepage-style reviews before the deep-cleaning other services block", () => {
+  const html = sanitizeHtml(readFixture("page109721366.html"), "/services/deep-cleaning");
+
+  const reviewsIndex = html.indexOf('id="deep-cleaning-reviews"');
+  const otherServicesIndex = html.indexOf('Explore <span class="dc-accent">Other</span> Services');
+  const reviewHtml = html.slice(reviewsIndex, otherServicesIndex);
+  assert.notEqual(reviewsIndex, -1);
+  assert.notEqual(otherServicesIndex, -1);
+  assert.ok(reviewsIndex < otherServicesIndex);
+  assert.match(reviewHtml, /What Our <span>Clients Say<\/span>/);
+  assert.match(reviewHtml, /Mobile Legends Jek/);
+  assert.match(reviewHtml, /Beksultan Bekbolotov/);
+  assert.doesNotMatch(reviewHtml, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
+});
+
+test("inserts homepage-style reviews before the move-in move-out other services block", () => {
+  const html = sanitizeHtml(readFixture("page109993436-copy.html"), "/services/move-in-move-out-cleaning");
+
+  const reviewsIndex = html.indexOf('id="move-in-move-out-reviews"');
+  const otherServicesIndex = html.indexOf('Explore <span style="color: rgb(158, 67, 90);">Other</span> Services');
+  const reviewHtml = html.slice(reviewsIndex, otherServicesIndex);
+  assert.notEqual(reviewsIndex, -1);
+  assert.notEqual(otherServicesIndex, -1);
+  assert.ok(reviewsIndex < otherServicesIndex);
+  assert.match(reviewHtml, /What Our <span>Clients Say<\/span>/);
+  assert.match(reviewHtml, /Mobile Legends Jek/);
+  assert.match(reviewHtml, /Beksultan Bekbolotov/);
+  assert.doesNotMatch(reviewHtml, /(?:tild|tilda|data-tilda|allrecords|\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i);
+});
+
 test("keeps the regular-cleaning main route hand-coded without Tilda runtime", () => {
   const html = sanitizeHtml(readFixture("page109653016-copy.html"), "/services/regular-cleaning");
 
