@@ -67,6 +67,7 @@ function buildOrder({
   scheduleTime = "09:00",
   updatedAt,
   confirmed = false,
+  quoteData = null,
 }) {
   const address = `${customerName} Address`;
   const serviceName = "Regular";
@@ -79,6 +80,11 @@ function buildOrder({
   };
   if (confirmed) {
     adminOrder.cleanerConfirmation = buildCleanerConfirmation(scheduleDate, scheduleTime, address, serviceName);
+  }
+
+  const payloadForRetry = { adminOrder };
+  if (quoteData && typeof quoteData === "object") {
+    payloadForRetry.calculatorData = quoteData;
   }
 
   return {
@@ -94,9 +100,7 @@ function buildOrder({
       updatedAt,
       selectedDate: scheduleDate,
       selectedTime: scheduleTime,
-      payloadForRetry: {
-        adminOrder,
-      },
+      payloadForRetry,
     },
     assignment: {
       entryId: id,
@@ -502,6 +506,70 @@ test("keeps confirmed mobile order detail actions from overlapping content", () 
   assert.match(detailView, /account-mobile-detail-primary-button/);
   assert.doesNotMatch(detailView, /account-mobile-action-stack-bottom/);
   assert.equal((detailView.match(/account-mobile-detail-primary-button/g) || []).length, 1);
+});
+
+test("renders client quote options and comments in the mobile order detail", () => {
+  const renderers = createRenderers();
+  const html = renderers.renderDashboardPage({
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+      w9: { document: { relativePath: "w9.pdf" } },
+      contract: { document: { relativePath: "contract.pdf" } },
+    },
+    staffSummary: null,
+    assignedOrders: [
+      buildOrder({
+        id: "quoted-detail-order",
+        customerName: "Quoted Detail Client",
+        status: "scheduled",
+        scheduleDate: "2099-01-05",
+        scheduleTime: "09:00",
+        updatedAt: "2099-01-03T12:00:00.000Z",
+        confirmed: true,
+        quoteData: {
+          rooms: "2",
+          bathrooms: "2",
+          squareMeters: "1500",
+          hasPets: "dog",
+          basementCleaning: "yes",
+          services: ["ovenCleaning", "insideCabinets"],
+          extras: ["insideFridge"],
+          quantityServices: {
+            interiorWindowsCleaning: 4,
+            blindsCleaning: 2,
+            bedLinenChange: 1,
+          },
+          additionalDetails: "Gate code 1942.\nPlease focus the kitchen first.",
+        },
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  });
+
+  const detailView = getMobileDetailView(html, "account-mobile-order-detail-quoted-detail-order");
+  assert.match(detailView, /Детали заявки/);
+  assert.match(detailView, /Oven Cleaning/);
+  assert.match(detailView, /Inside Cabinets Cleaning/);
+  assert.match(detailView, /Inside Refrigerator Cleaning/);
+  assert.match(detailView, /Interior Windows Cleaning: 4/);
+  assert.match(detailView, /Blinds Cleaning: 2/);
+  assert.match(detailView, /Bed Linen \/ Sofa Cover Change: 1/);
+  assert.match(detailView, /Basement Cleaning/);
+  assert.match(detailView, /Комментарий клиента/);
+  assert.match(detailView, /Gate code 1942\.<br>Please focus the kitchen first\./);
 });
 
 test("renders cleaner calendar cards with the scheduled time range", () => {
