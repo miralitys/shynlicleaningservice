@@ -49,6 +49,48 @@ test("clears recurring frequency for one-time service types", () => {
   assert.equal(movingPricing.frequency, "");
 });
 
+test("does not bill included deep-cleaning services as add-ons", () => {
+  const pricing = calculateQuotePricing({
+    serviceType: "deep",
+    rooms: "1",
+    bathrooms: "3.5",
+    squareMeters: "0",
+    basementCleaning: "no",
+    services: [
+      "ovenCleaning",
+      "refrigeratorCleaning",
+      "insideCabinets",
+      "baseboardCleaning",
+      "doorsCleaning",
+    ],
+  });
+
+  assert.equal(pricing.totalPrice, 399.5);
+  assert.deepEqual(pricing.includedServices, ["baseboardCleaning", "doorsCleaning"]);
+  assert.ok(pricing.services.includes("baseboardCleaning"));
+  assert.ok(pricing.services.includes("doorsCleaning"));
+});
+
+test("does not bill included move-in/out services as add-ons", () => {
+  const pricing = calculateQuotePricing({
+    serviceType: "moving",
+    rooms: "1",
+    bathrooms: "3.5",
+    squareMeters: "0",
+    basementCleaning: "no",
+    services: [
+      "ovenCleaning",
+      "refrigeratorCleaning",
+      "insideCabinets",
+      "baseboardCleaning",
+      "doorsCleaning",
+    ],
+  });
+
+  assert.equal(pricing.totalPrice, 444.5);
+  assert.deepEqual(pricing.includedServices, ["baseboardCleaning", "doorsCleaning"]);
+});
+
 test("supports the current UI square-foot step indexes and still accepts legacy square-foot buckets", () => {
   const stepIndexedPricing = calculateQuotePricing({
     serviceType: "regular",
