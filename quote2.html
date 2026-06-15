@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..900&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/quote2.css?v=20260523-progress-nav-places" />
+    <link rel="stylesheet" href="css/quote2.css?v=20260615-sticky-estimate-line" />
   </head>
   <body class="quote2-body">
     <div class="quote2-page">
@@ -43,17 +43,19 @@
       <div id="quote2GlobalNotice" class="quote2-global-notice" aria-live="polite"></div>
 
       <main class="quote2-shell">
-        <div id="quote2StickyEstimate" class="quote2-sticky-estimate" hidden>
-          <span class="quote2-sticky-estimate-label">Estimated Cost:</span>
-          <strong class="quote2-sticky-estimate-value" data-quote2-estimate="true">$145</strong>
-        </div>
-
-        <div id="quote2Progress" class="quote2-progress" aria-live="polite">
-          <div class="quote2-progress__meta">
-            <span id="quote2ProgressStep" class="quote2-progress__step">Step 1 of ?</span>
-            <strong id="quote2ProgressTitle" class="quote2-progress__title">Contact info</strong>
+        <div class="quote2-sticky-stack">
+          <div id="quote2Progress" class="quote2-progress" aria-live="polite">
+            <div class="quote2-progress__meta">
+              <span id="quote2ProgressStep" class="quote2-progress__step">Step 1 of ?</span>
+              <strong id="quote2ProgressTitle" class="quote2-progress__title">Contact info</strong>
+            </div>
+            <div id="quote2ProgressDots" class="quote2-progress__dots" aria-hidden="true"></div>
           </div>
-          <div id="quote2ProgressDots" class="quote2-progress__dots" aria-hidden="true"></div>
+
+          <div id="quote2StickyEstimate" class="quote2-sticky-estimate" hidden>
+            <span class="quote2-sticky-estimate-label">Estimated Cost:</span>
+            <strong class="quote2-sticky-estimate-value" data-quote2-estimate="true">$145</strong>
+          </div>
         </div>
 
         <section id="quote2SuccessCard" class="quote2-card quote2-success-card" hidden>
