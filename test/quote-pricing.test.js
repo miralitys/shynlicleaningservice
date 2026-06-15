@@ -49,7 +49,7 @@ test("clears recurring frequency for one-time service types", () => {
   assert.equal(movingPricing.frequency, "");
 });
 
-test("does not bill included deep-cleaning services as add-ons", () => {
+test("bills included deep-cleaning services to match the pricing calculator", () => {
   const pricing = calculateQuotePricing({
     serviceType: "deep",
     rooms: "1",
@@ -65,13 +65,13 @@ test("does not bill included deep-cleaning services as add-ons", () => {
     ],
   });
 
-  assert.equal(pricing.totalPrice, 399.5);
+  assert.equal(pricing.totalPrice, 443.5);
   assert.deepEqual(pricing.includedServices, ["baseboardCleaning", "doorsCleaning"]);
   assert.ok(pricing.services.includes("baseboardCleaning"));
   assert.ok(pricing.services.includes("doorsCleaning"));
 });
 
-test("does not bill included move-in/out services as add-ons", () => {
+test("bills included move-in/out services to match the pricing calculator", () => {
   const pricing = calculateQuotePricing({
     serviceType: "moving",
     rooms: "1",
@@ -87,7 +87,7 @@ test("does not bill included move-in/out services as add-ons", () => {
     ],
   });
 
-  assert.equal(pricing.totalPrice, 444.5);
+  assert.equal(pricing.totalPrice, 488.5);
   assert.deepEqual(pricing.includedServices, ["baseboardCleaning", "doorsCleaning"]);
 });
 

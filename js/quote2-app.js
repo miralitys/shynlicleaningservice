@@ -619,7 +619,7 @@
 
       checkbox.disabled = isIncluded;
       if (isIncluded || (isDefaultSelected && checkbox.checked)) {
-        setFieldPriceLabel(serviceKey, "Included");
+        setFieldPriceLabel(serviceKey, `Included (+${formatCurrency(price)})`);
       } else if (isDefaultSelected && !checkbox.checked) {
         setFieldPriceLabel(serviceKey, "Excluded");
       } else {
@@ -688,7 +688,6 @@
     const basementCleaning = elements.basementCleaning.value === "yes";
     const selectedServices = getSelectedServices();
     const quantityServices = getQuantityServices();
-    const includedServices = typePricing.includedServices || [];
 
     let total = serviceType === "regular" ? getRegularBasePrice(frequency) : typePricing.basePrice;
     total += calculateBedroomPrice(serviceType, rooms);
@@ -699,13 +698,9 @@
       total += getBasementCleaningFee(serviceType);
     }
 
-    selectedServices
-      .filter(function (serviceKey) {
-        return includedServices.indexOf(serviceKey) === -1;
-      })
-      .forEach(function (serviceKey) {
-        total += PRICING.services[serviceKey] || 0;
-      });
+    selectedServices.forEach(function (serviceKey) {
+      total += PRICING.services[serviceKey] || 0;
+    });
 
     Object.keys(quantityServices).forEach(function (serviceKey) {
       total += quantityServices[serviceKey] * (PRICING.quantityServices[serviceKey] || 0);
