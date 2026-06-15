@@ -91,7 +91,7 @@ test("bills included move-in/out services to match the pricing calculator", () =
   assert.deepEqual(pricing.includedServices, ["baseboardCleaning", "doorsCleaning"]);
 });
 
-test("supports the current UI square-foot step indexes and still accepts legacy square-foot buckets", () => {
+test("uses pricing-page square-foot step indexes and maps legacy raw square feet", () => {
   const stepIndexedPricing = calculateQuotePricing({
     serviceType: "regular",
     rooms: "1",
@@ -111,8 +111,18 @@ test("supports the current UI square-foot step indexes and still accepts legacy 
 
   assert.equal(legacyBucketPricing.rooms, 1);
   assert.equal(legacyBucketPricing.bathrooms, 1);
-  assert.equal(legacyBucketPricing.squareMeters, 1600);
+  assert.equal(legacyBucketPricing.squareMeters, 1);
   assert.equal(legacyBucketPricing.totalPrice, 165);
+
+  const largerLegacyBucketPricing = calculateQuotePricing({
+    serviceType: "regular",
+    rooms: "1",
+    bathrooms: "1",
+    squareMeters: "2250",
+  });
+
+  assert.equal(largerLegacyBucketPricing.squareMeters, 2);
+  assert.equal(largerLegacyBucketPricing.totalPrice, 185);
 });
 
 test("clamps obviously invalid quote inputs back to UI-supported minimums", () => {

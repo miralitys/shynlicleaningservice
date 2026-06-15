@@ -73,6 +73,16 @@
     squareFeetIncluded: 1200,
     squareFeetStep: 500,
     squareFeetStepPrice: 20,
+    squareFeetPricingBuckets: Object.freeze([
+      Object.freeze({ max: 1200, step: 0 }),
+      Object.freeze({ max: 2000, step: 1 }),
+      Object.freeze({ max: 2500, step: 2 }),
+      Object.freeze({ max: 3000, step: 3 }),
+      Object.freeze({ max: 3500, step: 4 }),
+      Object.freeze({ max: 4000, step: 5 }),
+      Object.freeze({ max: 5000, step: 6 }),
+      Object.freeze({ max: Number.POSITIVE_INFINITY, step: 7 }),
+    ]),
     services: {
       ovenCleaning: 45,
       refrigeratorCleaning: 45,
@@ -541,18 +551,25 @@
   }
 
   function calculateSquareFeetPrice(typePricing, squareFeet) {
-    const numericValue = Number(squareFeet || 0);
+    const squareFeetStep = normalizeSquareFeetBucket(squareFeet);
     const stepPrice =
       typePricing.squareFeetStepPrice !== undefined
         ? typePricing.squareFeetStepPrice
         : PRICING.squareFeetStepPrice;
 
-    if (!Number.isFinite(numericValue) || numericValue <= 0) return 0;
-    if (numericValue <= PRICING.squareFeetIncluded) return 0;
+    return squareFeetStep * stepPrice;
+  }
 
-    const extraSquareFeet = numericValue - PRICING.squareFeetIncluded;
-    const extraSteps = Math.ceil(extraSquareFeet / PRICING.squareFeetStep);
-    return extraSteps * stepPrice;
+  function normalizeSquareFeetBucket(squareFeet) {
+    const numericValue = Number.parseInt(String(squareFeet || "0").trim(), 10);
+    if (!Number.isFinite(numericValue) || numericValue <= 0) return 0;
+    if (numericValue <= 7) return numericValue;
+
+    for (const bucket of PRICING.squareFeetPricingBuckets) {
+      if (numericValue <= bucket.max) return bucket.step;
+    }
+
+    return 7;
   }
 
   function getBasementCleaningFee(serviceType) {
