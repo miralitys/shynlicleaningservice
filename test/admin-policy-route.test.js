@@ -443,6 +443,19 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.equal(pendingOrderDialogResponse.status, 200);
     assert.match(pendingOrderDialogBody, /Политика не подписана/);
     assert.match(pendingOrderDialogBody, /Отправить ещё раз/);
+    assert.match(pendingOrderDialogBody, /Текущая активная ссылка/);
+    assert.match(
+      pendingOrderDialogBody,
+      new RegExp(`href="${escapeRegex(resentConfirmationUrlMatch[0])}"`)
+    );
+    assert.match(
+      pendingOrderDialogBody,
+      new RegExp(`value="${escapeRegex(resentConfirmationUrlMatch[0])}"`)
+    );
+    assert.doesNotMatch(
+      pendingOrderDialogBody,
+      new RegExp(`href="${escapeRegex(confirmationUrlMatch[0])}"`)
+    );
 
     const invalidTokenResponse = await fetch(
       `${started.baseUrl}/api/policy-acceptance/not-a-real-token`
