@@ -701,6 +701,94 @@ test("syncs canceled orders into the staff calendar assignment status", async ()
   }
 });
 
+test("saves manual staff unavailable days from the team calendar", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-unavailable-route-"));
+  const storePath = path.join(tempDir, "admin-staff-store.json");
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: storePath,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-staff",
+        name: "Manual Busy Cleaner",
+        role: "cleaner",
+        phone: "13125550199",
+        email: "busy@example.com",
+        status: "active",
+      }),
+    });
+    assert.equal(createStaffResponse.status, 303);
+
+    const staffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const staffBody = await staffResponse.text();
+    const staffIdMatch = staffBody.match(/name="staffId" value="([^"]+)"/);
+    assert.ok(staffIdMatch);
+    const staffId = staffIdMatch[1];
+
+    const saveUnavailableResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-staff-unavailable-day",
+        staffId,
+        availabilityDate: "2026-07-06",
+        availabilityReason: "Family day",
+        availabilityNotes: "Unavailable from manager calendar",
+        calendarStart: "2026-07-06",
+        calendarView: "week",
+      }),
+    });
+    assert.equal(saveUnavailableResponse.status, 303);
+    assert.match(saveUnavailableResponse.headers.get("location") || "", /notice=staff-unavailable-saved/);
+    assert.match(saveUnavailableResponse.headers.get("location") || "", /section=calendar/);
+    assert.match(saveUnavailableResponse.headers.get("location") || "", /calendarStart=2026-07-06/);
+
+    const calendarResponse = await fetch(
+      `${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-07-06`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const calendarBody = await calendarResponse.text();
+    assert.equal(calendarResponse.status, 200);
+    assert.match(calendarBody, /admin-team-calendar-entry-unavailable/);
+    assert.match(calendarBody, /Family day/);
+    assert.match(calendarBody, /name="action" value="clear-staff-unavailable-day"/);
+    assert.match(calendarBody, /name="availabilityDate" value="2026-07-06"/);
+    assert.match(calendarBody, /data-admin-team-calendar-unavailable-dialog="true"/);
+
+    const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
+    assert.equal(storePayload.staff[0].availabilityBlocks.length, 1);
+    assert.equal(storePayload.staff[0].availabilityBlocks[0].date, "2026-07-06");
+    assert.equal(storePayload.staff[0].availabilityBlocks[0].summary, "Family day");
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("connects a cleaner to Google Calendar and syncs confirmed assignments into SHYNLI Work", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-google-calendar-route-"));
   const assignmentDate = getChicagoDateValue(1);

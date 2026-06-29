@@ -27,6 +27,7 @@ function createCalendarHelpers() {
     formatAdminServiceLabel: (value) => value || "Cleaning",
     formatAssignmentStatusLabel: (value) => value || "planned",
     formatOrderCountLabel: (count) => `${count} заказов`,
+    renderAdminDialogCloseButton: (dialogId) => `<button data-admin-dialog-close="${escapeHtml(dialogId)}">x</button>`,
     buildAdminRedirectPath: (path, params = {}) => {
       const query = new URLSearchParams(params).toString();
       return query ? `${path}?${query}` : path;
@@ -131,6 +132,64 @@ test("marks today in the team calendar date column", () => {
   assert.match(html, /class="admin-team-calendar-today-row"/);
   assert.match(html, /data-admin-team-calendar-today="true"/);
   assert.match(html, /class="admin-team-calendar-today-label">сегодня<\/span>/);
+});
+
+test("renders empty cleaner day cells as double-click unavailable targets", () => {
+  const helpers = createCalendarHelpers();
+  const html = helpers.renderStaffTeamCalendarTable(
+    [
+      {
+        id: "ramis",
+        name: "Ramis Iaparov",
+        role: "Клинер",
+        assignedOrders: [],
+      },
+    ],
+    "2026-07-06",
+    { view: "day" }
+  );
+
+  assert.match(html, /data-admin-team-calendar-empty="true"/);
+  assert.match(html, /data-admin-team-calendar-cleaner-id="ramis"/);
+  assert.match(html, /data-admin-team-calendar-cleaner-name="Ramis Iaparov"/);
+  assert.match(html, /data-admin-team-calendar-date="2026-07-06"/);
+  assert.match(html, /role="button"/);
+  assert.match(html, /data-admin-team-calendar-unavailable-dialog="true"/);
+  assert.match(html, /name="action" value="save-staff-unavailable-day"/);
+  assert.match(html, /name="calendarStart" value="2026-07-06"/);
+  assert.match(html, /name="calendarView" value="day"/);
+});
+
+test("renders manual unavailable blocks with a clear action", () => {
+  const helpers = createCalendarHelpers();
+  const html = helpers.renderStaffTeamCalendarTable(
+    [
+      {
+        id: "ramis",
+        name: "Ramis Iaparov",
+        role: "Клинер",
+        assignedOrders: [],
+        calendarAvailabilityBlocks: [
+          {
+            source: "manual",
+            date: "2026-07-06",
+            startDate: "2026-07-06",
+            endDate: "2026-07-07",
+            allDay: true,
+            summary: "Vacation",
+          },
+        ],
+      },
+    ],
+    "2026-07-06",
+    { view: "day" }
+  );
+
+  assert.match(html, /admin-team-calendar-entry-unavailable/);
+  assert.match(html, />Vacation<\/strong>/);
+  assert.match(html, /name="action" value="clear-staff-unavailable-day"/);
+  assert.match(html, /name="availabilityDate" value="2026-07-06"/);
+  assert.doesNotMatch(html, /data-admin-team-calendar-empty="true"/);
 });
 
 test("renders an assigned order only under the assigned cleaner with that cleaner color", () => {
