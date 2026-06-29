@@ -372,7 +372,9 @@ test("renders the clients table with filters and request history", async () => {
     assert.doesNotMatch(selectedClientDialog, /<h3 class="admin-subsection-title">Контакты<\/h3>/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100[\s\S]*jane@example\.com[\s\S]*123 Main St, Romeoville, IL 60446/i);
-    assert.doesNotMatch(selectedClientDialog, /client-request-3/);
+    assert.match(selectedClientDialog, /История заказов клиента/i);
+    assert.match(selectedClientDialog, /История заказов клиента[\s\S]*?2 заявки/i);
+    assert.match(selectedClientDialog, /client-request-3/);
     assert.match(selectedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.doesNotMatch(selectedClientBody, /Карточка клиента обновлена/i);
     assert.doesNotMatch(selectedClientBody, /id="client-card"/);
@@ -393,7 +395,9 @@ test("renders the clients table with filters and request history", async () => {
     assert.ok(plainfieldClientDialog);
     assert.match(plainfieldClientDialog, /789 Cedar Ln, Plainfield, IL 60544/i);
     assert.match(plainfieldClientDialog, /client-request-3/);
-    assert.doesNotMatch(plainfieldClientDialog, /client-request-2/);
+    assert.match(plainfieldClientDialog, /История заказов клиента/i);
+    assert.match(plainfieldClientDialog, /История заказов клиента[\s\S]*?2 заявки/i);
+    assert.match(plainfieldClientDialog, /client-request-2/);
 
     const nameFilterResponse = await fetch(`${started.baseUrl}/admin/clients?name=John`, {
       headers: {
@@ -642,7 +646,10 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Туалеты<\/span>[\s\S]*?<p class="admin-client-address-fact-value">2 bathrooms<\/p>/i);
     assert.match(napervilleClientDialog, /<span class="admin-client-address-fact-label">Домашние животные<\/span>[\s\S]*?<p class="admin-client-address-fact-value">Нет<\/p>/i);
     assert.match(napervilleClientDialog, /Key at front desk\. Alarm code 4455\./i);
-    assert.match(napervilleClientDialog, /По этому адресу пока нет заявок/i);
+    assert.match(napervilleClientDialog, /История заказов клиента/i);
+    assert.match(napervilleClientDialog, /История заказов клиента[\s\S]*?2 заявки/i);
+    assert.match(napervilleClientDialog, /client-request-2/);
+    assert.match(napervilleClientDialog, /client-request-3/);
     assert.doesNotMatch(napervilleClientDialog, /Сводка по активной заявке/i);
 
     const removeAddressForm = new URLSearchParams({
@@ -714,7 +721,7 @@ test("renders the clients table with filters and request history", async () => {
     )?.[0];
     assert.equal(removedAddressPageResponse.status, 200);
     assert.ok(removedAddressDialog);
-    assert.doesNotMatch(removedAddressDialog, /789 Cedar Ln, Plainfield, IL 60544/i);
+    assert.match(removedAddressDialog, /История заказов клиента[\s\S]*789 Cedar Ln, Plainfield, IL 60544/i);
     assert.match(removedAddressDialog, /123 Main St, Romeoville, IL 60446/i);
     assert.match(removedAddressDialog, /500 River Rd, Naperville, IL 60540/i);
 
