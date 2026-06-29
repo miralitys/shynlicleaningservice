@@ -228,6 +228,157 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(detailsOrderBody, /Размер дома[\s\S]*1500 sq ft/);
     assert.match(detailsOrderBody, /Питомцы[\s\S]*Собака/);
     assert.match(detailsOrderBody, /Комментарий клиента[\s\S]*Gate code 2040\. Please use side entrance\./);
+
+    const createExistingProfileSourceResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Existing Profile Customer",
+        customerPhone: "3125557799",
+        customerEmail: "existing.profile@example.com",
+        serviceType: "standard",
+        selectedDate: "2026-06-24",
+        selectedTime: "09:00",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
+        frequency: "biweekly",
+        totalPrice: "190.00",
+        fullAddress: "700 Existing Profile Ln, Plainfield, IL 60544",
+      }),
+    });
+    assert.equal(createExistingProfileSourceResponse.status, 303);
+    const existingProfileSourceRedirect = createExistingProfileSourceResponse.headers.get("location") || "";
+    const existingProfileSourceOrderId = new URL(existingProfileSourceRedirect, started.baseUrl).searchParams.get("order");
+    assert.ok(existingProfileSourceOrderId);
+
+    const saveExistingProfileFieldsForm = new URLSearchParams();
+    saveExistingProfileFieldsForm.set("action", "update-order-quote-fields");
+    saveExistingProfileFieldsForm.set("entryId", existingProfileSourceOrderId);
+    saveExistingProfileFieldsForm.set("returnTo", `/admin/orders?order=${existingProfileSourceOrderId}`);
+    saveExistingProfileFieldsForm.set("quoteServiceType", "standard");
+    saveExistingProfileFieldsForm.set("quoteFrequency", "biweekly");
+    saveExistingProfileFieldsForm.set("quoteSelectedDate", "2026-06-24");
+    saveExistingProfileFieldsForm.set("quoteSelectedTime", "09:00");
+    saveExistingProfileFieldsForm.set("quoteConsent", "yes");
+    saveExistingProfileFieldsForm.set("quoteRooms", "5");
+    saveExistingProfileFieldsForm.set("quoteBathrooms", "3");
+    saveExistingProfileFieldsForm.set("quoteSquareMeters", "3");
+    saveExistingProfileFieldsForm.set("quoteHasPets", "cat");
+    saveExistingProfileFieldsForm.set("quoteBasementCleaning", "yes");
+    saveExistingProfileFieldsForm.set("quoteInteriorWindowsCleaning", "0");
+    saveExistingProfileFieldsForm.set("quoteBlindsCleaning", "0");
+    saveExistingProfileFieldsForm.set("quoteBedLinenChange", "0");
+    saveExistingProfileFieldsForm.set("quoteFullAddress", "700 Existing Profile Ln, Plainfield, IL 60544");
+    saveExistingProfileFieldsForm.set("quoteAddress", "700 Existing Profile Ln");
+    saveExistingProfileFieldsForm.set("quoteCity", "Plainfield");
+    saveExistingProfileFieldsForm.set("quoteState", "IL");
+    saveExistingProfileFieldsForm.set("quoteZipCode", "60544");
+    saveExistingProfileFieldsForm.set(
+      "quoteAdditionalDetails",
+      "Client is allergic to strong smells. Use fragrance-free products."
+    );
+
+    const saveExistingProfileFieldsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: saveExistingProfileFieldsForm,
+    });
+    assert.equal(saveExistingProfileFieldsResponse.status, 303);
+    assert.match(saveExistingProfileFieldsResponse.headers.get("location") || "", /notice=order-form-fields-saved/);
+
+    const profileOrdersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const profileOrdersBody = await profileOrdersResponse.text();
+    assert.equal(profileOrdersResponse.status, 200);
+    const profileClientLookupDataMatch = profileOrdersBody.match(
+      /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
+    );
+    assert.ok(profileClientLookupDataMatch);
+    const profileClientLookupData = JSON.parse(profileClientLookupDataMatch[1]);
+    const existingProfileClient = profileClientLookupData.find(
+      (client) => client.name === "Existing Profile Customer"
+    );
+    assert.ok(existingProfileClient);
+    const existingProfileAddress = existingProfileClient.addresses.find(
+      (addressRecord) => addressRecord.address === "700 Existing Profile Ln, Plainfield, IL 60544"
+    );
+    assert.ok(existingProfileAddress);
+    assert.equal(existingProfileAddress.roomCount, "5");
+    assert.equal(existingProfileAddress.bathroomCount, "3");
+    assert.equal(existingProfileAddress.squareFootage, "3");
+    assert.equal(existingProfileAddress.pets, "cat");
+    assert.equal(existingProfileAddress.basementCleaning, "yes");
+    assert.equal(
+      existingProfileAddress.notes,
+      "Client is allergic to strong smells. Use fragrance-free products."
+    );
+
+    const createOrderFromExistingClientResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: existingProfileClient.name,
+        customerPhone: existingProfileClient.phone,
+        customerEmail: existingProfileClient.email,
+        selectedClientContactId: existingProfileClient.contactId,
+        selectedClientAddress: existingProfileAddress.address,
+        selectedClientAddressPropertyType: existingProfileAddress.propertyType,
+        selectedClientAddressSquareFootage: existingProfileAddress.squareFootage,
+        selectedClientAddressRoomCount: existingProfileAddress.roomCount,
+        selectedClientAddressBathroomCount: existingProfileAddress.bathroomCount,
+        selectedClientAddressPets: existingProfileAddress.pets,
+        selectedClientAddressBasementCleaning: existingProfileAddress.basementCleaning,
+        selectedClientAddressNotes: existingProfileAddress.notes,
+        serviceType: "standard",
+        selectedDate: "2026-07-01",
+        selectedTime: "09:00",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
+        frequency: "biweekly",
+        totalPrice: "190.00",
+        fullAddress: existingProfileAddress.address,
+      }),
+    });
+
+    assert.equal(createOrderFromExistingClientResponse.status, 303);
+    const existingClientOrderRedirect = createOrderFromExistingClientResponse.headers.get("location") || "";
+    assert.match(existingClientOrderRedirect, /notice=manual-order-created/);
+    const existingClientOrderResponse = await fetch(`${started.baseUrl}${existingClientOrderRedirect}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const existingClientOrderBody = await existingClientOrderResponse.text();
+    assert.equal(existingClientOrderResponse.status, 200);
+    assert.match(existingClientOrderBody, /Existing Profile Customer/);
+    assert.match(existingClientOrderBody, /Спальни[\s\S]*5/);
+    assert.match(existingClientOrderBody, /Санузлы[\s\S]*3/);
+    assert.match(existingClientOrderBody, /Размер дома[\s\S]*2,501 - 3,000 sq ft/);
+    assert.match(existingClientOrderBody, /Питомцы[\s\S]*Кошка/);
+    assert.match(existingClientOrderBody, /Basement cleaning[\s\S]*Да/);
+    assert.match(
+      existingClientOrderBody,
+      /Комментарий клиента[\s\S]*Client is allergic to strong smells\. Use fragrance-free products\./
+    );
   } finally {
     await stopServer(started.child);
   }
