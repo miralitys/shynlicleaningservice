@@ -4,6 +4,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const { createAdminSmsHelpers } = require("../lib/admin/handlers-sms-helpers");
+const { createAdminOrdersCreateHandlers } = require("../lib/admin/handlers-orders-create");
+const { getEntryOrderPolicyAcceptanceData } = require("../lib/admin-order-state");
 
 function normalizeString(value, maxLength = 500) {
   return String(value || "").trim().slice(0, maxLength);
@@ -148,5 +150,162 @@ test("skips policy delivery when the same client already signed once", async () 
   assert.equal(reusedPolicy.confirmationUrl, "");
   assert.equal(reusedPolicy.customerPhone, "424-419-9102");
   assert.equal(reusedPolicy.serviceAddress, "100 New Home Rd, Naperville, IL 60540");
+  assert.notEqual(reusedPolicy.acceptanceId, previousAcceptedPolicy.acceptanceId);
+});
+
+test("manual order creation marks policy accepted when existing client already signed", async () => {
+  const previousAcceptedPolicy = {
+    acceptanceId: "accepted-policy-mona",
+    bookingId: "previous-mona-order",
+    requestId: "previous-mona-request",
+    status: "accepted",
+    signedAt: "2026-06-23T14:10:00.000Z",
+    createdAt: "2026-06-23T14:00:00.000Z",
+    updatedAt: "2026-06-23T14:10:00.000Z",
+    customerFullName: "Mona",
+    customerEmail: "mona@example.com",
+    customerPhone: "+17080858185",
+    acceptedTerms: true,
+    acceptedPaymentCancellation: true,
+    typedSignature: "Mona",
+    policyAccepted: true,
+  };
+  const previousEntry = createOrderEntry("previous-mona-order", {
+    customerName: "Mona",
+    customerEmail: "mona@example.com",
+    customerPhone: "+17080858185",
+    contactId: "contact-mona",
+    policyAcceptance: previousAcceptedPolicy,
+  });
+  const entries = [previousEntry];
+  const ledger = {
+    async recordSubmission(payload = {}) {
+      const entry = {
+        id: "manual-mona-order",
+        requestId: payload.requestId,
+        customerName: payload.customerName,
+        customerPhone: payload.customerPhone,
+        customerEmail: payload.customerEmail,
+        fullAddress: payload.fullAddress,
+        contactId: payload.contactId,
+        payloadForRetry: {
+          ...(payload.payloadForRetry || {}),
+          orderState: {},
+          adminOrder: {},
+        },
+      };
+      entries.unshift(entry);
+      return entry;
+    },
+    async updateOrderEntry(entryId, updates = {}) {
+      const entry = entries.find((item) => item.id === entryId) || null;
+      if (!entry) return null;
+      entry.payloadForRetry = entry.payloadForRetry || {};
+      entry.payloadForRetry.orderState = {
+        ...(entry.payloadForRetry.orderState || {}),
+      };
+      entry.payloadForRetry.adminOrder = {
+        ...(entry.payloadForRetry.adminOrder || {}),
+      };
+      if (Object.prototype.hasOwnProperty.call(updates, "policyAcceptance")) {
+        return writePolicyAcceptance(entry, updates.policyAcceptance);
+      }
+      if (updates.createOrder) {
+        entry.payloadForRetry.orderState = {
+          ...entry.payloadForRetry.orderState,
+          isCreated: true,
+          status: updates.orderStatus || "new",
+          selectedDate: updates.selectedDate || "",
+          selectedTime: updates.selectedTime || "",
+          serviceDurationMinutes: updates.serviceDurationMinutes || 0,
+          frequency: updates.frequency || "",
+          totalPrice: updates.totalPrice || "",
+          paymentStatus: updates.paymentStatus || "",
+        };
+        entry.payloadForRetry.adminOrder = {
+          ...entry.payloadForRetry.adminOrder,
+          ...entry.payloadForRetry.orderState,
+        };
+      }
+      return entry;
+    },
+    async listEntries() {
+      return entries;
+    },
+  };
+
+  const helpers = createAdminSmsHelpers({
+    normalizeString,
+    orderPolicyAcceptance: {
+      async buildPendingAcceptance() {
+        throw new Error("A new policy link should not be generated.");
+      },
+    },
+  });
+  const redirects = [];
+  const { handleCreateManualOrder } = createAdminOrdersCreateHandlers({
+    applyAlreadyAcceptedPolicyForClient: helpers.applyAlreadyAcceptedPolicyForClient,
+    buildManualOrderRequestId() {
+      return "manual-mona-order-request";
+    },
+    formatManualOrderServiceLabel(value) {
+      return value === "standard" ? "Standard" : "Deep";
+    },
+    buildOrdersRedirect(basePath, notice, params = {}) {
+      const searchParams = new URLSearchParams({ notice, ...params });
+      return `${basePath}?${searchParams.toString()}`;
+    },
+    normalizeManualOrderFrequency(value) {
+      return normalizeString(value, 40);
+    },
+    normalizeManualOrderServiceType(value) {
+      return normalizeString(value, 40) || "standard";
+    },
+    getFormValue(body, name, maxLength = 500) {
+      return normalizeString(body && body[name], maxLength);
+    },
+    redirectWithTiming(res, statusCode, location) {
+      res.statusCode = statusCode;
+      res.location = location;
+      redirects.push({ statusCode, location });
+    },
+    ADMIN_ORDERS_PATH: "/admin/orders",
+  });
+
+  const res = {};
+  await handleCreateManualOrder({
+    res,
+    requestStartNs: process.hrtime.bigint(),
+    requestContext: { cacheHit: false },
+    quoteOpsLedger: ledger,
+    formBody: {
+      customerName: "Mona",
+      customerPhone: "+17080858185",
+      customerEmail: "mona@example.com",
+      fullAddress: "13800 S Autumn Wy, Plainfield, IL 60544, USA",
+      selectedClientContactId: "contact-mona",
+      serviceType: "standard",
+      selectedDate: "2026-07-01",
+      selectedTime: "9:00 AM",
+      serviceDurationHours: "2",
+      serviceDurationMinutes: "30",
+      frequency: "",
+      totalPrice: "155.00",
+    },
+    returnTo: "/admin/orders",
+  });
+
+  const manualEntry = entries.find((entry) => entry.id === "manual-mona-order");
+  const reusedPolicy = getEntryOrderPolicyAcceptanceData(manualEntry);
+  assert.equal(redirects.length, 1);
+  assert.equal(res.statusCode, 303);
+  assert.match(res.location, /notice=manual-order-created/);
+  assert.equal(reusedPolicy.policyAccepted, true);
+  assert.equal(reusedPolicy.status, "accepted");
+  assert.equal(reusedPolicy.bookingId, "manual-mona-order");
+  assert.equal(reusedPolicy.requestId, "manual-mona-order-request");
+  assert.equal(reusedPolicy.customerEmail, "mona@example.com");
+  assert.equal(reusedPolicy.customerPhone, "+17080858185");
+  assert.equal(reusedPolicy.serviceAddress, "13800 S Autumn Wy, Plainfield, IL 60544, USA");
   assert.notEqual(reusedPolicy.acceptanceId, previousAcceptedPolicy.acceptanceId);
 });
