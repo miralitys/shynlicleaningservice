@@ -775,9 +775,11 @@ test("saves manual staff unavailable days from the team calendar", async () => {
     assert.equal(calendarResponse.status, 200);
     assert.match(calendarBody, /admin-team-calendar-entry-unavailable/);
     assert.match(calendarBody, /Family day/);
+    assert.match(calendarBody, /data-admin-team-calendar-menu="true"/);
+    assert.match(calendarBody, /data-admin-team-calendar-busy-checkbox="true"[\s\S]*checked/);
     assert.match(calendarBody, /name="action" value="clear-staff-unavailable-day"/);
     assert.match(calendarBody, /name="availabilityDate" value="2026-07-06"/);
-    assert.match(calendarBody, /data-admin-team-calendar-unavailable-dialog="true"/);
+    assert.doesNotMatch(calendarBody, /data-admin-team-calendar-unavailable-dialog="true"/);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.staff[0].availabilityBlocks.length, 1);

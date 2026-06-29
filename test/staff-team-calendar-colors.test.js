@@ -134,7 +134,7 @@ test("marks today in the team calendar date column", () => {
   assert.match(html, /class="admin-team-calendar-today-label">сегодня<\/span>/);
 });
 
-test("renders empty cleaner day cells as double-click unavailable targets", () => {
+test("renders empty cleaner day cells with a busy menu checkbox", () => {
   const helpers = createCalendarHelpers();
   const html = helpers.renderStaffTeamCalendarTable(
     [
@@ -153,11 +153,15 @@ test("renders empty cleaner day cells as double-click unavailable targets", () =
   assert.match(html, /data-admin-team-calendar-cleaner-id="ramis"/);
   assert.match(html, /data-admin-team-calendar-cleaner-name="Ramis Iaparov"/);
   assert.match(html, /data-admin-team-calendar-date="2026-07-06"/);
-  assert.match(html, /role="button"/);
-  assert.match(html, /data-admin-team-calendar-unavailable-dialog="true"/);
+  assert.match(html, /data-admin-team-calendar-menu="true"/);
+  assert.match(html, /data-admin-team-calendar-menu-summary="true"/);
+  assert.match(html, /data-admin-team-calendar-busy-checkbox="true"/);
+  assert.match(html, />Занят<\/span>/);
   assert.match(html, /name="action" value="save-staff-unavailable-day"/);
   assert.match(html, /name="calendarStart" value="2026-07-06"/);
   assert.match(html, /name="calendarView" value="day"/);
+  assert.doesNotMatch(html, /Дважды нажмите/);
+  assert.doesNotMatch(html, /data-admin-team-calendar-unavailable-dialog="true"/);
 });
 
 test("renders manual unavailable blocks with a clear action", () => {
@@ -189,6 +193,7 @@ test("renders manual unavailable blocks with a clear action", () => {
   assert.match(html, />Vacation<\/strong>/);
   assert.match(html, /name="action" value="clear-staff-unavailable-day"/);
   assert.match(html, /name="availabilityDate" value="2026-07-06"/);
+  assert.match(html, /data-admin-team-calendar-busy-checkbox="true"[\s\S]*checked/);
   assert.doesNotMatch(html, /data-admin-team-calendar-empty="true"/);
 });
 
@@ -230,4 +235,9 @@ test("renders an assigned order only under the assigned cleaner with that cleane
     html,
     /<td[\s\S]*?--admin-staff-color:#2563eb[\s\S]*?Ramis Order[\s\S]*?<\/td>\s*<td[\s\S]*?--admin-staff-color:#0f766e[\s\S]*?admin-team-calendar-empty/
   );
+  const ramisCell = html.match(/<td[\s\S]*?data-admin-team-calendar-cleaner-name="Ramis Iaparov"[\s\S]*?<\/td>/)?.[0] || "";
+  const anastasiaCell =
+    html.match(/<td[\s\S]*?data-admin-team-calendar-cleaner-name="Anastasiia Iaparova"[\s\S]*?<\/td>/)?.[0] || "";
+  assert.doesNotMatch(ramisCell, /data-admin-team-calendar-menu="true"/);
+  assert.match(anastasiaCell, /data-admin-team-calendar-menu="true"/);
 });
