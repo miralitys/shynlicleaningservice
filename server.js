@@ -15,6 +15,7 @@ const {
   sendQuoteRequestConfirmationEmail,
   sendReviewRequestEmail,
   sendStaffW9ReminderEmail,
+  sendTestEmail,
 } = require("./lib/account-invite-email");
 const { createAutoNotificationService } = require("./lib/auto-notifications");
 const { createAdminMailStore } = require("./lib/admin-mail-store");
@@ -2104,6 +2105,23 @@ async function main() {
         }),
       () =>
         sendOrderPolicyConfirmationEmail({
+          ...payload,
+          env: process.env,
+          fetch: global.fetch,
+        })
+    );
+  };
+
+  accountInviteEmail.sendTest = async function sendTest(payload, config = {}) {
+    return sendAccountEmailWithPreferredProvider(
+      config,
+      (legacyConfig, googleStatus) =>
+        googleMailIntegration.sendTestEmail(payload, config, {
+          fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+          replyToEmail: legacyConfig.replyToEmail || "",
+        }),
+      () =>
+        sendTestEmail({
           ...payload,
           env: process.env,
           fetch: global.fetch,

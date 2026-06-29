@@ -189,6 +189,31 @@ test("connects Google Mail OAuth and sends invite email through Gmail API", asyn
   ).toString("utf8");
   assert.match(reminderRawMessage, /Subject: Complete your SHYNLI onboarding documents/);
   assert.match(reminderRawMessage, /account\/login/);
+
+  const testEmailResult = await integration.sendTestEmail(
+    {
+      toEmail: "miralitys@gmail.com",
+      sentAt: "2026-06-29T18:40:00.000Z",
+    },
+    config,
+    {
+      fromEmail: "SHYNLI Cleaning <relay@shynli.com>",
+      replyToEmail: "info@shynli.com",
+    }
+  );
+
+  assert.equal(testEmailResult.id, "gmail-message-1");
+  const testSendCalls = fetchCalls.filter(
+    (call) => call.url === "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+  );
+  assert.equal(testSendCalls.length, 3);
+  const testRawMessage = Buffer.from(
+    JSON.parse(testSendCalls[2].options.body).raw.replace(/-/g, "+").replace(/_/g, "/"),
+    "base64"
+  ).toString("utf8");
+  assert.match(testRawMessage, /To: miralitys@gmail\.com/);
+  assert.match(testRawMessage, /Subject: SHYNLI Cleaning email test/);
+  assert.match(testRawMessage, /connected Gmail API mailbox can send outgoing messages/);
 });
 
 test("keeps Gmail connect available when the mail store status lookup fails", async () => {
