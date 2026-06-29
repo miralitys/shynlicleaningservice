@@ -217,3 +217,42 @@ test("keeps Gmail connect available when the mail store status lookup fails", as
   assert.equal(status.accountEmail, "");
   assert.match(status.lastError, /PGRST205/i);
 });
+
+test("marks revoked Google Mail tokens as needing reconnect", async () => {
+  const client = createAdminGoogleMailClient({
+    env: {
+      GOOGLE_MAIL_CLIENT_ID: "gmail-client-id",
+      GOOGLE_MAIL_CLIENT_SECRET: "gmail-client-secret",
+    },
+    siteOrigin: "https://shynlicleaningservice.com",
+    fetch: async () => {
+      throw new Error("Unexpected fetch call");
+    },
+  });
+  const mailStore = createMailStoreStub();
+  await mailStore.setConnection({
+    provider: "google-mail",
+    accountEmail: "relay@shynli.com",
+    status: "attention",
+    tokenCipher: {
+      version: 1,
+      salt: "salt",
+      iv: "iv",
+      tag: "tag",
+      data: "data",
+    },
+    tokenExpiresAt: "2026-06-29T12:00:00.000Z",
+    lastError: "ACCOUNT_INVITE_EMAIL_SEND_FAILED:Token has been expired or revoked.",
+  });
+  const integration = createAdminGoogleMailIntegration({
+    client,
+    mailStore,
+  });
+
+  const status = await integration.getStatus();
+  assert.equal(status.configured, true);
+  assert.equal(status.connected, false);
+  assert.equal(status.needsReconnect, true);
+  assert.equal(status.accountEmail, "relay@shynli.com");
+  assert.match(status.lastError, /expired or revoked/i);
+});

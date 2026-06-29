@@ -1984,7 +1984,19 @@ async function main() {
     };
   };
 
-  accountInviteEmail.sendInvite = async function sendInvite(payload, config = {}) {
+  function isGoogleMailReconnectError(error) {
+    const message = String(error && error.message ? error.message : error || "").toLowerCase();
+    if (!message) return false;
+    return (
+      message.includes("invalid_grant") ||
+      message.includes("expired or revoked") ||
+      message.includes("refresh token") ||
+      message.includes("google_mail_refresh_token_missing") ||
+      message.includes("google_mail_token_response_invalid")
+    );
+  }
+
+  async function sendAccountEmailWithPreferredProvider(config, googleSend, fallbackSend) {
     const legacyConfig = loadAccountInviteEmailConfig(process.env);
     const googleStatus =
       googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
@@ -1992,110 +2004,111 @@ async function main() {
         : null;
 
     if (googleStatus && googleStatus.connected) {
-      return googleMailIntegration.sendInviteEmail(payload, config, {
-        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
-        replyToEmail: legacyConfig.replyToEmail || "",
-      });
+      try {
+        return await googleSend(legacyConfig, googleStatus);
+      } catch (error) {
+        if (legacyConfig.configured && isGoogleMailReconnectError(error)) {
+          return fallbackSend();
+        }
+        throw error;
+      }
     }
 
-    return sendAccountInviteEmail({
-      ...payload,
-      env: process.env,
-      fetch: global.fetch,
-    });
+    return fallbackSend();
+  }
+
+  accountInviteEmail.sendInvite = async function sendInvite(payload, config = {}) {
+    return sendAccountEmailWithPreferredProvider(
+      config,
+      (legacyConfig, googleStatus) =>
+        googleMailIntegration.sendInviteEmail(payload, config, {
+          fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+          replyToEmail: legacyConfig.replyToEmail || "",
+        }),
+      () =>
+        sendAccountInviteEmail({
+          ...payload,
+          env: process.env,
+          fetch: global.fetch,
+        })
+    );
   };
 
   accountInviteEmail.sendW9Reminder = async function sendW9Reminder(payload, config = {}) {
-    const legacyConfig = loadAccountInviteEmailConfig(process.env);
-    const googleStatus =
-      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
-        ? await googleMailIntegration.getStatus(config)
-        : null;
-
-    if (googleStatus && googleStatus.connected) {
-      return googleMailIntegration.sendW9ReminderEmail(payload, config, {
-        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
-        replyToEmail: legacyConfig.replyToEmail || "",
-      });
-    }
-
-    return sendStaffW9ReminderEmail({
-      ...payload,
-      env: process.env,
-      fetch: global.fetch,
-    });
+    return sendAccountEmailWithPreferredProvider(
+      config,
+      (legacyConfig, googleStatus) =>
+        googleMailIntegration.sendW9ReminderEmail(payload, config, {
+          fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+          replyToEmail: legacyConfig.replyToEmail || "",
+        }),
+      () =>
+        sendStaffW9ReminderEmail({
+          ...payload,
+          env: process.env,
+          fetch: global.fetch,
+        })
+    );
   };
 
   accountInviteEmail.sendQuoteRequestConfirmation = async function sendQuoteRequestConfirmation(
     payload,
     config = {}
   ) {
-    const legacyConfig = loadAccountInviteEmailConfig(process.env);
-    const googleStatus =
-      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
-        ? await googleMailIntegration.getStatus(config)
-        : null;
-
-    if (googleStatus && googleStatus.connected) {
-      return googleMailIntegration.sendQuoteRequestConfirmationEmail(payload, config, {
-        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
-        replyToEmail: legacyConfig.replyToEmail || "",
-      });
-    }
-
-    return sendQuoteRequestConfirmationEmail({
-      ...payload,
-      env: process.env,
-      fetch: global.fetch,
-    });
+    return sendAccountEmailWithPreferredProvider(
+      config,
+      (legacyConfig, googleStatus) =>
+        googleMailIntegration.sendQuoteRequestConfirmationEmail(payload, config, {
+          fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+          replyToEmail: legacyConfig.replyToEmail || "",
+        }),
+      () =>
+        sendQuoteRequestConfirmationEmail({
+          ...payload,
+          env: process.env,
+          fetch: global.fetch,
+        })
+    );
   };
 
   accountInviteEmail.sendReviewRequest = async function sendReviewRequest(
     payload,
     config = {}
   ) {
-    const legacyConfig = loadAccountInviteEmailConfig(process.env);
-    const googleStatus =
-      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
-        ? await googleMailIntegration.getStatus(config)
-        : null;
-
-    if (googleStatus && googleStatus.connected) {
-      return googleMailIntegration.sendReviewRequestEmail(payload, config, {
-        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
-        replyToEmail: legacyConfig.replyToEmail || "",
-      });
-    }
-
-    return sendReviewRequestEmail({
-      ...payload,
-      env: process.env,
-      fetch: global.fetch,
-    });
+    return sendAccountEmailWithPreferredProvider(
+      config,
+      (legacyConfig, googleStatus) =>
+        googleMailIntegration.sendReviewRequestEmail(payload, config, {
+          fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+          replyToEmail: legacyConfig.replyToEmail || "",
+        }),
+      () =>
+        sendReviewRequestEmail({
+          ...payload,
+          env: process.env,
+          fetch: global.fetch,
+        })
+    );
   };
 
   accountInviteEmail.sendOrderPolicyConfirmation = async function sendOrderPolicyConfirmation(
     payload,
     config = {}
   ) {
-    const legacyConfig = loadAccountInviteEmailConfig(process.env);
-    const googleStatus =
-      googleMailIntegration && typeof googleMailIntegration.getStatus === "function"
-        ? await googleMailIntegration.getStatus(config)
-        : null;
-
-    if (googleStatus && googleStatus.connected) {
-      return googleMailIntegration.sendOrderPolicyConfirmationEmail(payload, config, {
-        fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
-        replyToEmail: legacyConfig.replyToEmail || "",
-      });
-    }
-
-    return sendOrderPolicyConfirmationEmail({
-      ...payload,
-      env: process.env,
-      fetch: global.fetch,
-    });
+    return sendAccountEmailWithPreferredProvider(
+      config,
+      (legacyConfig, googleStatus) =>
+        googleMailIntegration.sendOrderPolicyConfirmationEmail(payload, config, {
+          fromEmail: legacyConfig.fromEmail || googleStatus.accountEmail,
+          replyToEmail: legacyConfig.replyToEmail || "",
+        }),
+      () =>
+        sendOrderPolicyConfirmationEmail({
+          ...payload,
+          env: process.env,
+          fetch: global.fetch,
+        })
+    );
   };
 
   autoNotificationService = createAutoNotificationService({
