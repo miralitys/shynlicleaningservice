@@ -4,6 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  buildClientVisitReminderSmsMessage,
   buildQuoteConfirmationSmsMessage,
   buildScheduleLabel,
   createAutoNotificationService,
@@ -40,6 +41,23 @@ test("formats quote confirmation SMS with sentence line breaks", () => {
       "A manager will contact you shortly.",
     ].join("\n")
   );
+});
+
+test("uses the in-home estimate name in client visit reminders", () => {
+  const message = buildClientVisitReminderSmsMessage(
+    {
+      customerName: "Ramis",
+      serviceName: "Free in-home estimate",
+      selectedDate: "2026-07-20",
+      selectedTime: "10:00",
+      fullAddress: "18 South Main Street, Naperville, IL 60540",
+    },
+    24
+  );
+
+  assert.match(message, /Your free in-home estimate is in 24 hours\./);
+  assert.match(message, /Service: Free in-home estimate\./);
+  assert.doesNotMatch(message, /Your cleaning is/);
 });
 
 function createLeadEntry(overrides = {}) {

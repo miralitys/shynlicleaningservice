@@ -109,6 +109,10 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(ordersBody, /id="admin-manual-order-address"/);
     assert.match(ordersBody, /data-admin-address-autocomplete="true"/);
     assert.match(ordersBody, /data-admin-address-suggestions/);
+    assert.match(
+      ordersBody,
+      /<option value="free-in-home-estimate">Free in-home estimate<\/option>/
+    );
     assert.match(ordersBody, /places_test_key/);
     assert.match(ordersBody, /__adminGooglePlacesReady/);
     assert.match(ordersBody, /v=beta/);
@@ -180,6 +184,46 @@ test("allows admins to add a manual order from the orders page", async () => {
     const scheduledLane = getOrderFunnelLaneSlice(createdOrderBody, "scheduled", "en-route");
     assert.match(newLane, /Manual Customer/);
     assert.doesNotMatch(scheduledLane, /Manual Customer/);
+
+    const createEstimateResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Estimate Customer",
+        customerPhone: "3125557733",
+        customerEmail: "estimate.customer@example.com",
+        serviceType: "free-in-home-estimate",
+        selectedDate: "2026-04-24",
+        selectedTime: "10:00",
+        serviceDurationHours: "1",
+        serviceDurationMinutes: "0",
+        totalPrice: "0",
+        fullAddress: "18 South Main Street, Naperville, IL 60540",
+      }),
+    });
+
+    assert.equal(createEstimateResponse.status, 303);
+    const estimateRedirectLocation = createEstimateResponse.headers.get("location") || "";
+    assert.match(estimateRedirectLocation, /notice=manual-order-created/);
+    const estimateOrderResponse = await fetch(`${started.baseUrl}${estimateRedirectLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const estimateOrderBody = await estimateOrderResponse.text();
+    assert.equal(estimateOrderResponse.status, 200);
+    assert.match(estimateOrderBody, /Estimate Customer/);
+    assert.match(estimateOrderBody, /Free in-home estimate/);
+    assert.match(
+      estimateOrderBody,
+      /<option value="free-in-home-estimate" selected>Free in-home estimate<\/option>/
+    );
 
     const createOrderWithClientDetailsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
