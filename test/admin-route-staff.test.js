@@ -739,7 +739,7 @@ test("syncs rescheduled and canceled orders into the staff calendar assignment s
   }
 });
 
-test("saves manual staff unavailable days from the team calendar", async () => {
+test("saves manual staff unavailable intervals from the team calendar", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-unavailable-route-"));
   const storePath = path.join(tempDir, "admin-staff-store.json");
   const env = {
@@ -790,6 +790,9 @@ test("saves manual staff unavailable days from the team calendar", async () => {
         action: "save-staff-unavailable-day",
         staffId,
         availabilityDate: "2026-07-06",
+        availabilityMode: "time-range",
+        availabilityStartTime: "08:00",
+        availabilityEndTime: "13:00",
         availabilityReason: "Family day",
         availabilityNotes: "Unavailable from manager calendar",
         calendarStart: "2026-07-06",
@@ -813,16 +816,23 @@ test("saves manual staff unavailable days from the team calendar", async () => {
     assert.equal(calendarResponse.status, 200);
     assert.match(calendarBody, /admin-team-calendar-entry-unavailable/);
     assert.match(calendarBody, /Family day/);
+    assert.match(calendarBody, /08:00 AM – 01:00 PM/);
     assert.match(calendarBody, /data-admin-team-calendar-menu="true"/);
     assert.match(calendarBody, /data-admin-team-calendar-busy-checkbox="true"[\s\S]*checked/);
-    assert.match(calendarBody, /name="action" value="clear-staff-unavailable-day"/);
+    assert.match(calendarBody, /name="action" value="save-staff-unavailable-day"/);
     assert.match(calendarBody, /name="availabilityDate" value="2026-07-06"/);
+    assert.match(calendarBody, /<option value="time-range" selected>С … до …<\/option>/);
+    assert.match(calendarBody, /name="availabilityStartTime"[\s\S]*?value="08:00"/);
+    assert.match(calendarBody, /name="availabilityEndTime"[\s\S]*?value="13:00"/);
     assert.doesNotMatch(calendarBody, /data-admin-team-calendar-unavailable-dialog="true"/);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     assert.equal(storePayload.staff[0].availabilityBlocks.length, 1);
     assert.equal(storePayload.staff[0].availabilityBlocks[0].date, "2026-07-06");
     assert.equal(storePayload.staff[0].availabilityBlocks[0].summary, "Family day");
+    assert.equal(storePayload.staff[0].availabilityBlocks[0].allDay, false);
+    assert.equal(storePayload.staff[0].availabilityBlocks[0].startTime, "08:00");
+    assert.equal(storePayload.staff[0].availabilityBlocks[0].endTime, "13:00");
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });

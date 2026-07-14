@@ -158,13 +158,20 @@ test("renders empty cleaner day cells with a busy menu checkbox", () => {
   assert.match(html, /data-admin-team-calendar-busy-checkbox="true"/);
   assert.match(html, />Занят<\/span>/);
   assert.match(html, /name="action" value="save-staff-unavailable-day"/);
+  assert.match(html, /data-admin-team-calendar-busy-settings="true"[\s\S]*hidden/);
+  assert.match(html, /name="availabilityMode"/);
+  assert.match(html, /<option value="all-day" selected>Весь день<\/option>/);
+  assert.match(html, /<option value="time-range">С … до …<\/option>/);
+  assert.match(html, /name="availabilityStartTime"[\s\S]*?value="09:00"/);
+  assert.match(html, /name="availabilityEndTime"[\s\S]*?value="13:00"/);
+  assert.match(html, />Сохранить<\/button>/);
   assert.match(html, /name="calendarStart" value="2026-07-06"/);
   assert.match(html, /name="calendarView" value="day"/);
   assert.doesNotMatch(html, /Дважды нажмите/);
   assert.doesNotMatch(html, /data-admin-team-calendar-unavailable-dialog="true"/);
 });
 
-test("renders manual unavailable blocks with a clear action", () => {
+test("renders manual unavailable blocks with editable busy controls", () => {
   const helpers = createCalendarHelpers();
   const html = helpers.renderStaffTeamCalendarTable(
     [
@@ -191,10 +198,46 @@ test("renders manual unavailable blocks with a clear action", () => {
 
   assert.match(html, /admin-team-calendar-entry-unavailable/);
   assert.match(html, />Vacation<\/strong>/);
-  assert.match(html, /name="action" value="clear-staff-unavailable-day"/);
+  assert.match(html, /name="action" value="save-staff-unavailable-day"/);
   assert.match(html, /name="availabilityDate" value="2026-07-06"/);
   assert.match(html, /data-admin-team-calendar-busy-checkbox="true"[\s\S]*checked/);
+  assert.match(html, /data-admin-team-calendar-busy-settings="true"/);
   assert.doesNotMatch(html, /data-admin-team-calendar-empty="true"/);
+});
+
+test("renders a timed unavailable interval in the cleaner calendar", () => {
+  const helpers = createCalendarHelpers();
+  const html = helpers.renderStaffTeamCalendarTable(
+    [
+      {
+        id: "anastasiia",
+        name: "Anastasiia Iaparova",
+        role: "Клинер",
+        assignedOrders: [],
+        calendarAvailabilityBlocks: [
+          {
+            source: "manual",
+            date: "2026-07-06",
+            startDate: "2026-07-06",
+            endDate: "2026-07-07",
+            allDay: false,
+            startTime: "08:00",
+            endTime: "13:00",
+            startMs: Date.UTC(2026, 6, 6, 8, 0, 0),
+            endMs: Date.UTC(2026, 6, 6, 13, 0, 0),
+            summary: "Занята до обеда",
+          },
+        ],
+      },
+    ],
+    "2026-07-06",
+    { view: "day" }
+  );
+
+  assert.match(html, />08:00 – 13:00<\/span>/);
+  assert.match(html, /<option value="time-range" selected>С … до …<\/option>/);
+  assert.match(html, /name="availabilityStartTime"[\s\S]*?value="08:00"/);
+  assert.match(html, /name="availabilityEndTime"[\s\S]*?value="13:00"/);
 });
 
 test("renders an assigned order only under the assigned cleaner with that cleaner color", () => {

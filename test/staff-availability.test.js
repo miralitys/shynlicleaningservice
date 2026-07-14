@@ -62,3 +62,43 @@ test("finds staff assignment conflicts for manual unavailable days", () => {
   assert.equal(conflicts[0].name, "Ramis");
   assert.equal(conflicts[0].label, "Doctor");
 });
+
+test("only blocks assignments that overlap a timed unavailable interval", () => {
+  const availabilityBlocks = upsertStaffAvailabilityBlock([], {
+    date: "2026-07-06",
+    availabilityMode: "time-range",
+    allDay: false,
+    startTime: "08:00",
+    endTime: "13:00",
+    summary: "Available after lunch",
+  });
+
+  assert.equal(availabilityBlocks[0].allDay, false);
+  assert.equal(availabilityBlocks[0].startTime, "08:00");
+  assert.equal(availabilityBlocks[0].endTime, "13:00");
+
+  const staffRecords = [
+    {
+      id: "anastasiia",
+      name: "Anastasiia",
+      availabilityBlocks,
+    },
+  ];
+  const overlapping = findStaffAvailabilityConflicts(
+    staffRecords,
+    ["anastasiia"],
+    "2026-07-06",
+    "12:30",
+    60
+  );
+  const availableAfterInterval = findStaffAvailabilityConflicts(
+    staffRecords,
+    ["anastasiia"],
+    "2026-07-06",
+    "13:00",
+    120
+  );
+
+  assert.equal(overlapping.length, 1);
+  assert.deepEqual(availableAfterInterval, []);
+});
