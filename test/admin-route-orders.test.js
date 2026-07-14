@@ -109,6 +109,49 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(ordersBody, /id="admin-manual-order-address"/);
     assert.match(ordersBody, /data-admin-address-autocomplete="true"/);
     assert.match(ordersBody, /data-admin-address-suggestions/);
+    assert.match(ordersBody, /data-admin-manual-order-estimate-defaults/);
+    const estimateDefaultsScriptMatch = ordersBody.match(
+      /<script data-admin-manual-order-estimate-defaults>([\s\S]*?)<\/script>/
+    );
+    assert.ok(estimateDefaultsScriptMatch);
+    let serviceTypeChangeHandler = null;
+    const estimateFormFields = new Map([
+      ['[name="serviceType"]', {
+        value: "standard",
+        addEventListener(eventName, handler) {
+          if (eventName === "change") serviceTypeChangeHandler = handler;
+        },
+      }],
+      ['[name="serviceDurationHours"]', { value: "2" }],
+      ['[name="serviceDurationMinutes"]', { value: "0" }],
+      ['[data-admin-service-duration-label="true"]', { value: "2 ч" }],
+      ['[name="totalPrice"]', { value: "240.00" }],
+      ['[name="frequency"]', { value: "weekly" }],
+    ]);
+    const estimateForm = {
+      querySelector(selector) {
+        return estimateFormFields.get(selector) || null;
+      },
+    };
+    const estimateDialog = {
+      querySelector(selector) {
+        return selector === "form" ? estimateForm : null;
+      },
+    };
+    const estimateDocument = {
+      getElementById(id) {
+        return id === "admin-manual-order-create-dialog" ? estimateDialog : null;
+      },
+    };
+    new Function("document", estimateDefaultsScriptMatch[1])(estimateDocument);
+    assert.equal(typeof serviceTypeChangeHandler, "function");
+    estimateFormFields.get('[name="serviceType"]').value = "free-in-home-estimate";
+    serviceTypeChangeHandler();
+    assert.equal(estimateFormFields.get('[name="serviceDurationHours"]').value, "0");
+    assert.equal(estimateFormFields.get('[name="serviceDurationMinutes"]').value, "30");
+    assert.equal(estimateFormFields.get('[data-admin-service-duration-label="true"]').value, "30 мин");
+    assert.equal(estimateFormFields.get('[name="totalPrice"]').value, "0.00");
+    assert.equal(estimateFormFields.get('[name="frequency"]').value, "");
     const phoneInputMatch = ordersBody.match(
       /<input class="admin-input admin-phone-input"[^>]*name="customerPhone"[^>]*oninput="([^"]+)"/
     );
@@ -209,9 +252,6 @@ test("allows admins to add a manual order from the orders page", async () => {
         serviceType: "free-in-home-estimate",
         selectedDate: "2026-04-24",
         selectedTime: "10:00",
-        serviceDurationHours: "1",
-        serviceDurationMinutes: "0",
-        totalPrice: "0",
         fullAddress: "18 South Main Street, Naperville, IL 60540",
       }),
     });
@@ -228,6 +268,8 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.equal(estimateOrderResponse.status, 200);
     assert.match(estimateOrderBody, /Estimate Customer/);
     assert.match(estimateOrderBody, /Free in-home estimate/);
+    assert.match(estimateOrderBody, /30 мин/);
+    assert.match(estimateOrderBody, /\$0\.00/);
     assert.match(
       estimateOrderBody,
       /<option value="free-in-home-estimate" selected>Free in-home estimate<\/option>/
