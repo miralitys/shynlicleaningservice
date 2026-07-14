@@ -2742,6 +2742,69 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
       }
     });
     assert.equal(reviewSmsRequestsAfterRepeat.length, 1);
+
+    const orderDialogResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    assert.equal(orderDialogResponse.status, 200);
+    const orderDialogBody = await orderDialogResponse.text();
+    assert.match(orderDialogBody, /Попросить отзыв/);
+
+    const manualReviewRequestResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "send-review-request",
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+      }),
+    });
+    assert.equal(manualReviewRequestResponse.status, 303);
+    assert.match(manualReviewRequestResponse.headers.get("location") || "", /notice=order-review-request-sent/);
+
+    const manualReviewNoticeResponse = await fetch(
+      `${started.baseUrl}${manualReviewRequestResponse.headers.get("location") || ""}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    assert.equal(manualReviewNoticeResponse.status, 200);
+    assert.match(await manualReviewNoticeResponse.text(), /Запрос отзыва отправлен клиенту повторно по email и SMS/);
+
+    const deliveredEmailsAfterManualRequest = smtpServer.messages.map((message) =>
+      decodeQuotedPrintable(message.raw)
+    );
+    const reviewRequestEmailsAfterManualRequest = deliveredEmailsAfterManualRequest.filter((rawEmail) =>
+      /Leave us a quick review/i.test(rawEmail) &&
+      DIRECT_REVIEW_URL_PATTERN.test(rawEmail)
+    );
+    assert.equal(reviewRequestEmailsAfterManualRequest.length, 2);
+
+    const captureLinesAfterManualRequest = (await fs.readFile(fetchStub.captureFile, "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const reviewSmsRequestsAfterManualRequest = captureLinesAfterManualRequest.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return /quick review/i.test(JSON.parse(record.body).message || "");
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(reviewSmsRequestsAfterManualRequest.length, 2);
   } finally {
     await stopServer(started.child);
     smtpServer.close();
