@@ -312,9 +312,10 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(staffBody, /__adminGooglePlacesReady/);
     assert.match(staffBody, /v=beta/);
     assert.doesNotMatch(staffBody, /data-admin-phone-input="true"/);
-    assert.match(staffBody, /maxlength="10"/);
+    assert.doesNotMatch(staffBody, /maxlength="10"/);
     assert.match(staffBody, /placeholder="6305550101"/);
     assert.match(staffBody, /oninput="this\.value=this\.value\.replace/);
+    assert.match(staffBody, /replace\(\/\^1\(\?=\\d\{10\}\$\)\/,'\'\)/);
     assert.match(staffBody, /slice\(0,10\)"/);
     assert.match(staffBody, /aria-label="Удалить сотрудника"/);
     assert.doesNotMatch(staffBody, /Удаление очистит его назначения в графике/);

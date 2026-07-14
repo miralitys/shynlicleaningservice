@@ -109,6 +109,14 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(ordersBody, /id="admin-manual-order-address"/);
     assert.match(ordersBody, /data-admin-address-autocomplete="true"/);
     assert.match(ordersBody, /data-admin-address-suggestions/);
+    const phoneInputMatch = ordersBody.match(
+      /<input class="admin-input admin-phone-input"[^>]*name="customerPhone"[^>]*oninput="([^"]+)"/
+    );
+    assert.ok(phoneInputMatch);
+    const pastedPhoneInput = { value: "+1 (513) 490-8202" };
+    new Function(phoneInputMatch[1]).call(pastedPhoneInput);
+    assert.equal(pastedPhoneInput.value, "5134908202");
+    assert.doesNotMatch(phoneInputMatch[0], /maxlength=/);
     assert.match(
       ordersBody,
       /<option value="free-in-home-estimate">Free in-home estimate<\/option>/
