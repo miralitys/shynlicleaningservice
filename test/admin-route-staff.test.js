@@ -571,7 +571,7 @@ test("creates staff members and assigns them to orders through the staff workspa
   }
 });
 
-test("syncs canceled orders into the staff calendar assignment status", async () => {
+test("syncs rescheduled and canceled orders into the staff calendar assignment status", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-cancel-sync-"));
   const fetchStub = createFetchStub([
     {
@@ -662,7 +662,7 @@ test("syncs canceled orders into the staff calendar assignment status", async ()
     });
     assert.equal(assignResponse.status, 303);
 
-    const cancelOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+    const rescheduleOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
       redirect: "manual",
       headers: {
@@ -673,11 +673,11 @@ test("syncs canceled orders into the staff calendar assignment status", async ()
         action: "save-order",
         entryId,
         returnTo: "/admin/staff?section=calendar",
-        orderStatus: "canceled",
+        orderStatus: "rescheduled",
       }),
     });
-    assert.equal(cancelOrderResponse.status, 303);
-    assert.match(cancelOrderResponse.headers.get("location") || "", /notice=order-saved/);
+    assert.equal(rescheduleOrderResponse.status, 303);
+    assert.match(rescheduleOrderResponse.headers.get("location") || "", /notice=order-saved/);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     const storedAssignment = storePayload.assignments.find((record) => record.entryId === entryId);
@@ -695,6 +695,43 @@ test("syncs canceled orders into the staff calendar assignment status", async ()
     assert.match(calendarBody, /admin-team-calendar-entry-order-canceled/);
     assert.match(calendarBody, /Отменено/);
     assert.match(calendarBody, /<option value="canceled" selected>Отменено<\/option>/);
+
+    const reactivateAssignmentResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", entryId],
+        ["staffIds", staffId],
+        ["status", "confirmed"],
+      ]),
+    });
+    assert.equal(reactivateAssignmentResponse.status, 303);
+
+    const cancelOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-order",
+        entryId,
+        returnTo: "/admin/staff?section=calendar",
+        orderStatus: "canceled",
+      }),
+    });
+    assert.equal(cancelOrderResponse.status, 303);
+
+    const canceledStorePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
+    const canceledAssignment = canceledStorePayload.assignments.find((record) => record.entryId === entryId);
+    assert.ok(canceledAssignment);
+    assert.equal(canceledAssignment.status, "canceled");
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
