@@ -462,6 +462,115 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.ok(mobileCalendarDetail > mobileCalendarStart);
     assert.ok(desktopStatsStart > mobileCalendarDetail);
     assert.match(accountCalendarBody.slice(mobileCalendarStart, desktopStatsStart), /account-mobile-detail-bottom-nav/i);
+    assert.match(accountCalendarBody, /data-account-calendar-availability="true"/i);
+    assert.match(accountCalendarBody, /data-account-availability-form="true"/i);
+    assert.match(accountCalendarBody, /name="action" value="save-own-unavailable-day"/i);
+    assert.match(accountCalendarBody, /name="availabilityMode"/i);
+    assert.match(accountCalendarBody, />Весь день</i);
+    assert.match(accountCalendarBody, />С … до …</i);
+
+    const saveOwnAvailabilityResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-own-unavailable-day",
+        staffId: "another-staff-record-must-be-ignored",
+        availabilityDate: "2026-03-27",
+        availabilityMode: "time-range",
+        availabilityStartTime: "08:30",
+        availabilityEndTime: "13:00",
+        calendarView: "month",
+        calendarShowDay: "1",
+      }),
+    });
+    assert.equal(saveOwnAvailabilityResponse.status, 303);
+    const saveOwnAvailabilityLocation = saveOwnAvailabilityResponse.headers.get("location") || "";
+    assert.match(saveOwnAvailabilityLocation, /notice=staff-unavailable-saved/i);
+    assert.match(saveOwnAvailabilityLocation, /section=calendar/i);
+    assert.match(saveOwnAvailabilityLocation, /view=month/i);
+    assert.match(saveOwnAvailabilityLocation, /date=2026-03-27/i);
+    assert.match(saveOwnAvailabilityLocation, /showDay=1/i);
+
+    const staffAfterOwnAvailabilitySave = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const ownStaffAfterAvailabilitySave = staffAfterOwnAvailabilitySave.staff.find(
+      (record) => record && record.id === staffId
+    );
+    assert.ok(ownStaffAfterAvailabilitySave);
+    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks.length, 1);
+    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].date, "2026-03-27");
+    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].allDay, false);
+    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].startTime, "08:30");
+    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].endTime, "13:00");
+
+    const savedOwnAvailabilityPageResponse = await fetch(
+      `${started.baseUrl}${saveOwnAvailabilityLocation}`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const savedOwnAvailabilityPageBody = await savedOwnAvailabilityPageResponse.text();
+    assert.equal(savedOwnAvailabilityPageResponse.status, 200);
+    assert.match(savedOwnAvailabilityPageBody, /Занятость сохранена/i);
+    assert.match(savedOwnAvailabilityPageBody, /Занят с 08:30 до 13:00/i);
+    assert.match(savedOwnAvailabilityPageBody, /data-account-availability-checkbox="true" checked/i);
+    assert.match(savedOwnAvailabilityPageBody, /option value="time-range" selected/i);
+    assert.match(savedOwnAvailabilityPageBody, /account-mobile-calendar-day[^"\n]*is-busy/i);
+
+    const clearOwnAvailabilityResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "clear-own-unavailable-day",
+        staffId: "another-staff-record-must-be-ignored",
+        availabilityDate: "2026-03-27",
+        calendarView: "month",
+        calendarShowDay: "1",
+      }),
+    });
+    assert.equal(clearOwnAvailabilityResponse.status, 303);
+    assert.match(clearOwnAvailabilityResponse.headers.get("location") || "", /notice=staff-unavailable-cleared/i);
+    const staffAfterOwnAvailabilityClear = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    const ownStaffAfterAvailabilityClear = staffAfterOwnAvailabilityClear.staff.find(
+      (record) => record && record.id === staffId
+    );
+    assert.ok(ownStaffAfterAvailabilityClear);
+    assert.deepEqual(ownStaffAfterAvailabilityClear.availabilityBlocks, []);
+
+    const invalidOwnAvailabilityResponse = await fetch(`${started.baseUrl}/account`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${userSessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "save-own-unavailable-day",
+        availabilityDate: "2026-03-27",
+        availabilityMode: "time-range",
+        availabilityStartTime: "14:00",
+        availabilityEndTime: "13:00",
+        calendarView: "month",
+        calendarShowDay: "1",
+      }),
+    });
+    assert.equal(invalidOwnAvailabilityResponse.status, 303);
+    assert.match(invalidOwnAvailabilityResponse.headers.get("location") || "", /notice=staff-unavailable-error/i);
+    const staffAfterInvalidOwnAvailability = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.deepEqual(
+      staffAfterInvalidOwnAvailability.staff.find((record) => record && record.id === staffId)
+        .availabilityBlocks,
+      []
+    );
 
     const adminStaffBeforeW9Response = await fetch(`${started.baseUrl}/admin/staff`, {
       headers: {
