@@ -14,9 +14,16 @@ function loadDefaultMeridiemSync() {
 }
 
 function createTimePicker(hourValue, initialMeridiem = "AM") {
-  const meridiemSelect = { value: initialMeridiem };
+  const amOption = { disabled: false };
+  const meridiemSelect = {
+    value: initialMeridiem,
+    querySelector(selector) {
+      return selector === "option[value='AM']" ? amOption : null;
+    },
+  };
   const field = {
     querySelector(selector) {
+      if (selector === "[data-admin-time-hour]") return hourSelect;
       return selector === "[data-admin-time-meridiem]" ? meridiemSelect : null;
     },
   };
@@ -26,7 +33,7 @@ function createTimePicker(hourValue, initialMeridiem = "AM") {
       return selector === "[data-admin-picker-field='time']" ? field : null;
     },
   };
-  return { hourSelect, meridiemSelect };
+  return { amOption, field, hourSelect, meridiemSelect };
 }
 
 test("defaults 12 PM and afternoon hours 1 through 6 to PM", () => {
@@ -47,4 +54,38 @@ test("defaults morning hours 7 through 11 to AM", () => {
     syncDefaultTimeMeridiemFromHour(picker.hourSelect);
     assert.equal(picker.meridiemSelect.value, "AM", `expected ${hour} to default to AM`);
   }
+});
+
+test("keeps 12 locked to PM", () => {
+  const { enforceNoonMeridiem } = new Function(
+    `${ADMIN_SHARED_PICKER_AND_MULTISELECT_SCRIPT}; return { enforceNoonMeridiem };`
+  )();
+  const picker = createTimePicker(12, "AM");
+
+  enforceNoonMeridiem(picker.field);
+
+  assert.equal(picker.meridiemSelect.value, "PM");
+  assert.equal(picker.amOption.disabled, true);
+
+  picker.hourSelect.value = "11";
+  enforceNoonMeridiem(picker.field);
+  assert.equal(picker.amOption.disabled, false);
+});
+
+test("converts a panel initialized from midnight to 12 PM", () => {
+  const { syncTimePanelFromValue } = new Function(
+    `${ADMIN_SHARED_PICKER_AND_MULTISELECT_SCRIPT}; return { syncTimePanelFromValue };`
+  )();
+  const picker = createTimePicker(1, "AM");
+  const minuteSelect = { value: "30" };
+  const originalQuerySelector = picker.field.querySelector.bind(picker.field);
+  picker.field.querySelector = (selector) =>
+    selector === "[data-admin-time-minute]" ? minuteSelect : originalQuerySelector(selector);
+
+  syncTimePanelFromValue(picker.field, "00:00");
+
+  assert.equal(picker.hourSelect.value, "12");
+  assert.equal(minuteSelect.value, "00");
+  assert.equal(picker.meridiemSelect.value, "PM");
+  assert.equal(picker.amOption.disabled, true);
 });
