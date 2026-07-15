@@ -571,7 +571,7 @@ test("creates staff members and assigns them to orders through the staff workspa
   }
 });
 
-test("syncs rescheduled and canceled orders into the staff calendar assignment status", async () => {
+test("removes rescheduled and canceled orders from the staff calendar", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-cancel-sync-"));
   const fetchStub = createFetchStub([
     {
@@ -692,9 +692,25 @@ test("syncs rescheduled and canceled orders into the staff calendar assignment s
     });
     const calendarBody = await calendarResponse.text();
     assert.equal(calendarResponse.status, 200);
-    assert.match(calendarBody, /admin-team-calendar-entry-order-canceled/);
-    assert.match(calendarBody, /Отменено/);
-    assert.match(calendarBody, /<option value="canceled" selected>Отменено<\/option>/);
+    assert.doesNotMatch(
+      calendarBody,
+      /class="[^"]*admin-team-calendar-entry-order-canceled[^"]*"/
+    );
+
+    const monthCalendarResponse = await fetch(
+      `${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-04-02&calendarView=month`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const monthCalendarBody = await monthCalendarResponse.text();
+    assert.equal(monthCalendarResponse.status, 200);
+    assert.doesNotMatch(
+      monthCalendarBody,
+      /class="[^"]*admin-team-calendar-month-event-canceled[^"]*"/
+    );
 
     const reactivateAssignmentResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",

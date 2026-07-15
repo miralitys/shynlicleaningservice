@@ -469,6 +469,56 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountCalendarBody, />Весь день</i);
     assert.match(accountCalendarBody, />С … до …</i);
 
+    const cancelCleanerAssignmentResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", assignedEntryId],
+        ["staffIds", staffId],
+        ["status", "canceled"],
+        ["notes", "Bring supplies"],
+      ]),
+    });
+    assert.equal(cancelCleanerAssignmentResponse.status, 303);
+
+    const canceledAccountCalendarResponse = await fetch(
+      `${started.baseUrl}/account?section=calendar&date=2026-03-27`,
+      {
+        headers: {
+          cookie: `shynli_user_session=${userSessionCookieValue}`,
+        },
+      }
+    );
+    const canceledAccountCalendarBody = await canceledAccountCalendarResponse.text();
+    assert.equal(canceledAccountCalendarResponse.status, 200);
+    assert.doesNotMatch(
+      canceledAccountCalendarBody,
+      /class="[^"]*account-mobile-calendar-order-card[^"]*"/
+    );
+    assert.match(canceledAccountCalendarBody, /Сегодня заказов нет/i);
+
+    const restoreCleanerAssignmentResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams([
+        ["action", "save-assignment"],
+        ["entryId", assignedEntryId],
+        ["staffIds", staffId],
+        ["status", "confirmed"],
+        ["notes", "Bring supplies"],
+      ]),
+    });
+    assert.equal(restoreCleanerAssignmentResponse.status, 303);
+
     const saveOwnAvailabilityResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
       redirect: "manual",
