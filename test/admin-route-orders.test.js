@@ -311,6 +311,8 @@ test("allows admins to add a manual order from the orders page", async () => {
 
     assert.equal(createOrderWithClientDetailsResponse.status, 303);
     const detailsRedirectLocation = createOrderWithClientDetailsResponse.headers.get("location") || "";
+    const detailsOrderId = new URL(detailsRedirectLocation, started.baseUrl).searchParams.get("order");
+    assert.ok(detailsOrderId);
     const detailsOrderResponse = await fetch(`${started.baseUrl}${detailsRedirectLocation}`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -323,7 +325,13 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(detailsOrderBody, /Санузлы[\s\S]*2/);
     assert.match(detailsOrderBody, /Размер дома[\s\S]*1500 sq ft/);
     assert.match(detailsOrderBody, /Питомцы[\s\S]*Собака/);
-    assert.match(detailsOrderBody, /Комментарий клиента[\s\S]*Gate code 2040\. Please use side entrance\./);
+    const detailsDialogStart = detailsOrderBody.indexOf(`id="admin-order-detail-dialog-${detailsOrderId}"`);
+    const detailsDialogEnd = detailsOrderBody.indexOf("</dialog>", detailsDialogStart);
+    assert.ok(detailsDialogStart >= 0);
+    assert.ok(detailsDialogEnd > detailsDialogStart);
+    const detailsDialogBody = detailsOrderBody.slice(detailsDialogStart, detailsDialogEnd);
+    assert.match(detailsDialogBody, /Комментарий клиента[\s\S]*Не указано/);
+    assert.doesNotMatch(detailsDialogBody, /Gate code 2040\. Please use side entrance\./);
 
     const createExistingProfileSourceResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -417,10 +425,7 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.equal(existingProfileAddress.squareFootage, "3");
     assert.equal(existingProfileAddress.pets, "cat");
     assert.equal(existingProfileAddress.basementCleaning, "yes");
-    assert.equal(
-      existingProfileAddress.notes,
-      "Client is allergic to strong smells. Use fragrance-free products."
-    );
+    assert.equal(existingProfileAddress.notes, "");
 
     const createOrderFromExistingClientResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -471,9 +476,22 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(existingClientOrderBody, /Размер дома[\s\S]*2,501 - 3,000 sq ft/);
     assert.match(existingClientOrderBody, /Питомцы[\s\S]*Кошка/);
     assert.match(existingClientOrderBody, /Basement cleaning[\s\S]*Да/);
-    assert.match(
-      existingClientOrderBody,
-      /Комментарий клиента[\s\S]*Client is allergic to strong smells\. Use fragrance-free products\./
+    const existingClientOrderId = new URL(existingClientOrderRedirect, started.baseUrl).searchParams.get("order");
+    assert.ok(existingClientOrderId);
+    const existingClientDialogStart = existingClientOrderBody.indexOf(
+      `id="admin-order-detail-dialog-${existingClientOrderId}"`
+    );
+    const existingClientDialogEnd = existingClientOrderBody.indexOf("</dialog>", existingClientDialogStart);
+    assert.ok(existingClientDialogStart >= 0);
+    assert.ok(existingClientDialogEnd > existingClientDialogStart);
+    const existingClientDialogBody = existingClientOrderBody.slice(
+      existingClientDialogStart,
+      existingClientDialogEnd
+    );
+    assert.match(existingClientDialogBody, /Комментарий клиента[\s\S]*Не указано/);
+    assert.doesNotMatch(
+      existingClientDialogBody,
+      /Client is allergic to strong smells\. Use fragrance-free products\./
     );
   } finally {
     await stopServer(started.child);

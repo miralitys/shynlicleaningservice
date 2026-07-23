@@ -225,7 +225,7 @@ test("persists service duration and carries it into recurring orders", () => {
   assert.equal(recurringSubmission.payloadForRetry.adminOrder.serviceDurationMinutes, 150);
 });
 
-test("copies client address and quote details into recurring orders", () => {
+test("copies client property details but not prior comments into recurring orders", () => {
   const { buildRecurringOrderSubmission } = createMutationDomain();
   const entry = {
     id: "order-recurring-client-details-1",
@@ -246,6 +246,7 @@ test("copies client address and quote details into recurring orders", () => {
         selectedTime: "09:00",
         frequency: "biweekly",
         totalPrice: 175,
+        additionalDetails: "Comment for the completed visit only.",
       },
       quoteData: {
         services: ["insideCabinets", "refrigeratorCleaning"],
@@ -294,7 +295,7 @@ test("copies client address and quote details into recurring orders", () => {
   assert.equal(calculatorData.bathrooms, "2");
   assert.equal(calculatorData.squareMeters, "1500 sq ft");
   assert.equal(calculatorData.hasPets, "dog");
-  assert.equal(calculatorData.additionalDetails, "Gate code 2040. Please use side entrance.");
+  assert.equal(calculatorData.additionalDetails, undefined);
   assert.deepEqual(calculatorData.services, ["insideCabinets", "refrigeratorCleaning"]);
   assert.deepEqual(calculatorData.quantityServices, {
     interiorWindowsCleaning: 4,
