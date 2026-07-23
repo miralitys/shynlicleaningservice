@@ -74,22 +74,25 @@ function createEntry({
   sourceEntryId = "",
   nextEntryId = "",
   status = "scheduled",
+  frequency = "biweekly",
+  seriesId = "cheryl-series",
+  customerName = "Cheryl Gilsdorf",
 } = {}) {
   const state = {
     isCreated: true,
     status,
-    frequency: "biweekly",
+    frequency,
     selectedDate: date,
     selectedTime: "11:00",
     serviceDurationMinutes: 180,
-    recurringSeriesId: "cheryl-series",
+    recurringSeriesId: seriesId,
     ...(sourceEntryId ? { recurringSourceEntryId: sourceEntryId } : {}),
     ...(nextEntryId ? { recurringNextEntryId: nextEntryId } : {}),
   };
   return {
     id,
     requestId: `${id}-request`,
-    customerName: "Cheryl Gilsdorf",
+    customerName,
     customerPhone: "3125550101",
     serviceType: "standard",
     serviceName: "Standard",
@@ -101,7 +104,7 @@ function createEntry({
     payloadForRetry: {
       calculatorData: {
         serviceType: "standard",
-        frequency: "biweekly",
+        frequency,
         selectedDate: date,
         selectedTime: "11:00",
       },
@@ -290,6 +293,51 @@ test("replaces future visits when the recurring frequency changes", async () => 
     ]
   );
   assert.equal((await ledger.listEntries()).length, 7);
+});
+
+test("stops Marcus monthly series after an occurrence is changed to Not set", async () => {
+  const domain = createDomain();
+  const root = createEntry({
+    id: "marcus-root",
+    date: "2026-07-14",
+    frequency: "monthly",
+    seriesId: "marcus-series",
+    customerName: "Marcus Cyrus",
+  });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+  const generated = await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: root,
+  });
+  const augustVisit = generated.find((entry) => entry.selectedDate === "2026-08-14");
+  assert.ok(augustVisit);
+
+  await ledger.updateOrderEntry(augustVisit.id, { frequency: "" });
+  const createdAfterRepair = await helpers.ensureAllRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    today: "2026-07-23",
+  });
+  const remainingEntries = await ledger.listEntries();
+
+  assert.equal(createdAfterRepair.length, 0);
+  assert.deepEqual(
+    remainingEntries.map((entry) => entry.selectedDate),
+    ["2026-07-14", "2026-08-14"]
+  );
+  assert.ok(remainingEntries.every((entry) => !getEntryOrderState(entry).frequency));
+  assert.ok(remainingEntries.every((entry) => !getEntryOrderState(entry).recurringSeriesId));
+
+  const secondPass = await helpers.ensureAllRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    today: "2026-07-23",
+  });
+  assert.equal(secondPass.length, 0);
+  assert.equal((await ledger.listEntries()).length, 2);
 });
 
 test("cancels the selected recurring visit and every later visit while keeping earlier history", async () => {
