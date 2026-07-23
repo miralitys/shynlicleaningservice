@@ -74,6 +74,15 @@ function getChicagoDateTimeValueFromNow(offsetMs = 0) {
   };
 }
 
+function getOrderDialogEntryIdByText(html, expectedText) {
+  for (const match of String(html || "").matchAll(
+    /<dialog[^>]+id="admin-order-detail-dialog-([^"]+)"[\s\S]*?<\/dialog>/g
+  )) {
+    if (match[0].includes(expectedText)) return match[1];
+  }
+  return "";
+}
+
 test("allows admins to add a manual order from the orders page", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
@@ -1106,6 +1115,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         selectedTime: "09:00",
         fullAddress: "101 Weekly Lane, Aurora, IL 60505",
         expectedNextSchedule: "04/21/2026, 09:00 AM",
+        expectedOrderCount: 27,
       },
       {
         requestId: "recurring-biweekly-order",
@@ -1118,6 +1128,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         selectedTime: "11:30",
         fullAddress: "202 Biweekly Drive, Naperville, IL 60540",
         expectedNextSchedule: "04/28/2026, 11:30 AM",
+        expectedOrderCount: 14,
       },
       {
         requestId: "recurring-monthly-order",
@@ -1129,7 +1140,8 @@ test("creates the next recurring order when a recurring order is completed", asy
         selectedDate: "2026-04-14",
         selectedTime: "15:15",
         fullAddress: "303 Monthly Court, Aurora, IL 60505",
-        expectedNextSchedule: "06/14/2026, 03:15 PM",
+        expectedNextSchedule: "05/14/2026, 03:15 PM",
+        expectedOrderCount: 7,
       },
     ];
 
@@ -1173,10 +1185,13 @@ test("creates the next recurring order when a recurring order is completed", asy
       const ordersBody = await ordersResponse.text();
 
       assert.equal(ordersResponse.status, 200);
-      assert.match(ordersBody, /Найдено 2 из \d+ заказов\./);
+      assert.match(
+        ordersBody,
+        new RegExp(`Найдено ${recurringCase.expectedOrderCount} из \\d+ заказов\\.`)
+      );
       assert.match(ordersBody, new RegExp(escapeRegex(recurringCase.expectedNextSchedule)));
       assert.match(ordersBody, /Завершено/);
-      assert.match(ordersBody, /Новые/);
+      assert.match(ordersBody, /Запланировано/);
     }
 
     const repeatCompleteResponse = await fetch(`${started.baseUrl}/admin/orders`, {
@@ -1204,7 +1219,55 @@ test("creates the next recurring order when a recurring order is completed", asy
     );
     const weeklyOrdersAfterRepeatBody = await weeklyOrdersAfterRepeatResponse.text();
     assert.equal(weeklyOrdersAfterRepeatResponse.status, 200);
-    assert.match(weeklyOrdersAfterRepeatBody, /Найдено 2 из \d+ заказов\./);
+    assert.match(weeklyOrdersAfterRepeatBody, /Найдено 27 из \d+ заказов\./);
+
+    const biweeklyOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent(recurringCases[1].fullName)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const biweeklyOrdersBody = await biweeklyOrdersResponse.text();
+    const firstFutureBiweeklyEntryId = getOrderDialogEntryIdByText(
+      biweeklyOrdersBody,
+      recurringCases[1].expectedNextSchedule
+    );
+    assert.ok(firstFutureBiweeklyEntryId);
+    assert.match(biweeklyOrdersBody, /Какие визиты отменить/);
+    assert.match(biweeklyOrdersBody, /Этот и все последующие/);
+
+    const cancelFutureResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: firstFutureBiweeklyEntryId,
+        returnTo: "/admin/orders",
+        orderStatus: "canceled",
+        cancelScope: "future",
+      }),
+    });
+    assert.equal(cancelFutureResponse.status, 303);
+
+    const canceledBiweeklyResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent(recurringCases[1].fullName)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const canceledBiweeklyBody = await canceledBiweeklyResponse.text();
+    assert.equal(canceledBiweeklyResponse.status, 200);
+    assert.equal(
+      Array.from(canceledBiweeklyBody.matchAll(/<option value="canceled" selected>/g)).length,
+      13
+    );
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -1212,7 +1275,7 @@ test("creates the next recurring order when a recurring order is completed", asy
   }
 });
 
-test("lets admins manually schedule the next recurring visit", async () => {
+test("recognizes the next recurring visit created by the six-month schedule", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-next-recurring-order-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const fetchStub = createFetchStub([
@@ -1285,7 +1348,7 @@ test("lets admins manually schedule the next recurring visit", async () => {
 
     assert.equal(scheduleNextResponse.status, 303);
     const scheduleNextLocation = scheduleNextResponse.headers.get("location") || "";
-    assert.match(scheduleNextLocation, /notice=next-order-created/);
+    assert.match(scheduleNextLocation, /notice=next-order-already-created/);
     const nextEntryId = new URL(scheduleNextLocation, started.baseUrl).searchParams.get("order");
     assert.ok(nextEntryId);
     assert.notEqual(nextEntryId, entryId);
@@ -1300,7 +1363,7 @@ test("lets admins manually schedule the next recurring visit", async () => {
     );
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
-    assert.match(ordersBody, /Найдено 2 из \d+ заказов\./);
+    assert.match(ordersBody, /Найдено 27 из \d+ заказов\./);
     assert.match(ordersBody, /04\/21\/2026, 09:00 AM/);
 
     const repeatScheduleNextResponse = await fetch(`${started.baseUrl}/admin/orders`, {
@@ -1330,7 +1393,7 @@ test("lets admins manually schedule the next recurring visit", async () => {
     );
     const repeatOrdersBody = await repeatOrdersResponse.text();
     assert.equal(repeatOrdersResponse.status, 200);
-    assert.match(repeatOrdersBody, /Найдено 2 из \d+ заказов\./);
+    assert.match(repeatOrdersBody, /Найдено 27 из \d+ заказов\./);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -1575,7 +1638,7 @@ test("creates a completed-order follow-up task and records the next cleaning out
     );
     const agreedOrdersBody = await agreedOrdersResponse.text();
     assert.equal(agreedOrdersResponse.status, 200);
-    assert.match(agreedOrdersBody, /Найдено 2 из \d+ заказов\./);
+    assert.match(agreedOrdersBody, /Найдено 27 из \d+ заказов\./);
     assert.match(agreedOrdersBody, /04\/29\/2026, 02:30 PM/);
 
     const declinedQuoteResponse = await submitQuote(started.baseUrl, {
@@ -1653,8 +1716,8 @@ test("creates a completed-order follow-up task and records the next cleaning out
     );
     const declinedOrdersBody = await declinedOrdersResponse.text();
     assert.equal(declinedOrdersResponse.status, 200);
-    assert.match(declinedOrdersBody, /Найдено 1 из \d+ заказов\./);
-    assert.doesNotMatch(declinedOrdersBody, /04\/21\/2026, 10:00 AM/);
+    assert.match(declinedOrdersBody, /Найдено 27 из \d+ заказов\./);
+    assert.match(declinedOrdersBody, /Отменено/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

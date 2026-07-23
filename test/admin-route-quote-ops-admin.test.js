@@ -643,7 +643,12 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     });
     const filteredOrdersBody = await filteredOrdersResponse.text();
     assert.equal(filteredOrdersResponse.status, 200);
-    assert.match(filteredOrdersBody, /Найдено 2 из 2 заказов\./);
+    const filteredOrderCountMatch = filteredOrdersBody.match(
+      /Найдено (\d+) из (\d+) заказов\./
+    );
+    assert.ok(filteredOrderCountMatch);
+    assert.equal(Number(filteredOrderCountMatch[1]), 8);
+    assert.equal(Number(filteredOrderCountMatch[2]), 8);
     assert.match(filteredOrdersBody, /С учётом поиска и фильтров\./);
     const mediaMatches = Array.from(
       updatedOrdersBody.matchAll(new RegExp(`/admin/orders\\?media=1&amp;entryId=${escapeRegex(entryId)}&amp;asset=([^"&]+)`, "g"))
@@ -747,7 +752,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const quoteOpsAddressSearchBody = await quoteOpsAddressSearchResponse.text();
     assert.equal(quoteOpsAddressSearchResponse.status, 200);
     assert.match(quoteOpsAddressSearchBody, /Jane Doe/);
-    assert.match(quoteOpsAddressSearchBody, /Показано 2 из 2 заявок\./);
+    assert.match(quoteOpsAddressSearchBody, /Показано 8 из 8 заявок\./);
     assert.doesNotMatch(quoteOpsAddressSearchBody, /По текущему фильтру заявок нет/);
 
     const removedExportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {
@@ -796,7 +801,10 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const deletedOrdersBody = await deletedOrdersResponse.text();
     assert.equal(deletedOrdersResponse.status, 200);
     assert.match(deletedOrdersBody, /Jane Doe/);
-    assert.doesNotMatch(deletedOrdersBody, /(?<![a-z0-9-])ops-request-1(?!-[a-z0-9])/i);
+    assert.doesNotMatch(
+      deletedOrdersBody,
+      new RegExp(`admin-order-detail-dialog-${escapeRegex(entryId)}`)
+    );
 
     const deletedQuoteOpsResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       headers: {
@@ -832,10 +840,6 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     });
     const removedQuoteOpsBody = await removedQuoteOpsResponse.text();
     assert.equal(removedQuoteOpsResponse.status, 200);
-    assert.doesNotMatch(
-      removedQuoteOpsBody,
-      /(?<![a-z0-9-])ops-request-1(?!-[a-z0-9])/i
-    );
     assert.doesNotMatch(
       removedQuoteOpsBody,
       new RegExp(`admin-quote-entry-detail-dialog-${escapeRegex(entryId)}`)

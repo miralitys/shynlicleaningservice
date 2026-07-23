@@ -1205,11 +1205,13 @@ const adminSharedRenderers = createAdminSharedRenderers({
 });
 
 const {
+  addRecurringScheduleDate,
   applyLeadEntryUpdates,
   applyClientEntryUpdates,
   applyOrderEntryUpdates,
   applyPaymentEntryUpdates,
   buildRecurringOrderSubmission,
+  buildRecurringOrderSeriesSubmissions,
   buildAdminQrMarkup,
   buildAdminRedirectPath,
   buildOrdersReturnPath,
@@ -1635,7 +1637,9 @@ const handleAdminRequest = createAdminRequestHandler({
   adminPageRenderers,
   adminSharedRenderers,
   adminTwoFactorRateLimiter,
+  addRecurringScheduleDate,
   buildRecurringOrderSubmission,
+  buildRecurringOrderSeriesSubmissions,
   buildAdminQrMarkup,
   buildAdminRedirectPath,
   buildOrdersReturnPath,

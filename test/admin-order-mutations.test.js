@@ -488,3 +488,89 @@ test("clears recurring frequency for deep cleaning orders", () => {
   assert.equal(getEntryPayload(entry).calculatorData.frequency, undefined);
   assert.equal(buildRecurringOrderSubmission(entry), null);
 });
+
+test("builds six months of biweekly visits from the original Cheryl schedule after one visit moves", () => {
+  const { buildRecurringOrderSeriesSubmissions } = createMutationDomain();
+  const entry = {
+    id: "order-cheryl-gilsdorf",
+    requestId: "cheryl-gilsdorf-biweekly",
+    customerName: "Cheryl Gilsdorf",
+    customerPhone: "3125550101",
+    serviceType: "standard",
+    serviceName: "Standard",
+    selectedDate: "2026-07-29",
+    selectedTime: "11:00",
+    totalPrice: 180,
+    payloadForRetry: {
+      calculatorData: {
+        serviceType: "standard",
+        frequency: "biweekly",
+        selectedDate: "2026-07-29",
+        selectedTime: "11:00",
+      },
+      orderState: {
+        isCreated: true,
+        status: "rescheduled",
+        frequency: "biweekly",
+        selectedDate: "2026-07-29",
+        selectedTime: "11:00",
+        recurringSeriesId: "cheryl-gilsdorf-biweekly",
+        recurringAnchorDate: "2026-07-28",
+        recurringOccurrenceDate: "2026-07-28",
+        recurringOccurrenceIndex: 0,
+      },
+    },
+  };
+
+  const submissions = buildRecurringOrderSeriesSubmissions(entry);
+  assert.equal(submissions[0].selectedDate, "2026-08-11");
+  assert.equal(submissions[0].selectedTime, "11:00");
+  assert.equal(
+    getEntryOrderState({ payloadForRetry: submissions[0].payloadForRetry }).recurringOccurrenceDate,
+    "2026-08-11"
+  );
+  assert.ok(submissions.length >= 12);
+});
+
+test("builds Mona's biweekly series through the next six months without duplicate dates", () => {
+  const { buildRecurringOrderSeriesSubmissions } = createMutationDomain();
+  const entry = {
+    id: "order-mona-biweekly",
+    requestId: "mona-biweekly",
+    customerName: "Mona",
+    customerPhone: "7808858185",
+    serviceType: "standard",
+    serviceName: "Standard",
+    selectedDate: "2026-07-21",
+    selectedTime: "09:00",
+    totalPrice: 155,
+    payloadForRetry: {
+      calculatorData: {
+        serviceType: "standard",
+        frequency: "biweekly",
+        selectedDate: "2026-07-21",
+        selectedTime: "09:00",
+      },
+      orderState: {
+        isCreated: true,
+        status: "scheduled",
+        frequency: "biweekly",
+        selectedDate: "2026-07-21",
+        selectedTime: "09:00",
+      },
+    },
+  };
+
+  const submissions = buildRecurringOrderSeriesSubmissions(entry);
+  const dates = submissions.map((submission) => submission.selectedDate);
+  assert.deepEqual(dates.slice(0, 3), ["2026-08-04", "2026-08-18", "2026-09-01"]);
+  assert.equal(new Set(dates).size, dates.length);
+  assert.ok(dates.at(-1) <= "2027-01-21");
+});
+
+test("monthly recurrence advances one month and keeps the anchor day when possible", () => {
+  const { addRecurringScheduleDate } = createMutationDomain();
+  assert.equal(addRecurringScheduleDate("2026-04-14", "monthly"), "2026-05-14");
+  assert.equal(addRecurringScheduleDate("2026-01-31", "monthly"), "2026-02-28");
+  assert.equal(addRecurringScheduleDate("2026-01-31", "monthly", 2), "2026-03-31");
+});
