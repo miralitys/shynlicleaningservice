@@ -389,6 +389,38 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(updatedStaffBody, /Bring tall ladder/);
     assert.match(updatedStaffBody, /Olga Stone/);
 
+    const newerOrderResponses = [];
+    for (let index = 0; index < 125; index += 1) {
+      newerOrderResponses.push(
+        await fetch(`${started.baseUrl}/admin/orders`, {
+          method: "POST",
+          redirect: "manual",
+          headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            cookie: `shynli_admin_session=${sessionCookieValue}`,
+          },
+          body: new URLSearchParams({
+            action: "create-manual-order",
+            returnTo: "/admin/orders",
+            customerName: `Newer Calendar Order ${index}`,
+            customerPhone: `312555${String(1000 + index).slice(-4)}`,
+            customerEmail: `newer-calendar-${index}@example.com`,
+            serviceType: "standard",
+            selectedDate: "2026-04-01",
+            selectedTime: "10:00",
+            serviceDurationHours: "2",
+            serviceDurationMinutes: "0",
+            totalPrice: "180",
+            fullAddress: `${1000 + index} Newer Order Lane, Aurora, IL 60504`,
+          }),
+        })
+      );
+    }
+    assert.ok(
+      newerOrderResponses.every((response) => response.status === 303),
+      `Unexpected order statuses: ${newerOrderResponses.map((response) => response.status).join(", ")}`
+    );
+
     const calendarSectionResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-03-25`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
