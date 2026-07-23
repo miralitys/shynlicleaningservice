@@ -559,6 +559,9 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(focusedOrderBody, /name="quoteServices"/);
     assert.match(focusedOrderBody, /name="quoteFullAddress"/);
     assert.match(focusedOrderBody, /name="quoteAdditionalDetails"/);
+    assert.match(focusedOrderBody, /data-admin-order-primary-save/);
+    assert.match(focusedOrderBody, /data-admin-order-quote-form="admin-order-detail-dialog-[^"]+-quote-fields-edit-form"/);
+    assert.match(focusedOrderBody, /update-order-with-quote-fields/);
 
     const saveQuoteFieldsForm = new URLSearchParams();
     saveQuoteFieldsForm.set("action", "update-order-quote-fields");
@@ -625,6 +628,58 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(updatedOrderBody, /Apt \/ suite[\s\S]*Suite 8/);
     assert.match(updatedOrderBody, /ZIP[\s\S]*60540/);
     assert.match(updatedOrderBody, /Комментарий клиента[\s\S]*Please focus on the basement shelves\./);
+
+    const saveOrderAndQuoteFieldsForm = new URLSearchParams();
+    saveOrderAndQuoteFieldsForm.set("action", "update-order-with-quote-fields");
+    saveOrderAndQuoteFieldsForm.set("entryId", createdOrderId);
+    saveOrderAndQuoteFieldsForm.set("returnTo", `/admin/orders?order=${createdOrderId}`);
+    saveOrderAndQuoteFieldsForm.set("orderStatus", "new");
+    saveOrderAndQuoteFieldsForm.set("selectedDate", "2026-06-03");
+    saveOrderAndQuoteFieldsForm.set("selectedTime", "09:00");
+    saveOrderAndQuoteFieldsForm.set("serviceDurationHours", "2");
+    saveOrderAndQuoteFieldsForm.set("serviceDurationMinutes", "30");
+    saveOrderAndQuoteFieldsForm.set("frequency", "monthly");
+    for (const [name, value] of saveQuoteFieldsForm.entries()) {
+      if (["action", "entryId", "returnTo", "quoteHasPets"].includes(name)) continue;
+      saveOrderAndQuoteFieldsForm.append(name, value);
+    }
+    saveOrderAndQuoteFieldsForm.set("quoteHasPets", "cat");
+
+    const saveOrderAndQuoteFieldsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: saveOrderAndQuoteFieldsForm,
+    });
+    assert.equal(saveOrderAndQuoteFieldsResponse.status, 303);
+    assert.match(
+      saveOrderAndQuoteFieldsResponse.headers.get("location") || "",
+      new RegExp(`(?=.*notice=order-saved)(?=.*order=${escapeRegex(createdOrderId)})`)
+    );
+
+    const catOrderResponse = await fetch(
+      `${started.baseUrl}${saveOrderAndQuoteFieldsResponse.headers.get("location") || ""}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const catOrderBody = await catOrderResponse.text();
+    assert.equal(catOrderResponse.status, 200);
+    const catDialogStart = catOrderBody.indexOf(`id="admin-order-detail-dialog-${createdOrderId}"`);
+    const catDialogEnd = catOrderBody.indexOf("</dialog>", catDialogStart);
+    assert.ok(catDialogStart >= 0);
+    assert.ok(catDialogEnd > catDialogStart);
+    const catDialogBody = catOrderBody.slice(catDialogStart, catDialogEnd);
+    assert.match(
+      catDialogBody,
+      /admin-order-quote-field-label">Питомцы<\/span>\s*<p class="admin-order-quote-field-value">Кошка<\/p>/
+    );
+    assert.match(catDialogBody, /<option value="cat" selected>Кошка<\/option>/);
   } finally {
     await stopServer(started.child);
   }
