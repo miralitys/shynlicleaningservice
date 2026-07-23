@@ -110,6 +110,8 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(ordersBody, /data-admin-address-autocomplete="true"/);
     assert.match(ordersBody, /data-admin-address-suggestions/);
     assert.match(ordersBody, /data-admin-manual-order-estimate-defaults/);
+    assert.match(ordersBody, /data-admin-manual-order-draft/);
+    assert.match(ordersBody, /Можно указать позже/);
     const estimateDefaultsScriptMatch = ordersBody.match(
       /<script data-admin-manual-order-estimate-defaults>([\s\S]*?)<\/script>/
     );
@@ -828,7 +830,7 @@ test("sorts the orders table newest first and scheduled funnel by visit date", a
   }
 });
 
-test("requires service duration when admins add a manual order", async () => {
+test("allows admins to add a manual order without a known service duration", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
   };
@@ -858,10 +860,12 @@ test("requires service duration when admins add a manual order", async () => {
     });
 
     assert.equal(createOrderResponse.status, 303);
-    assert.match(createOrderResponse.headers.get("location") || "", /notice=manual-order-duration-invalid/);
+    const redirectLocation = createOrderResponse.headers.get("location") || "";
+    assert.match(redirectLocation, /notice=manual-order-created/);
+    assert.ok(new URL(redirectLocation, started.baseUrl).searchParams.get("order"));
 
     const ordersResponse = await fetch(
-      `${started.baseUrl}${(createOrderResponse.headers.get("location") || "").replace(/#.*$/, "")}`,
+      `${started.baseUrl}${redirectLocation.replace(/#.*$/, "")}`,
       {
         headers: {
           cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -870,7 +874,8 @@ test("requires service duration when admins add a manual order", async () => {
     );
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
-    assert.match(ordersBody, /укажите длительность уборки в часах и минутах/i);
+    assert.match(ordersBody, /Заказ добавлен вручную/);
+    assert.match(ordersBody, /Duration Missing Customer/);
   } finally {
     await stopServer(started.child);
   }
