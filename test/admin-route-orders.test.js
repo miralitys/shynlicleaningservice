@@ -912,6 +912,111 @@ test("sorts the orders table newest first and scheduled funnel by visit date", a
   }
 });
 
+test("keeps older scheduled orders searchable after many newer orders are created", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createOlderOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Judi Veach",
+        customerPhone: "3125557001",
+        customerEmail: "judi.veach@example.com",
+        serviceType: "standard",
+        selectedDate: "2026-07-27",
+        selectedTime: "09:00",
+        serviceDurationHours: "8",
+        serviceDurationMinutes: "0",
+        frequency: "",
+        totalPrice: "320.00",
+        fullAddress: "100 Older Order Avenue, Chicago, IL 60601",
+      }),
+    });
+    assert.equal(createOlderOrderResponse.status, 303);
+    const olderOrderId = new URL(
+      createOlderOrderResponse.headers.get("location") || "",
+      started.baseUrl
+    ).searchParams.get("order");
+    assert.ok(olderOrderId);
+
+    const scheduleOlderOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: olderOrderId,
+        returnTo: "/admin/orders",
+        orderStatus: "scheduled",
+      }),
+    });
+    assert.equal(scheduleOlderOrderResponse.status, 303);
+
+    const newerOrderResponses = [];
+    for (let index = 0; index < 165; index += 1) {
+      newerOrderResponses.push(
+        await fetch(`${started.baseUrl}/admin/orders`, {
+          method: "POST",
+          redirect: "manual",
+          headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            cookie: `shynli_admin_session=${sessionCookieValue}`,
+          },
+          body: new URLSearchParams({
+            action: "create-manual-order",
+            returnTo: "/admin/orders",
+            customerName: `Newer Orders Board Entry ${index}`,
+            customerPhone: `312555${String(7100 + index).slice(-4)}`,
+            customerEmail: `newer-orders-board-${index}@example.com`,
+            serviceType: "standard",
+            selectedDate: "2026-08-01",
+            selectedTime: "10:00",
+            serviceDurationHours: "2",
+            serviceDurationMinutes: "0",
+            frequency: "",
+            totalPrice: "180.00",
+            fullAddress: `${2000 + index} Newer Board Lane, Chicago, IL 60601`,
+          }),
+        })
+      );
+    }
+    assert.ok(
+      newerOrderResponses.every((response) => response.status === 303),
+      `Unexpected order statuses: ${newerOrderResponses.map((response) => response.status).join(", ")}`
+    );
+
+    const ordersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Judi Veach")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Judi Veach/);
+    const scheduledLane = getOrderFunnelLaneSlice(ordersBody, "scheduled", "en-route");
+    assert.match(scheduledLane, /Judi Veach/);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
 test("allows admins to add a manual order without a known service duration", async () => {
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
