@@ -832,6 +832,66 @@ test("does not resend client reminders already present in SMS history", async ()
   assert.equal(leadConnectorClient.calls.length, 0);
 });
 
+test("sends reminders again for a rescheduled visit with an old reminder history", async () => {
+  const entry = createOrderEntry({
+    id: "order-rescheduled-reminder-1",
+    selectedDate: "2026-04-21",
+    selectedTime: "10:00",
+    payloadForRetry: {
+      adminOrder: {
+        status: "scheduled",
+        notifications: {
+          reminderSms: {
+            signature: "2026-04-20|10:00",
+            sent48hAt: "2026-04-18T15:00:00.000Z",
+            sent24hAt: "2026-04-19T15:00:00.000Z",
+            sent1hAt: "",
+          },
+        },
+      },
+      adminSms: {
+        history: [
+          {
+            id: "sms-old-24h-reminder",
+            sentAt: "2026-04-19T15:00:00.000Z",
+            message: "Reminder for the original visit date.",
+            phone: "3125550100",
+            channel: "ghl",
+            direction: "outbound",
+            source: "automatic",
+            targetType: "visit-reminder",
+            targetRef: "order-rescheduled-reminder-1:sent24hAt",
+            status: "sent",
+          },
+        ],
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+  });
+
+  const schedule = localDateTimeToInstant("2026-04-21", "10:00");
+  const twentyThreeHoursBefore = new Date(schedule.date.getTime() - 23 * 60 * 60 * 1000);
+  const sweep = await service.runClientReminderSweep({
+    now: twentyThreeHoursBefore,
+    leadConnectorClient,
+  });
+
+  assert.equal(sweep.sent, 1);
+  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.match(leadConnectorClient.calls[0].message, /in 24 hours/);
+  const reminderState = getOrderNotificationState(entry).reminderSms;
+  assert.equal(reminderState.signature, "2026-04-21|10:00");
+  assert.ok(reminderState.sent24hAt);
+  assert.equal(
+    entry.payloadForRetry.adminSms.history[0].targetRef,
+    "order-rescheduled-reminder-1:2026-04-21%7C10%3A00:sent24hAt"
+  );
+});
+
 test("sends review request email and SMS once when an order enters awaiting-review", async () => {
   const entry = createOrderEntry({
     id: "order-review-1",
