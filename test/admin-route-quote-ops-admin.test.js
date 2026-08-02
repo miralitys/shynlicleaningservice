@@ -190,6 +190,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(ordersBody, /data-order-dropzone="scheduled"/);
     assert.match(ordersBody, /data-order-funnel-stage-form="true"/);
     assert.match(ordersBody, /X-SHYNLI-ADMIN-AJAX/);
+    assert.match(ordersBody, /window\.setTimeout\(\(\) => window\.location\.reload\(\), 150\)/);
     assert.match(ordersBody, /Ближайшие выезды/);
     assert.match(ordersBody, /admin-orders-filter-inline-panel/);
     assert.match(ordersBody, /data-admin-auto-submit="true"/);
