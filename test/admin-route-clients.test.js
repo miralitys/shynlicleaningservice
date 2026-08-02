@@ -860,6 +860,27 @@ test("syncs a corrected client address into an existing order", async () => {
       "client-address-sync-request"
     );
 
+    const firstUpdateForm = new URLSearchParams({
+      action: "update-client",
+      clientKey: "3125550188",
+      returnTo: "/admin/clients?client=3125550188",
+      name: "Address Sync Client",
+      phone: "312-555-0188",
+      email: "address.sync@example.com",
+    });
+    firstUpdateForm.append("addresses", correctedAddress);
+    firstUpdateForm.append("addresses", "200 Secondary Street, Aurora, IL 60504");
+    const firstUpdateResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: firstUpdateForm,
+    });
+    assert.equal(firstUpdateResponse.status, 303);
+
     const updateResponse = await fetch(`${started.baseUrl}/admin/clients`, {
       method: "POST",
       redirect: "manual",
@@ -874,7 +895,7 @@ test("syncs a corrected client address into an existing order", async () => {
         name: "Address Sync Client",
         phone: "312-555-0188",
         email: "address.sync@example.com",
-        addressOriginals: oldAddress,
+        addressOriginals: correctedAddress,
         addresses: correctedAddress,
       }),
     });
