@@ -281,6 +281,10 @@ test("renders an assigned order only under the assigned cleaner with that cleane
   const ramisCell = html.match(/<td[\s\S]*?data-admin-team-calendar-cleaner-name="Ramis Iaparov"[\s\S]*?<\/td>/)?.[0] || "";
   const anastasiaCell =
     html.match(/<td[\s\S]*?data-admin-team-calendar-cleaner-name="Anastasiia Iaparova"[\s\S]*?<\/td>/)?.[0] || "";
-  assert.doesNotMatch(ramisCell, /data-admin-team-calendar-menu="true"/);
+  assert.match(ramisCell, /data-admin-team-calendar-menu="true"/);
+  assert.match(ramisCell, /data-admin-team-calendar-busy-checkbox="true"/);
+  assert.match(ramisCell, /name="availabilityDate" value="2026-05-04"/);
+  assert.match(ramisCell, /<option value="time-range">С … до …<\/option>/);
+  assert.match(ramisCell, /Ramis Order/);
   assert.match(anastasiaCell, /data-admin-team-calendar-menu="true"/);
 });
