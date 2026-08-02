@@ -105,6 +105,7 @@ test("completes the admin login flow without a second factor", async () => {
     assert.match(dashboardBody, /admin-sidebar-logout-button/);
     assert.match(dashboardBody, /data-admin-logout-form="true"/);
     assert.match(dashboardBody, /data-admin-logout-trigger="true"/);
+    assert.doesNotMatch(dashboardBody, /href="\/admin\/messages"/);
     assert.doesNotMatch(dashboardBody, /admin-topbar/i);
     assert.doesNotMatch(dashboardBody, /Вы вошли как/i);
 
