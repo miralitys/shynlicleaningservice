@@ -349,6 +349,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /data-admin-save-confirm="true"/i);
     assert.match(selectedClientDialog, /name="clientKey" value="3125550100"/i);
     assert.match(selectedClientDialog, /name="addresses"/i);
+    assert.match(selectedClientDialog, /name="addressOriginals" value="123 Main St, Romeoville, IL 60446"/i);
     assert.match(selectedClientDialog, /name="addressPropertyTypes"/i);
     assert.match(selectedClientDialog, /name="addressSquareFootages"/i);
     assert.match(selectedClientDialog, /name="addressRoomCounts"/i);
@@ -806,6 +807,91 @@ test("renders the clients table with filters and request history", async () => {
     );
     assert.equal(contactCalls.length, 3);
     assert.equal(autoSmsCalls.length, 4);
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(tempDir, { recursive: true, force: true });
+    fetchStub.cleanup();
+  }
+});
+
+test("syncs a corrected client address into an existing order", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-client-address-sync-"));
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-address-sync-123",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: path.join(tempDir, "admin-staff-store.json"),
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const oldAddress = "100 Wrong Street, Naperville, IL 60540";
+    const correctedAddress = "100 Correct Street, Naperville, IL 60540";
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "client-address-sync-request",
+      fullName: "Address Sync Client",
+      phone: "312-555-0188",
+      email: "address.sync@example.com",
+      serviceType: "deep",
+      fullAddress: oldAddress,
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    await createOrderFromQuoteRequest(
+      started.baseUrl,
+      sessionCookieValue,
+      "client-address-sync-request"
+    );
+
+    const updateResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update-client",
+        clientKey: "3125550188",
+        returnTo: "/admin/clients?client=3125550188",
+        name: "Address Sync Client",
+        phone: "312-555-0188",
+        email: "address.sync@example.com",
+        addressOriginals: oldAddress,
+        addresses: correctedAddress,
+      }),
+    });
+    assert.equal(updateResponse.status, 303);
+    assert.match(updateResponse.headers.get("location") || "", /notice=client-saved/);
+
+    const ordersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Address Sync Client")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /100 Correct Street, Naperville, IL 60540/i);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
