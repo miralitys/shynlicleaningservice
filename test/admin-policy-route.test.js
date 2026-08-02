@@ -330,6 +330,20 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       }
     });
     assert.equal(policySmsRequests.length, 1);
+    const policyFollowUpSmsRequests = smsRequests.filter((record) => {
+      try {
+        return /received an automatic message with our service policy/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(policyFollowUpSmsRequests.length, 1);
+    assert.equal(
+      JSON.parse(policyFollowUpSmsRequests[0].body).message,
+      "Policy, You should have received an automatic message with our Service Policy. 😊 It's nothing unusual—just our standard policy that we ask all first-time customers to review and sign before their cleaning appointment.\n\nThank you so much!"
+    );
     const smsPayload = JSON.parse(policySmsRequests[0].body);
     assert.equal(smsPayload.type, "SMS");
     assert.equal(smsPayload.contactId, "policy-contact-1");
@@ -418,6 +432,16 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       }
     });
     assert.equal(policySmsRequestsAfterResend.length, 2);
+    const policyFollowUpSmsRequestsAfterResend = smsRequestsAfterResend.filter((record) => {
+      try {
+        return /received an automatic message with our service policy/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(policyFollowUpSmsRequestsAfterResend.length, 1);
 
     const refreshedAcceptanceResponse = await fetch(
       `${started.baseUrl}/api/admin/policy-acceptance/${encodeURIComponent(entryId)}`,
@@ -996,7 +1020,7 @@ test("sends policy acceptance by SMS only when the order has no email", async ()
     const smsRequests = captureLines.filter((record) =>
       String(record.url).includes("/conversations/messages")
     );
-    assert.equal(smsRequests.length, 1);
+    assert.equal(smsRequests.length, 2);
     const firstSmsPayload = JSON.parse(smsRequests[0].body);
     assert.equal(firstSmsPayload.type, "SMS");
     assert.equal(firstSmsPayload.contactId, "policy-sms-only-contact-1");
@@ -1004,6 +1028,11 @@ test("sends policy acceptance by SMS only when the order has no email", async ()
     assert.match(
       firstSmsPayload.message,
       /Hi SMS, this is Shynli Cleaning Service\. To confirm your booking, please review and accept our service policies here:/
+    );
+    const followUpSmsPayload = JSON.parse(smsRequests[1].body);
+    assert.equal(
+      followUpSmsPayload.message,
+      "SMS, You should have received an automatic message with our Service Policy. 😊 It's nothing unusual—just our standard policy that we ask all first-time customers to review and sign before their cleaning appointment.\n\nThank you so much!"
     );
 
     const pendingAcceptanceResponse = await fetch(
@@ -1064,7 +1093,7 @@ test("sends policy acceptance by SMS only when the order has no email", async ()
     const smsRequestsAfterResend = captureLinesAfterResend.filter((record) =>
       String(record.url).includes("/conversations/messages")
     );
-    assert.equal(smsRequestsAfterResend.length, 2);
+    assert.equal(smsRequestsAfterResend.length, 3);
   } finally {
     await stopServer(started.child);
     await smtpServer.close();
