@@ -175,6 +175,7 @@ test("allows admins to add a manual order from the orders page", async () => {
       ordersBody,
       /<option value="free-in-home-estimate">Free in-home estimate<\/option>/
     );
+    assert.match(ordersBody, /<option value="every3weeks">Every 3 weeks<\/option>/);
     assert.match(ordersBody, /places_test_key/);
     assert.match(ordersBody, /__adminGooglePlacesReady/);
     assert.match(ordersBody, /v=beta/);
@@ -502,6 +503,70 @@ test("allows admins to add a manual order from the orders page", async () => {
       existingClientDialogBody,
       /Client is allergic to strong smells\. Use fragrance-free products\./
     );
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
+test("saves and filters manual orders that repeat every three weeks", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Every Three Weeks Customer",
+        customerPhone: "3125550111",
+        customerEmail: "every.three.weeks@example.com",
+        serviceType: "standard",
+        selectedDate: "2026-08-08",
+        selectedTime: "09:00",
+        serviceDurationHours: "2",
+        serviceDurationMinutes: "30",
+        frequency: "every3weeks",
+        totalPrice: "180.00",
+        fullAddress: "100 Main Street, Naperville, IL 60540",
+      }),
+    });
+
+    assert.equal(createResponse.status, 303);
+    const redirectLocation = createResponse.headers.get("location") || "";
+    assert.match(redirectLocation, /notice=manual-order-created/);
+
+    const createdResponse = await fetch(`${started.baseUrl}${redirectLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const createdBody = await createdResponse.text();
+    assert.equal(createdResponse.status, 200);
+    assert.match(createdBody, /Every Three Weeks Customer/);
+    assert.match(createdBody, /Every 3 weeks/);
+
+    const filteredResponse = await fetch(
+      `${started.baseUrl}/admin/orders?frequency=every3weeks`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const filteredBody = await filteredResponse.text();
+    assert.equal(filteredResponse.status, 200);
+    assert.match(filteredBody, /Every Three Weeks Customer/);
+    assert.match(filteredBody, /<option value="every3weeks" selected>Every 3 weeks<\/option>/);
   } finally {
     await stopServer(started.child);
   }

@@ -574,3 +574,42 @@ test("monthly recurrence advances one month and keeps the anchor day when possib
   assert.equal(addRecurringScheduleDate("2026-01-31", "monthly"), "2026-02-28");
   assert.equal(addRecurringScheduleDate("2026-01-31", "monthly", 2), "2026-03-31");
 });
+
+test("builds every-three-weeks visits through the next six months", () => {
+  const { addRecurringScheduleDate, buildRecurringOrderSeriesSubmissions } = createMutationDomain();
+  const entry = {
+    id: "order-every-three-weeks",
+    requestId: "every-three-weeks",
+    customerName: "Every Three Weeks Customer",
+    customerPhone: "3125550111",
+    serviceType: "standard",
+    serviceName: "Standard",
+    selectedDate: "2026-08-08",
+    selectedTime: "09:00",
+    totalPrice: 180,
+    payloadForRetry: {
+      calculatorData: {
+        serviceType: "standard",
+        frequency: "every3weeks",
+        selectedDate: "2026-08-08",
+        selectedTime: "09:00",
+      },
+      orderState: {
+        isCreated: true,
+        status: "scheduled",
+        frequency: "every3weeks",
+        selectedDate: "2026-08-08",
+        selectedTime: "09:00",
+      },
+    },
+  };
+
+  assert.equal(addRecurringScheduleDate("2026-08-08", "every3weeks"), "2026-08-29");
+  assert.equal(addRecurringScheduleDate("2026-08-08", "every3weeks", 2), "2026-09-19");
+
+  const submissions = buildRecurringOrderSeriesSubmissions(entry);
+  const dates = submissions.map((submission) => submission.selectedDate);
+  assert.deepEqual(dates.slice(0, 4), ["2026-08-29", "2026-09-19", "2026-10-10", "2026-10-31"]);
+  assert.equal(new Set(dates).size, dates.length);
+  assert.ok(dates.at(-1) <= "2027-02-08");
+});

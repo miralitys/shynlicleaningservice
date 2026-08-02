@@ -265,7 +265,7 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
   },
 ]);
 const ORDER_STATUS_VALUES = new Set(["new", "scheduled", "in-progress", "completed", "canceled", "rescheduled"]);
-const ORDER_FREQUENCY_VALUES = new Set(["weekly", "biweekly", "monthly"]);
+const ORDER_FREQUENCY_VALUES = new Set(["weekly", "biweekly", "every3weeks", "monthly"]);
 const ORDER_ASSIGNMENT_VALUES = new Set(["all", "assigned", "unassigned"]);
 const QUOTE_PUBLIC_PATH = "/quote";
 const QUOTE_NO_CALCULATOR_PUBLIC_PATH = "/quote-no-calculator";
