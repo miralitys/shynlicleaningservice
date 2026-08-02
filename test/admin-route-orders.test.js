@@ -852,7 +852,7 @@ test("allows admins to edit visit date and time from the order summary card", as
     const updatedOrderBody = await updatedOrderResponse.text();
     assert.equal(updatedOrderResponse.status, 200);
     assert.match(updatedOrderBody, /Заказ обновлён/);
-    assert.match(updatedOrderBody, /Дата и время[\s\S]*07\/04\/2026, 02:15 PM/);
+    assert.match(updatedOrderBody, /Дата и время[\s\S]*07\/04\/2026 \(Сб\), 02:15 PM/);
     assert.match(
       updatedOrderBody,
       /data-admin-order-schedule-editor="admin-order-detail-dialog-[^"]+-schedule-edit-panel"[\s\S]*name="selectedDate"[\s\S]*value="07\/04\/2026"[\s\S]*name="selectedTime"[\s\S]*value="2:15 PM"/
@@ -1284,7 +1284,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         selectedDate: "2026-04-14",
         selectedTime: "09:00",
         fullAddress: "101 Weekly Lane, Aurora, IL 60505",
-        expectedNextSchedule: "04/21/2026, 09:00 AM",
+        expectedNextSchedule: "04/21/2026 (Вт), 09:00 AM",
         expectedOrderCount: 27,
       },
       {
@@ -1297,7 +1297,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         selectedDate: "2026-04-14",
         selectedTime: "11:30",
         fullAddress: "202 Biweekly Drive, Naperville, IL 60540",
-        expectedNextSchedule: "04/28/2026, 11:30 AM",
+        expectedNextSchedule: "04/28/2026 (Вт), 11:30 AM",
         expectedOrderCount: 14,
       },
       {
@@ -1310,7 +1310,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         selectedDate: "2026-04-14",
         selectedTime: "15:15",
         fullAddress: "303 Monthly Court, Aurora, IL 60505",
-        expectedNextSchedule: "05/14/2026, 03:15 PM",
+        expectedNextSchedule: "05/14/2026 (Чт), 03:15 PM",
         expectedOrderCount: 7,
       },
     ];
@@ -1534,7 +1534,7 @@ test("recognizes the next recurring visit created by the six-month schedule", as
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Найдено 27 из \d+ заказов\./);
-    assert.match(ordersBody, /04\/21\/2026, 09:00 AM/);
+    assert.match(ordersBody, /04\/21\/2026 \(Вт\), 09:00 AM/);
 
     const repeatScheduleNextResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -1674,9 +1674,9 @@ test("saving a new visit from a completed order creates a separate scheduled ord
     const scheduledLane = getOrderFunnelLaneSlice(ordersBody, "scheduled", "en-route");
     const completedLane = getOrderFunnelLaneSlice(ordersBody, "completed", "canceled");
     assert.match(scheduledLane, /Completed Next Visit Client/);
-    assert.match(scheduledLane, /05\/01\/2026, 11:30 AM/);
+    assert.match(scheduledLane, /05\/01\/2026 \(Пт\), 11:30 AM/);
     assert.match(completedLane, /Completed Next Visit Client/);
-    assert.match(completedLane, /04\/14\/2026, 09:00 AM/);
+    assert.match(completedLane, /04\/14\/2026 \(Вт\), 09:00 AM/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -1809,7 +1809,7 @@ test("creates a completed-order follow-up task and records the next cleaning out
     const agreedOrdersBody = await agreedOrdersResponse.text();
     assert.equal(agreedOrdersResponse.status, 200);
     assert.match(agreedOrdersBody, /Найдено 27 из \d+ заказов\./);
-    assert.match(agreedOrdersBody, /04\/29\/2026, 02:30 PM/);
+    assert.match(agreedOrdersBody, /04\/29\/2026 \(Ср\), 02:30 PM/);
 
     const declinedQuoteResponse = await submitQuote(started.baseUrl, {
       requestId: "completed-followup-declined",
