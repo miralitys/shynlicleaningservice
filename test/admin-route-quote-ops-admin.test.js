@@ -207,30 +207,40 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.doesNotMatch(ordersBody, /admin-kicker">Заказы</);
     assert.doesNotMatch(ordersBody, /Найдено \d+ из \d+ заказов/);
     assert.doesNotMatch(ordersBody, /Показан общий рабочий список/);
-    assert.match(ordersBody, /Поля из формы клиента/);
-    assert.match(ordersBody, /admin-delete-button/);
-    assert.match(ordersBody, /Inside Cabinets Cleaning/);
-    assert.match(ordersBody, /Interior Windows Cleaning/);
-    assert.match(ordersBody, /Apt 4B/);
-    assert.match(ordersBody, /Romeoville/);
-    assert.match(ordersBody, /Питомцы[\s\S]*Кошка/);
-    assert.match(ordersBody, /03\/22\/2026, 09:00 AM/);
-    assert.match(ordersBody, /Please call on arrival/);
-    assert.match(ordersBody, /Gate code 2040/);
-    assert.match(ordersBody, /Команда не назначена/);
-    assert.doesNotMatch(ordersBody, /Отчёт клинера/);
-    assert.doesNotMatch(ordersBody, /data-admin-order-completion-panel="true"/);
-    assert.doesNotMatch(ordersBody, /data-admin-order-cleaner-comment-panel="true"/);
-    assert.match(ordersBody, /name="paymentStatus"/);
-    assert.match(ordersBody, /name="paymentMethod"/);
-    assert.doesNotMatch(ordersBody, /Команда назначена/);
-    assert.doesNotMatch(ordersBody, /CRM без ошибок/);
-    assert.doesNotMatch(ordersBody, /Успешно/);
-    assert.doesNotMatch(ordersBody, /Удаление убирает запись из рабочих разделов админки/);
-
-    const entryIdMatch = ordersBody.match(/name="entryId" value="([^"]+)"/);
+    const entryIdMatch = ordersBody.match(/data-order-entry-id="([^"]+)"/);
     assert.ok(entryIdMatch);
     const entryId = entryIdMatch[1];
+
+    const initialOrderResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const initialOrderBody = await initialOrderResponse.text();
+    assert.equal(initialOrderResponse.status, 200);
+    assert.match(initialOrderBody, /Поля из формы клиента/);
+    assert.match(initialOrderBody, /admin-delete-button/);
+    assert.match(initialOrderBody, /Inside Cabinets Cleaning/);
+    assert.match(initialOrderBody, /Interior Windows Cleaning/);
+    assert.match(initialOrderBody, /Apt 4B/);
+    assert.match(initialOrderBody, /Romeoville/);
+    assert.match(initialOrderBody, /Питомцы[\s\S]*Кошка/);
+    assert.match(initialOrderBody, /03\/22\/2026, 09:00 AM/);
+    assert.match(initialOrderBody, /Please call on arrival/);
+    assert.match(initialOrderBody, /Gate code 2040/);
+    assert.match(initialOrderBody, /Команда не назначена/);
+    assert.doesNotMatch(initialOrderBody, /Отчёт клинера/);
+    assert.doesNotMatch(initialOrderBody, /data-admin-order-completion-panel="true"/);
+    assert.doesNotMatch(initialOrderBody, /data-admin-order-cleaner-comment-panel="true"/);
+    assert.match(initialOrderBody, /name="paymentStatus"/);
+    assert.match(initialOrderBody, /name="paymentMethod"/);
+    assert.doesNotMatch(initialOrderBody, /Команда назначена/);
+    assert.doesNotMatch(initialOrderBody, /CRM без ошибок/);
+    assert.doesNotMatch(initialOrderBody, /Успешно/);
+    assert.doesNotMatch(initialOrderBody, /Удаление убирает запись из рабочих разделов админки/);
 
     const staffStorePayload = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
     const findStaffIdByName = (name) =>
@@ -607,11 +617,14 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(ajaxOrderSavePayload.notice, "order-saved");
     assert.equal(ajaxOrderSavePayload.order.orderStatus, "completed");
 
-    const updatedOrdersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
-      headers: {
-        cookie: `shynli_admin_session=${sessionCookieValue}`,
-      },
-    });
+    const updatedOrdersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
     const updatedOrdersBody = await updatedOrdersResponse.text();
     assert.equal(updatedOrdersResponse.status, 200);
     assert.match(updatedOrdersBody, /Завершено/);
@@ -648,8 +661,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       /Найдено (\d+) из (\d+) заказов\./
     );
     assert.ok(filteredOrderCountMatch);
-    assert.equal(Number(filteredOrderCountMatch[1]), 8);
-    assert.equal(Number(filteredOrderCountMatch[2]), 8);
+    assert.equal(Number(filteredOrderCountMatch[1]), 7);
+    assert.equal(Number(filteredOrderCountMatch[2]), 7);
     assert.match(filteredOrdersBody, /С учётом поиска и фильтров\./);
     const mediaMatches = Array.from(
       updatedOrdersBody.matchAll(new RegExp(`/admin/orders\\?media=1&amp;entryId=${escapeRegex(entryId)}&amp;asset=([^"&]+)`, "g"))
@@ -753,7 +766,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const quoteOpsAddressSearchBody = await quoteOpsAddressSearchResponse.text();
     assert.equal(quoteOpsAddressSearchResponse.status, 200);
     assert.match(quoteOpsAddressSearchBody, /Jane Doe/);
-    assert.match(quoteOpsAddressSearchBody, /Показано 8 из 8 заявок\./);
+    assert.match(quoteOpsAddressSearchBody, /Показано 7 из 7 заявок\./);
     assert.doesNotMatch(quoteOpsAddressSearchBody, /По текущему фильтру заявок нет/);
 
     const removedExportResponse = await fetch(`${started.baseUrl}/admin/quote-ops/export.csv`, {

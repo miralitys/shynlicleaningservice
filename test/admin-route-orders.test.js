@@ -80,6 +80,11 @@ function getOrderDialogEntryIdByText(html, expectedText) {
   )) {
     if (match[0].includes(expectedText)) return match[1];
   }
+  for (const match of String(html || "").matchAll(
+    /<article[^>]+data-order-entry-id="([^"]+)"[\s\S]*?<\/article>/g
+  )) {
+    if (match[0].includes(expectedText)) return match[1];
+  }
   return "";
 }
 
@@ -417,6 +422,26 @@ test("allows admins to add a manual order from the orders page", async () => {
     });
     const profileOrdersBody = await profileOrdersResponse.text();
     assert.equal(profileOrdersResponse.status, 200);
+    assert.match(profileOrdersBody, /data-admin-order-dialog-host="true"/);
+    assert.match(profileOrdersBody, /data-admin-dialog-url="\/admin\/orders\?fragment=order-dialog&amp;order=/);
+    assert.doesNotMatch(profileOrdersBody, /<dialog class="admin-dialog admin-dialog-wide admin-dialog-orders"/);
+    const profileDialogFragmentResponse = await fetch(
+      `${started.baseUrl}/admin/orders?fragment=order-dialog&order=${encodeURIComponent(existingProfileSourceOrderId)}&returnTo=${encodeURIComponent("/admin/orders")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const profileDialogFragmentBody = await profileDialogFragmentResponse.text();
+    assert.equal(profileDialogFragmentResponse.status, 200);
+    assert.match(
+      profileDialogFragmentBody,
+      new RegExp(`id="admin-order-detail-dialog-${escapeRegex(existingProfileSourceOrderId)}"`)
+    );
+    assert.ok(profileDialogFragmentBody.length < 200_000);
+    assert.doesNotMatch(profileDialogFragmentBody, /<!DOCTYPE html>/i);
+    assert.doesNotMatch(profileDialogFragmentBody, /admin-orders-workspace/);
     const profileClientLookupDataMatch = profileOrdersBody.match(
       /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
     );
@@ -1064,6 +1089,16 @@ test("keeps older scheduled orders searchable after many newer orders are create
       `Unexpected order statuses: ${newerOrderResponses.map((response) => response.status).join(", ")}`
     );
 
+    const allOrdersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const allOrdersBody = await allOrdersResponse.text();
+    assert.equal(allOrdersResponse.status, 200);
+    assert.ok(allOrdersBody.length < 2_500_000);
+    assert.doesNotMatch(allOrdersBody, /<dialog class="admin-dialog admin-dialog-wide admin-dialog-orders"/);
+
     const ordersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Judi Veach")}`,
       {
@@ -1405,8 +1440,18 @@ test("creates the next recurring order when a recurring order is completed", asy
       recurringCases[1].expectedNextSchedule
     );
     assert.ok(firstFutureBiweeklyEntryId);
-    assert.match(biweeklyOrdersBody, /Какие визиты отменить/);
-    assert.match(biweeklyOrdersBody, /Этот и все последующие/);
+    const biweeklyDialogResponse = await fetch(
+      `${started.baseUrl}/admin/orders?fragment=order-dialog&order=${encodeURIComponent(firstFutureBiweeklyEntryId)}&returnTo=${encodeURIComponent("/admin/orders")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const biweeklyDialogBody = await biweeklyDialogResponse.text();
+    assert.equal(biweeklyDialogResponse.status, 200);
+    assert.match(biweeklyDialogBody, /Какие визиты отменить/);
+    assert.match(biweeklyDialogBody, /Этот и все последующие/);
 
     const cancelFutureResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -1435,7 +1480,7 @@ test("creates the next recurring order when a recurring order is completed", asy
     const canceledBiweeklyBody = await canceledBiweeklyResponse.text();
     assert.equal(canceledBiweeklyResponse.status, 200);
     assert.equal(
-      Array.from(canceledBiweeklyBody.matchAll(/<option value="canceled" selected>/g)).length,
+      Array.from(canceledBiweeklyBody.matchAll(/data-order-funnel-status="canceled"/g)).length,
       13
     );
   } finally {
@@ -2037,8 +2082,26 @@ test("sends order SMS over ajax and keeps SMS history in the order dialog", asyn
     const afterBody = await afterResponse.text();
     assert.equal(afterResponse.status, 200);
     assert.match(afterBody, /История SMS/);
-    assert.match(afterBody, /Order SMS history test/);
-    assert.match(afterBody, /admin-ghl-sms-history-list is-scrollable/);
+    assert.match(afterBody, /admin-ghl-sms-history-list/);
+    assert.doesNotMatch(afterBody, /Order SMS history test/);
+    const lazyHistoryResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "load-order-sms-history",
+        entryId,
+        returnTo,
+      }),
+    });
+    const lazyHistoryPayload = await lazyHistoryResponse.json();
+    assert.equal(lazyHistoryResponse.status, 200);
+    assert.equal(lazyHistoryPayload.ok, true);
+    assert.ok(Array.isArray(lazyHistoryPayload.sms.history));
 
     const captureLines = (await fs.readFile(fetchStub.captureFile, "utf8"))
       .trim()
@@ -4195,14 +4258,24 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     );
     assert.match(completedLane, /Cleaner Confirmation Customer/);
     assert.match(completedLane, /Уборка завершена/);
-    assert.match(completedOrdersBody, /Отчёт клинера/);
-    assert.match(completedOrdersBody, /Second cleaner note is appended\./);
-    assert.doesNotMatch(completedOrdersBody, /Фото до/);
-    assert.doesNotMatch(completedOrdersBody, /Фото после/);
-    assert.doesNotMatch(completedOrdersBody, /<img class="admin-order-media-thumb"/);
-    assert.doesNotMatch(completedOrdersBody, /type="file" name="beforePhotos"/);
-    assert.doesNotMatch(completedOrdersBody, /type="file" name="afterPhotos"/);
-    assert.doesNotMatch(completedOrdersBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);
+    const completedOrderDetailResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const completedOrderDetailBody = await completedOrderDetailResponse.text();
+    assert.equal(completedOrderDetailResponse.status, 200);
+    assert.match(completedOrderDetailBody, /Отчёт клинера/);
+    assert.match(completedOrderDetailBody, /Second cleaner note is appended\./);
+    assert.doesNotMatch(completedOrderDetailBody, /Фото до/);
+    assert.doesNotMatch(completedOrderDetailBody, /Фото после/);
+    assert.doesNotMatch(completedOrderDetailBody, /<img class="admin-order-media-thumb"/);
+    assert.doesNotMatch(completedOrderDetailBody, /type="file" name="beforePhotos"/);
+    assert.doesNotMatch(completedOrderDetailBody, /type="file" name="afterPhotos"/);
+    assert.doesNotMatch(completedOrderDetailBody, /<button[^>]+data-admin-order-cleaner-comment-submit/);
 
     const cleaningCompleteOrdersResponse = await fetch(
       `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Cleaner Confirmation Customer")}`,

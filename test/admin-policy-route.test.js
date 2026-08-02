@@ -225,7 +225,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
       "policy-order-1"
     );
     const ordersResponse = await fetch(
-      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}&order=${encodeURIComponent(entryId)}`,
       {
         headers: {
           cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -234,7 +234,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     );
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
-    assert.match(ordersBody, new RegExp(`name="entryId" value="${escapeRegex(entryId)}"`));
+    assert.match(ordersBody, new RegExp(`data-order-entry-id="${escapeRegex(entryId)}"`));
 
     const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -262,7 +262,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     );
 
     const ordersAwaitingPolicyResponse = await fetch(
-      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}&order=${encodeURIComponent(entryId)}`,
       {
         headers: {
           cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -798,7 +798,7 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.equal(managerCertificateBuffer.subarray(0, 4).toString("utf8"), "%PDF");
 
     const updatedOrdersResponse = await fetch(
-      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}`,
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent("Policy Customer")}&order=${encodeURIComponent(entryId)}`,
       {
         headers: {
           cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -836,7 +836,35 @@ test("sends a policy acceptance email on scheduled transition and stores the sig
     assert.match(orderDialogBody, /История SMS/);
     assert.match(orderDialogBody, /Автоматически/);
     assert.match(orderDialogBody, /Сбросить подтверждение/);
-    assert.match(orderDialogBody, /To confirm your booking, please review and accept our service policies here:/);
+    assert.doesNotMatch(
+      orderDialogBody,
+      /To confirm your booking, please review and accept our service policies here:/
+    );
+
+    const smsHistoryResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+        "x-shynli-admin-ajax": "1",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "load-order-sms-history",
+        entryId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(entryId)}`,
+      }),
+    });
+    const smsHistoryPayload = await smsHistoryResponse.json();
+    assert.equal(smsHistoryResponse.status, 200);
+    assert.equal(smsHistoryPayload.ok, true);
+    assert.ok(
+      smsHistoryPayload.sms.history.some((item) =>
+        String(item && item.message).includes(
+          "To confirm your booking, please review and accept our service policies here:"
+        )
+      )
+    );
 
     const managerOrderDialogResponse = await fetch(
       `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,

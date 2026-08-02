@@ -567,11 +567,14 @@ test("creates staff members and assigns them to orders through the staff workspa
       /Jane Doe[\s\S]*?name="scheduleDate"[\s\S]*?value="2026-03-28"[\s\S]*?name="scheduleTime"[\s\S]*?value="14:15"/
     );
 
-    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
-      headers: {
-        cookie: `shynli_admin_session=${sessionCookieValue}`,
-      },
-    });
+    const ordersResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Olga Stone/);

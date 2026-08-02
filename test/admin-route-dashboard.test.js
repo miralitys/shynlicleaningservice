@@ -183,7 +183,7 @@ test("renders overview tables for unassigned clients and today's orders", async 
     const todayOrdersBody = await todayOrdersResponse.text();
     assert.equal(todayOrdersResponse.status, 200);
 
-    const entryIdMatch = todayOrdersBody.match(/name="entryId" value="([^"]+)"/);
+    const entryIdMatch = todayOrdersBody.match(/data-order-entry-id="([^"]+)"/);
     assert.ok(entryIdMatch);
 
     const saveOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
