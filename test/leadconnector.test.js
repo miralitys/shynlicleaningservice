@@ -781,6 +781,28 @@ test("sends an SMS through conversations API when contactId is provided", async 
   });
 });
 
+test("marks GHL rate-limit SMS failures as retryable", async () => {
+  const client = createLeadConnectorClient({
+    env: {
+      GHL_API_KEY: "test-key",
+      GHL_LOCATION_ID: "loc-1",
+      GHL_API_BASE_URL: "https://services.leadconnectorhq.com",
+    },
+    fetch: async () => createResponse(429, { message: "Rate limit exceeded" }),
+  });
+
+  const result = await client.sendSmsMessage({
+    contactId: "contact-123",
+    phone: "312-555-0100",
+    message: "Policy explanation",
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.status, 429);
+  assert.equal(result.code, "SMS_SEND_FAILED");
+  assert.equal(result.retryable, true);
+});
+
 test("looks up the contact by phone before sending an SMS", async () => {
   const calls = [];
   const fetch = async (url, options = {}) => {
