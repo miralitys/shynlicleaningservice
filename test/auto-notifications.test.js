@@ -189,9 +189,11 @@ function createLeadConnectorSequenceStub(results = []) {
       const next = results[calls.length - 1] || { ok: true };
       return {
         ok: next.ok !== false,
+        status: Number(next.status || 0),
         code: next.code || (next.ok === false ? "SMS_SEND_FAILED" : "OK"),
         message: next.message || "",
         details: next.details || null,
+        retryable: next.retryable === true,
         contactId: next.contactId || input.contactId || "",
         conversationId: next.ok === false ? "" : `conversation-${calls.length}`,
         messageId: next.ok === false ? "" : `message-${calls.length}`,
@@ -928,16 +930,20 @@ test("sends review request email and SMS once when an order enters awaiting-revi
 
   assert.equal(firstResult.customerEmailSent, true);
   assert.equal(firstResult.customerSmsSent, true);
+  assert.equal(firstResult.customerFollowUpSmsSent, true);
   assert.equal(emailCalls.length, 1);
-  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.equal(leadConnectorClient.calls.length, 2);
   assert.match(leadConnectorClient.calls[0].message, /quick review/i);
   assert.match(leadConnectorClient.calls[0].message, DIRECT_REVIEW_URL_PATTERN);
   assert.doesNotMatch(leadConnectorClient.calls[0].message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
   assert.doesNotMatch(leadConnectorClient.calls[0].message, /google\.com\/search/);
-  assert.equal((firstResult.entry.payloadForRetry.adminSms.history || []).length, 1);
+  assert.match(leadConnectorClient.calls[1].message, /^Jane, If you have a moment/);
+  assert.match(leadConnectorClient.calls[1].message, /mention the city or area/i);
+  assert.equal((firstResult.entry.payloadForRetry.adminSms.history || []).length, 2);
   const firstNotificationState = getOrderNotificationState(firstResult.entry);
   assert.ok(firstNotificationState.reviewRequest.emailSentAt);
   assert.ok(firstNotificationState.reviewRequest.smsSentAt);
+  assert.ok(firstNotificationState.reviewRequest.followUpSmsSentAt);
   assert.match(firstNotificationState.reviewRequest.reviewUrl, DIRECT_REVIEW_URL_PATTERN);
 
   const secondResult = await service.notifyAwaitingReviewRequest({
@@ -946,8 +952,45 @@ test("sends review request email and SMS once when an order enters awaiting-revi
   });
   assert.equal(secondResult.customerEmailSent, false);
   assert.equal(secondResult.customerSmsSent, false);
+  assert.equal(secondResult.customerFollowUpSmsSent, false);
   assert.equal(emailCalls.length, 1);
-  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.equal(leadConnectorClient.calls.length, 2);
+});
+
+test("retries a transient review follow-up SMS failure without resending the review link", async () => {
+  const entry = createOrderEntry({
+    id: "order-review-retry-1",
+    payloadForRetry: {
+      orderState: { status: "awaiting-review" },
+      adminOrder: { status: "awaiting-review" },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorSequenceStub([
+    { ok: true },
+    { ok: false, status: 429, code: "RATE_LIMITED", retryable: true },
+    { ok: true },
+  ]);
+  const waits = [];
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+    reviewSmsRetryDelays: [10, 20],
+    wait: async (delayMs) => waits.push(delayMs),
+  });
+
+  const result = await service.notifyAwaitingReviewRequest({
+    entry,
+    leadConnectorClient,
+  });
+
+  assert.equal(result.customerSmsSent, true);
+  assert.equal(result.customerFollowUpSmsSent, true);
+  assert.equal(leadConnectorClient.calls.length, 3);
+  assert.match(leadConnectorClient.calls[0].message, /quick review/i);
+  assert.match(leadConnectorClient.calls[1].message, /If you have a moment/i);
+  assert.equal(leadConnectorClient.calls[2].message, leadConnectorClient.calls[1].message);
+  assert.deepEqual(waits, [10]);
+  assert.equal((result.entry.payloadForRetry.adminSms.history || []).length, 2);
 });
 
 test("normalizes legacy review links to the direct Google review page", () => {

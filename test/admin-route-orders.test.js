@@ -3166,6 +3166,18 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
     assert.match(reviewSmsPayload.message, DIRECT_REVIEW_URL_PATTERN);
     assert.doesNotMatch(reviewSmsPayload.message, /maps\.app\.goo\.gl\/4u9s7onykNrJEEn99/);
     assert.doesNotMatch(reviewSmsPayload.message, /google\.com\/search/);
+    const reviewFollowUpSmsRequests = captureLines.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return /If you have a moment, we'd truly appreciate/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(reviewFollowUpSmsRequests.length, 1);
+    assert.match(JSON.parse(reviewFollowUpSmsRequests[0].body).message, /^Review, If you have a moment/);
 
     const repeatSaveResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -3210,6 +3222,17 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
       }
     });
     assert.equal(reviewSmsRequestsAfterRepeat.length, 1);
+    const reviewFollowUpSmsRequestsAfterRepeat = captureLinesAfterRepeat.filter((record) => {
+      if (!String(record.url).includes("/conversations/messages")) return false;
+      try {
+        return /If you have a moment, we'd truly appreciate/i.test(
+          JSON.parse(record.body).message || ""
+        );
+      } catch {
+        return false;
+      }
+    });
+    assert.equal(reviewFollowUpSmsRequestsAfterRepeat.length, 1);
 
     const orderDialogResponse = await fetch(
       `${started.baseUrl}/admin/orders?order=${encodeURIComponent(entryId)}`,
@@ -3273,6 +3296,19 @@ test("sends a review request email and SMS when an order moves to awaiting-revie
       }
     });
     assert.equal(reviewSmsRequestsAfterManualRequest.length, 2);
+    const reviewFollowUpSmsRequestsAfterManualRequest = captureLinesAfterManualRequest.filter(
+      (record) => {
+        if (!String(record.url).includes("/conversations/messages")) return false;
+        try {
+          return /If you have a moment, we'd truly appreciate/i.test(
+            JSON.parse(record.body).message || ""
+          );
+        } catch {
+          return false;
+        }
+      }
+    );
+    assert.equal(reviewFollowUpSmsRequestsAfterManualRequest.length, 2);
   } finally {
     await stopServer(started.child);
     smtpServer.close();
