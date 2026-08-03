@@ -712,28 +712,43 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /123 Main St, Romeoville, IL 60446/);
     assert.match(quoteOpsBody, /\+1\(312\)555-0100/);
     assert.match(quoteOpsBody, /data-admin-dialog-open="admin-quote-entry-detail-dialog-/);
+    assert.match(quoteOpsBody, /data-admin-dialog-url="\/admin\/quote-ops\?fragment=entry-dialog&amp;entry=/);
+    assert.doesNotMatch(quoteOpsBody, /<dialog class="admin-dialog admin-dialog-wide admin-dialog-orders"/);
     assert.match(quoteOpsBody, /class="admin-table-row-clickable"/);
     assert.match(quoteOpsBody, /data-admin-dialog-row="true"/);
-    assert.match(quoteOpsBody, /Удалить заявку/);
-    assert.match(quoteOpsBody, /data-admin-confirm-message="Удалить эту заявку из системы без возможности восстановления\?"/);
-    assert.match(quoteOpsBody, /Телефон: \+1\(312\)555-0100/);
-    assert.match(quoteOpsBody, /E-mail: jane@example\.com/);
-    assert.match(quoteOpsBody, /admin-client-metric-card-wide/);
-    assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Сумма<\/span>/);
-    assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Дата и время<\/span>/);
-    assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Телефон<\/span>/);
-    assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Услуга<\/span>/);
-    assert.match(quoteOpsBody, /<span class="admin-client-metric-label">Адрес<\/span>/);
-    assert.match(quoteOpsBody, /admin-client-info-grid admin-client-info-grid-three/);
-    assert.match(quoteOpsBody, /<span class="admin-client-info-label">Создана<\/span>/);
-    assert.match(quoteOpsBody, /<label class="admin-label">\s*Менеджер/);
-    assert.match(quoteOpsBody, /Не назначен/);
-    assert.match(quoteOpsBody, /Что заказал клиент/);
-    assert.match(quoteOpsBody, /Поля из формы клиента/);
-    assert.match(quoteOpsBody, /Комментарий клиента/);
-    assert.match(quoteOpsBody, /\$245\.50/);
-    assert.match(quoteOpsBody, /Gate code 2040/);
-    assert.doesNotMatch(quoteOpsBody, /Главные детали собраны в компактные блоки/);
+    const quoteOpsEntryIdMatch = quoteOpsBody.match(/data-quote-entry-id="([^"]+)"/);
+    assert.ok(quoteOpsEntryIdMatch);
+    const quoteOpsDialogResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?fragment=entry-dialog&entry=${encodeURIComponent(quoteOpsEntryIdMatch[1])}&returnTo=${encodeURIComponent("/admin/quote-ops")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const quoteOpsDialogBody = await quoteOpsDialogResponse.text();
+    assert.equal(quoteOpsDialogResponse.status, 200);
+    assert.doesNotMatch(quoteOpsDialogBody, /<!DOCTYPE html>/i);
+    assert.match(quoteOpsDialogBody, /Удалить заявку/);
+    assert.match(quoteOpsDialogBody, /data-admin-confirm-message="Удалить эту заявку из системы без возможности восстановления\?"/);
+    assert.match(quoteOpsDialogBody, /Телефон: \+1\(312\)555-0100/);
+    assert.match(quoteOpsDialogBody, /E-mail: jane@example\.com/);
+    assert.match(quoteOpsDialogBody, /admin-client-metric-card-wide/);
+    assert.match(quoteOpsDialogBody, /<span class="admin-client-metric-label">Сумма<\/span>/);
+    assert.match(quoteOpsDialogBody, /<span class="admin-client-metric-label">Дата и время<\/span>/);
+    assert.match(quoteOpsDialogBody, /<span class="admin-client-metric-label">Телефон<\/span>/);
+    assert.match(quoteOpsDialogBody, /<span class="admin-client-metric-label">Услуга<\/span>/);
+    assert.match(quoteOpsDialogBody, /<span class="admin-client-metric-label">Адрес<\/span>/);
+    assert.match(quoteOpsDialogBody, /admin-client-info-grid admin-client-info-grid-three/);
+    assert.match(quoteOpsDialogBody, /<span class="admin-client-info-label">Создана<\/span>/);
+    assert.match(quoteOpsDialogBody, /<label class="admin-label">\s*Менеджер/);
+    assert.match(quoteOpsDialogBody, /Не назначен/);
+    assert.match(quoteOpsDialogBody, /Что заказал клиент/);
+    assert.match(quoteOpsDialogBody, /Поля из формы клиента/);
+    assert.match(quoteOpsDialogBody, /Комментарий клиента/);
+    assert.match(quoteOpsDialogBody, /\$245\.50/);
+    assert.match(quoteOpsDialogBody, /Gate code 2040/);
+    assert.doesNotMatch(quoteOpsDialogBody, /Главные детали собраны в компактные блоки/);
     assert.doesNotMatch(quoteOpsBody, /admin-quote-ops-filter-disclosure" open/);
     assert.doesNotMatch(quoteOpsBody, /Persistent storage active/i);
     assert.doesNotMatch(quoteOpsBody, /Подключено к Supabase/i);

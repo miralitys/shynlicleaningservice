@@ -154,7 +154,7 @@ async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
   const quoteOpsBody = await quoteOpsResponse.text();
   assert.equal(quoteOpsResponse.status, 200);
 
-  const entryIdMatch = quoteOpsBody.match(/name="entryId" value="([^"]+)"/);
+  const entryIdMatch = quoteOpsBody.match(/data-quote-entry-id="([^"]+)"/);
   assert.ok(entryIdMatch, `Expected quote ops entry for ${query}`);
   return entryIdMatch[1];
 }

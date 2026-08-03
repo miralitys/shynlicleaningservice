@@ -161,7 +161,7 @@ async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
   const quoteOpsBody = await quoteOpsResponse.text();
   assert.equal(quoteOpsResponse.status, 200);
 
-  const entryIdMatch = quoteOpsBody.match(/name="entryId" value="([^"]+)"/);
+  const entryIdMatch = quoteOpsBody.match(/data-quote-entry-id="([^"]+)"/);
   assert.ok(entryIdMatch, `Expected quote ops entry for ${query}`);
   return entryIdMatch[1];
 }
@@ -491,11 +491,23 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     });
     const listBody = await listResponse.text();
     assert.equal(listResponse.status, 200);
-    assert.match(listBody, /admin-quote-entry-stage-form/);
-    assert.match(listBody, /admin-quote-entry-task-summary/);
-    const entryIdMatch = listBody.match(/name="entryId" value="([^"]+)"/);
+    const entryIdMatch = listBody.match(/data-quote-entry-id="([^"]+)"/);
     assert.ok(entryIdMatch);
     const entryId = entryIdMatch[1];
+    assert.doesNotMatch(listBody, /<form class="admin-form admin-form-grid admin-form-grid-two admin-quote-entry-stage-form"/);
+    const detailResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?fragment=entry-dialog&entry=${encodeURIComponent(entryId)}&returnTo=${encodeURIComponent("/admin/quote-ops")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const detailBody = await detailResponse.text();
+    assert.equal(detailResponse.status, 200);
+    assert.match(detailBody, /<form class="admin-form admin-form-grid admin-form-grid-two admin-quote-entry-stage-form"/);
+    assert.match(detailBody, /admin-quote-entry-task-summary/);
+    assert.doesNotMatch(detailBody, /<!DOCTYPE html>/i);
 
     const updateNotesResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       method: "POST",
@@ -530,7 +542,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(notedListBody, /Позвонить после 5 PM и уточнить код домофона\./);
     assert.match(
       notedListBody,
-      /document\.querySelectorAll\('\[data-quote-entry-notes-form="true"\]'\)[\s\S]*if \(activeSection !== "funnel"\) return;/
+      /window\.__adminBindQuoteOpsDialogContent = bindQuoteOpsEntryNotesForms;[\s\S]*if \(activeSection !== "funnel"\) return;/
     );
 
     const discussionAt = "2026-04-17T09:15";
@@ -857,7 +869,10 @@ test("auto-assigns new quote submissions to managers in round robin order", asyn
     assert.equal(quoteOpsResponse.status, 200);
 
     const fetchQuoteBody = async (query) => {
-      const response = await fetch(`${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent(query)}`, {
+      const entryId = await getQuoteOpsEntryId(started.baseUrl, sessionCookieValue, query);
+      const response = await fetch(
+        `${started.baseUrl}/admin/quote-ops?fragment=entry-dialog&entry=${encodeURIComponent(entryId)}&returnTo=${encodeURIComponent("/admin/quote-ops")}`,
+        {
         headers: {
           cookie: `shynli_admin_session=${sessionCookieValue}`,
         },
@@ -938,7 +953,7 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     });
     const listBody = await listResponse.text();
     assert.equal(listResponse.status, 200);
-    const entryIdMatch = listBody.match(/name="entryId" value="([^"]+)"/);
+    const entryIdMatch = listBody.match(/data-quote-entry-id="([^"]+)"/);
     assert.ok(entryIdMatch);
     const entryId = entryIdMatch[1];
 
