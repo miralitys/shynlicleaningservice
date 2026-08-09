@@ -1483,6 +1483,53 @@ test("creates the next recurring order when a recurring order is completed", asy
       Array.from(canceledBiweeklyBody.matchAll(/data-order-funnel-status="canceled"/g)).length,
       13
     );
+
+    const canceledBiweeklyDialogResponse = await fetch(
+      `${started.baseUrl}/admin/orders?fragment=order-dialog&order=${encodeURIComponent(firstFutureBiweeklyEntryId)}&returnTo=${encodeURIComponent("/admin/orders")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const canceledBiweeklyDialogBody = await canceledBiweeklyDialogResponse.text();
+    assert.equal(canceledBiweeklyDialogResponse.status, 200);
+    assert.match(canceledBiweeklyDialogBody, /Восстановить эту и последующие уборки/);
+
+    const restoreFutureResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "restore-recurring-series",
+        entryId: firstFutureBiweeklyEntryId,
+        returnTo: "/admin/orders",
+      }),
+    });
+    assert.equal(restoreFutureResponse.status, 303);
+    assert.match(restoreFutureResponse.headers.get("location") || "", /notice=recurring-series-restored/);
+
+    const restoredBiweeklyResponse = await fetch(
+      `${started.baseUrl}/admin/orders?q=${encodeURIComponent(recurringCases[1].fullName)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const restoredBiweeklyBody = await restoredBiweeklyResponse.text();
+    assert.equal(restoredBiweeklyResponse.status, 200);
+    assert.equal(
+      Array.from(restoredBiweeklyBody.matchAll(/data-order-funnel-status="canceled"/g)).length,
+      0
+    );
+    assert.equal(
+      Array.from(restoredBiweeklyBody.matchAll(/data-order-funnel-status="scheduled"/g)).length,
+      13
+    );
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
@@ -1932,7 +1979,8 @@ test("creates a completed-order follow-up task and records the next cleaning out
     const declinedOrdersBody = await declinedOrdersResponse.text();
     assert.equal(declinedOrdersResponse.status, 200);
     assert.match(declinedOrdersBody, /Найдено 27 из \d+ заказов\./);
-    assert.match(declinedOrdersBody, /Отменено/);
+    assert.doesNotMatch(declinedOrdersBody, /data-order-funnel-status="canceled"/);
+    assert.match(declinedOrdersBody, /data-order-funnel-status="scheduled"/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

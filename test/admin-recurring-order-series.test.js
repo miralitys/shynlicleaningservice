@@ -383,4 +383,24 @@ test("cancels the selected recurring visit and every later visit while keeping e
         staffStore.assignments.find((record) => record.entryId === entry.id).status === "canceled"
     )
   );
+
+  const restored = await helpers.restoreRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: await ledger.getEntry(aug11.id),
+    staffStore,
+  });
+
+  assert.equal(restored.length, canceled.length);
+  assert.ok(restored.every((entry) => getEntryOrderState(entry).status === "scheduled"));
+  assert.ok(
+    restored.every(
+      (entry) =>
+        staffStore.assignments.find((record) => record.entryId === entry.id).status === "planned"
+    )
+  );
+  assert.ok(
+    (await ledger.listEntries()).every(
+      (entry) => !getEntryOrderState(entry).recurringSeriesCanceledFromDate
+    )
+  );
 });
