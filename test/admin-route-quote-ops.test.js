@@ -1005,6 +1005,22 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
       new RegExp(`id="admin-quote-task-result-dialog-${escapeRegex(taskId)}"[^>]*data-admin-dialog-autopen="true"`)
     );
     assert.match(directTaskBody, /data-admin-dialog-return-url="\/admin\/quote-ops\?section=tasks"/);
+    assert.match(directTaskBody, /name="action" value="delete-lead-task"/);
+    assert.match(directTaskBody, /aria-label="Удалить таск"/);
+    assert.match(directTaskBody, /data-admin-confirm-title="Вы точно хотите удалить\?"/);
+    assert.match(directTaskBody, /Удалится только этот таск\. Заявка и заказы клиента останутся без изменений\./);
+    assertTextBefore(
+      directTaskBody,
+      ">Открыть заявку</a>",
+      'aria-label="Удалить таск"',
+      "Task dialog header actions"
+    );
+    assertTextBefore(
+      directTaskBody,
+      'aria-label="Удалить таск"',
+      `data-admin-dialog-close="admin-quote-task-result-dialog-${taskId}"`,
+      "Task dialog header actions"
+    );
 
     for (const expected of [
       /Связаться с клиентом/,
@@ -1089,6 +1105,81 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     const emptyTasksBody = await emptyTasksResponse.text();
     assert.equal(emptyTasksResponse.status, 200);
     assert.match(emptyTasksBody, /Для текущего фильтра открытых тасков нет/);
+
+    const deletableQuoteResponse = await submitQuote(started.baseUrl, {
+      requestId: "task-delete-request-1",
+      fullName: "Delete Task Lead",
+      phone: "312-555-0188",
+      email: "delete.task@example.com",
+      serviceType: "regular",
+      selectedDate: "2026-04-20",
+      selectedTime: "11:00",
+      fullAddress: "902 Follow Up Dr, Aurora, IL 60506",
+    });
+    assert.equal(deletableQuoteResponse.status, 201);
+
+    const deletableEntryId = await getQuoteOpsEntryId(
+      started.baseUrl,
+      sessionCookieValue,
+      "task-delete-request-1"
+    );
+    const deletableTasksResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("task-delete-request-1")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const deletableTasksBody = await deletableTasksResponse.text();
+    assert.equal(deletableTasksResponse.status, 200);
+    const deletableTaskId = getLeadTaskIdByEntryId(deletableTasksBody, deletableEntryId);
+    assert.ok(deletableTaskId);
+
+    const deleteTaskResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "delete-lead-task",
+        entryId: deletableEntryId,
+        taskId: deletableTaskId,
+        returnTo: `/admin/quote-ops?section=tasks&q=${encodeURIComponent("task-delete-request-1")}`,
+      }),
+    });
+    assert.equal(deleteTaskResponse.status, 303);
+    assert.match(deleteTaskResponse.headers.get("location") || "", /notice=task-deleted/);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const afterDeleteTasksResponse = await fetch(
+        `${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("task-delete-request-1")}`,
+        {
+          headers: {
+            cookie: `shynli_admin_session=${sessionCookieValue}`,
+          },
+        }
+      );
+      const afterDeleteTasksBody = await afterDeleteTasksResponse.text();
+      assert.equal(afterDeleteTasksResponse.status, 200);
+      assert.doesNotMatch(afterDeleteTasksBody, new RegExp(escapeRegex(deletableTaskId)));
+      assert.match(afterDeleteTasksBody, /Для текущего фильтра открытых тасков нет/);
+    }
+
+    const retainedLeadResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("task-delete-request-1")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const retainedLeadBody = await retainedLeadResponse.text();
+    assert.equal(retainedLeadResponse.status, 200);
+    assert.match(retainedLeadBody, /Delete Task Lead/);
+    assert.match(retainedLeadBody, new RegExp(`data-quote-entry-id="${escapeRegex(deletableEntryId)}"`));
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
