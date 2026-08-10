@@ -451,7 +451,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     savePaymentForm.set("entryId", entryId);
     savePaymentForm.set("returnTo", `/admin/orders?q=ops-request-1&order=${entryId}`);
     savePaymentForm.set("paymentStatus", "paid");
-    savePaymentForm.set("paymentMethod", "zelle");
+    savePaymentForm.set("paymentMethod", "venmo");
 
     const savePaymentResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -479,7 +479,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(paymentEditorResponse.status, 200);
     assert.match(paymentEditorBody, /data-admin-dialog-autopen="true"/);
     assert.match(paymentEditorBody, /<option value="paid" selected>Paid/);
-    assert.match(paymentEditorBody, /<option value="zelle" selected>Zelle/);
+    assert.match(paymentEditorBody, /<option value="venmo" selected>Venmo/);
+    assert.match(paymentEditorBody, /<option value="check">Check/);
     assert.match(
       paymentEditorBody,
       /<button[^>]*data-admin-order-payment-edit-trigger="admin-order-detail-dialog-[^"]+-payment-edit-panel"[^>]*>/
@@ -496,6 +497,34 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
       paymentEditorBody,
       /<button[^>]*aria-label="Отменить редактирование оплаты"[^>]*hidden/
     );
+
+    const saveCheckPaymentForm = new URLSearchParams();
+    saveCheckPaymentForm.set("entryId", entryId);
+    saveCheckPaymentForm.set("returnTo", `/admin/orders?q=ops-request-1&order=${entryId}`);
+    saveCheckPaymentForm.set("paymentStatus", "paid");
+    saveCheckPaymentForm.set("paymentMethod", "check");
+
+    const saveCheckPaymentResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: saveCheckPaymentForm,
+    });
+    assert.equal(saveCheckPaymentResponse.status, 303);
+
+    const checkPaymentLocation = saveCheckPaymentResponse.headers.get("location");
+    assert.ok(checkPaymentLocation);
+    const checkPaymentResponse = await fetch(`${started.baseUrl}${checkPaymentLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const checkPaymentBody = await checkPaymentResponse.text();
+    assert.equal(checkPaymentResponse.status, 200);
+    assert.match(checkPaymentBody, /<option value="check" selected>Check/);
 
     const completionFormData = new FormData();
     completionFormData.set("action", "save-order-completion");
