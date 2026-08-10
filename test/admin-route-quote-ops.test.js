@@ -605,6 +605,16 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /Выберите админа или менеджера/);
     assert.match(tasksBody, /Zoe Admin — админ/);
     assert.match(tasksBody, /name="action" value="create-lead-task"/);
+    assert.match(tasksBody, /data-quote-task-client-search="true"/);
+    assert.match(tasksBody, /placeholder="Имя, телефон, email или адрес"/);
+    assert.match(tasksBody, /type="hidden" name="entryId" value="" data-quote-task-entry-id="true"/);
+    assert.doesNotMatch(tasksBody, /<select class="admin-input" name="entryId"/);
+    assert.match(tasksBody, /data-quote-task-title-preset="Позвонить клиенту"/);
+    assert.match(tasksBody, /data-quote-task-due-preset="three-hours"/);
+    assert.match(tasksBody, /После выбора клиента подставится ответственный менеджер его заявки/);
+    assert.match(tasksBody, /data-quote-task-client-result="true"/);
+    assert.match(tasksBody, /data-client-address="310 Funnel Road, Naperville, IL 60540"/);
+    assert.match(tasksBody, /\.admin-quote-task-client-result\[hidden\]\s*\{\s*display:\s*none !important;/);
     assert.match(tasksBody, /admin-orders-filter-toggle/);
     assert.match(tasksBody, /admin-clients-search-form/);
     assert.match(tasksBody, /admin-quote-task-table/);
