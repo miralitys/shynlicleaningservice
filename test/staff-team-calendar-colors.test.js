@@ -240,6 +240,61 @@ test("renders a timed unavailable interval in the cleaner calendar", () => {
   assert.match(html, /name="availabilityEndTime"[\s\S]*?value="13:00"/);
 });
 
+test("aligns matching appointment times across cleaner columns", () => {
+  const helpers = createCalendarHelpers();
+  const sharedOrder = (id) => ({
+    scheduleDate: "2026-08-07",
+    scheduleTime: "12:00",
+    scheduleTimestamp: Date.UTC(2026, 7, 7, 17, 0, 0),
+    assignmentStatus: "planned",
+    entry: {
+      id,
+      customerName: "Mankawalpreet Wazir",
+      serviceName: "General cleaning",
+    },
+  });
+  const html = helpers.renderStaffTeamCalendarTable(
+    [
+      {
+        id: "anastasiia",
+        name: "Anastasiia Iaparova",
+        assignedOrders: [sharedOrder("order-anastasiia")],
+        calendarAvailabilityBlocks: [],
+      },
+      {
+        id: "tolkun",
+        name: "Tolkun Muratbekkyzy",
+        assignedOrders: [sharedOrder("order-tolkun")],
+        calendarAvailabilityBlocks: [
+          {
+            source: "manual",
+            startDate: "2026-08-07",
+            endDate: "2026-08-08",
+            allDay: false,
+            startTime: "09:00",
+            endTime: "11:00",
+            startMs: Date.UTC(2026, 7, 7, 14, 0, 0),
+            endMs: Date.UTC(2026, 7, 7, 16, 0, 0),
+            summary: "Не может выйти на работу",
+          },
+        ],
+      },
+    ],
+    "2026-08-07",
+    { view: "day" }
+  );
+
+  const anastasiiaCell =
+    html.match(/<td[\s\S]*?data-admin-team-calendar-cleaner-name="Anastasiia Iaparova"[\s\S]*?<\/td>/)?.[0] || "";
+  const tolkunCell =
+    html.match(/<td[\s\S]*?data-admin-team-calendar-cleaner-name="Tolkun Muratbekkyzy"[\s\S]*?<\/td>/)?.[0] || "";
+
+  assert.match(anastasiiaCell, /admin-team-calendar-time-slot-empty[\s\S]*?data-admin-team-calendar-time-slot="540"/);
+  assert.match(anastasiiaCell, /data-admin-team-calendar-time-slot="720"[\s\S]*?Mankawalpreet Wazir/);
+  assert.match(tolkunCell, /data-admin-team-calendar-time-slot="540"[\s\S]*?Не может выйти на работу/);
+  assert.match(tolkunCell, /data-admin-team-calendar-time-slot="720"[\s\S]*?Mankawalpreet Wazir/);
+});
+
 test("renders an assigned order only under the assigned cleaner with that cleaner color", () => {
   const helpers = createCalendarHelpers();
   const html = helpers.renderStaffTeamCalendarTable(
