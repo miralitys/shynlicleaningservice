@@ -180,6 +180,12 @@ test("allows admins to add a manual order from the orders page", async () => {
       ordersBody,
       /<option value="free-in-home-estimate">Free in-home estimate<\/option>/
     );
+    assert.match(ordersBody, /<option value="move-in">Move-in<\/option>/);
+    assert.match(ordersBody, /<option value="move-out">Move-out<\/option>/);
+    assert.match(
+      ordersBody,
+      /<option value="move-in\/out">Move-in\/out \(нужно уточнить\)<\/option>/
+    );
     assert.match(ordersBody, /<option value="every3weeks">Every 3 weeks<\/option>/);
     assert.match(ordersBody, /places_test_key/);
     assert.match(ordersBody, /__adminGooglePlacesReady/);
@@ -594,6 +600,136 @@ test("saves and filters manual orders that repeat every three weeks", async () =
     assert.match(filteredBody, /<option value="every3weeks" selected>Every 3 weeks<\/option>/);
   } finally {
     await stopServer(started.child);
+  }
+});
+
+test("lets managers refine a website move-in/out request into move-in or move-out", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "moving-direction-contact",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const requestId = `moving-request-${Date.now()}`;
+    const quoteResponse = await submitQuote(started.baseUrl, {
+      requestId,
+      fullName: "Moving Direction Customer",
+      phone: "312-555-4411",
+      email: "moving.direction@example.com",
+      serviceType: "moving",
+      selectedDate: "2026-08-18",
+      selectedTime: "10:30",
+      fullAddress: "901 Moving Lane, Naperville, IL 60540",
+    });
+    assert.equal(quoteResponse.status, 201);
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const orderId = await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, requestId);
+
+    const initialOrderResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(orderId)}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const initialOrderBody = await initialOrderResponse.text();
+    assert.equal(initialOrderResponse.status, 200);
+    assert.match(initialOrderBody, /Move-in\/out/);
+    assert.match(initialOrderBody, /<option value="move-in">Move-in<\/option>/);
+    assert.match(initialOrderBody, /<option value="move-out">Move-out<\/option>/);
+    assert.match(initialOrderBody, /<option value="move-in\/out" selected>Move-in\/out \(нужно уточнить\)<\/option>/);
+
+    const refineOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update-order-quote-fields",
+        entryId: orderId,
+        returnTo: `/admin/orders?order=${orderId}`,
+        quoteServiceType: "move-out",
+        quoteSelectedDate: "2026-08-18",
+        quoteSelectedTime: "10:30",
+        quoteFullAddress: "901 Moving Lane, Naperville, IL 60540",
+        quoteAddress: "901 Moving Lane",
+        quoteCity: "Naperville",
+        quoteState: "IL",
+        quoteZipCode: "60540",
+      }),
+    });
+    assert.equal(refineOrderResponse.status, 303);
+    assert.match(refineOrderResponse.headers.get("location") || "", /notice=order-form-fields-saved/);
+
+    const filteredMoveOutResponse = await fetch(
+      `${started.baseUrl}/admin/orders?serviceType=move-out`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const filteredMoveOutBody = await filteredMoveOutResponse.text();
+    assert.equal(filteredMoveOutResponse.status, 200);
+    assert.match(filteredMoveOutBody, /Moving Direction Customer/);
+    assert.match(filteredMoveOutBody, /<option value="move-out" selected>Move-out<\/option>/);
+
+    const refineToMoveInResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "update-order-quote-fields",
+        entryId: orderId,
+        returnTo: `/admin/orders?order=${orderId}`,
+        quoteServiceType: "move-in",
+        quoteSelectedDate: "2026-08-18",
+        quoteSelectedTime: "10:30",
+        quoteFullAddress: "901 Moving Lane, Naperville, IL 60540",
+      }),
+    });
+    assert.equal(refineToMoveInResponse.status, 303);
+
+    const filteredMoveInResponse = await fetch(
+      `${started.baseUrl}/admin/orders?serviceType=move-in`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const filteredMoveInBody = await filteredMoveInResponse.text();
+    assert.equal(filteredMoveInResponse.status, 200);
+    assert.match(filteredMoveInBody, /Moving Direction Customer/);
+    assert.match(filteredMoveInBody, /<option value="move-in" selected>Move-in<\/option>/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
   }
 });
 

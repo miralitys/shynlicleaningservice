@@ -167,6 +167,52 @@ test("persists automatic notification state on order updates", () => {
   });
 });
 
+test("keeps move-in and move-out as distinct service types", () => {
+  const { applyOrderEntryUpdates } = createMutationDomain();
+  const entry = {
+    id: "moving-direction-order",
+    serviceType: "moving",
+    serviceName: "Move-in/out",
+    payloadForRetry: {
+      calculatorData: {
+        serviceType: "moving",
+      },
+      orderState: {
+        isCreated: true,
+        status: "scheduled",
+      },
+      adminOrder: {
+        isCreated: true,
+        status: "scheduled",
+      },
+    },
+  };
+
+  applyOrderEntryUpdates(entry, {
+    serviceType: "move-in",
+    serviceName: "Move-in",
+    quoteCalculatorData: {
+      serviceType: "move-in",
+    },
+  });
+
+  assert.equal(entry.serviceType, "move-in");
+  assert.equal(entry.serviceName, "Move-in");
+  assert.equal(getEntryPayload(entry).calculatorData.serviceType, "move-in");
+
+  applyOrderEntryUpdates(entry, {
+    serviceType: "move-out",
+    serviceName: "Move-out",
+    quoteCalculatorData: {
+      serviceType: "move-out",
+    },
+  });
+
+  assert.equal(entry.serviceType, "move-out");
+  assert.equal(entry.serviceName, "Move-out");
+  assert.equal(getEntryPayload(entry).calculatorData.serviceType, "move-out");
+});
+
 test("persists service duration and carries it into recurring orders", () => {
   const { applyOrderEntryUpdates, buildRecurringOrderSubmission } = createMutationDomain();
   const entry = {
