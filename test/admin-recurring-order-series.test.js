@@ -77,6 +77,7 @@ function createEntry({
   frequency = "biweekly",
   seriesId = "cheryl-series",
   customerName = "Cheryl Gilsdorf",
+  totalPrice = 180,
 } = {}) {
   const state = {
     isCreated: true,
@@ -99,7 +100,7 @@ function createEntry({
     selectedDate: date,
     selectedTime: "11:00",
     serviceDurationMinutes: 180,
-    totalPrice: 180,
+    totalPrice,
     createdAt: "2026-07-01T12:00:00.000Z",
     payloadForRetry: {
       calculatorData: {
@@ -217,6 +218,43 @@ test("keeps Cheryl's Aug 11 cadence after the Jul 28 visit moves to Jul 29", asy
     staffStore,
   });
   assert.equal(secondPass.length, 0);
+});
+
+test("updates the selected recurring price and future visits without changing history", async () => {
+  const domain = createDomain();
+  const root = createEntry({
+    id: "kylie-root",
+    date: "2026-08-01",
+    status: "completed",
+    frequency: "weekly",
+    seriesId: "kylie-series",
+    customerName: "Kylie Beckstrom",
+    totalPrice: 220,
+  });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+  const generated = await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: root,
+  });
+  const august8 = generated.find((entry) => entry.selectedDate === "2026-08-08");
+  assert.ok(august8);
+
+  const updatedAugust8 = await ledger.updateOrderEntry(august8.id, { totalPrice: 280 });
+  const updatedFuture = await helpers.updateRecurringOrderSeriesFuturePrice({
+    quoteOpsLedger: ledger,
+    sourceEntry: updatedAugust8,
+    totalPrice: 280,
+  });
+
+  assert.equal(root.totalPrice, 220);
+  assert.equal(updatedAugust8.totalPrice, 280);
+  assert.ok(updatedFuture.length > 1);
+  assert.ok(updatedFuture.every((entry) => entry.totalPrice === 280));
 });
 
 test("backfills an existing recurring series once when the calendar opens", async () => {
