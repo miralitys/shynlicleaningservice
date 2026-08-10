@@ -914,6 +914,90 @@ test("auto-assigns new quote submissions to managers in round robin order", asyn
   }
 });
 
+test("manual task picker includes clients outside the recent quote workspace window", async () => {
+  const fetchStub = createFetchStub([
+    {
+      method: "POST",
+      match: "/contacts/",
+      status: 200,
+      body: {
+        contact: {
+          id: "contact-older-task-client",
+        },
+      },
+    },
+  ]);
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    GHL_API_KEY: "ghl_test_key",
+    GHL_LOCATION_ID: "location-123",
+    GHL_ENABLE_NOTES: "0",
+    GHL_CREATE_OPPORTUNITY: "0",
+    POST_RATE_LIMIT_MAX_REQUESTS: "500",
+    QUOTE_OPS_LEDGER_LIMIT: "220",
+    SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const olderClientResponse = await submitQuote(started.baseUrl, {
+      requestId: "manual-judi-veach-zraem5",
+      fullName: "Judi Veach",
+      phone: "630-370-0013",
+      email: "judi.veach@example.com",
+      serviceType: "moving",
+      selectedDate: "2026-07-27",
+      selectedTime: "09:00",
+      fullAddress: "2655 Lindrick Ln, Aurora, IL 60504, USA",
+    });
+    assert.equal(olderClientResponse.status, 201);
+
+    const fillerRequests = Array.from({ length: 180 }, (_, index) =>
+      submitQuote(started.baseUrl, {
+        requestId: `newer-task-client-${String(index).padStart(3, "0")}`,
+        fullName: `Newer Task Client ${index}`,
+        phone: `312-555-${String(index).padStart(4, "0")}`,
+        email: `newer-task-client-${index}@example.com`,
+        serviceType: "regular",
+        selectedDate: "2026-08-20",
+        selectedTime: "09:00",
+        fullAddress: `${1000 + index} Newer Client Rd, Aurora, IL 60504`,
+      })
+    );
+    const fillerResponses = await Promise.all(fillerRequests);
+    fillerResponses.forEach((response) => assert.equal(response.status, 201));
+
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const recentWorkspaceResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("Judi Veach")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const recentWorkspaceBody = await recentWorkspaceResponse.text();
+    assert.equal(recentWorkspaceResponse.status, 200);
+    assert.match(recentWorkspaceBody, /Найдено 0 из 180 заявок/);
+    assert.doesNotMatch(recentWorkspaceBody, /manual-judi-veach-zraem5/);
+
+    const tasksResponse = await fetch(`${started.baseUrl}/admin/quote-ops?section=tasks`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const tasksBody = await tasksResponse.text();
+    assert.equal(tasksResponse.status, 200);
+    assert.match(tasksBody, /data-client-name="Judi Veach"/);
+    assert.match(tasksBody, /manual-judi-veach-zraem5/);
+    assert.match(tasksBody, /data-client-phone="\+1\(630\)370-0013"/);
+  } finally {
+    await stopServer(started.child);
+    fetchStub.cleanup();
+  }
+});
+
 test("advances no-response lead tasks from same-day retry to next-morning and then refusal", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-quote-task-flow-"));
   const fetchStub = createFetchStub([
