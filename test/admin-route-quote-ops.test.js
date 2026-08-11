@@ -914,7 +914,7 @@ test("auto-assigns new quote submissions to managers in round robin order", asyn
   }
 });
 
-test("manual task picker includes clients outside the recent quote workspace window", async () => {
+test("manual task picker includes clients outside the clients page ledger window", async () => {
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -933,8 +933,8 @@ test("manual task picker includes clients outside the recent quote workspace win
     GHL_LOCATION_ID: "location-123",
     GHL_ENABLE_NOTES: "0",
     GHL_CREATE_OPPORTUNITY: "0",
-    POST_RATE_LIMIT_MAX_REQUESTS: "500",
-    QUOTE_OPS_LEDGER_LIMIT: "220",
+    POST_RATE_LIMIT_MAX_REQUESTS: "800",
+    QUOTE_OPS_LEDGER_LIMIT: "700",
     SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
   };
   const started = await startServer({ env });
@@ -942,18 +942,18 @@ test("manual task picker includes clients outside the recent quote workspace win
 
   try {
     const olderClientResponse = await submitQuote(started.baseUrl, {
-      requestId: "manual-judi-veach-zraem5",
-      fullName: "Judi Veach",
-      phone: "630-370-0013",
-      email: "judi.veach@example.com",
-      serviceType: "moving",
-      selectedDate: "2026-07-27",
-      selectedTime: "09:00",
-      fullAddress: "2655 Lindrick Ln, Aurora, IL 60504, USA",
+        requestId: "manual-suganya-swamy-e8n84g",
+        fullName: "Suganya Swamy",
+        phone: "513-490-8202",
+        email: "suganya.swamy@example.com",
+        serviceType: "regular",
+        selectedDate: "2027-05-28",
+        selectedTime: "09:00",
+        fullAddress: "127 Skyline Drive, Plainfield, IL 60585, USA",
     });
-    assert.equal(olderClientResponse.status, 201);
+    assert.equal(olderClientResponse.status, 201, await olderClientResponse.text());
 
-    const fillerRequests = Array.from({ length: 180 }, (_, index) =>
+    const fillerRequests = Array.from({ length: 500 }, (_, index) =>
       submitQuote(started.baseUrl, {
         requestId: `newer-task-client-${String(index).padStart(3, "0")}`,
         fullName: `Newer Task Client ${index}`,
@@ -970,7 +970,7 @@ test("manual task picker includes clients outside the recent quote workspace win
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
     const recentWorkspaceResponse = await fetch(
-      `${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("Judi Veach")}`,
+      `${started.baseUrl}/admin/quote-ops?q=${encodeURIComponent("Suganya Swamy")}`,
       {
         headers: {
           cookie: `shynli_admin_session=${sessionCookieValue}`,
@@ -980,7 +980,7 @@ test("manual task picker includes clients outside the recent quote workspace win
     const recentWorkspaceBody = await recentWorkspaceResponse.text();
     assert.equal(recentWorkspaceResponse.status, 200);
     assert.match(recentWorkspaceBody, /Найдено 0 из 180 заявок/);
-    assert.doesNotMatch(recentWorkspaceBody, /manual-judi-veach-zraem5/);
+    assert.doesNotMatch(recentWorkspaceBody, /manual-suganya-swamy-e8n84g/);
 
     const tasksResponse = await fetch(`${started.baseUrl}/admin/quote-ops?section=tasks`, {
       headers: {
@@ -989,9 +989,9 @@ test("manual task picker includes clients outside the recent quote workspace win
     });
     const tasksBody = await tasksResponse.text();
     assert.equal(tasksResponse.status, 200);
-    assert.match(tasksBody, /data-client-name="Judi Veach"/);
-    assert.match(tasksBody, /manual-judi-veach-zraem5/);
-    assert.match(tasksBody, /data-client-phone="\+1\(630\)370-0013"/);
+    assert.match(tasksBody, /data-client-name="Suganya Swamy"/);
+    assert.match(tasksBody, /manual-suganya-swamy-e8n84g/);
+    assert.match(tasksBody, /data-client-phone="\+1\(513\)490-8202"/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
