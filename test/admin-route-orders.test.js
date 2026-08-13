@@ -448,6 +448,8 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.ok(profileDialogFragmentBody.length < 200_000);
     assert.doesNotMatch(profileDialogFragmentBody, /<!DOCTYPE html>/i);
     assert.doesNotMatch(profileDialogFragmentBody, /admin-orders-workspace/);
+    assert.match(profileDialogFragmentBody, /Открыть клиента/);
+    assert.match(profileDialogFragmentBody, /href="\/admin\/clients\?client=/);
     const profileClientLookupDataMatch = profileOrdersBody.match(
       /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
     );
