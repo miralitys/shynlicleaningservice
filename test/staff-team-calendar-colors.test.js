@@ -197,6 +197,8 @@ test("renders manual unavailable blocks with editable busy controls", () => {
   );
 
   assert.match(html, /admin-team-calendar-entry-unavailable/);
+  assert.match(html, /admin-team-calendar-entry-unavailable-all-day/);
+  assert.match(html, /--admin-team-calendar-entry-top:0\.000%;--admin-team-calendar-entry-height:100\.000%/);
   assert.match(html, />Vacation<\/strong>/);
   assert.match(html, /name="action" value="save-staff-unavailable-day"/);
   assert.match(html, /name="availabilityDate" value="2026-07-06"/);
@@ -235,6 +237,7 @@ test("renders a timed unavailable interval in the cleaner calendar", () => {
   );
 
   assert.match(html, />08:00 – 13:00<\/span>/);
+  assert.match(html, /--admin-team-calendar-entry-top:0\.000%;--admin-team-calendar-entry-height:41\.667%/);
   assert.match(html, /<option value="time-range" selected>С … до …<\/option>/);
   assert.match(html, /name="availabilityStartTime"[\s\S]*?value="08:00"/);
   assert.match(html, /name="availabilityEndTime"[\s\S]*?value="13:00"/);
@@ -289,10 +292,12 @@ test("aligns matching appointment times across cleaner columns", () => {
   const tolkunCell =
     html.match(/<td[\s\S]*?data-admin-team-calendar-cleaner-name="Tolkun Muratbekkyzy"[\s\S]*?<\/td>/)?.[0] || "";
 
-  assert.match(anastasiiaCell, /admin-team-calendar-time-slot-empty[\s\S]*?data-admin-team-calendar-time-slot="540"/);
-  assert.match(anastasiiaCell, /data-admin-team-calendar-time-slot="720"[\s\S]*?Mankawalpreet Wazir/);
-  assert.match(tolkunCell, /data-admin-team-calendar-time-slot="540"[\s\S]*?Не может выйти на работу/);
-  assert.match(tolkunCell, /data-admin-team-calendar-time-slot="720"[\s\S]*?Mankawalpreet Wazir/);
+  const anastasiiaOrderTop = anastasiiaCell.match(/Mankawalpreet Wazir[\s\S]*?/) &&
+    anastasiiaCell.match(/style="[^"]*--admin-team-calendar-entry-top:([\d.]+)%[^"]*"[\s\S]*?Mankawalpreet Wazir/)?.[1];
+  const tolkunOrderTop = tolkunCell.match(/style="[^"]*--admin-team-calendar-entry-top:([\d.]+)%[^"]*"[\s\S]*?Mankawalpreet Wazir/)?.[1];
+  assert.ok(anastasiiaOrderTop);
+  assert.equal(tolkunOrderTop, anastasiiaOrderTop);
+  assert.match(tolkunCell, /--admin-team-calendar-entry-top:8\.333%[\s\S]*?Не может выйти на работу/);
 });
 
 test("renders an assigned order only under the assigned cleaner with that cleaner color", () => {
