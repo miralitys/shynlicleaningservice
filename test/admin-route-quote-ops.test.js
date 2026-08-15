@@ -1103,6 +1103,9 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     assert.match(directTaskBody, /aria-label="Удалить таск"/);
     assert.match(directTaskBody, /data-admin-confirm-title="Вы точно хотите удалить\?"/);
     assert.match(directTaskBody, /Удалится только этот таск\. Заявка и заказы клиента останутся без изменений\./);
+    assert.match(directTaskBody, /data-quote-task-contacted-autosave="true"/);
+    assert.match(directTaskBody, /data-quote-task-autosave-submit="true"/);
+    assert.match(directTaskBody, /data-quote-task-autosave-status="true"/);
     assertTextBefore(
       directTaskBody,
       ">Открыть заявку</a>",
