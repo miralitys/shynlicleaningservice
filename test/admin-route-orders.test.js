@@ -1287,7 +1287,8 @@ test("allows admins to add a manual order without a known service duration", asy
     assert.equal(createOrderResponse.status, 303);
     const redirectLocation = createOrderResponse.headers.get("location") || "";
     assert.match(redirectLocation, /notice=manual-order-created/);
-    assert.ok(new URL(redirectLocation, started.baseUrl).searchParams.get("order"));
+    const durationMissingOrderId = new URL(redirectLocation, started.baseUrl).searchParams.get("order");
+    assert.ok(durationMissingOrderId);
 
     const ordersResponse = await fetch(
       `${started.baseUrl}${redirectLocation.replace(/#.*$/, "")}`,
@@ -1301,6 +1302,38 @@ test("allows admins to add a manual order without a known service duration", asy
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Заказ добавлен вручную/);
     assert.match(ordersBody, /Duration Missing Customer/);
+
+    const scheduleResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: durationMissingOrderId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(durationMissingOrderId)}`,
+        orderStatus: "scheduled",
+        selectedDate: "2026-04-22",
+        selectedTime: "13:30",
+        serviceDurationHours: "",
+        serviceDurationMinutes: "",
+        frequency: "",
+      }),
+    });
+    assert.equal(scheduleResponse.status, 303);
+    assert.doesNotMatch(scheduleResponse.headers.get("location") || "", /order-duration-required/);
+
+    const scheduledOrderResponse = await fetch(
+      `${started.baseUrl}${scheduleResponse.headers.get("location") || ""}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const scheduledOrderBody = await scheduledOrderResponse.text();
+    assert.match(scheduledOrderBody, /<option value="scheduled" selected>Запланировано<\/option>/);
   } finally {
     await stopServer(started.child);
   }
