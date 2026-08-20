@@ -298,6 +298,44 @@ test("allows admins to add a manual order from the orders page", async () => {
       /<option value="free-in-home-estimate" selected>Free in-home estimate<\/option>/
     );
 
+    const estimateOrderId = new URL(estimateRedirectLocation, started.baseUrl).searchParams.get("order");
+    assert.ok(estimateOrderId);
+    const scheduleEstimateResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        entryId: estimateOrderId,
+        returnTo: `/admin/orders?order=${encodeURIComponent(estimateOrderId)}`,
+        orderStatus: "policy",
+        selectedDate: "2026-04-24",
+        selectedTime: "10:00",
+      }),
+    });
+    assert.equal(scheduleEstimateResponse.status, 303);
+    assert.doesNotMatch(
+      scheduleEstimateResponse.headers.get("location") || "",
+      /policy-(?:email|sms)/
+    );
+
+    const scheduledEstimateResponse = await fetch(
+      `${started.baseUrl}/admin/orders?order=${encodeURIComponent(estimateOrderId)}`,
+      { headers: { cookie: `shynli_admin_session=${sessionCookieValue}` } }
+    );
+    const scheduledEstimateBody = await scheduledEstimateResponse.text();
+    assert.equal(scheduledEstimateResponse.status, 200);
+    assert.match(scheduledEstimateBody, /data-order-policy-not-required="true"/);
+    assert.match(scheduledEstimateBody, /Для бесплатной оценки дома подписание политики не требуется\./);
+    assert.doesNotMatch(
+      scheduledEstimateBody.match(
+        new RegExp(`id="admin-order-detail-dialog-${escapeRegex(estimateOrderId)}"[\\s\\S]*?<\\/dialog>`)
+      )?.[0] || "",
+      /Политика не подписана/
+    );
+
     const createOrderWithClientDetailsResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
       redirect: "manual",
