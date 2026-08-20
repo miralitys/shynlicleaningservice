@@ -684,6 +684,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
         taskId,
         taskAction: "contacted",
         nextStatus: "confirmed",
+        discussionNextContactAt: "2026-04-19T14:45",
         returnTo: `/admin/quote-ops?section=tasks&managerId=${encodeURIComponent(managerUserId)}`,
       }),
     });
@@ -701,8 +702,9 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     const confirmedFunnelBody = await confirmedFunnelResponse.text();
     assert.equal(confirmedFunnelResponse.status, 200);
     assert.match(confirmedFunnelBody, /Подтверждено/);
-    assert.match(confirmedFunnelBody, /Заказ создан/);
     assert.match(confirmedFunnelBody, /Mila Rivers/);
+    assert.match(confirmedFunnelBody, /Связаться с клиентом в назначенное время/);
+    assert.match(confirmedFunnelBody, /04\/19\/2026, 02:45 PM/);
     assert.match(confirmedFunnelBody, /data-quote-card-deadline-row="true" hidden/);
 
     const ordersResponse = await fetch(`${started.baseUrl}/admin/orders?q=${encodeURIComponent("Funnel Lead")}`, {
