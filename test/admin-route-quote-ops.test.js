@@ -238,10 +238,14 @@ test("shows new quote and task badges in the sidebar until the lead leaves the n
         action: "update-lead-status",
         entryId,
         leadStatus: "no-response",
+        discussionNextContactAt: "2026-04-18T12:30",
         returnTo: "/admin/quote-ops",
       }),
     });
     assert.equal(updateStatusResponse.status, 200);
+    const updateStatusPayload = await updateStatusResponse.json();
+    assert.equal(updateStatusPayload.entry.taskLabel, "Связаться с клиентом в назначенное время");
+    assert.equal(updateStatusPayload.entry.dueLabel, "04/18/2026, 12:30 PM");
 
     const updatedDashboardResponse = await fetch(`${started.baseUrl}/admin`, {
       headers: {
