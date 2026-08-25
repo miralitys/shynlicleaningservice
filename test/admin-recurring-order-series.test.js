@@ -148,14 +148,14 @@ function createLedger(domain, initialEntries = []) {
   };
 }
 
-function createStaffStore() {
+function createStaffStore(status = "planned") {
   const assignments = [
     {
       entryId: "cheryl-moved",
       staffIds: ["cleaner-1"],
       scheduleDate: "",
       scheduleTime: "",
-      status: "planned",
+      status,
       notes: "",
     },
   ];
@@ -176,6 +176,35 @@ function createStaffStore() {
     },
   };
 }
+
+test("keeps confirmed staff assignments on generated recurring visits", async () => {
+  const domain = createDomain();
+  const source = createEntry({
+    id: "cheryl-moved",
+    date: "2026-07-29",
+  });
+  const ledger = createLedger(domain, [source]);
+  const staffStore = createStaffStore("confirmed");
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+
+  const created = await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: source,
+    staffStore,
+  });
+
+  assert.ok(created.length > 0);
+  assert.ok(
+    created.every(
+      (entry) =>
+        staffStore.assignments.find((record) => record.entryId === entry.id).status === "confirmed"
+    )
+  );
+});
 
 test("keeps Cheryl's Aug 11 cadence after the Jul 28 visit moves to Jul 29", async () => {
   const domain = createDomain();
