@@ -827,6 +827,10 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(focusedOrderBody, /Поля из формы клиента/);
     assert.match(
       focusedOrderBody,
+      /class="admin-dialog admin-dialog-wide admin-dialog-orders"[^>]*data-admin-dialog-dirty-confirm="true"/
+    );
+    assert.match(
+      focusedOrderBody,
       /data-admin-toggle-target="admin-order-detail-dialog-[^"]+-quote-fields-edit-panel"/
     );
     assert.match(focusedOrderBody, /name="action" value="update-order-quote-fields"/);
