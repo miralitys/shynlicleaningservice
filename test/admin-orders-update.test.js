@@ -8,15 +8,19 @@ const {
   shouldAutoScheduleAssignedNewOrder,
 } = require("../lib/admin/handlers-orders-update");
 
-test("restores a canceled assignment when an active order is moved", () => {
-  assert.equal(getScheduleSyncedAssignmentStatus("scheduled", "canceled"), "planned");
+test("confirms assignments for scheduled orders", () => {
+  assert.equal(getScheduleSyncedAssignmentStatus("scheduled", "planned"), "confirmed");
+  assert.equal(getScheduleSyncedAssignmentStatus("scheduled", "canceled"), "confirmed");
+  assert.equal(getScheduleSyncedAssignmentStatus("scheduled", "confirmed"), "confirmed");
+});
+
+test("restores a canceled assignment when an active unscheduled order is moved", () => {
   assert.equal(getScheduleSyncedAssignmentStatus("new", "cancelled"), "planned");
 });
 
 test("keeps canceled assignments hidden for inactive orders", () => {
   assert.equal(getScheduleSyncedAssignmentStatus("canceled", "canceled"), "canceled");
   assert.equal(getScheduleSyncedAssignmentStatus("rescheduled", "canceled"), "canceled");
-  assert.equal(getScheduleSyncedAssignmentStatus("scheduled", "confirmed"), "confirmed");
 });
 
 test("automatically schedules a new order once date, time, and team are assigned", () => {
