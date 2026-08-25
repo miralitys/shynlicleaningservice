@@ -320,6 +320,94 @@ test("backfills an existing recurring series once when the calendar opens", asyn
   assert.equal(secondPass.length, 0);
 });
 
+test("repairs a modern recurring series when future visits are missing", async () => {
+  const domain = createDomain();
+  const root = createEntry({
+    id: "cheryl-modern-root",
+    date: "2026-08-12",
+    seriesId: "cheryl-modern-series",
+  });
+  const ledger = createLedger(domain, [root]);
+  const staffStore = createStaffStore("confirmed");
+  staffStore.assignments[0].entryId = root.id;
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+
+  const generated = await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: root,
+    staffStore,
+  });
+  assert.ok(generated.some((entry) => entry.selectedDate === "2026-08-26"));
+
+  for (const entry of generated) {
+    await ledger.deleteEntry(entry.id);
+    const assignmentIndex = staffStore.assignments.findIndex((record) => record.entryId === entry.id);
+    if (assignmentIndex >= 0) staffStore.assignments.splice(assignmentIndex, 1);
+  }
+
+  const repaired = await helpers.ensureAllRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    staffStore,
+    today: "2026-08-25",
+  });
+
+  assert.equal(repaired[0].selectedDate, "2026-08-26");
+  assert.ok(repaired.length >= 12);
+  assert.ok(
+    repaired.every(
+      (entry) =>
+        staffStore.assignments.find((record) => record.entryId === entry.id).status === "confirmed"
+    )
+  );
+});
+
+test("restores a missing team assignment from another visit in the same series", async () => {
+  const domain = createDomain();
+  const root = createEntry({
+    id: "cheryl-assignment-root",
+    date: "2026-08-12",
+    seriesId: "cheryl-assignment-series",
+  });
+  const ledger = createLedger(domain, [root]);
+  const staffStore = createStaffStore("confirmed");
+  staffStore.assignments[0].entryId = root.id;
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+
+  const generated = await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: root,
+    staffStore,
+  });
+  const nextVisit = generated.find((entry) => entry.selectedDate === "2026-08-26");
+  assert.ok(nextVisit);
+  const missingAssignmentIndex = staffStore.assignments.findIndex(
+    (record) => record.entryId === nextVisit.id
+  );
+  assert.ok(missingAssignmentIndex >= 0);
+  staffStore.assignments.splice(missingAssignmentIndex, 1);
+
+  await helpers.ensureAllRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    staffStore,
+    today: "2026-08-25",
+  });
+
+  const restoredAssignment = staffStore.assignments.find(
+    (record) => record.entryId === nextVisit.id
+  );
+  assert.ok(restoredAssignment);
+  assert.deepEqual(restoredAssignment.staffIds, ["cleaner-1"]);
+  assert.equal(restoredAssignment.status, "confirmed");
+});
+
 test("replaces future visits when the recurring frequency changes", async () => {
   const domain = createDomain();
   const root = createEntry({
