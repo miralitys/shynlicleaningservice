@@ -535,6 +535,45 @@ test("clears recurring frequency for deep cleaning orders", () => {
   assert.equal(buildRecurringOrderSubmission(entry), null);
 });
 
+test("keeps a recurring series active when one existing visit changes to deep", () => {
+  const { applyOrderEntryUpdates } = createMutationDomain();
+  const entry = {
+    id: "cheryl-deep-visit",
+    requestId: "cheryl-deep-visit",
+    customerName: "Cheryl Gilsdorf",
+    serviceType: "standard",
+    serviceName: "Standard",
+    selectedDate: "2026-08-26",
+    selectedTime: "12:30",
+    payloadForRetry: {
+      calculatorData: {
+        serviceType: "standard",
+        frequency: "biweekly",
+        selectedDate: "2026-08-26",
+        selectedTime: "12:30",
+      },
+      orderState: {
+        isCreated: true,
+        status: "scheduled",
+        frequency: "biweekly",
+        recurringSeriesId: "cheryl-biweekly-series",
+        recurringOccurrenceDate: "2026-08-26",
+        recurringOccurrenceIndex: 4,
+      },
+    },
+  };
+
+  applyOrderEntryUpdates(entry, {
+    serviceType: "deep",
+    serviceName: "Deep",
+    frequency: "",
+  });
+
+  assert.equal(entry.serviceType, "deep");
+  assert.equal(getEntryOrderState(entry).frequency, "biweekly");
+  assert.equal(getEntryOrderState(entry).recurringSeriesId, "cheryl-biweekly-series");
+});
+
 test("builds six months of biweekly visits from the original Cheryl schedule after one visit moves", () => {
   const { buildRecurringOrderSeriesSubmissions } = createMutationDomain();
   const entry = {
