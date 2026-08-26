@@ -111,6 +111,9 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(ordersBody, /create-manual-order/);
     assert.match(ordersBody, /id="admin-save-confirm-dialog"/);
     assert.match(ordersBody, /data-admin-save-confirm-accept="true"/);
+    assert.match(ordersBody, /data-admin-reminder-confirm-skip hidden/);
+    assert.match(ordersBody, /Send updated reminder/);
+    assert.match(ordersBody, /Would you like to send an updated reminder to the client\?/);
     assert.match(
       ordersBody,
       /id="admin-manual-order-create-dialog"[^>]*data-admin-dialog-dirty-confirm="true"/

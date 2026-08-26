@@ -5,6 +5,7 @@ const assert = require("node:assert/strict");
 
 const {
   buildClientVisitReminderSmsMessage,
+  buildUpdatedClientVisitReminderSmsMessage,
   buildQuoteConfirmationSmsMessage,
   buildScheduleLabel,
   createAutoNotificationService,
@@ -58,6 +59,21 @@ test("uses the in-home estimate name in client visit reminders", () => {
   assert.match(message, /Your free in-home estimate is in 24 hours\./);
   assert.match(message, /Service: Free in-home estimate\./);
   assert.doesNotMatch(message, /Your cleaning is/);
+});
+
+test("formats an updated appointment reminder with the new visit details", () => {
+  const message = buildUpdatedClientVisitReminderSmsMessage({
+    customerName: "Ramis",
+    serviceName: "Deep Cleaning",
+    selectedDate: "2026-07-21",
+    selectedTime: "13:30",
+    fullAddress: "18 South Main Street, Naperville, IL 60540",
+  });
+
+  assert.match(message, /has been updated/);
+  assert.match(message, /Service: Deep Cleaning/);
+  assert.match(message, /Time: 07\/21\/2026, 01:30 PM/);
+  assert.match(message, /Address: 18 South Main Street/);
 });
 
 function createLeadEntry(overrides = {}) {
@@ -834,7 +850,7 @@ test("does not resend client reminders already present in SMS history", async ()
   assert.equal(leadConnectorClient.calls.length, 0);
 });
 
-test("sends reminders again for a rescheduled visit with an old reminder history", async () => {
+test("does not resend an already-sent reminder after a visit is rescheduled", async () => {
   const entry = createOrderEntry({
     id: "order-rescheduled-reminder-1",
     selectedDate: "2026-04-21",
@@ -882,15 +898,117 @@ test("sends reminders again for a rescheduled visit with an old reminder history
     leadConnectorClient,
   });
 
-  assert.equal(sweep.sent, 1);
-  assert.equal(leadConnectorClient.calls.length, 1);
-  assert.match(leadConnectorClient.calls[0].message, /in 24 hours/);
+  assert.equal(sweep.sent, 0);
+  assert.equal(leadConnectorClient.calls.length, 0);
   const reminderState = getOrderNotificationState(entry).reminderSms;
   assert.equal(reminderState.signature, "2026-04-21|10:00");
   assert.ok(reminderState.sent24hAt);
+  assert.equal(entry.payloadForRetry.adminSms.history.length, 1);
+});
+
+test("sends one updated reminder only after an administrator approves it", async () => {
+  const previousEntry = createOrderEntry({
+    id: "order-updated-reminder-1",
+    selectedDate: "2026-04-20",
+    selectedTime: "10:00",
+    payloadForRetry: {
+      adminOrder: {
+        status: "scheduled",
+        notifications: {
+          reminderSms: {
+            signature: "2026-04-20|10:00",
+            sent48hAt: "2026-04-18T15:00:00.000Z",
+            sent24hAt: "2026-04-19T15:00:00.000Z",
+            sent1hAt: "",
+          },
+        },
+      },
+    },
+  });
+  const updatedEntry = createOrderEntry({
+    id: "order-updated-reminder-1",
+    selectedDate: "2026-04-21",
+    selectedTime: "13:30",
+  });
+  const ledger = createMutableLedger(updatedEntry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({ quoteOpsLedger: ledger });
+
+  const skipped = await service.handleUpdatedClientVisit({
+    previousEntry,
+    entry: updatedEntry,
+    sendUpdatedReminder: false,
+    leadConnectorClient,
+  });
+  assert.equal(skipped.sent, false);
+  assert.equal(skipped.reason, "not-approved");
+  assert.equal(leadConnectorClient.calls.length, 0);
+
+  const sent = await service.handleUpdatedClientVisit({
+    previousEntry,
+    entry: skipped.entry,
+    sendUpdatedReminder: true,
+    leadConnectorClient,
+  });
+  assert.equal(sent.sent, true);
+  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.match(leadConnectorClient.calls[0].message, /has been updated/);
+  assert.match(leadConnectorClient.calls[0].message, /04\/21\/2026, 01:30 PM/);
+  const reminderState = getOrderNotificationState(sent.entry).reminderSms;
+  assert.equal(reminderState.signature, "2026-04-21|13:30");
+  assert.equal(reminderState.sent48hAt, "2026-04-18T15:00:00.000Z");
+  assert.equal(reminderState.sent24hAt, "2026-04-19T15:00:00.000Z");
+  assert.ok(reminderState.lastUpdatedReminderSentAt);
+});
+
+test("recognizes a previously sent reminder from SMS history before an appointment update", async () => {
+  const previousEntry = createOrderEntry({
+    id: "order-history-only-reminder-1",
+    selectedDate: "2026-04-20",
+    selectedTime: "10:00",
+    payloadForRetry: {
+      adminOrder: {
+        status: "scheduled",
+        notifications: {},
+      },
+      adminSms: {
+        history: [
+          {
+            id: "sms-reminder-history-only",
+            sentAt: "2026-04-19T15:00:00.000Z",
+            message: "Your cleaning is in 24 hours.",
+            phone: "3125550199",
+            direction: "outbound",
+            source: "automatic",
+            targetType: "visit-reminder",
+            targetRef: "order-history-only-reminder-1:2026-04-20%7C10%3A00:sent24hAt",
+            status: "sent",
+          },
+        ],
+      },
+    },
+  });
+  const updatedEntry = createOrderEntry({
+    id: "order-history-only-reminder-1",
+    selectedDate: "2026-04-21",
+    selectedTime: "13:30",
+  });
+  const ledger = createMutableLedger(updatedEntry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({ quoteOpsLedger: ledger });
+
+  const result = await service.handleUpdatedClientVisit({
+    previousEntry,
+    entry: updatedEntry,
+    sendUpdatedReminder: false,
+    leadConnectorClient,
+  });
+
+  assert.equal(result.reason, "not-approved");
+  assert.equal(leadConnectorClient.calls.length, 0);
   assert.equal(
-    entry.payloadForRetry.adminSms.history[0].targetRef,
-    "order-rescheduled-reminder-1:2026-04-21%7C10%3A00:sent24hAt"
+    getOrderNotificationState(result.entry).reminderSms.sent24hAt,
+    "2026-04-19T15:00:00.000Z"
   );
 });
 
