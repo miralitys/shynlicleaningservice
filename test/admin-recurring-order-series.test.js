@@ -450,6 +450,47 @@ test("replaces future visits when the recurring frequency changes", async () => 
   assert.equal((await ledger.listEntries()).length, 7);
 });
 
+test("replaces future visits from the original date when a visit moves forward", async () => {
+  const domain = createDomain();
+  const root = createEntry({
+    id: "cheryl-moved-forward",
+    date: "2026-09-09",
+  });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+  await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: root,
+  });
+
+  const movedRoot = await ledger.updateOrderEntry(root.id, {
+    selectedDate: "2026-10-01",
+    selectedTime: "13:00",
+  });
+  await helpers.resetRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: movedRoot,
+    resetFromDate: "2026-09-09",
+  });
+  const remainingBeforeRegeneration = await ledger.listEntries();
+
+  assert.deepEqual(
+    remainingBeforeRegeneration.map((entry) => entry.id),
+    [root.id]
+  );
+  await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: await ledger.getEntry(root.id),
+  });
+  const regenerated = await ledger.listEntries();
+  assert.equal(regenerated[1].selectedDate, "2026-10-15");
+  assert.equal(regenerated[1].selectedTime, "13:00");
+});
+
 test("stops Marcus monthly series after an occurrence is changed to Not set", async () => {
   const domain = createDomain();
   const root = createEntry({

@@ -841,6 +841,9 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(focusedOrderBody, /data-admin-order-primary-save/);
     assert.match(focusedOrderBody, /data-admin-order-quote-form="admin-order-detail-dialog-[^"]+-quote-fields-edit-form"/);
     assert.match(focusedOrderBody, /update-order-with-quote-fields/);
+    assert.match(focusedOrderBody, /name="recurringEditScope"/);
+    assert.match(focusedOrderBody, /data-admin-recurring-edit-scope-mirror/);
+    assert.match(focusedOrderBody, /К этому и всем следующим/);
 
     const saveQuoteFieldsForm = new URLSearchParams();
     saveQuoteFieldsForm.set("action", "update-order-quote-fields");

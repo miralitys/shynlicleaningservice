@@ -6,6 +6,7 @@ const assert = require("node:assert/strict");
 const {
   getScheduleSyncedAssignmentStatus,
   shouldAutoScheduleAssignedNewOrder,
+  shouldResetRecurringFutureVisits,
 } = require("../lib/admin/handlers-orders-update");
 
 test("confirms assignments for scheduled orders", () => {
@@ -43,5 +44,29 @@ test("automatically schedules a new order once date, time, and team are assigned
       selectedTime: "09:00",
     }),
     false
+  );
+});
+
+test("resets future recurring visits only when the manager selects the future scope", () => {
+  assert.equal(
+    shouldResetRecurringFutureVisits({
+      editScope: "current",
+      scheduleChanged: true,
+    }),
+    false
+  );
+  assert.equal(
+    shouldResetRecurringFutureVisits({
+      editScope: "future",
+      serviceTypeChanged: true,
+    }),
+    true
+  );
+  assert.equal(
+    shouldResetRecurringFutureVisits({
+      editScope: "future",
+      serviceDurationChanged: true,
+    }),
+    true
   );
 });
