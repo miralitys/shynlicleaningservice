@@ -237,7 +237,7 @@ test("renders a timed unavailable interval in the cleaner calendar", () => {
   );
 
   assert.match(html, />08:00 – 13:00<\/span>/);
-  assert.match(html, /--admin-team-calendar-entry-top:0\.000%;--admin-team-calendar-entry-height:41\.667%/);
+  assert.match(html, /--admin-team-calendar-entry-top:0\.000px;--admin-team-calendar-entry-height:79\.167px/);
   assert.match(html, /<option value="time-range" selected>С … до …<\/option>/);
   assert.match(html, /name="availabilityStartTime"[\s\S]*?value="08:00"/);
   assert.match(html, /name="availabilityEndTime"[\s\S]*?value="13:00"/);
@@ -293,11 +293,54 @@ test("aligns matching appointment times across cleaner columns", () => {
     html.match(/<td[\s\S]*?data-admin-team-calendar-cleaner-name="Tolkun Muratbekkyzy"[\s\S]*?<\/td>/)?.[0] || "";
 
   const anastasiiaOrderTop = anastasiiaCell.match(/Mankawalpreet Wazir[\s\S]*?/) &&
-    anastasiiaCell.match(/style="[^"]*--admin-team-calendar-entry-top:([\d.]+)%[^"]*"[\s\S]*?Mankawalpreet Wazir/)?.[1];
-  const tolkunOrderTop = tolkunCell.match(/style="[^"]*--admin-team-calendar-entry-top:([\d.]+)%[^"]*"[\s\S]*?Mankawalpreet Wazir/)?.[1];
+    anastasiiaCell.match(/style="[^"]*--admin-team-calendar-entry-top:([\d.]+)px[^"]*"[\s\S]*?Mankawalpreet Wazir/)?.[1];
+  const tolkunOrderTop = tolkunCell.match(/style="[^"]*--admin-team-calendar-entry-top:([\d.]+)px[^"]*"[\s\S]*?Mankawalpreet Wazir/)?.[1];
   assert.ok(anastasiiaOrderTop);
   assert.equal(tolkunOrderTop, anastasiiaOrderTop);
-  assert.match(tolkunCell, /--admin-team-calendar-entry-top:8\.333%[\s\S]*?Не может выйти на работу/);
+  assert.match(tolkunCell, /--admin-team-calendar-entry-top:15\.833px[\s\S]*?Не может выйти на работу/);
+});
+
+test("keeps closely spaced short appointments from overlapping", () => {
+  const helpers = createCalendarHelpers();
+  const appointment = (id, customerName, scheduleTime) => ({
+    scheduleDate: "2026-08-27",
+    scheduleTime,
+    assignmentStatus: "planned",
+    serviceDurationMinutes: 30,
+    entry: {
+      id,
+      customerName,
+      serviceName: "Free in-home estimate",
+    },
+  });
+  const html = helpers.renderStaffTeamCalendarTable(
+    [
+      {
+        id: "tolkun",
+        name: "Tolkun Muratbekkyzy",
+        assignedOrders: [
+          appointment("estimate-1", "Rebecca Payette", "13:00"),
+          appointment("estimate-2", "Second Estimate", "13:30"),
+          appointment("estimate-3", "Lissa Mares", "14:30"),
+        ],
+        calendarAvailabilityBlocks: [],
+      },
+    ],
+    "2026-08-27",
+    { view: "day" }
+  );
+
+  const positions = Array.from(
+    html.matchAll(
+      /--admin-team-calendar-entry-top:([\d.]+)px;--admin-team-calendar-entry-height:([\d.]+)px/g
+    ),
+    (match) => ({ top: Number(match[1]), height: Number(match[2]) })
+  );
+
+  assert.equal(positions.length, 3);
+  assert.ok(positions[1].top >= positions[0].top + positions[0].height + 5.9);
+  assert.ok(positions[2].top >= positions[1].top + positions[1].height + 5.9);
+  assert.match(html, /--admin-team-calendar-timeline-height:253\.167px/);
 });
 
 test("renders an assigned order only under the assigned cleaner with that cleaner color", () => {
