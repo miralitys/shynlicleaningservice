@@ -242,6 +242,49 @@ test("does not send the policy explanation when an expired link is resent", asyn
   assert.match(fixture.sentMessages[0], /review and accept our service policies/i);
 });
 
+test("skips an automatic policy invite when client automatic messages are disabled", async () => {
+  const fixture = createPolicySmsTestFixture();
+  fixture.entry.payloadForRetry.adminClient = {
+    automaticNotificationsEnabled: false,
+  };
+
+  const result = await fixture.helpers.sendOrderPolicyAcceptanceInvite(
+    fixture.ledger,
+    fixture.entry.id,
+    fixture.entry,
+    {},
+    fixture.leadConnectorClient,
+    {
+      sendFollowUpSms: true,
+      respectClientAutomaticNotifications: true,
+    }
+  );
+
+  assert.equal(result.emailState, "notifications-disabled");
+  assert.equal(result.smsState, "skipped");
+  assert.equal(fixture.sentMessages.length, 0);
+  assert.equal(fixture.entry.payloadForRetry.adminOrder.policyAcceptance, undefined);
+});
+
+test("manual policy resend remains available for a client with automatic messages disabled", async () => {
+  const fixture = createPolicySmsTestFixture();
+  fixture.entry.payloadForRetry.adminClient = {
+    automaticNotificationsEnabled: false,
+  };
+
+  const result = await fixture.helpers.sendOrderPolicyAcceptanceInvite(
+    fixture.ledger,
+    fixture.entry.id,
+    fixture.entry,
+    {},
+    fixture.leadConnectorClient,
+    { sendFollowUpSms: false }
+  );
+
+  assert.equal(result.smsState, "sent");
+  assert.equal(fixture.sentMessages.length, 1);
+});
+
 test("records a failed policy explanation after all GHL retries are exhausted", async () => {
   const temporaryFailure = {
     ok: false,

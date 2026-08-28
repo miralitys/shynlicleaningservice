@@ -240,6 +240,7 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(createdOrderBody, /data-admin-manual-client-search/);
     assert.match(createdOrderBody, /data-admin-manual-client-suggestions/);
     assert.match(createdOrderBody, /name="selectedClientContactId"/);
+    assert.match(createdOrderBody, /name="selectedClientAutomaticNotificationsEnabled"/);
     assert.match(createdOrderBody, /name="selectedClientAddressPropertyType"/);
     const clientLookupDataMatch = createdOrderBody.match(
       /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
@@ -353,6 +354,7 @@ test("allows admins to add a manual order from the orders page", async () => {
         customerPhone: "3125557722",
         customerEmail: "manual.details@example.com",
         selectedClientContactId: "contact-manual-details-1",
+        selectedClientAutomaticNotificationsEnabled: "0",
         selectedClientAddress: "13800 S Autumn Wy, Plainfield, IL 60544, USA",
         selectedClientAddressPropertyType: "house",
         selectedClientAddressSquareFootage: "1500 sq ft",
@@ -387,6 +389,16 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(detailsOrderBody, /Санузлы[\s\S]*2/);
     assert.match(detailsOrderBody, /Размер дома[\s\S]*1500 sq ft/);
     assert.match(detailsOrderBody, /Питомцы[\s\S]*Собака/);
+    const detailsLookupDataMatch = detailsOrderBody.match(
+      /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
+    );
+    assert.ok(detailsLookupDataMatch);
+    const detailsLookupData = JSON.parse(detailsLookupDataMatch[1]);
+    const detailsLookupClient = detailsLookupData.find(
+      (client) => client.name === "Manual Details Customer"
+    );
+    assert.ok(detailsLookupClient);
+    assert.equal(detailsLookupClient.automaticNotificationsEnabled, false);
     const detailsDialogStart = detailsOrderBody.indexOf(`id="admin-order-detail-dialog-${detailsOrderId}"`);
     const detailsDialogEnd = detailsOrderBody.indexOf("</dialog>", detailsDialogStart);
     assert.ok(detailsDialogStart >= 0);

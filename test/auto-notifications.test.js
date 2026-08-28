@@ -315,6 +315,52 @@ test("sends new lead SMS alerts to active managers and admins", async () => {
   assert.equal((result.entry.payloadForRetry.adminSms.history || []).length, 3);
 });
 
+test("skips automatic customer confirmation for a muted client but still alerts managers", async () => {
+  const entry = createLeadEntry({
+    payloadForRetry: {
+      adminLead: {
+        managerId: "manager-1",
+        managerName: "Mila Rivers",
+        managerEmail: "mila@example.com",
+      },
+      adminClient: {
+        automaticNotificationsEnabled: false,
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const emailCalls = [];
+  const service = createAutoNotificationService({
+    accountInviteEmail: {
+      async getStatus() {
+        return { configured: true };
+      },
+      async sendQuoteRequestConfirmation(payload) {
+        emailCalls.push(payload);
+      },
+    },
+    listLeadManagers: async () => [
+      {
+        id: "manager-1",
+        name: "Mila Rivers",
+        email: "mila@example.com",
+        phone: "3125550199",
+      },
+    ],
+    quoteOpsLedger: ledger,
+  });
+
+  const result = await service.notifyQuoteSubmissionSuccess({ entry, leadConnectorClient });
+
+  assert.equal(result.customerEmailSent, false);
+  assert.equal(result.customerSmsSent, false);
+  assert.equal(result.managerSmsSent, true);
+  assert.equal(emailCalls.length, 0);
+  assert.equal(leadConnectorClient.calls.length, 1);
+  assert.match(leadConnectorClient.calls[0].message, /assigned to you/i);
+});
+
 test("falls back to contact SMS for internal lead alerts when direct send is blocked", async () => {
   const entry = createLeadEntry({
     customerPhone: "3125550101",
@@ -801,6 +847,31 @@ test("sends client reminder SMS at 48h, 24h and 1h without duplicates", async ()
   });
   assert.equal(thirdSweep.sent, 1);
   assert.equal(leadConnectorClient.calls.length, 3);
+});
+
+test("does not send scheduled reminders when automatic messages are disabled", async () => {
+  const entry = createOrderEntry({
+    id: "order-muted-reminder-1",
+    selectedDate: "2026-04-20",
+    selectedTime: "10:00",
+    payloadForRetry: {
+      orderState: { status: "scheduled" },
+      adminOrder: { status: "scheduled" },
+      adminClient: { automaticNotificationsEnabled: false },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({ quoteOpsLedger: ledger });
+  const schedule = localDateTimeToInstant("2026-04-20", "10:00");
+
+  const result = await service.runClientReminderSweep({
+    now: new Date(schedule.date.getTime() - 23 * 60 * 60 * 1000),
+    leadConnectorClient,
+  });
+
+  assert.equal(result.sent, 0);
+  assert.equal(leadConnectorClient.calls.length, 0);
 });
 
 test("does not resend client reminders already present in SMS history", async () => {
