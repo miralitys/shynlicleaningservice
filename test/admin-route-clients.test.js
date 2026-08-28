@@ -340,7 +340,7 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientBody, /data-admin-dialog-return-url="\/admin\/clients"/);
     assert.match(selectedClientDialog, /Сводка по активной заявке/i);
     assert.match(selectedClientDialog, /Сумма текущей заявки/i);
-    assert.match(selectedClientDialog, /Сумма по адресу/i);
+    assert.match(selectedClientDialog, /Сумма прошедших уборок/i);
     assert.match(selectedClientDialog, /Адреса клиента/i);
     assert.match(selectedClientDialog, /client-request-2/);
     assert.match(selectedClientDialog, /Команда: Olga Stone/);
