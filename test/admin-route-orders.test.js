@@ -261,7 +261,7 @@ test("allows admins to add a manual order from the orders page", async () => {
     const newLane = getOrderFunnelLaneSlice(createdOrderBody, "new", "policy");
     const scheduledLane = getOrderFunnelLaneSlice(createdOrderBody, "scheduled", "en-route");
     assert.match(newLane, /Manual Customer/);
-    assert.doesNotMatch(scheduledLane, /Manual Customer/);
+    assert.match(scheduledLane, /Manual Customer/);
 
     const createEstimateResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -653,6 +653,60 @@ test("saves and filters manual orders that repeat every three weeks", async () =
     assert.equal(filteredResponse.status, 200);
     assert.match(filteredBody, /Every Three Weeks Customer/);
     assert.match(filteredBody, /<option value="every3weeks" selected>Every 3 weeks<\/option>/);
+  } finally {
+    await stopServer(started.child);
+  }
+});
+
+test("saves a monthly deep-cleaning series created manually", async () => {
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const sessionCookieValue = await createAdminSession(started.baseUrl, config);
+    const createResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-manual-order",
+        returnTo: "/admin/orders",
+        customerName: "Monthly Deep Customer",
+        customerPhone: "9099195500",
+        customerEmail: "monthly.deep@example.com",
+        serviceType: "deep",
+        selectedDate: "2026-09-30",
+        selectedTime: "13:30",
+        serviceDurationHours: "3",
+        serviceDurationMinutes: "0",
+        frequency: "monthly",
+        totalPrice: "240.00",
+        fullAddress: "2710 Pontiac Lane, Aurora, IL 60502",
+      }),
+    });
+
+    assert.equal(createResponse.status, 303);
+    const redirectLocation = createResponse.headers.get("location") || "";
+    assert.match(redirectLocation, /notice=manual-order-created/);
+
+    const createdResponse = await fetch(`${started.baseUrl}${redirectLocation}`, {
+      headers: {
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+    });
+    const createdBody = await createdResponse.text();
+    assert.equal(createdResponse.status, 200);
+    assert.match(createdBody, /Monthly Deep Customer/);
+    assert.match(createdBody, /Deep/);
+    assert.match(createdBody, /Monthly/);
+    assert.match(createdBody, /09\/30\/2026/);
+    assert.match(createdBody, /10\/30\/2026/);
   } finally {
     await stopServer(started.child);
   }

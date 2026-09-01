@@ -477,9 +477,9 @@ test("persists editable client form fields into quote calculator data", () => {
   assert.equal(entry.fullAddress, "200 New Ave, Naperville, IL 60540");
   assert.equal(entry.selectedDate, "2026-05-02");
   assert.equal(entry.selectedTime, "14:30");
-  assert.equal(getEntryOrderState(entry).frequency, "");
+  assert.equal(getEntryOrderState(entry).frequency, "biweekly");
   assert.equal(payload.calculatorData.serviceType, "deep");
-  assert.equal(payload.calculatorData.frequency, undefined);
+  assert.equal(payload.calculatorData.frequency, "biweekly");
   assert.equal(payload.calculatorData.rooms, "4");
   assert.equal(payload.calculatorData.bathrooms, "3");
   assert.equal(payload.calculatorData.hasPets, "dog");
@@ -495,7 +495,7 @@ test("persists editable client form fields into quote calculator data", () => {
   assert.equal(payload.calculatorData.addressLine2, "Suite 8");
 });
 
-test("clears recurring frequency for deep cleaning orders", () => {
+test("keeps recurring frequency for deep cleaning orders", () => {
   const { applyOrderEntryUpdates, buildRecurringOrderSubmission } = createMutationDomain();
   const entry = {
     id: "deep-order-1",
@@ -530,9 +530,12 @@ test("clears recurring frequency for deep cleaning orders", () => {
     frequency: "biweekly",
   });
 
-  assert.equal(getEntryOrderState(entry).frequency, "");
-  assert.equal(getEntryPayload(entry).calculatorData.frequency, undefined);
-  assert.equal(buildRecurringOrderSubmission(entry), null);
+  assert.equal(getEntryOrderState(entry).frequency, "biweekly");
+  assert.equal(getEntryPayload(entry).calculatorData.frequency, "biweekly");
+  const recurringSubmission = buildRecurringOrderSubmission(entry);
+  assert.ok(recurringSubmission);
+  assert.equal(recurringSubmission.serviceType, "deep");
+  assert.equal(recurringSubmission.selectedDate, "2026-05-04");
 });
 
 test("keeps a recurring series active when one existing visit changes to deep", () => {
