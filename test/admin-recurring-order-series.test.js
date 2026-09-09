@@ -408,6 +408,47 @@ test("restores a missing team assignment from another visit in the same series",
   assert.equal(restoredAssignment.status, "confirmed");
 });
 
+test("restores a canceled calendar assignment for an active recurring visit", async () => {
+  const domain = createDomain();
+  const root = createEntry({
+    id: "kylie-root",
+    date: "2026-09-05",
+    frequency: "weekly",
+    seriesId: "kylie-series",
+  });
+  const ledger = createLedger(domain, [root]);
+  const staffStore = createStaffStore("confirmed");
+  staffStore.assignments[0].entryId = root.id;
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+
+  const generated = await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: root,
+    staffStore,
+  });
+  const september12 = generated.find((entry) => entry.selectedDate === "2026-09-12");
+  const september19 = generated.find((entry) => entry.selectedDate === "2026-09-19");
+  assert.ok(september12);
+  assert.ok(september19);
+
+  await staffStore.setAssignment(september12.id, { status: "canceled" });
+  await helpers.ensureAllRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    staffStore,
+    today: "2026-09-09",
+  });
+
+  const restoredAssignment = staffStore.assignments.find(
+    (record) => record.entryId === september12.id
+  );
+  assert.deepEqual(restoredAssignment.staffIds, ["cleaner-1"]);
+  assert.equal(restoredAssignment.status, "confirmed");
+});
+
 test("replaces future visits when the recurring frequency changes", async () => {
   const domain = createDomain();
   const root = createEntry({
