@@ -617,6 +617,11 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.doesNotMatch(tasksBody, /<select class="admin-input" name="entryId"/);
     assert.match(tasksBody, /data-quote-task-title-preset="Позвонить клиенту"/);
     assert.match(tasksBody, /data-quote-task-due-preset="three-hours"/);
+    assert.match(tasksBody, /id="admin-quote-task-due-at"/);
+    assert.doesNotMatch(
+      tasksBody,
+      /<label class="admin-label admin-quote-task-due-field">[\s\S]*?data-quote-task-due-preset=/
+    );
     assert.match(tasksBody, /После выбора клиента подставится ответственный менеджер его заявки/);
     assert.match(tasksBody, /data-quote-task-client-result="true"/);
     assert.match(tasksBody, /data-client-address="310 Funnel Road, Naperville, IL 60540"/);
