@@ -37,6 +37,34 @@ function createLeadDomain() {
   });
 }
 
+function createOrderAwareLeadDomain() {
+  return createAdminLeadDomain({
+    applyOrderEntryUpdates() {},
+    getEntryAdminLeadData(entry) {
+      return (entry.payloadForRetry && entry.payloadForRetry.adminLead) || {};
+    },
+    getEntryAdminSmsData() {
+      return {};
+    },
+    getEntryPayload(entry) {
+      return entry.payloadForRetry || {};
+    },
+    getEntrySmsHistory() {
+      return [];
+    },
+    getRequestUrl() {
+      return new URL("https://example.com/admin/quote-ops");
+    },
+    isOrderCreatedEntry(entry) {
+      return Boolean(entry && entry.payloadForRetry && entry.payloadForRetry.adminOrder);
+    },
+    normalizeAdminSmsHistoryEntries() {
+      return [];
+    },
+    normalizeString,
+  });
+}
+
 test("keeps the generated default task id stable", () => {
   const domain = createLeadDomain();
   const entry = {
@@ -50,6 +78,17 @@ test("keeps the generated default task id stable", () => {
 
   assert.equal(firstTask.id, "default-lead-123");
   assert.equal(secondTask.id, firstTask.id);
+});
+
+test("does not generate a default lead task for an order", () => {
+  const domain = createOrderAwareLeadDomain();
+  const entry = {
+    id: "legacy-order-123",
+    createdAt: "2026-06-01T15:00:00.000Z",
+    payloadForRetry: { adminOrder: { status: "scheduled" } },
+  };
+
+  assert.deepEqual(domain.getEntryLeadTasks(entry), []);
 });
 
 test("deletes a generated default task permanently on the first attempt", () => {
