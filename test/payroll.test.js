@@ -67,3 +67,43 @@ test("keeps the full percent when the cleaner is assigned solo", () => {
   assert.equal(snapshot.items[0].teamSize, 1);
   assert.equal(snapshot.items[0].amountCents, 12000);
 });
+
+test("uses a per-order fixed override for any assigned cleaner", () => {
+  const snapshot = buildOrderPayrollSnapshot({
+    entry: {
+      id: "entry-fixed-override",
+      totalPrice: "300",
+      payloadForRetry: {
+        adminOrder: {
+          payrollOverrides: {
+            "staff-z": "125.50",
+          },
+        },
+      },
+    },
+    assignment: {
+      entryId: "entry-fixed-override",
+      staffIds: ["staff-z", "staff-a"],
+    },
+    staffRecords: [
+      {
+        id: "staff-z",
+        name: "Zilola",
+        compensationType: "percent",
+        compensationValue: "55",
+      },
+      {
+        id: "staff-a",
+        name: "Anna",
+        compensationType: "percent",
+        compensationValue: "50",
+      },
+    ],
+  });
+
+  assert.equal(snapshot.items[0].compensationType, "fixed");
+  assert.equal(snapshot.items[0].compensationValue, "125.50");
+  assert.equal(snapshot.items[0].amountCents, 12550);
+  assert.equal(snapshot.items[1].compensationType, "percent");
+  assert.equal(snapshot.items[1].amountCents, 7500);
+});
