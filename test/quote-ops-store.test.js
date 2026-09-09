@@ -137,6 +137,13 @@ test("hides admin shadow rows from quote ops listings", () => {
         customerName: "Hidden mail row",
         serviceType: "",
       },
+      {
+        id: "entry-6",
+        kind: "admin_standalone_task",
+        status: "success",
+        customerName: "Без клиента",
+        serviceType: "",
+      },
     ],
     { limit: 10 },
     normalizeString
@@ -146,4 +153,27 @@ test("hides admin shadow rows from quote ops listings", () => {
     entries.map((entry) => entry.id),
     ["entry-1"]
   );
+});
+
+test("includes standalone task rows only when explicitly requested", () => {
+  const entries = filterQuoteOpsEntries(
+    [
+      {
+        id: "entry-1",
+        kind: "quote_submission",
+        status: "success",
+        customerName: "Visible order",
+      },
+      {
+        id: "entry-2",
+        kind: "admin_standalone_task",
+        status: "success",
+        customerName: "Без клиента",
+      },
+    ],
+    { limit: 10, includeHidden: true },
+    normalizeString
+  );
+
+  assert.deepEqual(entries.map((entry) => entry.id), ["entry-1", "entry-2"]);
 });

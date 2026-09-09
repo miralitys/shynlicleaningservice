@@ -610,6 +610,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /Zoe Admin — админ/);
     assert.match(tasksBody, /name="action" value="create-lead-task"/);
     assert.match(tasksBody, /data-quote-task-client-search="true"/);
+    assert.match(tasksBody, /data-quote-task-clientless-result="true"/);
+    assert.match(tasksBody, /Обычный внутренний таск без привязки к заявке/);
     assert.match(tasksBody, /placeholder="Имя, телефон, email или адрес"/);
     assert.match(tasksBody, /type="hidden" name="entryId" value="" data-quote-task-entry-id="true"/);
     assert.doesNotMatch(tasksBody, /<select class="admin-input" name="entryId"/);
@@ -670,6 +672,39 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(manualTasksBody, /Zoe Admin/);
     assert.match(manualTasksBody, /Закрыть ручной таск/);
     assert.match(manualTasksBody, /Отметить выполнено/);
+
+    const createStandaloneTaskResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${sessionCookieValue}`,
+      },
+      body: new URLSearchParams({
+        action: "create-lead-task",
+        entryId: "standalone",
+        taskTitle: "Заказать расходные материалы",
+        taskDueAt: "2030-05-02T12:00",
+        assigneeId: adminUserId,
+        returnTo: "/admin/quote-ops?section=tasks",
+      }),
+    });
+    assert.equal(createStandaloneTaskResponse.status, 303);
+    assert.match(createStandaloneTaskResponse.headers.get("location") || "", /notice=task-created/);
+
+    const standaloneTasksResponse = await fetch(
+      `${started.baseUrl}/admin/quote-ops?section=tasks&q=${encodeURIComponent("Заказать расходные материалы")}`,
+      {
+        headers: {
+          cookie: `shynli_admin_session=${sessionCookieValue}`,
+        },
+      }
+    );
+    const standaloneTasksBody = await standaloneTasksResponse.text();
+    assert.equal(standaloneTasksResponse.status, 200);
+    assert.match(standaloneTasksBody, /Заказать расходные материалы/);
+    assert.match(standaloneTasksBody, /Внутренний таск/);
+    assert.doesNotMatch(standaloneTasksBody, />Открыть заявку<\/a>/);
 
     const confirmResponse = await fetch(`${started.baseUrl}/admin/quote-ops`, {
       method: "POST",
