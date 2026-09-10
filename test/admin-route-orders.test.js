@@ -907,8 +907,8 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(focusedOrderBody, /name="quoteServices"/);
     assert.match(focusedOrderBody, /name="quoteFullAddress"/);
     assert.match(focusedOrderBody, /name="quoteAdditionalDetails"/);
-    assert.match(focusedOrderBody, /name="commentEditScope"/);
-    assert.match(focusedOrderBody, /Для этой и всех следующих уборок/);
+    assert.match(focusedOrderBody, /data-admin-recurring-comment-confirm="true"/);
+    assert.match(focusedOrderBody, /К каким уборкам применить комментарий/);
     assert.match(focusedOrderBody, /data-admin-order-primary-save/);
     assert.match(focusedOrderBody, /data-admin-order-quote-form="admin-order-detail-dialog-[^"]+-quote-fields-edit-form"/);
     assert.match(focusedOrderBody, /update-order-with-quote-fields/);
