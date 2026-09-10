@@ -348,6 +348,47 @@ test("copies client property details but not prior comments into recurring order
   });
 });
 
+test("carries a series comment into newly generated recurring orders", () => {
+  const { buildRecurringOrderSubmission } = createMutationDomain();
+  const entry = {
+    id: "order-recurring-series-comment-1",
+    requestId: "recurring-series-comment-1",
+    customerName: "Recurring Comment Customer",
+    serviceType: "standard",
+    serviceName: "Standard",
+    selectedDate: "2026-09-19",
+    selectedTime: "09:00",
+    totalPrice: 240,
+    payloadForRetry: {
+      calculatorData: {
+        selectedDate: "2026-09-19",
+        selectedTime: "09:00",
+        frequency: "every3weeks",
+        additionalDetails: "Keep this instruction for every future visit.",
+      },
+      adminOrder: {
+        isCreated: true,
+        status: "scheduled",
+        frequency: "every3weeks",
+        selectedDate: "2026-09-19",
+        selectedTime: "09:00",
+        recurringAdditionalDetails: "Keep this instruction for every future visit.",
+      },
+    },
+  };
+
+  const recurringSubmission = buildRecurringOrderSubmission(entry);
+  assert.ok(recurringSubmission);
+  assert.equal(
+    recurringSubmission.payloadForRetry.calculatorData.additionalDetails,
+    "Keep this instruction for every future visit."
+  );
+  assert.equal(
+    recurringSubmission.payloadForRetry.adminOrder.recurringAdditionalDetails,
+    "Keep this instruction for every future visit."
+  );
+});
+
 test("repairs legacy bathroom counts stored as square footage in recurring orders", () => {
   const { buildRecurringOrderSubmission } = createMutationDomain();
   const entry = {
