@@ -286,6 +286,63 @@ test("updates the selected recurring price and future visits without changing hi
   assert.ok(updatedFuture.every((entry) => entry.totalPrice === 280));
 });
 
+test("joins a manual visit to the client's recurring series when a series comment is saved", async () => {
+  const domain = createDomain();
+  const root = createEntry({
+    id: "ina-root",
+    date: "2026-08-29",
+    status: "completed",
+    frequency: "every3weeks",
+    seriesId: "ina-series",
+    customerName: "Ina Salgado",
+    totalPrice: 240,
+  });
+  root.customerPhone = "2244096681";
+  root.fullAddress = "1336 Foxglove Dr, Batavia, IL 60510, USA";
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+  const generated = await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: root,
+  });
+  const october10 = generated.find((entry) => entry.selectedDate === "2026-10-10");
+  assert.ok(october10);
+
+  const manualVisit = createEntry({
+    id: "ina-manual-september-19",
+    date: "2026-09-19",
+    frequency: "",
+    seriesId: "",
+    customerName: "Ina Salgado",
+    totalPrice: 240,
+  });
+  manualVisit.customerPhone = "2244096681";
+  manualVisit.fullAddress = root.fullAddress;
+  delete manualVisit.payloadForRetry.adminOrder.recurringSeriesId;
+  delete manualVisit.payloadForRetry.orderState.recurringSeriesId;
+  ledger.entries?.push?.(manualVisit);
+  // The in-memory ledger intentionally exposes entries only through listEntries.
+  (await ledger.listEntries()).push(manualVisit);
+
+  const updated = await helpers.updateRecurringOrderSeriesFutureComment({
+    quoteOpsLedger: ledger,
+    sourceEntry: manualVisit,
+    additionalDetails: "Use the side entrance for every visit.",
+  });
+
+  assert.ok(updated.some((entry) => entry.id === manualVisit.id));
+  assert.equal(getEntryOrderState(manualVisit).frequency, "every3weeks");
+  assert.equal(getEntryOrderState(manualVisit).recurringSeriesId, "ina-series");
+  assert.equal(
+    getEntryPayload(october10).calculatorData.additionalDetails,
+    "Use the side entrance for every visit."
+  );
+});
+
 test("backfills an existing recurring series once when the calendar opens", async () => {
   const domain = createDomain();
   const root = createEntry({
