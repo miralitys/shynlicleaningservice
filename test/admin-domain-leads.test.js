@@ -107,6 +107,28 @@ test("does not generate a task for a legacy new lead without saved tasks", () =>
   assert.deepEqual(domain.getEntryLeadTasks(entry), []);
 });
 
+test("hides a legacy generated task that was saved to the entry", () => {
+  const domain = createLeadDomain();
+  const entry = {
+    id: "legacy-lead-456",
+    createdAt: "2026-04-12T21:59:00.000Z",
+    payloadForRetry: {
+      adminLead: {
+        status: "new",
+        tasks: [
+          {
+            id: "default-legacy-lead-456",
+            kind: "contact-client",
+            status: "open",
+          },
+        ],
+      },
+    },
+  };
+
+  assert.deepEqual(domain.getEntryLeadTasks(entry), []);
+});
+
 test("deletes a saved task permanently on the first attempt", () => {
   const domain = createLeadDomain();
   const entry = {
