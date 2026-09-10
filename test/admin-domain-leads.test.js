@@ -65,18 +65,23 @@ function createOrderAwareLeadDomain() {
   });
 }
 
-test("keeps the generated default task id stable", () => {
+test("keeps a saved task id stable", () => {
   const domain = createLeadDomain();
   const entry = {
     id: "lead-123",
     createdAt: "2026-06-01T15:00:00.000Z",
-    payloadForRetry: { adminLead: { status: "new" } },
+    payloadForRetry: {
+      adminLead: {
+        status: "new",
+        tasks: [{ id: "saved-lead-task", kind: "contact-client", status: "open" }],
+      },
+    },
   };
 
   const firstTask = domain.getEntryLeadTasks(entry)[0];
   const secondTask = domain.getEntryLeadTasks(entry)[0];
 
-  assert.equal(firstTask.id, "default-lead-123");
+  assert.equal(firstTask.id, "saved-lead-task");
   assert.equal(secondTask.id, firstTask.id);
 });
 
@@ -91,12 +96,28 @@ test("does not generate a default lead task for an order", () => {
   assert.deepEqual(domain.getEntryLeadTasks(entry), []);
 });
 
-test("deletes a generated default task permanently on the first attempt", () => {
+test("does not generate a task for a legacy new lead without saved tasks", () => {
+  const domain = createLeadDomain();
+  const entry = {
+    id: "legacy-lead-123",
+    createdAt: "2026-04-12T21:59:00.000Z",
+    payloadForRetry: {},
+  };
+
+  assert.deepEqual(domain.getEntryLeadTasks(entry), []);
+});
+
+test("deletes a saved task permanently on the first attempt", () => {
   const domain = createLeadDomain();
   const entry = {
     id: "lead-456",
     createdAt: "2026-06-01T15:00:00.000Z",
-    payloadForRetry: { adminLead: { status: "new" } },
+    payloadForRetry: {
+      adminLead: {
+        status: "new",
+        tasks: [{ id: "saved-task", kind: "contact-client", status: "open" }],
+      },
+    },
   };
   const taskId = domain.getEntryLeadTasks(entry)[0].id;
 
