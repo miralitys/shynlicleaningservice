@@ -991,7 +991,6 @@ test("allows admins to edit client form fields inside an order", async () => {
     saveOrderAndQuoteFieldsForm.set("selectedTime", "09:00");
     saveOrderAndQuoteFieldsForm.set("serviceDurationHours", "2");
     saveOrderAndQuoteFieldsForm.set("serviceDurationMinutes", "30");
-    saveOrderAndQuoteFieldsForm.set("frequency", "monthly");
     for (const [name, value] of saveQuoteFieldsForm.entries()) {
       if (["action", "entryId", "returnTo", "quoteHasPets"].includes(name)) continue;
       saveOrderAndQuoteFieldsForm.append(name, value);
