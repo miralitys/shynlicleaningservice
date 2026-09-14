@@ -548,6 +548,48 @@ test("replaces future visits when the recurring frequency changes", async () => 
   assert.equal((await ledger.listEntries()).length, 7);
 });
 
+test("adopts existing generated visits when recurrence is assigned later", async () => {
+  const domain = createDomain();
+  const root = createEntry({
+    id: "yaw-root",
+    date: "2026-09-30",
+    frequency: "monthly",
+    seriesId: "",
+    customerName: "Yaw Enin",
+  });
+  const october = createEntry({
+    id: "yaw-october",
+    date: "2026-10-30",
+    frequency: "",
+    seriesId: "",
+    customerName: "Yaw Enin",
+  });
+  october.requestId = `${root.requestId}-next-20261030`;
+  const ledger = createLedger(domain, [root, october]);
+  const originalRecordSubmission = ledger.recordSubmission;
+  ledger.recordSubmission = async (submission) => {
+    if (submission.requestId === october.requestId) return october;
+    return originalRecordSubmission(submission);
+  };
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+
+  await helpers.ensureRecurringOrderSeries({
+    quoteOpsLedger: ledger,
+    sourceEntry: root,
+  });
+
+  assert.equal(getEntryOrderState(october).frequency, "monthly");
+  assert.equal(
+    getEntryOrderState(october).recurringSeriesId,
+    getEntryOrderState(root).recurringSeriesId
+  );
+  assert.equal(getEntryOrderState(october).recurringOccurrenceDate, "2026-10-30");
+});
+
 test("replaces future visits from the original date when a visit moves forward", async () => {
   const domain = createDomain();
   const root = createEntry({
