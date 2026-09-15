@@ -1237,6 +1237,30 @@ test("serves ads v2 no-calculator variants as indexable routes", async () => {
   assert.match(pricingBody, /House Cleaning Prices/);
 });
 
+test("serves cleaners-near-me with LocalBusiness and Service schema", async () => {
+  const response = await fetch(`${BASE_URL}/cleaners-near-me`);
+  const body = await response.text();
+  assert.equal(response.status, 200);
+
+  const schemaMatch = body.match(
+    /<script type="application\/ld\+json" id="schema-cleaners-near-me">([\s\S]*?)<\/script>/
+  );
+  assert.ok(schemaMatch, "cleaners-near-me schema should be present");
+
+  const schema = JSON.parse(schemaMatch[1]);
+  const graph = schema["@graph"];
+  const schemaText = JSON.stringify(schema);
+
+  assert.deepEqual(
+    graph.map((node) => node["@type"]),
+    ["LocalBusiness", "Service"]
+  );
+  assert.equal(graph[1].provider["@id"], "https://shynlicleaningservice.com/#localbusiness");
+  assert.equal(graph[1].hasOfferCatalog.itemListElement.length, 3);
+  assert.doesNotMatch(schemaText, /aggregateRating/);
+  assert.doesNotMatch(schemaText, /HouseCleaningService/);
+});
+
 test("keeps v2 pages inside the v2 link environment", async () => {
   const routes = [
     "/ads-v2",
