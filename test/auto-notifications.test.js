@@ -167,6 +167,12 @@ function createMutableLedger(entry) {
         payload.orderState = JSON.parse(JSON.stringify(orderState));
         payload.adminOrder = JSON.parse(JSON.stringify(orderState));
       }
+      if (Object.prototype.hasOwnProperty.call(updates, "orderStatus")) {
+        const orderState = cloneOrderState(currentEntry);
+        orderState.status = updates.orderStatus;
+        payload.orderState = JSON.parse(JSON.stringify(orderState));
+        payload.adminOrder = JSON.parse(JSON.stringify(orderState));
+      }
       currentEntry.payloadForRetry = payload;
       store.set(entryId, currentEntry);
       return currentEntry;
@@ -1244,7 +1250,38 @@ test("scans reminders by upcoming appointment date when the ledger supports it",
 
   assert.deepEqual(scannedRanges, [{
     startDate: "2026-09-17",
-    endDate: "2026-09-20",
+    endDate: "2026-10-17",
     limit: 1000,
   }]);
+});
+
+test("repairs a fully assigned signed order that is still marked new", async () => {
+  const entry = createOrderEntry({
+    id: "najiyyah-signed-new",
+    selectedDate: "2026-09-19",
+    selectedTime: "09:00",
+    payloadForRetry: {
+      orderState: {
+        status: "new",
+        assignedStaff: "Zilola Furkatovna",
+        policyAcceptance: { policyAccepted: true, status: "accepted" },
+      },
+      adminOrder: {
+        status: "new",
+        assignedStaff: "Zilola Furkatovna",
+        policyAcceptance: { policyAccepted: true, status: "accepted" },
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  ledger.listReminderEntries = async () => [entry];
+  const service = createAutoNotificationService({ quoteOpsLedger: ledger });
+  const leadConnectorClient = createLeadConnectorStub();
+
+  await service.runClientReminderSweep({
+    now: new Date("2026-09-17T18:00:00.000Z"),
+    leadConnectorClient,
+  });
+
+  assert.equal(entry.payloadForRetry.adminOrder.status, "scheduled");
 });
