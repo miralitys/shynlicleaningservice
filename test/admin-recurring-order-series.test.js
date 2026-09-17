@@ -286,6 +286,76 @@ test("updates the selected recurring price and future visits without changing hi
   assert.ok(updatedFuture.every((entry) => entry.totalPrice === 280));
 });
 
+test("updates staff assignments for all future recurring visits without changing history", async () => {
+  const domain = createDomain();
+  const completed = createEntry({
+    id: "mona-completed",
+    date: "2026-09-07",
+    status: "completed",
+    seriesId: "mona-series",
+    customerName: "Mona",
+  });
+  const current = createEntry({
+    id: "mona-current",
+    date: "2026-09-21",
+    sourceEntryId: "mona-completed",
+    seriesId: "mona-series",
+    customerName: "Mona",
+  });
+  const future = createEntry({
+    id: "mona-future",
+    date: "2026-10-05",
+    sourceEntryId: "mona-current",
+    seriesId: "mona-series",
+    customerName: "Mona",
+  });
+  const ledger = createLedger(domain, [completed, current, future]);
+  const assignments = [completed, current, future].map((entry) => ({
+    entryId: entry.id,
+    staffIds: ["anastasiia", "tolkun"],
+    scheduleDate: "",
+    scheduleTime: "",
+    status: entry.id === "mona-completed" ? "completed" : "confirmed",
+    notes: "",
+  }));
+  const staffStore = {
+    async getSnapshot() {
+      return { assignments };
+    },
+    async setAssignment(entryId, input) {
+      const assignment = assignments.find((record) => record.entryId === entryId);
+      Object.assign(assignment, input);
+      return assignment;
+    },
+  };
+  const helpers = createAdminOrdersRecurringHelpers({
+    ...domain,
+    getEntryOrderState,
+    normalizeString,
+  });
+
+  await helpers.updateRecurringOrderSeriesFutureAssignment({
+    quoteOpsLedger: ledger,
+    sourceEntry: current,
+    staffStore,
+    assignedStaff: "Zilola Furkatovna",
+    staffIds: ["zilola"],
+  });
+
+  assert.deepEqual(assignments.find((record) => record.entryId === completed.id).staffIds, [
+    "anastasiia",
+    "tolkun",
+  ]);
+  assert.deepEqual(assignments.find((record) => record.entryId === current.id).staffIds, [
+    "anastasiia",
+    "tolkun",
+  ]);
+  assert.deepEqual(assignments.find((record) => record.entryId === future.id).staffIds, ["zilola"]);
+  assert.equal(getEntryOrderState(completed).assignedStaff || "", "");
+  assert.equal(getEntryOrderState(current).assignedStaff || "", "");
+  assert.equal(getEntryOrderState(future).assignedStaff, "Zilola Furkatovna");
+});
+
 test("joins a manual visit to the client's recurring series when a series comment is saved", async () => {
   const domain = createDomain();
   const root = createEntry({
