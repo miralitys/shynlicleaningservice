@@ -64,3 +64,32 @@ test("keeps bearer auth for legacy service_role JWT keys", async () => {
   assert.equal(calls[0].options.headers.apikey, "legacy.jwt.token");
   assert.equal(calls[0].options.headers.Authorization, "Bearer legacy.jwt.token");
 });
+
+test("loads reminder candidates by appointment date instead of creation date", async () => {
+  const calls = [];
+  const client = createSupabaseQuoteOpsClient({
+    env: {
+      SUPABASE_URL: "https://example.supabase.co",
+      SUPABASE_SERVICE_ROLE_KEY: "sb_secret_example123",
+    },
+    fetch: async (url, options = {}) => {
+      calls.push({ url, options });
+      return {
+        ok: true,
+        status: 200,
+        async text() {
+          return "[]";
+        },
+      };
+    },
+  });
+
+  await client.fetchEntriesBySelectedDateRange("2026-09-17", "2026-09-20", 1000);
+
+  const requestUrl = new URL(calls[0].url);
+  assert.deepEqual(requestUrl.searchParams.getAll("selected_date"), [
+    "gte.2026-09-17",
+    "lte.2026-09-20",
+  ]);
+  assert.equal(requestUrl.searchParams.get("order"), "selected_date.asc,selected_time.asc");
+});

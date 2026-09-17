@@ -1219,3 +1219,32 @@ test("uses the configured reminder scan limit during reminder sweeps", async () 
   assert.equal(result.inspected, 0);
   assert.equal(result.sent, 0);
 });
+
+test("scans reminders by upcoming appointment date when the ledger supports it", async () => {
+  const scannedRanges = [];
+  const ledger = {
+    async listEntries() {
+      throw new Error("The creation-date list should not be used for reminder sweeps.");
+    },
+    async listReminderEntries(filters = {}) {
+      scannedRanges.push(filters);
+      return [];
+    },
+  };
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({
+    quoteOpsLedger: ledger,
+    reminderScanLimit: 1000,
+  });
+
+  await service.runClientReminderSweep({
+    now: new Date("2026-09-17T19:46:00.000Z"),
+    leadConnectorClient,
+  });
+
+  assert.deepEqual(scannedRanges, [{
+    startDate: "2026-09-17",
+    endDate: "2026-09-20",
+    limit: 1000,
+  }]);
+});
