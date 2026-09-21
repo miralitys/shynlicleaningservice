@@ -836,6 +836,9 @@ test("renders cleaner calendar cards with the scheduled time range", () => {
 
   assert.match(html, /Calendar Range Client/);
   assert.match(html, /09:00 - 12:30/);
+  assert.match(html, /Первая половина \(9:00–13:00\)/);
+  assert.match(html, /Вторая половина \(13:00–18:00\)/);
+  assert.match(html, /Своё время/);
 });
 
 test("keeps the mobile month calendar list collapsed until a day is selected", () => {

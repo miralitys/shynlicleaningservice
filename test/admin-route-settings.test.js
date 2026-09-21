@@ -467,7 +467,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountCalendarBody, /name="action" value="save-own-unavailable-day"/i);
     assert.match(accountCalendarBody, /name="availabilityMode"/i);
     assert.match(accountCalendarBody, />Весь день</i);
-    assert.match(accountCalendarBody, />С … до …</i);
+    assert.match(accountCalendarBody, />Первая половина \(9:00–13:00\)</i);
+    assert.match(accountCalendarBody, />Вторая половина \(13:00–18:00\)</i);
+    assert.match(accountCalendarBody, />Своё время</i);
 
     const cancelCleanerAssignmentResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -530,9 +532,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
         action: "save-own-unavailable-day",
         staffId: "another-staff-record-must-be-ignored",
         availabilityDate: "2026-03-27",
-        availabilityMode: "time-range",
+        availabilityMode: "afternoon",
         availabilityStartTime: "08:30",
-        availabilityEndTime: "13:00",
+        availabilityEndTime: "09:00",
         calendarView: "month",
         calendarShowDay: "1",
       }),
@@ -553,8 +555,8 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks.length, 1);
     assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].date, "2026-03-27");
     assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].allDay, false);
-    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].startTime, "08:30");
-    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].endTime, "13:00");
+    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].startTime, "13:00");
+    assert.equal(ownStaffAfterAvailabilitySave.availabilityBlocks[0].endTime, "18:00");
 
     const savedOwnAvailabilityPageResponse = await fetch(
       `${started.baseUrl}${saveOwnAvailabilityLocation}`,
@@ -567,9 +569,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     const savedOwnAvailabilityPageBody = await savedOwnAvailabilityPageResponse.text();
     assert.equal(savedOwnAvailabilityPageResponse.status, 200);
     assert.match(savedOwnAvailabilityPageBody, /Занятость сохранена/i);
-    assert.match(savedOwnAvailabilityPageBody, /Занят с 08:30 до 13:00/i);
+    assert.match(savedOwnAvailabilityPageBody, /Занят с 13:00 до 18:00/i);
     assert.match(savedOwnAvailabilityPageBody, /data-account-availability-checkbox="true" checked/i);
-    assert.match(savedOwnAvailabilityPageBody, /option value="time-range" selected/i);
+    assert.match(savedOwnAvailabilityPageBody, /option value="afternoon" selected/i);
     assert.match(savedOwnAvailabilityPageBody, /account-mobile-calendar-day[^"\n]*is-busy/i);
 
     const clearOwnAvailabilityResponse = await fetch(`${started.baseUrl}/account`, {
