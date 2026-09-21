@@ -252,6 +252,52 @@ test("renders active cleaner orders first and moves completed orders into histor
   assert.match(completedCard, /Completed Client/);
 });
 
+test("limits completed order history until the cleaner asks to expand it", () => {
+  const renderers = createRenderers();
+  const context = {
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+    },
+    staffSummary: null,
+    assignedOrders: Array.from({ length: 25 }, (_, index) =>
+      buildOrder({
+        id: `completed-history-${index}`,
+        customerName: `Completed History Client ${index}`,
+        status: "completed",
+        scheduleDate: `2099-01-${String(index + 1).padStart(2, "0")}`,
+        updatedAt: `2099-01-${String(index + 1).padStart(2, "0")}T12:00:00.000Z`,
+        confirmed: true,
+      })
+    ),
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  };
+
+  const compactHtml = renderers.renderDashboardPage(context);
+  const expandedHtml = renderers.renderDashboardPage(context, { showAllHistory: true });
+  const focusedHtml = renderers.renderDashboardPage(context, {
+    focusedOrderId: "completed-history-0",
+  });
+
+  assert.match(compactHtml, /Показать всю историю/);
+  assert.doesNotMatch(compactHtml, /Completed History Client 0/);
+  assert.match(expandedHtml, /Completed History Client 0/);
+  assert.match(expandedHtml, /Свернуть историю/);
+  assert.match(focusedHtml, /Completed History Client 0/);
+});
+
 test("prioritizes the cleaner order opened from an SMS link", () => {
   const renderers = createRenderers();
   const html = renderers.renderDashboardPage(
