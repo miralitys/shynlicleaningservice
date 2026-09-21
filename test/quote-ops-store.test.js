@@ -99,6 +99,42 @@ test("tracks diagnostics when Supabase write fails", async () => {
   assert.ok(diagnostics.lastWriteAt);
 });
 
+test("loads only requested cleaner entries from Supabase", async () => {
+  const requestedIds = [];
+  const store = createQuoteOpsStore({
+    QUOTE_OPS_LEDGER_LIMIT: 1000,
+    applyOrderEntryUpdates(entry) {
+      return entry;
+    },
+    createSupabaseQuoteOpsClient() {
+      return {
+        config: {
+          configured: true,
+          url: "https://example.supabase.co",
+          tableName: "quote_ops_entries",
+        },
+        isConfigured() {
+          return true;
+        },
+        async fetchEntriesByIds(entryIds) {
+          requestedIds.push(...entryIds);
+          return entryIds.map((id) => ({ id, customerName: `Client ${id}` }));
+        },
+        async fetchEntries() {
+          throw new Error("full ledger should not be loaded");
+        },
+      };
+    },
+    normalizeString,
+  });
+
+  const entries = await store.listEntriesByIds(["order-1", "order-2", "order-1"]);
+
+  assert.deepEqual(requestedIds, ["order-1", "order-2"]);
+  assert.deepEqual(entries.map((entry) => entry.id), ["order-1", "order-2"]);
+  assert.equal(store.getDiagnostics().lastReadSource, "supabase-entry-ids");
+});
+
 test("hides admin shadow rows from quote ops listings", () => {
   const entries = filterQuoteOpsEntries(
     [

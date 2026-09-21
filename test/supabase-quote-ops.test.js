@@ -93,3 +93,36 @@ test("loads reminder candidates by appointment date instead of creation date", a
   ]);
   assert.equal(requestUrl.searchParams.get("order"), "selected_date.asc,selected_time.asc");
 });
+
+test("loads assigned cleaner entries by id in bounded batches", async () => {
+  const calls = [];
+  const client = createSupabaseQuoteOpsClient({
+    env: {
+      SUPABASE_URL: "https://example.supabase.co",
+      SUPABASE_SERVICE_ROLE_KEY: "sb_secret_example123",
+    },
+    fetch: async (url, options = {}) => {
+      calls.push({ url, options });
+      return {
+        ok: true,
+        status: 200,
+        async text() {
+          return "[]";
+        },
+      };
+    },
+  });
+
+  const entryIds = Array.from({ length: 76 }, (_, index) => `manual-order-${index + 1}`);
+  await client.fetchEntriesByIds([...entryIds, entryIds[0]]);
+
+  assert.equal(calls.length, 2);
+  const firstUrl = new URL(calls[0].url);
+  const secondUrl = new URL(calls[1].url);
+  assert.equal(
+    firstUrl.searchParams.get("id"),
+    `in.(${entryIds.slice(0, 75).join(",")})`
+  );
+  assert.equal(secondUrl.searchParams.get("id"), `in.(${entryIds[75]})`);
+  assert.equal(firstUrl.searchParams.get("order"), "created_at.desc");
+});
