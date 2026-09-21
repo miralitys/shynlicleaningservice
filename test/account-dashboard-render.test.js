@@ -959,3 +959,56 @@ test("shows payroll amount inside the mobile-visible payroll row", () => {
   assert.match(html, /\$43\.75/);
   assert.match(html, /Payroll Mobile Client[\s\S]*account-payroll-mobile-amount[\s\S]*\$43\.75/);
 });
+
+test("renders cleaner calendar details only for orders in the visible period", () => {
+  const renderers = createRenderers();
+  const context = {
+    user: {
+      id: "user-1",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      staffId: "staff-1",
+      role: "cleaner",
+    },
+    staffRecord: {
+      id: "staff-1",
+      name: "Ariana Cleaner",
+      email: "ariana.cleaner@example.com",
+      phone: "3125550100",
+      status: "active",
+    },
+    assignedOrders: [
+      buildOrder({
+        id: "visible-calendar-order",
+        customerName: "Visible Calendar Client",
+        scheduleDate: "2099-02-10",
+        scheduleTime: "09:00",
+        confirmed: true,
+      }),
+      buildOrder({
+        id: "offscreen-calendar-order",
+        customerName: "Offscreen Calendar Client",
+        scheduleDate: "2099-03-10",
+        scheduleTime: "09:00",
+        confirmed: true,
+      }),
+    ],
+    managerContact: null,
+    calendarMeta: { configured: false, connected: false },
+    payrollSummary: { records: [], totals: {} },
+  };
+
+  const dayHtml = renderers.renderCalendarPage(context, {
+    calendarDate: "2099-02-10",
+    calendarView: "today",
+  });
+  const monthHtml = renderers.renderCalendarPage(context, {
+    calendarDate: "2099-02-10",
+    calendarView: "month",
+  });
+
+  assert.match(dayHtml, /Visible Calendar Client/);
+  assert.doesNotMatch(dayHtml, /Offscreen Calendar Client/);
+  assert.match(monthHtml, /Visible Calendar Client/);
+  assert.doesNotMatch(monthHtml, /Offscreen Calendar Client/);
+});
