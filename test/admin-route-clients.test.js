@@ -358,6 +358,8 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /name="addressNotes"/i);
     assert.match(selectedClientDialog, /Автоматические сообщения/i);
     assert.match(selectedClientDialog, /name="automaticNotificationsEnabled" value="1" checked/i);
+    assert.match(selectedClientDialog, /Отключить уведомления об оплате/i);
+    assert.doesNotMatch(selectedClientDialog, /name="paymentNotificationsDisabled" value="1" checked/i);
     assert.match(selectedClientDialog, /Автосообщения включены/i);
     assert.match(selectedClientDialog, /data-admin-client-address-remove="true"/i);
     assert.match(selectedClientDialog, /Добавить адрес/i);
@@ -495,6 +497,8 @@ test("renders the clients table with filters and request history", async () => {
       secondaryPhone: "(312) 555-0112",
       email: "jane.cooper@example.com",
       automaticNotificationsSettingPresent: "1",
+      paymentNotificationsSettingPresent: "1",
+      paymentNotificationsDisabled: "1",
     });
     [
       {
@@ -597,6 +601,8 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(updatedClientDialog, /name="primaryPhone" value="secondary"/);
     assert.match(updatedClientDialog, /jane\.cooper@example\.com/i);
     assert.match(updatedClientDialog, /Автосообщения выключены/i);
+    assert.match(updatedClientDialog, /Уведомления об оплате выключены/i);
+    assert.match(updatedClientDialog, /name="paymentNotificationsDisabled" value="1" checked/i);
     assert.doesNotMatch(updatedClientDialog, /name="automaticNotificationsEnabled" value="1" checked/i);
     assert.match(updatedClientDialog, /123 Main St, Romeoville, IL 60446/);
     assert.match(updatedClientDialog, /500 River Rd, Naperville, IL 60540/);

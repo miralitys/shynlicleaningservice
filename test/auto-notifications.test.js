@@ -76,6 +76,29 @@ test("formats an updated appointment reminder with the new visit details", () =>
   assert.match(message, /Address: 18 South Main Street/);
 });
 
+test("skips invoice SMS when payment notifications are disabled for the client", async () => {
+  const entry = createOrderEntry({
+    id: "order-payment-notifications-disabled",
+    payloadForRetry: {
+      adminClient: {
+        paymentNotificationsEnabled: false,
+      },
+      adminOrder: {
+        status: "invoice-sent",
+      },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  const leadConnectorClient = createLeadConnectorStub();
+  const service = createAutoNotificationService({ quoteOpsLedger: ledger });
+
+  const result = await service.notifyInvoicePaymentLink({ entry, leadConnectorClient });
+
+  assert.equal(result.sent, false);
+  assert.equal(result.reason, "client-payment-notifications-disabled");
+  assert.equal(leadConnectorClient.calls.length, 0);
+});
+
 function createLeadEntry(overrides = {}) {
   return {
     id: "entry-1",
