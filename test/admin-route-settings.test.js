@@ -466,6 +466,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountCalendarBody, /data-account-availability-form="true"/i);
     assert.match(accountCalendarBody, /name="action" value="save-own-unavailable-day"/i);
     assert.match(accountCalendarBody, /name="availabilityMode"/i);
+    assert.match(accountCalendarBody, /name="availabilityRecurrence"/i);
     assert.match(accountCalendarBody, />Весь день</i);
     assert.match(accountCalendarBody, />Первая половина \(9:00–13:00\)</i);
     assert.match(accountCalendarBody, />Вторая половина \(13:00–18:00\)</i);

@@ -844,6 +844,7 @@ test("saves manual staff unavailable intervals from the team calendar", async ()
         availabilityMode: "time-range",
         availabilityStartTime: "08:00",
         availabilityEndTime: "13:00",
+        availabilityRecurrence: "weekly",
         availabilityReason: "Family day",
         availabilityNotes: "Unavailable from manager calendar",
         calendarStart: "2026-07-06",
@@ -868,6 +869,15 @@ test("saves manual staff unavailable intervals from the team calendar", async ()
     assert.match(calendarBody, /admin-team-calendar-entry-unavailable/);
     assert.match(calendarBody, /Family day/);
     assert.match(calendarBody, /08:00 AM – 01:00 PM/);
+
+    const storedPayload = JSON.parse(await fs.readFile(storePath, "utf8"));
+    const storedStaff = storedPayload.staff.find((record) => record.id === staffId);
+    assert.ok(storedStaff);
+    assert.ok(storedStaff.availabilityBlocks.length >= 52);
+    assert.deepEqual(
+      storedStaff.availabilityBlocks.slice(0, 3).map((block) => block.date),
+      ["2026-07-06", "2026-07-13", "2026-07-20"]
+    );
     assert.match(calendarBody, /data-admin-team-calendar-menu="true"/);
     assert.match(calendarBody, /data-admin-team-calendar-busy-checkbox="true"[\s\S]*checked/);
     assert.match(calendarBody, /name="action" value="save-staff-unavailable-day"/);
@@ -878,7 +888,7 @@ test("saves manual staff unavailable intervals from the team calendar", async ()
     assert.doesNotMatch(calendarBody, /data-admin-team-calendar-unavailable-dialog="true"/);
 
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
-    assert.equal(storePayload.staff[0].availabilityBlocks.length, 1);
+    assert.equal(storePayload.staff[0].availabilityBlocks.length, 53);
     assert.equal(storePayload.staff[0].availabilityBlocks[0].date, "2026-07-06");
     assert.equal(storePayload.staff[0].availabilityBlocks[0].summary, "Family day");
     assert.equal(storePayload.staff[0].availabilityBlocks[0].allDay, false);

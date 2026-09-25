@@ -4,11 +4,31 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   DEFAULT_STAFF_UNAVAILABLE_SUMMARY,
+  buildStaffAvailabilityRecurrenceDates,
   findStaffAvailabilityConflicts,
   removeStaffAvailabilityBlock,
   sanitizeStaffAvailabilityBlocks,
   upsertStaffAvailabilityBlock,
 } = require("../lib/staff-availability");
+
+test("builds weekly and monthly recurring unavailable dates", () => {
+  const weekly = buildStaffAvailabilityRecurrenceDates("2026-09-28", "weekly", 1);
+  assert.deepEqual(weekly.slice(0, 5), [
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26",
+  ]);
+
+  const monthly = buildStaffAvailabilityRecurrenceDates("2026-01-31", "monthly", 3);
+  assert.deepEqual(monthly, [
+    "2026-01-31",
+    "2026-02-28",
+    "2026-03-31",
+    "2026-04-30",
+  ]);
+});
 
 test("sanitizes and upserts manual staff unavailable days", () => {
   const first = upsertStaffAvailabilityBlock([], {

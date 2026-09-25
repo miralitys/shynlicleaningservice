@@ -160,6 +160,9 @@ test("renders empty cleaner day cells with a busy menu checkbox", () => {
   assert.match(html, /name="action" value="save-staff-unavailable-day"/);
   assert.match(html, /data-admin-team-calendar-busy-settings="true"[\s\S]*hidden/);
   assert.match(html, /name="availabilityMode"/);
+  assert.match(html, /name="availabilityRecurrence"/);
+  assert.match(html, /<option value="weekly">Каждую неделю<\/option>/);
+  assert.match(html, /<option value="monthly">Каждый месяц<\/option>/);
   assert.match(html, /<option value="all-day" selected>Весь день<\/option>/);
   assert.match(html, /<option value="time-range">С … до …<\/option>/);
   assert.match(html, /name="availabilityStartTime"[\s\S]*?value="09:00"/);
