@@ -606,7 +606,7 @@ test("creates staff members and assigns them to orders through the staff workspa
   }
 });
 
-test("removes rescheduled and canceled orders from the staff calendar", async () => {
+test("keeps rescheduled orders active and removes canceled orders from the staff calendar", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-staff-cancel-sync-"));
   const fetchStub = createFetchStub([
     {
@@ -717,7 +717,7 @@ test("removes rescheduled and canceled orders from the staff calendar", async ()
     const storePayload = JSON.parse(await fs.readFile(storePath, "utf8"));
     const storedAssignment = storePayload.assignments.find((record) => record.entryId === entryId);
     assert.ok(storedAssignment);
-    assert.equal(storedAssignment.status, "canceled");
+    assert.equal(storedAssignment.status, "confirmed");
     assert.deepEqual(storedAssignment.staffIds, [staffId]);
 
     const calendarResponse = await fetch(`${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-04-02`, {
@@ -727,10 +727,7 @@ test("removes rescheduled and canceled orders from the staff calendar", async ()
     });
     const calendarBody = await calendarResponse.text();
     assert.equal(calendarResponse.status, 200);
-    assert.doesNotMatch(
-      calendarBody,
-      /class="[^"]*admin-team-calendar-entry-order-canceled[^"]*"/
-    );
+    assert.match(calendarBody, /Cancel Sync Customer/);
 
     const monthCalendarResponse = await fetch(
       `${started.baseUrl}/admin/staff?section=calendar&calendarStart=2026-04-02&calendarView=month`,
@@ -742,10 +739,7 @@ test("removes rescheduled and canceled orders from the staff calendar", async ()
     );
     const monthCalendarBody = await monthCalendarResponse.text();
     assert.equal(monthCalendarResponse.status, 200);
-    assert.doesNotMatch(
-      monthCalendarBody,
-      /class="[^"]*admin-team-calendar-month-event-canceled[^"]*"/
-    );
+    assert.match(monthCalendarBody, /Cancel Sync Customer/);
 
     const reactivateAssignmentResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",

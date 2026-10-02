@@ -19,9 +19,9 @@ test("restores a canceled assignment when an active unscheduled order is moved",
   assert.equal(getScheduleSyncedAssignmentStatus("new", "cancelled"), "planned");
 });
 
-test("keeps canceled assignments hidden for inactive orders", () => {
+test("keeps canceled assignments hidden only for canceled orders", () => {
   assert.equal(getScheduleSyncedAssignmentStatus("canceled", "canceled"), "canceled");
-  assert.equal(getScheduleSyncedAssignmentStatus("rescheduled", "canceled"), "canceled");
+  assert.equal(getScheduleSyncedAssignmentStatus("rescheduled", "canceled"), "planned");
 });
 
 test("automatically schedules a new order once date, time, and team are assigned", () => {
