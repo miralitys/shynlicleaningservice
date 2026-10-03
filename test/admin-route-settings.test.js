@@ -216,8 +216,9 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(settingsBody, /id="admin-user-create-dialog"/);
     assert.match(settingsBody, /admin-settings-users-table/);
     assert.match(settingsBody, /admin-settings-section-stack/);
-    assert.match(settingsBody, /name="phone"[^>]*required/i);
-    assert.match(settingsBody, /name="address"[^>]*required/i);
+    assert.match(settingsBody, /<option value="viewer">Наблюдатель<\/option>/i);
+    assert.doesNotMatch(settingsBody, /name="phone"[^>]*required/i);
+    assert.doesNotMatch(settingsBody, /name="address"[^>]*required/i);
     assert.match(settingsBody, /name="compensationValue"/i);
     assert.match(settingsBody, /name="compensationType"/i);
     assert.match(settingsBody, /Почта приглашений/i);
@@ -1312,6 +1313,85 @@ test("sends an invite email and lets the employee set a first password after ema
   } finally {
     await stopServer(started.child);
     await smtpServer.close();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("viewer account can inspect orders and clients without write or staff access", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-viewer-route-"));
+  const env = {
+    ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_STAFF_STORE_PATH: path.join(tempDir, "admin-staff-store.json"),
+    ADMIN_USERS_STORE_PATH: path.join(tempDir, "admin-users-store.json"),
+  };
+  const started = await startServer({ env });
+  const config = loadAdminConfig(env);
+
+  try {
+    const adminSession = await createAdminSession(started.baseUrl, config);
+    const createResponse = await fetch(`${started.baseUrl}/admin/settings`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_admin_session=${adminSession}`,
+      },
+      body: new URLSearchParams({
+        action: "create_user",
+        name: "Eva",
+        role: "viewer",
+        status: "active",
+        staffStatus: "active",
+        email: "eva@shynli.local",
+        password: "ViewerPass123!",
+      }),
+    });
+    assert.equal(createResponse.status, 303);
+
+    const loginResponse = await fetch(`${started.baseUrl}/admin/login`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        email: "eva@shynli.local",
+        password: "ViewerPass123!",
+      }),
+    });
+    assert.equal(loginResponse.status, 303);
+    assert.equal(loginResponse.headers.get("location"), "/admin");
+    const viewerSession = getCookieValue(getSetCookies(loginResponse), "shynli_user_session");
+    assert.ok(viewerSession);
+
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+      headers: { cookie: `shynli_user_session=${viewerSession}` },
+    });
+    const ordersBody = await ordersResponse.text();
+    assert.equal(ordersResponse.status, 200);
+    assert.match(ordersBody, /Наблюдатель/i);
+    assert.doesNotMatch(ordersBody, /href="\/admin\/staff"/i);
+    assert.doesNotMatch(ordersBody, /href="\/admin\/settings"/i);
+
+    const blockedWriteResponse = await fetch(`${started.baseUrl}/admin/clients`, {
+      method: "POST",
+      redirect: "manual",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: `shynli_user_session=${viewerSession}`,
+      },
+      body: new URLSearchParams({ action: "save-client" }),
+    });
+    assert.equal(blockedWriteResponse.status, 403);
+
+    const blockedStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+      redirect: "manual",
+      headers: { cookie: `shynli_user_session=${viewerSession}` },
+    });
+    assert.equal(blockedStaffResponse.status, 303);
+    assert.equal(blockedStaffResponse.headers.get("location"), "/admin");
+  } finally {
+    await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });

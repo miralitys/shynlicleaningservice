@@ -9,6 +9,31 @@ const assert = require("node:assert/strict");
 const { hashPassword } = require("../lib/admin-auth");
 const { createAdminUsersStore } = require("../lib/admin-users-store");
 
+test("stores read-only viewers as non-employees", async () => {
+  const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "shynli-viewer-store-"));
+  const storePath = path.join(tempDir, "admin-users-store.json");
+  const store = createAdminUsersStore({ filePath: storePath });
+
+  try {
+    const viewer = await store.createUser({
+      staffId: "staff-eva-viewer",
+      email: "eva@shynli.local",
+      passwordHash: hashPassword("StrongPassword123!"),
+      status: "active",
+      role: "viewer",
+    });
+
+    assert.equal(viewer.role, "viewer");
+    assert.equal(viewer.isEmployee, false);
+
+    const storedViewer = await store.findUserByEmail("eva@shynli.local");
+    assert.equal(storedViewer.role, "viewer");
+    assert.equal(storedViewer.isEmployee, false);
+  } finally {
+    await fsp.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 function cloneSnapshot(snapshot) {
   return JSON.parse(JSON.stringify(snapshot));
 }
