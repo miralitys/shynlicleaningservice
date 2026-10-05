@@ -1950,7 +1950,7 @@ test("recognizes the next recurring visit created by the six-month schedule", as
   }
 });
 
-test("saving a new visit from a completed order creates a separate scheduled order", async () => {
+test("explicitly scheduling a new visit from a completed order creates a separate scheduled order", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-completed-next-visit-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const fetchStub = createFetchStub([
@@ -2021,6 +2021,7 @@ test("saving a new visit from a completed order creates a separate scheduled ord
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
       body: new URLSearchParams({
+        action: "schedule-next-order",
         entryId,
         returnTo: "/admin/orders",
         orderStatus: "scheduled",
