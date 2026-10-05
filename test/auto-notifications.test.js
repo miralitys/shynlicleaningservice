@@ -512,6 +512,7 @@ test("sends assignment SMS once per schedule signature for scheduled orders", as
   });
 
   const firstResult = await service.notifyScheduledAssignment({
+    now: new Date("2026-04-19T12:00:00Z"),
     entry,
     assignment: {
       staffIds: ["staff-1"],
@@ -537,6 +538,7 @@ test("sends assignment SMS once per schedule signature for scheduled orders", as
   );
 
   const secondResult = await service.notifyScheduledAssignment({
+    now: new Date("2026-04-19T12:00:00Z"),
     entry: firstResult.entry,
     assignment: {
       staffIds: ["staff-1"],
@@ -592,6 +594,7 @@ test("sends assignment SMS for rescheduled orders when staff is assigned", async
   });
 
   const result = await service.notifyScheduledAssignment({
+    now: new Date("2026-04-19T12:00:00Z"),
     entry,
     assignment: {
       staffIds: ["staff-1"],
@@ -646,6 +649,7 @@ test("falls back to contact-based assignment SMS when direct send is rejected", 
   });
 
   const result = await service.notifyScheduledAssignment({
+    now: new Date("2026-04-19T12:00:00Z"),
     entry,
     assignment: {
       staffIds: ["staff-1"],
@@ -703,6 +707,7 @@ test("logs assignment SMS failures when both assignment send attempts are reject
   });
 
   const result = await service.notifyScheduledAssignment({
+    now: new Date("2026-04-19T12:00:00Z"),
     entry,
     assignment: {
       staffIds: ["staff-1"],
@@ -720,6 +725,39 @@ test("logs assignment SMS failures when both assignment send attempts are reject
   assert.equal(loggedEvents[0].type, "assignment_staff_sms_failed");
   assert.equal(loggedEvents[0].code, "CONTACT_NOT_FOUND");
   assert.match(loggedEvents[0].message, /Recipient not reachable/i);
+});
+
+test("blocks assignment SMS for past visits and finished order stages", async () => {
+  const now = new Date("2026-10-05T19:03:00Z");
+  const cases = [
+    { status: "scheduled", date: "2026-08-23", time: "07:00" },
+    { status: "rescheduled", date: "2026-10-05", time: "14:00" },
+    ...["cleaning-complete", "invoice-sent", "paid", "awaiting-review", "completed", "canceled"]
+      .map((status) => ({ status, date: "2026-10-06", time: "09:00" })),
+    { status: "scheduled", date: "", time: "" },
+  ];
+  for (const scenario of cases) {
+    const entry = createOrderEntry({
+      selectedDate: scenario.date,
+      selectedTime: scenario.time,
+      payloadForRetry: { orderState: { status: scenario.status } },
+    });
+    const leadConnectorClient = createLeadConnectorStub();
+    let snapshotReads = 0;
+    const service = createAutoNotificationService({
+      quoteOpsLedger: createMutableLedger(entry),
+      staffStore: { async getSnapshot() { snapshotReads += 1; return { staff: [] }; } },
+    });
+    const result = await service.notifyScheduledAssignment({
+      entry,
+      assignment: { staffIds: ["staff-1"] },
+      leadConnectorClient,
+      now,
+    });
+    assert.equal(result.sent, 0, JSON.stringify(scenario));
+    assert.equal(leadConnectorClient.calls.length, 0);
+    assert.equal(snapshotReads, 0);
+  }
 });
 
 test("sends client en-route SMS once when an order moves to en-route", async () => {
