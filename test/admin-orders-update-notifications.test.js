@@ -114,3 +114,14 @@ test("moving a new order to scheduled still announces its existing assignment", 
   const result = await updateOrder({ orderStatus: "scheduled" }, "new");
   assert.deepEqual(result.calls, { assignments: 1, notifications: 1 });
 });
+
+test("editing a completed visit updates that visit, not the next visit", async () => {
+  const result = await updateOrder({
+    orderStatus: "scheduled", selectedDate: "2026-10-18", selectedTime: "10:00",
+    paymentStatus: "unpaid", paymentMethod: "",
+  }, "completed");
+  assert.equal(result.entry.id, "old-order");
+  assert.equal(result.entry.selectedDate, "2026-10-18");
+  assert.equal(result.entry.selectedTime, "10:00");
+  assert.equal(result.entry.payloadForRetry.orderState.status, "scheduled");
+});
