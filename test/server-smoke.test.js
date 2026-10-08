@@ -268,9 +268,9 @@ test("serves the home page through the custom route layer", async () => {
   assert.doesNotMatch(body, /data-elem-id=['"]1767791730605['"]/);
   assert.doesNotMatch(body, /data-elem-id=['"]1767881559686000001['"]/);
   assert.doesNotMatch(body, /id="shynli-benefit-copy-single-instance-style"/);
-  assert.match(body, /Suganya Swamy/);
-  assert.match(body, /Mobile Legends Jek/);
-  assert.match(body, /Yevgeniy Magomedov/);
+  assert.match(body, /Erika Barney/);
+  assert.match(body, /Cora Trofy/);
+  assert.match(body, /Tyshone Johnson/);
   assert.match(body, /Lina Gonzales/);
   assert.match(body, /clients-say-home__track--top/);
   assert.match(body, /clients-say-home__track--bottom/);
@@ -287,7 +287,7 @@ test("serves the home page through the custom route layer", async () => {
     /Do you offer move-out cleaning\?/,
     /Move-in and move-out cleaning is available for houses, apartments, and condos\./,
   ].forEach((pattern) => assert.match(body, pattern));
-  assert.match(body, /class="areas__summary"/);
+  assert.match(body, /class="[^"]*\bareas__summary\b[^"]*"/);
   assert.match(body, /Shynli Cleaning serves homes across/);
   [
     ["href=\"/naperville\"", /Naperville/],
@@ -877,8 +877,8 @@ test("serves homepage-style reviews before the regular-cleaning cross-sell block
   assert.notEqual(needMoreIndex, -1);
   assert.ok(reviewsIndex < needMoreIndex);
   assert.match(body, /What Our <span>Clients Say<\/span>/);
-  assert.match(body, /Mobile Legends Jek/);
-  assert.match(body, /Beksultan Bekbolotov/);
+  assert.match(body, /Erika Barney/);
+  assert.match(body, /Tyshone Johnson/);
   assert.doesNotMatch(body, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
 });
 
@@ -894,8 +894,8 @@ test("serves homepage-style reviews before the deep-cleaning other services bloc
   assert.notEqual(otherServicesIndex, -1);
   assert.ok(reviewsIndex < otherServicesIndex);
   assert.match(reviewHtml, /What Our <span>Clients Say<\/span>/);
-  assert.match(reviewHtml, /Mobile Legends Jek/);
-  assert.match(reviewHtml, /Beksultan Bekbolotov/);
+  assert.match(reviewHtml, /Erika Barney/);
+  assert.match(reviewHtml, /Tyshone Johnson/);
   assert.doesNotMatch(reviewHtml, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
 });
 
@@ -911,8 +911,8 @@ test("serves homepage-style reviews before the move-in move-out other services b
   assert.notEqual(otherServicesIndex, -1);
   assert.ok(reviewsIndex < otherServicesIndex);
   assert.match(reviewHtml, /What Our <span>Clients Say<\/span>/);
-  assert.match(reviewHtml, /Mobile Legends Jek/);
-  assert.match(reviewHtml, /Beksultan Bekbolotov/);
+  assert.match(reviewHtml, /Erika Barney/);
+  assert.match(reviewHtml, /Tyshone Johnson/);
   assert.doesNotMatch(reviewHtml, /(?:tild|tilda|data-tilda|allrecords|\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i);
 });
 

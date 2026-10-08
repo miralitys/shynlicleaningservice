@@ -1116,16 +1116,16 @@ test("rebuilds the homepage review block with unique current reviews", () => {
   assert.equal(names.length, 24);
   assert.equal(new Set(names).size, names.length);
   [
-    "Suganya Swamy",
-    "D B",
-    "Mobile Legends Jek",
-    "Yevgeniy Magomedov",
-    "Aleksei Krenitsyn",
-    "Max Krasavin",
-    "Vlad B",
-    "Anur",
-    "Igor Bych",
-    "Lina Gonzales",
+    "Erika Barney",
+    "Dawn Hoff Jaeckels Suppinger",
+    "Mariana Solari",
+    "Amy Knack",
+    "Cora Trofy",
+    "Karoline Kijowski",
+    "Tyshone Johnson",
+    "Judy Veach",
+    "Suzana Duka",
+    "Hector Amizo",
   ].forEach((name) => assert.ok(names.includes(name), name));
   assert.equal((section.match(/clients-say-home__group--primary/g) || []).length, 2);
   assert.doesNotMatch(section, /clients-say-home__group--clone/);
@@ -1162,8 +1162,8 @@ test("inserts homepage-style reviews before the regular-cleaning cross-sell bloc
   assert.notEqual(needMoreIndex, -1);
   assert.ok(reviewsIndex < needMoreIndex);
   assert.match(html, /What Our <span>Clients Say<\/span>/);
-  assert.match(html, /Mobile Legends Jek/);
-  assert.match(html, /Beksultan Bekbolotov/);
+  assert.match(html, /Erika Barney/);
+  assert.match(html, /Tyshone Johnson/);
   assert.doesNotMatch(html, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
 });
 
@@ -1177,8 +1177,8 @@ test("inserts homepage-style reviews before the deep-cleaning other services blo
   assert.notEqual(otherServicesIndex, -1);
   assert.ok(reviewsIndex < otherServicesIndex);
   assert.match(reviewHtml, /What Our <span>Clients Say<\/span>/);
-  assert.match(reviewHtml, /Mobile Legends Jek/);
-  assert.match(reviewHtml, /Beksultan Bekbolotov/);
+  assert.match(reviewHtml, /Erika Barney/);
+  assert.match(reviewHtml, /Tyshone Johnson/);
   assert.doesNotMatch(reviewHtml, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
 });
 
@@ -1192,8 +1192,8 @@ test("inserts homepage-style reviews before the move-in move-out other services 
   assert.notEqual(otherServicesIndex, -1);
   assert.ok(reviewsIndex < otherServicesIndex);
   assert.match(reviewHtml, /What Our <span>Clients Say<\/span>/);
-  assert.match(reviewHtml, /Mobile Legends Jek/);
-  assert.match(reviewHtml, /Beksultan Bekbolotov/);
+  assert.match(reviewHtml, /Erika Barney/);
+  assert.match(reviewHtml, /Tyshone Johnson/);
   assert.doesNotMatch(reviewHtml, /(?:tild|tilda|data-tilda|allrecords|\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i);
 });
 
