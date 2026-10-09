@@ -172,6 +172,25 @@ test("loads reminder candidates by appointment date instead of creation date", a
   assert.equal(requestUrl.searchParams.get("order"), "selected_date.asc,selected_time.asc");
 });
 
+test("conditional order updates only patch the expected existing row version", async () => {
+  const calls = [];
+  const client = createSupabaseQuoteOpsClient({
+    env: { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_example123" },
+    fetch: async (url, options) => {
+      calls.push({ url, options });
+      return { ok: true, async text() { return calls.length === 1 ? '[{"id":"visit"}]' : "[]"; } };
+    },
+  });
+  const entry = { id: "visit", updatedAt: "2026-10-08T13:00:00.000Z", payloadForRetry: { orderState: { isCreated: true } } };
+  assert.equal(await client.updateEntryIfUnchanged(entry, "2026-10-08T12:00:00.000Z"), true);
+  assert.equal(await client.updateEntryIfUnchanged(entry, "2026-10-08T12:00:00.000Z"), false);
+  const url = new URL(calls[0].url);
+  assert.equal(url.searchParams.get("id"), "eq.visit");
+  assert.equal(url.searchParams.get("updated_at"), "eq.2026-10-08T12:00:00.000Z");
+  assert.equal(calls[0].options.method, "PATCH");
+  assert.equal(JSON.parse(calls[0].options.body).payload_for_retry.orderState.isCreated, true);
+});
+
 test("loads assigned cleaner entries by id in bounded batches", async () => {
   const calls = [];
   const client = createSupabaseQuoteOpsClient({

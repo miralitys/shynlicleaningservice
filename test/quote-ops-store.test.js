@@ -8,6 +8,50 @@ function normalizeString(value, maxLength = 500) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+test("guarded background order writes use compare-and-set and stop on a concurrent deletion", async () => {
+  const original = {
+    id: "visit", updatedAt: "2026-10-08T12:00:00.000Z",
+    payloadForRetry: { orderState: { isCreated: true, status: "scheduled" } },
+  };
+  let conditionalWrites = 0;
+  let unconditionalWrites = 0;
+  const store = createQuoteOpsStore({
+    QUOTE_OPS_LEDGER_LIMIT: 25, normalizeString,
+    applyOrderEntryUpdates(entry) {
+      entry.updatedAt = "2026-10-08T13:00:00.000Z";
+      return entry;
+    },
+    createSupabaseQuoteOpsClient: () => ({
+      config: { configured: true }, isConfigured: () => true,
+      async fetchEntryById() { return structuredClone(original); },
+      async upsertEntry() { unconditionalWrites++; },
+      async updateEntryIfUnchanged(entry, expectedUpdatedAt) {
+        conditionalWrites++;
+        assert.equal(expectedUpdatedAt, original.updatedAt);
+        return false;
+      },
+    }),
+  });
+  assert.equal(await store.updateOrderEntry("visit", { requireExistingOrder: true, recurringNextEntryId: "next" }), null);
+  assert.equal(conditionalWrites, 1);
+  assert.equal(unconditionalWrites, 0);
+});
+
+test("guarded background writes skip an already deleted order", async () => {
+  let writes = 0;
+  const store = createQuoteOpsStore({
+    QUOTE_OPS_LEDGER_LIMIT: 25, normalizeString,
+    applyOrderEntryUpdates() { throw new Error("Deleted visits must not be mutated"); },
+    createSupabaseQuoteOpsClient: () => ({
+      config: { configured: true }, isConfigured: () => true,
+      async fetchEntryById() { return { id: "visit", payloadForRetry: { orderState: null } }; },
+      async upsertEntry() { writes++; },
+    }),
+  });
+  assert.equal(await store.updateOrderEntry("visit", { requireExistingOrder: true, recurringSeriesId: "series" }), null);
+  assert.equal(writes, 0);
+});
+
 test("complete series reads fail closed instead of using a partial memory fallback", async () => {
   const store = createQuoteOpsStore({
     QUOTE_OPS_LEDGER_LIMIT: 25,

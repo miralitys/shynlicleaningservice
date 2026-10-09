@@ -223,6 +223,30 @@ test("overlapping series generators from separate handlers cannot insert duplica
   assert.equal(created.filter((items) => items.length > 0).length, 1);
 });
 
+test("a sweep cannot revive a visit deleted while its stale series list is being processed", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "kylie", date: "2026-10-11", frequency: "weekly" });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  const generated = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  const victim = generated[0];
+  const update = ledger.updateOrderEntry.bind(ledger);
+  let deleted = false;
+  ledger.updateOrderEntry = async (id, updates) => {
+    if (id === victim.id && Object.hasOwn(updates, "recurringNextEntryId")) {
+      domain.applyOrderEntryUpdates(victim, { removeOrder: true });
+      deleted = true;
+    }
+    return update(id, updates);
+  };
+
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+
+  assert.equal(deleted, true);
+  assert.deepEqual(getEntryOrderState(victim), {});
+  assert.equal((await ledger.listEntries()).filter((entry) => entry.requestId === victim.requestId).length, 1);
+});
+
 test("keeps confirmed staff assignments on generated recurring visits", async () => {
   const domain = createDomain();
   const source = createEntry({
