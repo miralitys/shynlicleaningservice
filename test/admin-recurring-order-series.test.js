@@ -232,6 +232,11 @@ test("a sweep cannot revive a visit deleted while its stale series list is being
   const victim = generated[0];
   const update = ledger.updateOrderEntry.bind(ledger);
   let deleted = false;
+  const assignedIds = [];
+  const staffStore = {
+    async getSnapshot() { return { assignments: [{ entryId: root.id, staffIds: ["zilola"], status: "planned" }] }; },
+    async setAssignment(id) { assignedIds.push(id); },
+  };
   ledger.updateOrderEntry = async (id, updates) => {
     if (id === victim.id && Object.hasOwn(updates, "recurringNextEntryId")) {
       domain.applyOrderEntryUpdates(victim, { removeOrder: true });
@@ -240,10 +245,11 @@ test("a sweep cannot revive a visit deleted while its stale series list is being
     return update(id, updates);
   };
 
-  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root, staffStore });
 
   assert.equal(deleted, true);
   assert.deepEqual(getEntryOrderState(victim), {});
+  assert.equal(assignedIds.includes(victim.id), false);
   assert.equal((await ledger.listEntries()).filter((entry) => entry.requestId === victim.requestId).length, 1);
 });
 
