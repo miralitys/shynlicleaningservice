@@ -36,6 +36,68 @@ function createCalendarHelpers() {
   });
 }
 
+test("read-only calendar keeps every event source in day, week and month views", async () => {
+  const helpers = createCalendarHelpers();
+  const { createStaffPageRenderer } = require("../lib/admin/pages/staff-page");
+  const staff = [{ id: "cleaner-1", name: "Calendar Cleaner", assignedOrders: [{
+    scheduleDate: "2026-10-08", scheduleTime: "09:00", assignmentStatus: "planned",
+    entry: { id: "readonly-order", customerName: "Calendar Client", serviceName: "Standard" },
+  }], availabilityBlocks: [{
+    id: "manual-busy", date: "2026-10-08", allDay: false, startTime: "15:00", endTime: "19:00",
+    summary: "Manual afternoon", notes: "Manual comment <safe>",
+  }] }];
+  const externalBlocks = [{
+    id: "google-busy", source: "google", startDate: "2026-10-08", endDate: "2026-10-09",
+    allDay: true, summary: "Google calendar event",
+  }];
+  const ledgerCalls = [];
+  const calendarCalls = [];
+  const render = createStaffPageRenderer({
+    ADMIN_STAFF_PATH: "/admin/staff", STAFF_QUOTE_OPS_PAGE_LIMIT: 1000,
+    buildStaffPlanningContext: (entries, snapshot) => ({
+      staff: snapshot.staff, staffSummaries: snapshot.staff, orderItems: [], scheduledOrders: [], activeStaffCount: 1,
+    }),
+    collectNonAssignableStaffIds: () => [], filterStaffSnapshotByHiddenStaffIds: (snapshot) => snapshot,
+    getRequestUrl: (req) => new URL(req.url, "http://localhost"), getStaffSection: () => "calendar",
+    getStaffTeamCalendarStartDate: helpers.getStaffTeamCalendarStartDate,
+    getStaffTeamCalendarView: helpers.getStaffTeamCalendarView,
+    getWorkspaceAccessContext: (runtime) => ({ role: runtime.role, canEdit: runtime.role !== "viewer" }),
+    normalizeString, renderAdminAppSidebar: () => "", renderAdminCard: (title, copy, html) => html,
+    renderAdminLayout: (title, html, options) => `${html}${options.bodyScripts}`,
+    renderStaffAddressAutocompleteScript: () => "address-script", renderStaffTravelEstimateScript: () => "travel-script",
+    renderStaffTeamCalendarDragScript: () => "navigation-script", renderStaffTeamCalendarTable: helpers.renderStaffTeamCalendarTable,
+    renderStaffAssignmentDialogs: (items, records, options) => options.canEdit === false ? "" : "assignment-editor",
+    renderStaffSectionNav: () => "staff-sections",
+    renderStaffNotice: () => "staff-notice", renderStaffOverviewStrip: () => "",
+  });
+  const ledger = { listEntries: async (filters) => { ledgerCalls.push(filters); return []; } };
+  const staffStore = { getSnapshot: async () => ({ staff, assignments: [] }) };
+  const integration = { loadStaffCalendarStates: async (records) => {
+    calendarCalls.push(records.map((record) => record.id));
+    return records.map((record) => ({ ...record, calendarAvailabilityBlocks: externalBlocks }));
+  } };
+  for (const view of ["day", "week", "month"]) {
+    const req = { url: `/admin/staff?section=calendar&calendarStart=2026-10-08&calendarView=${view}` };
+    for (const role of ["viewer", "manager"]) {
+      const html = await render(req, {}, ledger, staffStore, { role, googleCalendarIntegration: integration });
+      for (const text of ["Calendar Client", "Calendar Cleaner", "Manual afternoon", "Manual comment &lt;safe&gt;", "Google calendar event", "navigation-script"]) {
+        assert.ok(html.includes(text), `${role}/${view}: ${text}`);
+      }
+      if (role === "viewer") {
+        assert.match(html, /href="\/admin\/staff\?section=calendar&amp;calendarStart=2026-10-08&amp;calendarView=(day|week|month)&amp;order=readonly-order"/);
+        assert.doesNotMatch(html, /assignment-editor|staff-sections|staff-notice|address-script|travel-script/);
+        assert.doesNotMatch(html, /<form\b|data-admin-dialog-open=|data-admin-team-calendar-menu="true"/);
+      } else {
+        assert.match(html, /assignment-editor/);
+        assert.match(html, /data-admin-dialog-open="admin-staff-assignment-dialog-readonly-order"/);
+      }
+    }
+  }
+  assert.equal(ledgerCalls.length, 6);
+  assert.ok(ledgerCalls.every((filters) => filters.limit === 1000));
+  assert.deepEqual(calendarCalls, Array.from({ length: 6 }, () => ["cleaner-1"]));
+});
+
 test("assigns unique team calendar colors to each cleaner", () => {
   const helpers = createCalendarHelpers();
   const staffSummaries = Array.from({ length: 12 }, (_, index) => ({

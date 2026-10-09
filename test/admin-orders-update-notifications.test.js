@@ -4,12 +4,12 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createAdminOrdersUpdateHandlers } = require("../lib/admin/handlers-orders-update");
 
-async function updateOrder(formBody, status = "scheduled", missingAssignment = false) {
+async function updateOrder(formBody, status = "scheduled", missingAssignment = false, recurring = false) {
   let entry = {
     id: "old-order",
     selectedDate: "2026-08-23",
     selectedTime: "07:00",
-    payloadForRetry: { orderState: { status, assignedStaff: "Anastasiia, Tolkun" } },
+    payloadForRetry: { orderState: { status, assignedStaff: "Anastasiia, Tolkun", frequency: recurring ? "weekly" : "" } },
   };
   let assignment = {
     entryId: entry.id, staffIds: ["nastia", "tolkun"], status: "confirmed",
@@ -41,6 +41,7 @@ async function updateOrder(formBody, status = "scheduled", missingAssignment = f
     normalizeString,
     normalizeOrderStatus: (value, fallback) => value || fallback,
     normalizeManualOrderFrequency: (value) => value || "",
+    buildRecurringOrderSeriesSubmissions() { throw new Error("Single-visit edit must not generate future visits"); },
     resolveAssignableStaffIdsByNames: async (_, __, names) => ({
       snapshot: await staffStore.getSnapshot(),
       staffIds: staff.filter((record) => names.includes(record.name)).map((record) => record.id),
@@ -56,6 +57,7 @@ async function updateOrder(formBody, status = "scheduled", missingAssignment = f
     requestContext: {},
     staffStore,
     quoteOpsLedger: {
+      async listEntries() { throw new Error("Single-visit edit must not read or mutate the series"); },
       async updateOrderEntry(_, updates) {
         const state = { ...getState(entry), ...updates };
         if (updates.orderStatus) state.status = updates.orderStatus;
@@ -124,4 +126,13 @@ test("editing a completed visit updates that visit, not the next visit", async (
   assert.equal(result.entry.selectedDate, "2026-10-18");
   assert.equal(result.entry.selectedTime, "10:00");
   assert.equal(result.entry.payloadForRetry.orderState.status, "scheduled");
+});
+
+test("editing one recurring visit's team or time never invokes the series generator", async () => {
+  for (const fields of [{ assignedStaff: ["Zilola"] }, { selectedTime: "10:00" }]) {
+    const result = await updateOrder({ ...fields, recurringEditScope: "current" }, "scheduled", false, true);
+    assert.equal(result.entry.id, "old-order");
+    assert.equal(result.calls.assignments, 1);
+    assert.equal(result.entry.payloadForRetry.orderState.frequency, "weekly");
+  }
 });

@@ -8,6 +8,21 @@ function normalizeString(value, maxLength = 500) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+test("complete series reads fail closed instead of using a partial memory fallback", async () => {
+  const store = createQuoteOpsStore({
+    QUOTE_OPS_LEDGER_LIMIT: 25,
+    normalizeString,
+    applyOrderEntryUpdates: (entry) => entry,
+    createSupabaseQuoteOpsClient: () => ({
+      config: { configured: true, url: "https://example.supabase.co", tableName: "quote_ops_entries" },
+      isConfigured: () => true,
+      async fetchAllEntries() { throw new Error("incomplete ledger"); },
+      async fetchEntries() { return [{ id: "only-recent-entry" }]; },
+    }),
+  });
+  await assert.rejects(store.listAllEntries(), /incomplete ledger/);
+});
+
 test("tracks diagnostics when Supabase read falls back to local memory", async () => {
   const store = createQuoteOpsStore({
     QUOTE_OPS_LEDGER_LIMIT: 25,

@@ -7,6 +7,7 @@ const {
   getScheduleSyncedAssignmentStatus,
   shouldAutoScheduleAssignedNewOrder,
   shouldResetRecurringFutureVisits,
+  shouldExtendRecurringSeries,
 } = require("../lib/admin/handlers-orders-update");
 
 test("confirms assignments for scheduled orders", () => {
@@ -69,4 +70,17 @@ test("resets future recurring visits only when the manager selects the future sc
     }),
     true
   );
+});
+
+test("single-visit schedule and team edits do not extend a recurring series", () => {
+  assert.equal(shouldExtendRecurringSeries({ editScope: "current", assignmentChanged: true }), false);
+  assert.equal(shouldExtendRecurringSeries({ editScope: "current", scheduleChanged: true }), false);
+  assert.equal(shouldExtendRecurringSeries({ editScope: "future", assignmentChanged: true }), true);
+  assert.equal(shouldExtendRecurringSeries({ resetFutureVisitsForEdit: true }), true);
+});
+
+test("initial scheduling, completion and frequency changes still extend recurring series", () => {
+  for (const property of ["transitionedToScheduled", "transitionedToCompleted", "frequencyChanged"]) {
+    assert.equal(shouldExtendRecurringSeries({ editScope: "current", [property]: true }), true);
+  }
 });

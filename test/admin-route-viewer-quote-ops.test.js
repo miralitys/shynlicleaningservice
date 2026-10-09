@@ -19,6 +19,13 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     GHL_ENABLE_NOTES: "0", GHL_CREATE_OPPORTUNITY: "0",
     SHYNLI_FETCH_STUB_ENTRY: fetchStub.stubEntry,
   };
+  await fs.writeFile(env.ADMIN_STAFF_STORE_PATH, JSON.stringify({ staff: [{
+    id: "availability-test-staff", name: "Availability Test Cleaner", status: "active",
+    availabilityBlocks: [
+      { id: "hours", date: "2099-11-20", allDay: false, startTime: "15:00", endTime: "19:00", notes: "Private & safe <note>" },
+      { id: "day", date: "2099-11-21", allDay: true, notes: "All day test" },
+    ],
+  }], assignments: [] }));
   const started = await startServer({ env });
   const post = (route, cookie, values) => fetch(`${started.baseUrl}${route}`, {
     method: "POST", redirect: "manual",
@@ -31,8 +38,9 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
   };
   const assertReadOnly = (html) => {
     assert.doesNotMatch(html, /<form\b[^>]*method="post"[^>]*action="\/admin\/quote-ops(?:\/retry)?"/i);
-    assert.doesNotMatch(html, /Создать таск|Удалить таск|Удалить заявку|Сохранить этап|Сохранить переход|Подтвердить и создать заказ/);
+    assert.doesNotMatch(html, /Создать таск|Удалить таск|Закрыть таск|Отменить таск|Удалить заявку|Сохранить этап|Сохранить переход|Подтвердить и создать заказ/);
     assert.doesNotMatch(html, /draggable="true"/);
+    assert.doesNotMatch(html, /<dialog\b[^>]*id="admin-(save-)?confirm-dialog"/);
   };
 
   try {
@@ -83,7 +91,13 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
       action: "create-lead-task", entryId: "standalone", taskTitle: "Late standalone task",
       taskDueAt: "2099-11-20T23:30", assigneeId: managerId,
     })).status, 303);
+    assert.equal((await post("/admin/quote-ops", managerCookie, {
+      action: "create-lead-task", entryId: "standalone", taskTitle: "Overdue standalone audit task",
+      taskDueAt: "2020-01-01T09:00", assigneeId: managerId,
+    })).status, 303);
     const managerTasks = await get("/admin/quote-ops?section=tasks", managerCookie);
+    assert.match(managerTasks.html, /Закрыть таск/);
+    assert.match(managerTasks.html, /Отменить таск/);
     const taskDialogs = Array.from(managerTasks.html.matchAll(/<dialog\b[^>]*id="admin-quote-task-result-dialog-([^"]+)"[^>]*>[\s\S]*?<\/dialog>/g));
     const futureId = taskDialogs.find((match) => match[0].includes("Future manual task"))[1];
     const closedId = taskDialogs.find((match) => match[0].includes("Closed manual task"))[1];
@@ -97,6 +111,7 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
       assertReadOnly(page.html);
       assert.match(page.html, /href="\/admin\/quote-ops"/);
       assert.match(page.html, /href="\/admin\/quote-ops\?section=tasks"/);
+      assert.match(page.html, /href="\/admin\/staff\?section=calendar"/);
       assert.doesNotMatch(page.html, /href="\/admin\/(staff|settings)"/);
     }
     const tasks = await get("/admin/quote-ops?section=tasks", viewerCookie);
@@ -109,6 +124,79 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     assert.match(tasks.html, /Future Task Client/);
     assert.match(tasks.html, /Генеральная уборка/);
     assert.match(tasks.html, /admin-quote-task-dialog-manager">manager<\/p>/);
+    const viewerDashboard = await get("/admin", viewerCookie);
+    const managerDashboard = await get("/admin", managerCookie);
+    assert.match(viewerDashboard.html, /Overdue standalone audit task/);
+    assert.match(managerDashboard.html, /Overdue standalone audit task/);
+    assertReadOnly(viewerDashboard.html);
+    const availability = await get("/admin/quote-ops?section=availability&dateFrom=2099-11-20&dateTo=2099-11-20", viewerCookie);
+    assert.equal(availability.status, 200);
+    assertReadOnly(availability.html);
+    assert.match(availability.html, /Availability Test Cleaner/);
+    assert.match(availability.html, /15:00/);
+    assert.match(availability.html, /19:00/);
+    assert.match(availability.html, /Private &amp; safe &lt;note&gt;/);
+    assert.doesNotMatch(availability.html, /All day test/);
+    assert.doesNotMatch(availability.html, /name="action" value="save-staff-unavailable-day"/);
+    assert.equal((await post("/admin/quote-ops?section=availability", viewerCookie, {
+      action: "save-staff-unavailable-day", staffId: "availability-test-staff", availabilityDate: "2099-11-20",
+    })).status, 403);
+
+    const createdOrder = await post("/admin/orders", adminCookie, {
+      action: "create-manual-order", customerName: "Calendar Audit Client", customerPhone: "3125550123",
+      serviceType: "standard", selectedDate: "2099-11-20", selectedTime: "09:00",
+      serviceDurationHours: "2", serviceDurationMinutes: "0", totalPrice: "180",
+      fullAddress: "100 Test Street, Naperville, IL 60563",
+    });
+    assert.equal(createdOrder.status, 303);
+    const orderId = new URL(createdOrder.headers.get("location"), started.baseUrl).searchParams.get("order");
+    assert.ok(orderId);
+    assert.equal((await post("/admin/staff", adminCookie, {
+      action: "save-assignment", entryId: orderId, staffIds: "availability-test-staff", status: "planned",
+    })).status, 303);
+    for (const view of ["day", "week", "month"]) {
+      const route = `/admin/staff?section=calendar&calendarStart=2099-11-20&calendarView=${view}`;
+      const calendar = await get(route, viewerCookie);
+      assert.equal(calendar.status, 200);
+      assertReadOnly(calendar.html);
+      assert.match(calendar.html, /Calendar Audit Client/);
+      assert.match(calendar.html, /Availability Test Cleaner/);
+      assert.match(calendar.html, /Private &amp; safe &lt;note&gt;/);
+      assert.match(calendar.html, /03:00 PM.*07:00 PM/);
+      assert.match(calendar.html, new RegExp(`href="/admin/staff\\?section=calendar&amp;calendarStart=2099-11-20&amp;calendarView=${view}&amp;order=${orderId}"`));
+      assert.doesNotMatch(calendar.html, /<form\b[^>]*method="post"[^>]*action="\/admin\/staff"/i);
+      assert.doesNotMatch(calendar.html, /<dialog\b[^>]*id="admin-staff-assignment-dialog-/);
+      assert.doesNotMatch(calendar.html, /<details\b[^>]*data-admin-team-calendar-menu=/);
+      assert.doesNotMatch(calendar.html, /href="\/admin\/(staff\?section=(team|assignments)|payroll|settings)"/);
+      if (view !== "day") assert.match(calendar.html, /All day test/);
+      const selected = await get(`${route}&order=${orderId}`, viewerCookie);
+      assert.equal(selected.status, 200);
+      assertReadOnly(selected.html);
+      assert.match(selected.html, /<dialog\b[^>]* open data-admin-dialog-server-open="true"/);
+      assert.match(selected.html, /100 Test Street, Naperville, IL 60563/);
+      assert.doesNotMatch(selected.html, /name="action" value="(?:save-assignment|clear-assignment)"/);
+      assert.doesNotMatch(selected.html, /Сохранить назначение|Очистить назначение|name="staffIds"/);
+      for (const cookie of [managerCookie, adminCookie]) {
+        const editableCalendar = await get(route, cookie);
+        assert.equal(editableCalendar.status, 200);
+        assert.match(editableCalendar.html, /Calendar Audit Client/);
+        assert.match(editableCalendar.html, /Private &amp; safe &lt;note&gt;/);
+        assert.match(editableCalendar.html, /name="action" value="save-assignment"/);
+        if (view !== "month") assert.match(editableCalendar.html, /name="action" value="save-staff-unavailable-day"/);
+      }
+    }
+    for (const route of ["/admin/staff", "/admin/staff?section=team", "/admin/staff?section=assignments"]) {
+      const response = await fetch(`${started.baseUrl}${route}`, { headers: { cookie: viewerCookie }, redirect: "manual" });
+      assert.equal(response.status, 303);
+      assert.equal(response.headers.get("location"), "/admin/staff?section=calendar");
+    }
+    const staffBeforeForbiddenPosts = await fs.readFile(env.ADMIN_STAFF_STORE_PATH, "utf8");
+    for (const action of ["save-staff-unavailable-day", "clear-staff-unavailable-day", "save-assignment", "clear-assignment", "update-staff", "delete-staff", "unknown-action"]) {
+      assert.equal((await post("/admin/staff?section=calendar", viewerCookie, {
+        action, entryId: orderId, staffId: "availability-test-staff", availabilityDate: "2099-11-20",
+      })).status, 403, action);
+    }
+    assert.equal(await fs.readFile(env.ADMIN_STAFF_STORE_PATH, "utf8"), staffBeforeForbiddenPosts);
 
     const filtered = await get("/admin/quote-ops?section=tasks&taskStatus=open&dueFrom=2099-11-20&dueTo=2099-11-20", viewerCookie);
     assert.match(filtered.html, /Future manual task/);

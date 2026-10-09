@@ -2065,7 +2065,7 @@ test("explicitly scheduling a new visit from a completed order creates a separat
   }
 });
 
-test("creates a completed-order follow-up task and records the next cleaning outcome", async () => {
+test("creates follow-ups only without future orders and records the next cleaning outcome", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-completed-followup-"));
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const fetchStub = createFetchStub([
@@ -2107,11 +2107,11 @@ test("creates a completed-order follow-up task and records the next cleaning out
 
     const agreedQuoteResponse = await submitQuote(started.baseUrl, {
       requestId: "completed-followup-agreed",
-      serviceType: "regular",
+      serviceType: "deep",
       fullName: "Completed Followup Agreed",
       email: "completed.followup.agreed@example.com",
       phone: "312-555-2191",
-      frequency: "weekly",
+      frequency: "",
       selectedDate: "2026-04-14",
       selectedTime: "09:00",
       fullAddress: "501 Followup Lane, Aurora, IL 60505",
@@ -2189,16 +2189,16 @@ test("creates a completed-order follow-up task and records the next cleaning out
     );
     const agreedOrdersBody = await agreedOrdersResponse.text();
     assert.equal(agreedOrdersResponse.status, 200);
-    assert.match(agreedOrdersBody, /Найдено 27 из \d+ заказов\./);
+    assert.match(agreedOrdersBody, /Найдено 2 из \d+ заказов\./);
     assert.match(agreedOrdersBody, /04\/29\/2026 \(Ср\), 02:30 PM/);
 
     const declinedQuoteResponse = await submitQuote(started.baseUrl, {
       requestId: "completed-followup-declined",
-      serviceType: "regular",
+      serviceType: "deep",
       fullName: "Completed Followup Declined",
       email: "completed.followup.declined@example.com",
       phone: "312-555-2192",
-      frequency: "weekly",
+      frequency: "",
       selectedDate: "2026-04-14",
       selectedTime: "10:00",
       fullAddress: "502 Followup Lane, Aurora, IL 60505",
@@ -2267,9 +2267,32 @@ test("creates a completed-order follow-up task and records the next cleaning out
     );
     const declinedOrdersBody = await declinedOrdersResponse.text();
     assert.equal(declinedOrdersResponse.status, 200);
-    assert.match(declinedOrdersBody, /Найдено 27 из \d+ заказов\./);
+    assert.match(declinedOrdersBody, /Найдено 1 из \d+ заказов\./);
     assert.doesNotMatch(declinedOrdersBody, /data-order-funnel-status="canceled"/);
-    assert.match(declinedOrdersBody, /data-order-funnel-status="scheduled"/);
+    assert.match(declinedOrdersBody, /data-order-funnel-status="completed"/);
+
+    const bookedQuote = await submitQuote(started.baseUrl, {
+      requestId: "completed-followup-already-booked",
+      serviceType: "regular", fullName: "Already Booked Client",
+      phone: "312-555-2193", frequency: "weekly",
+      selectedDate: "2030-04-14", selectedTime: "09:00",
+      fullAddress: "503 Followup Lane, Aurora, IL 60505",
+    });
+    assert.equal(bookedQuote.status, 201);
+    const bookedEntryId = await createOrderFromQuoteRequest(
+      started.baseUrl, sessionCookieValue, "completed-followup-already-booked"
+    );
+    const completeBooked = await fetch(`${started.baseUrl}/admin/orders`, {
+      method: "POST", redirect: "manual",
+      headers: { "content-type": "application/x-www-form-urlencoded", cookie: `shynli_admin_session=${sessionCookieValue}` },
+      body: new URLSearchParams({ entryId: bookedEntryId, orderStatus: "completed", returnTo: "/admin/orders" }),
+    });
+    assert.equal(completeBooked.status, 303);
+    const bookedTasks = await fetch(`${started.baseUrl}/admin/quote-ops?section=tasks&q=completed-followup-already-booked`, {
+      headers: { cookie: `shynli_admin_session=${sessionCookieValue}` },
+    });
+    assert.equal(bookedTasks.status, 200);
+    assert.equal(getLeadTaskIdByEntryId(await bookedTasks.text(), bookedEntryId), "");
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

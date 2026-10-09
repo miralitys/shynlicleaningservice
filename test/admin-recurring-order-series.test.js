@@ -177,6 +177,52 @@ function createStaffStore(status = "planned") {
   };
 }
 
+test("series generation uses the complete ledger, not the latest 1000 records", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "kylie", date: "2026-10-11", frequency: "weekly" });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  const completeEntries = await ledger.listEntries();
+  const before = JSON.stringify(completeEntries);
+  ledger.listAllEntries = async () => completeEntries;
+  ledger.listEntries = async () => [root];
+
+  const created = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+
+  assert.equal(created.length, 0);
+  assert.equal(completeEntries.length, JSON.parse(before).length);
+});
+
+test("a failed complete read creates nothing and releases the series generation lock", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "kylie", date: "2026-10-11", frequency: "weekly" });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  ledger.listAllEntries = async () => { throw new Error("incomplete ledger"); };
+  await assert.rejects(helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root }), /incomplete ledger/);
+  assert.equal((await ledger.listEntries()).length, 1);
+  ledger.listAllEntries = ledger.listEntries;
+  assert.ok((await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root })).length > 0);
+});
+
+test("overlapping series generators from separate handlers cannot insert duplicate visits", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "kylie", date: "2026-10-11", frequency: "weekly" });
+  const ledger = createLedger(domain, [root]);
+  const deps = { ...domain, getEntryOrderState, normalizeString };
+  const first = createAdminOrdersRecurringHelpers(deps);
+  const second = createAdminOrdersRecurringHelpers(deps);
+  const created = await Promise.all([
+    first.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root }),
+    second.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root }),
+  ]);
+  const entries = await ledger.listEntries();
+
+  assert.equal(new Set(entries.map((entry) => entry.requestId)).size, entries.length);
+  assert.equal(created.filter((items) => items.length > 0).length, 1);
+});
+
 test("keeps confirmed staff assignments on generated recurring visits", async () => {
   const domain = createDomain();
   const source = createEntry({
@@ -638,7 +684,7 @@ test("adopts existing generated visits when recurrence is assigned later", async
   const ledger = createLedger(domain, [root, october]);
   const originalRecordSubmission = ledger.recordSubmission;
   ledger.recordSubmission = async (submission) => {
-    if (submission.requestId === october.requestId) return october;
+    assert.notEqual(submission.requestId, october.requestId, "adopt the existing visit without inserting it again");
     return originalRecordSubmission(submission);
   };
   const helpers = createAdminOrdersRecurringHelpers({

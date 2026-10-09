@@ -39,7 +39,7 @@ function createHelpers() {
   });
 }
 
-test("hides next-cleaning task while the client has a future assigned visit", () => {
+test("renders persisted task status without hiding records before approved cleanup", () => {
   const helpers = createHelpers();
   const customerPhone = "+1 (630) 555-0100";
   const completedEntry = {
@@ -56,7 +56,9 @@ test("hides next-cleaning task while the client has a future assigned visit", ()
     order: { status: "scheduled", assignedStaff: "Anastasiia Iaparova" },
   };
 
-  assert.deepEqual(helpers.buildQuoteOpsTaskRecords([completedEntry, futureEntry]), []);
+  assert.equal(helpers.buildQuoteOpsTaskRecords([completedEntry, futureEntry])[0].status, "open");
+  completedEntry.tasks[0].status = "completed";
+  assert.equal(helpers.buildQuoteOpsTaskRecords([completedEntry, futureEntry])[0].status, "completed");
 });
 
 test("shows next-cleaning task when no future assigned visit remains", () => {

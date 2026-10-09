@@ -65,6 +65,82 @@ function createOrderAwareLeadDomain() {
   });
 }
 
+test("declined stage cancels automatic tasks, preserves manual tasks and ignores stale contact time", () => {
+  const domain = createLeadDomain();
+  const entry = { kind: "quote_submission", payloadForRetry: { adminLead: {
+    status: "discussion", discussionNextContactAt: "2099-10-20T10:00",
+    tasks: [{ id: "auto", kind: "discussion-followup", status: "open" },
+      { id: "manual", kind: "manual", status: "open" }],
+  } } };
+  domain.applyLeadEntryUpdates(entry, { status: "declined" });
+  assert.equal(domain.getEntryLeadTasks(entry).find((task) => task.id === "auto").status, "canceled");
+  assert.equal(domain.getEntryLeadTasks(entry).find((task) => task.id === "manual").status, "open");
+  assert.equal(domain.getEntryLeadTasks(entry).filter((task) => task.kind !== "manual" && task.status === "open").length, 0);
+});
+
+test("resaving a stage reuses the same automatic task and updates its chosen deadline", () => {
+  const domain = createLeadDomain();
+  const entry = { kind: "quote_submission", payloadForRetry: { adminLead: { status: "discussion", tasks: [] } } };
+  domain.applyLeadEntryUpdates(entry, { status: "discussion", nextContactAt: "2099-10-20T10:00" });
+  const id = domain.getEntryOpenLeadTask(entry).id;
+  domain.applyLeadEntryUpdates(entry, { status: "discussion", nextContactAt: "2099-10-22T11:00" });
+  assert.equal(domain.getEntryLeadTasks(entry).length, 1);
+  assert.equal(domain.getEntryOpenLeadTask(entry).id, id);
+  assert.equal(domain.getEntryOpenLeadTask(entry).dueAt, "2099-10-22T16:00:00.000Z");
+});
+
+test("explicit task closure or cancellation changes only the selected task", () => {
+  for (const [taskAction, status] of [["complete", "completed"], ["cancel", "canceled"]]) {
+    const domain = createLeadDomain();
+    const entry = { kind: "quote_submission", payloadForRetry: {
+      adminOrder: { frequency: "weekly", selectedDate: "2099-11-20", assignedStaff: "Original team" },
+      adminLead: { status: "discussion", notes: "Original notes", tasks: [
+        { id: "selected", kind: "discussion-followup", status: "open" },
+        { id: "other", kind: "manual", status: "open" },
+      ] },
+    } };
+    const order = structuredClone(entry.payloadForRetry.adminOrder);
+    domain.applyLeadEntryUpdates(entry, { taskId: "selected", taskAction });
+    assert.equal(domain.getEntryLeadTasks(entry).find((task) => task.id === "selected").status, status);
+    assert.equal(domain.getEntryLeadTasks(entry).find((task) => task.id === "other").status, "open");
+    assert.equal(entry.payloadForRetry.adminLead.status, "discussion");
+    assert.equal(entry.payloadForRetry.adminLead.notes, "Original notes");
+    assert.deepEqual(entry.payloadForRetry.adminOrder, order);
+  }
+});
+
+test("notes or SMS sync never reopens a completed contact task", () => {
+  const domain = createLeadDomain();
+  const entry = { kind: "quote_submission", payloadForRetry: { adminLead: { status: "new", tasks: [
+    { id: "done", kind: "contact-client", status: "completed" },
+  ] } } };
+  domain.applyLeadEntryUpdates(entry, { notes: "Updated notes" });
+  domain.applyLeadEntryUpdates(entry, { smsHistory: [] });
+  assert.equal(domain.getEntryLeadTasks(entry).length, 1);
+  assert.equal(domain.getEntryOpenLeadTask(entry), null);
+});
+
+test("replaying a completed task action does not replace its existing followup", () => {
+  const domain = createLeadDomain();
+  const entry = { kind: "quote_submission", payloadForRetry: { adminLead: { status: "new", tasks: [
+    { id: "contact", kind: "contact-client", status: "open" },
+  ] } } };
+  const updates = { taskId: "contact", taskAction: "contacted", nextStatus: "discussion", nextContactAt: "2099-10-20T10:00" };
+  domain.applyLeadEntryUpdates(entry, updates);
+  const snapshot = structuredClone(entry);
+  domain.applyLeadEntryUpdates(entry, updates);
+  assert.deepEqual(entry, snapshot);
+});
+
+test("confirmed leads still allow an explicitly scheduled contact, declined leads do not", () => {
+  const domain = createLeadDomain();
+  const entry = { kind: "quote_submission", payloadForRetry: { adminLead: { status: "discussion", tasks: [] } } };
+  domain.applyLeadEntryUpdates(entry, { status: "confirmed", nextContactAt: "2099-10-20T10:00" });
+  assert.equal(domain.getEntryOpenLeadTask(entry).kind, "discussion-followup");
+  domain.applyLeadEntryUpdates(entry, { status: "declined", nextContactAt: "2099-10-20T10:00" });
+  assert.equal(domain.getEntryOpenLeadTask(entry), null);
+});
+
 test("keeps a saved task id stable", () => {
   const domain = createLeadDomain();
   const entry = {
