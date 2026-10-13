@@ -77,8 +77,8 @@
         result.totalPrice.toLocaleString("en-US", { maximumFractionDigits: 2 })
       : "$0";
     document.getElementById("pricingFrequencyNotice").hidden = true;
-    document.getElementById("refrigeratorCondition").disabled = !result.services.includes("refrigeratorCleaning");
-    document.getElementById("cabinetsCondition").disabled = !result.services.includes("insideCabinets");
+    document.getElementById("refrigeratorCondition").disabled = false;
+    document.getElementById("cabinetsCondition").disabled = false;
     for (const [key, label] of Object.entries(controls.roomLabels)) {
       document
         .getElementById(key + "-qty")
