@@ -83,6 +83,9 @@
         )
         .join(""),
     );
+    document.querySelector('[data-quantity-service="interiorWindowsCleaning"]').after(
+      document.getElementById("quote2InteriorWindowsWithTracks").closest(".quote2-quantity-item"),
+    );
     quantities.insertAdjacentHTML(
       "afterend",
       '<p class="quote2-section-copy">' + chandelierNote + "</p>",
@@ -136,6 +139,9 @@
           ),
         )
         .join(""),
+    );
+    document.getElementById("windows-qty").closest(".quantity-item").after(
+      document.getElementById("interiorWindowsWithTracks-qty").closest(".quantity-item"),
     );
     originalQuantities.insertAdjacentHTML(
       "afterend",
