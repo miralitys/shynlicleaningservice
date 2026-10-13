@@ -3,6 +3,8 @@
   const engine = window.ShynliPricing;
   const controls = window.ShynliCalculatorControls;
   controls.mountPricing();
+  document.querySelector('#frequency option[value="every3weeks"]').textContent = "Every 3 weeks";
+  document.getElementById("pricingFrequencyNotice").textContent = "";
   const form = document.getElementById("cleaningCalculator");
   const serviceKeys = {
     oven: "ovenCleaning",
@@ -74,8 +76,7 @@
       ? "$" +
         result.totalPrice.toLocaleString("en-US", { maximumFractionDigits: 2 })
       : "$0";
-    document.getElementById("pricingFrequencyNotice").hidden =
-      !result.frequencyNotice;
+    document.getElementById("pricingFrequencyNotice").hidden = true;
     document.getElementById("refrigeratorCondition").disabled = !result.services.includes("refrigeratorCleaning");
     document.getElementById("cabinetsCondition").disabled = !result.services.includes("insideCabinets");
     for (const [key, label] of Object.entries(controls.roomLabels)) {
