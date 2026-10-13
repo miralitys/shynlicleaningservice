@@ -27,77 +27,8 @@
   );
   const SERVICE_AREA_ZIP_VALIDATION_ENABLED = SERVICE_AREA_ZIP_CODES.size > 0;
 
-  const PRICING = {
-    regular: {
-      basePrices: {
-        weekly: 101,
-        biweekly: 111,
-        monthly: 121,
-      },
-      roomPrice: 12,
-      firstBathroomPrice: 22,
-      bathroomStepPrice: 12,
-      bathroomStepSize: 0.5,
-      squareFeetStepPrice: 20,
-      basementCleaningFee: 45,
-      includedServices: [],
-      defaultSelectedServices: [],
-    },
-    deep: {
-      basePrice: 84.5,
-      roomPrice: 22.5,
-      firstBathroomPrice: 45,
-      bathroomStepPrice: 22.5,
-      bathroomStepSize: 0.5,
-      squareFeetStepPrice: 20,
-      basementCleaningFee: 65,
-      includedServices: ["baseboardCleaning", "doorsCleaning"],
-      defaultSelectedServices: ["baseboardCleaning", "doorsCleaning"],
-    },
-    moving: {
-      basePrice: 129.5,
-      roomPrice: 22.5,
-      firstBathroomPrice: 45,
-      bathroomStepPrice: 22.5,
-      bathroomStepSize: 0.5,
-      squareFeetStepPrice: 20,
-      basementCleaningFee: 65,
-      includedServices: ["baseboardCleaning", "doorsCleaning"],
-      defaultSelectedServices: [
-        "ovenCleaning",
-        "refrigeratorCleaning",
-        "baseboardCleaning",
-        "doorsCleaning",
-      ],
-    },
-    squareFeetIncluded: 1200,
-    squareFeetStep: 500,
-    squareFeetStepPrice: 20,
-    squareFeetPricingBuckets: Object.freeze([
-      Object.freeze({ max: 1200, step: 0 }),
-      Object.freeze({ max: 2000, step: 1 }),
-      Object.freeze({ max: 2500, step: 2 }),
-      Object.freeze({ max: 3000, step: 3 }),
-      Object.freeze({ max: 3500, step: 4 }),
-      Object.freeze({ max: 4000, step: 5 }),
-      Object.freeze({ max: 5000, step: 6 }),
-      Object.freeze({ max: Number.POSITIVE_INFINITY, step: 7 }),
-    ]),
-    services: {
-      ovenCleaning: 45,
-      refrigeratorCleaning: 45,
-      baseboardCleaning: 22,
-      doorsCleaning: 22,
-      insideCabinets: 45,
-      rangeHood: 22,
-      furniturePolishing: 20,
-    },
-    quantityServices: {
-      interiorWindowsCleaning: 6,
-      blindsCleaning: 8,
-      bedLinenChange: 8,
-    },
-  };
+  const PRICING = window.ShynliPricing.PRICING;
+  window.ShynliCalculatorControls.mountQuote();
 
   const SERVICE_LABELS = {
     regular: "Regular Cleaning",
@@ -115,6 +46,7 @@
     weekly: "Weekly",
     biweekly: "Biweekly",
     monthly: "Monthly",
+    every3weeks: "Every 3 weeks (biweekly estimate)",
   };
 
   const STEP_META = {
@@ -137,6 +69,8 @@
     interiorWindowsCleaning: "Interior windows",
     blindsCleaning: "Blinds",
     bedLinenChange: "Bed linen change",
+    ...window.ShynliCalculatorControls.quantityLabels,
+    topKitchenCabinets: "Top of kitchen cabinets",
   };
 
   const state = {
@@ -192,6 +126,10 @@
     squareFeet: document.getElementById("quote2SquareFeet"),
     basementCleaning: document.getElementById("quote2BasementCleaning"),
     hasPets: document.getElementById("quote2HasPets"),
+    refrigeratorCondition: document.getElementById("quote2RefrigeratorCondition"),
+    cabinetsCondition: document.getElementById("quote2CabinetsCondition"),
+    additionalRooms: Object.fromEntries(Object.keys(window.ShynliCalculatorControls.roomLabels).map(key => [key, document.getElementById("quote2" + key.charAt(0).toUpperCase() + key.slice(1))])),
+    quantities: Object.fromEntries(Object.keys(PRICING.quantityServices).map(key => [key, document.getElementById("quote2" + key.charAt(0).toUpperCase() + key.slice(1))])),
     services: Array.from(document.querySelectorAll('input[name="services"]')),
     interiorWindowsCleaning: document.getElementById("quote2InteriorWindowsCleaning"),
     blindsCleaning: document.getElementById("quote2BlindsCleaning"),
@@ -532,51 +470,6 @@
     return elements.frequency.value || "biweekly";
   }
 
-  function getRegularBasePrice(frequency) {
-    return PRICING.regular.basePrices[frequency] || PRICING.regular.basePrices.biweekly;
-  }
-
-  function calculateBedroomPrice(serviceType, rooms) {
-    const typePricing = PRICING[serviceType] || PRICING.regular;
-    return rooms * (typePricing.roomPrice || 0);
-  }
-
-  function calculateBathroomPrice(typePricing, bathrooms) {
-    if (!bathrooms || bathrooms <= 0) return 0;
-    if (bathrooms <= 1) return typePricing.firstBathroomPrice || 0;
-    return (
-      (typePricing.firstBathroomPrice || 0) +
-      ((bathrooms - 1) / (typePricing.bathroomStepSize || 0.5)) * (typePricing.bathroomStepPrice || 0)
-    );
-  }
-
-  function calculateSquareFeetPrice(typePricing, squareFeet) {
-    const squareFeetStep = normalizeSquareFeetBucket(squareFeet);
-    const stepPrice =
-      typePricing.squareFeetStepPrice !== undefined
-        ? typePricing.squareFeetStepPrice
-        : PRICING.squareFeetStepPrice;
-
-    return squareFeetStep * stepPrice;
-  }
-
-  function normalizeSquareFeetBucket(squareFeet) {
-    const numericValue = Number.parseInt(String(squareFeet || "0").trim(), 10);
-    if (!Number.isFinite(numericValue) || numericValue <= 0) return 0;
-    if (numericValue <= 7) return numericValue;
-
-    for (const bucket of PRICING.squareFeetPricingBuckets) {
-      if (numericValue <= bucket.max) return bucket.step;
-    }
-
-    return 7;
-  }
-
-  function getBasementCleaningFee(serviceType) {
-    const typePricing = PRICING[serviceType] || PRICING.regular;
-    return typePricing.basementCleaningFee || 0;
-  }
-
   function calculateCleaningTime(rooms, bathrooms, serviceType) {
     let baseMin = 2.0;
     let baseMax = 2.5;
@@ -611,11 +504,7 @@
   }
 
   function getQuantityServices() {
-    return {
-      interiorWindowsCleaning: Math.max(0, Number.parseInt(elements.interiorWindowsCleaning.value || "0", 10) || 0),
-      blindsCleaning: Math.max(0, Number.parseInt(elements.blindsCleaning.value || "0", 10) || 0),
-      bedLinenChange: Math.max(0, Number.parseInt(elements.bedLinenChange.value || "0", 10) || 0),
-    };
+    return Object.fromEntries(Object.entries(elements.quantities).map(([key, input]) => [key, Number(input.value || 0)]));
   }
 
   function setFieldPriceLabel(serviceKey, label) {
@@ -632,7 +521,9 @@
       const serviceKey = checkbox.value;
       const isIncluded = includedServices.indexOf(serviceKey) >= 0;
       const isDefaultSelected = defaultSelectedServices.indexOf(serviceKey) >= 0;
-      const price = PRICING.services[serviceKey] || 0;
+      const price = window.ShynliPricing.getServicePrice(serviceKey, { serviceType,
+        refrigeratorCondition: elements.refrigeratorCondition.value,
+        cabinetsCondition: elements.cabinetsCondition.value });
 
       checkbox.disabled = isIncluded;
       if (isIncluded || (isDefaultSelected && checkbox.checked)) {
@@ -696,45 +587,24 @@
   }
 
   function calculateCurrentPricing() {
-    const serviceType = getSelectedServiceType();
-    const typePricing = PRICING[serviceType] || PRICING.regular;
-    const frequency = serviceType === "regular" ? getSelectedFrequency() : "";
-    const rooms = Number.parseInt(elements.rooms.value || "1", 10) || 1;
-    const bathrooms = parseBathroomCount(elements.bathrooms.value, 1);
-    const squareFeet = Number.parseInt(elements.squareFeet.value || "0", 10) || 0;
-    const basementCleaning = elements.basementCleaning.value === "yes";
-    const selectedServices = getSelectedServices();
-    const quantityServices = getQuantityServices();
-
-    let total = serviceType === "regular" ? getRegularBasePrice(frequency) : typePricing.basePrice;
-    total += calculateBedroomPrice(serviceType, rooms);
-    total += calculateBathroomPrice(typePricing, bathrooms);
-    total += calculateSquareFeetPrice(typePricing, squareFeet);
-
-    if (basementCleaning) {
-      total += getBasementCleaningFee(serviceType);
-    }
-
-    selectedServices.forEach(function (serviceKey) {
-      total += PRICING.services[serviceKey] || 0;
+    const result = window.ShynliPricing.calculateQuotePricing({
+      serviceType: getSelectedServiceType(), frequency: getSelectedFrequency(),
+      rooms: elements.rooms.value, bathrooms: elements.bathrooms.value,
+      squareMeters: elements.squareFeet.value, basementCleaning: elements.basementCleaning.value,
+      hasPets: elements.hasPets.value,
+      additionalRooms: Object.fromEntries(Object.entries(elements.additionalRooms).map(([key,input]) => [key, Number(input.value || 0)])),
+      refrigeratorCondition: elements.refrigeratorCondition.value, cabinetsCondition: elements.cabinetsCondition.value,
+      services: getSelectedServices(), quantityServices: getQuantityServices()
     });
-
-    Object.keys(quantityServices).forEach(function (serviceKey) {
-      total += quantityServices[serviceKey] * (PRICING.quantityServices[serviceKey] || 0);
+    document.getElementById("quote2FrequencyNotice").hidden = !result.frequencyNotice;
+    elements.refrigeratorCondition.disabled = !result.services.includes("refrigeratorCleaning");
+    elements.cabinetsCondition.disabled = !result.services.includes("insideCabinets");
+    Object.values(elements.additionalRooms).forEach(input => {
+      input.closest(".quote2-quantity-item").querySelector("small").textContent = "+$" + PRICING[result.serviceType].roomPrice + " each";
     });
-
-    return {
-      serviceType: serviceType,
-      frequency: frequency,
-      rooms: rooms,
-      bathrooms: bathrooms,
-      squareFeet: squareFeet,
-      basementCleaning: basementCleaning,
-      selectedServices: selectedServices,
-      quantityServices: quantityServices,
-      totalPrice: Number(total.toFixed(2)),
-      durationLabel: calculateCleaningTime(rooms, bathrooms, serviceType),
-    };
+    document.querySelector("[data-deep-only]").hidden = result.serviceType === "regular";
+    return { ...result, squareFeet: result.squareMeters, selectedServices: result.services,
+      durationLabel: calculateCleaningTime(result.rooms, result.bathrooms, result.serviceType) };
   }
 
   function getScheduleLabel(dateValue, timeValue) {
@@ -966,6 +836,7 @@
   function updateEstimateTargets() {
     syncAddressZipValidation();
     const pricing = calculateCurrentPricing();
+    syncIncludedServiceStates(pricing.serviceType);
     elements.estimateTargets.forEach(function (target) {
       target.textContent = NO_PRICE_MODE ? "Free quote" : formatCurrency(pricing.totalPrice);
     });
@@ -1100,15 +971,15 @@
         const target = document.getElementById(targetId);
         const direction = Number.parseInt(button.getAttribute("data-stepper-direction") || "0", 10);
         if (!target) return;
-        const nextValue = Math.max(0, (Number.parseInt(target.value || "0", 10) || 0) + direction);
+        const nextValue = Math.min(Number(target.max) || 200, Math.max(0, (Number.parseInt(target.value || "0", 10) || 0) + direction));
         target.value = String(nextValue);
         updateEstimateTargets();
       });
     });
 
-    [elements.interiorWindowsCleaning, elements.blindsCleaning, elements.bedLinenChange].forEach(function (input) {
+    [...Object.values(elements.quantities), ...Object.values(elements.additionalRooms)].forEach(function (input) {
       input.addEventListener("input", function () {
-        const nextValue = Math.max(0, Number.parseInt(input.value || "0", 10) || 0);
+        const nextValue = Math.min(Number(input.max) || 200, Math.max(0, Number.parseInt(input.value || "0", 10) || 0));
         input.value = String(nextValue);
         updateEstimateTargets();
       });
@@ -1162,6 +1033,8 @@
       elements.squareFeet,
       elements.basementCleaning,
       elements.hasPets,
+      elements.refrigeratorCondition,
+      elements.cabinetsCondition,
       elements.addressInput,
       elements.addressLine2,
       elements.city,
@@ -1580,6 +1453,9 @@
       frequency: pricing.frequency,
       services: pricing.selectedServices,
       quantityServices: pricing.quantityServices,
+      additionalRooms: pricing.additionalRooms,
+      refrigeratorCondition: pricing.refrigeratorCondition,
+      cabinetsCondition: pricing.cabinetsCondition,
       additionalDetails: elements.additionalDetails.value.trim(),
       totalPrice: pricing.totalPrice,
       selectedDate: elements.selectedDate.value,

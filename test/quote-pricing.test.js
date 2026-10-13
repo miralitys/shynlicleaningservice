@@ -65,8 +65,8 @@ test("bills included deep-cleaning services to match the pricing calculator", ()
     ],
   });
 
-  assert.equal(pricing.totalPrice, 443.5);
-  assert.deepEqual(pricing.includedServices, ["baseboardCleaning", "doorsCleaning"]);
+  assert.equal(pricing.totalPrice, 466.5);
+  assert.deepEqual(pricing.includedServices, ["baseboardCleaning"]);
   assert.ok(pricing.services.includes("baseboardCleaning"));
   assert.ok(pricing.services.includes("doorsCleaning"));
 });
@@ -87,8 +87,8 @@ test("bills included move-in/out services to match the pricing calculator", () =
     ],
   });
 
-  assert.equal(pricing.totalPrice, 488.5);
-  assert.deepEqual(pricing.includedServices, ["baseboardCleaning", "doorsCleaning"]);
+  assert.equal(pricing.totalPrice, 511.5);
+  assert.deepEqual(pricing.includedServices, ["baseboardCleaning"]);
 });
 
 test("uses pricing-page square-foot step indexes and maps legacy raw square feet", () => {

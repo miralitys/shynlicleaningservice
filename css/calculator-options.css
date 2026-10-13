@@ -1,0 +1,78 @@
+.calculator-note {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.calculator-note,
+#cleaningCalculator .form-group > label,
+#cleaningCalculator .form-group > span {
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 13px;
+}
+.pricing-v2-addons {
+  padding: 48px 20px;
+  font-family: "Montserrat", Arial, sans-serif;
+}
+.pricing-v2-addons__inner {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+.pricing-v2-addons__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+}
+.pricing-v2-addon {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.pricing-v2-addon__price {
+  flex-shrink: 0;
+  color: #9e445a;
+}
+@media (max-width: 600px) {
+  .pricing-v2-addons__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.quote2-quantity-item,
+.quantity-item {
+  min-width: 0;
+}
+.quote2-quantity-copy,
+.quantity-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.quote2-stepper,
+.quantity-controls {
+  flex-shrink: 0;
+}
+#cleaningCalculator .addon-checkbox:not(:disabled) {
+  pointer-events: auto;
+}
+.quote2-quantity-item {
+  flex-wrap: wrap;
+}
+.quote2-field small {
+  font-size: 13px;
+  line-height: 1.5;
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 480px) {
+  .quantity-item {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .quantity-label {
+    flex-basis: 100%;
+  }
+}

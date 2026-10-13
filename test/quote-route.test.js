@@ -1243,6 +1243,12 @@ test("returns canonical repriced values while keeping quote history local", asyn
           bathrooms: 0,
           squareMeters: 1,
           totalPrice: 1,
+          hasPets: "dog",
+          additionalRooms: {office: 2, sunroom: 1, familyRoom: 0, loft: 1},
+          refrigeratorCondition: "notEmptied",
+          cabinetsCondition: "notEmptied",
+          services: ["refrigeratorCleaning", "insideCabinets"],
+          quantityServices: {interiorWindowsWithTracks: 2, slidingDoorBothSides: 1, chandelierCleaning: 1},
         }),
       }),
     });
@@ -1256,6 +1262,12 @@ test("returns canonical repriced values while keeping quote history local", asyn
       bathrooms: 0,
       squareMeters: 1,
       totalPrice: 1,
+      hasPets: "dog",
+      additionalRooms: {office: 2, sunroom: 1, familyRoom: 0, loft: 1},
+      refrigeratorCondition: "notEmptied",
+      cabinetsCondition: "notEmptied",
+      services: ["refrigeratorCleaning", "insideCabinets"],
+      quantityServices: {interiorWindowsWithTracks: 2, slidingDoorBothSides: 1, chandelierCleaning: 1},
     });
 
     assert.equal(payload.pricing.totalPrice, expectedPricing.totalPrice);
