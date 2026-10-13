@@ -68,6 +68,14 @@
   display: none !important;
 }
 @media (max-width: 480px) {
+  .quote2-quantity-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .quote2-quantity-copy {
+    width: 100%;
+  }
   .quantity-item {
     flex-wrap: wrap;
     gap: 8px;
