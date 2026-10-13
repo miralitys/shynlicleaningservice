@@ -7,7 +7,7 @@
     loft: "Loft",
   };
   const quantityLabels = {
-    interiorWindowsWithTracks: "Interior windows with tracks",
+    interiorWindowsWithTracks: "Interior windows with tracks*",
     slidingDoorInterior: "Sliding / glass door: inside with tracks",
     slidingDoorBothSides: "Sliding / glass door: both sides with tracks",
     chandelierCleaning: "Chandelier (crystal or glass)*",
@@ -88,11 +88,13 @@
     );
     quantities.insertAdjacentHTML(
       "afterend",
-      '<p class="quote2-section-copy">' + chandelierNote + "</p>",
+      '<p class="quote2-section-copy">* Standard-size windows.</p><p class="quote2-section-copy">' + chandelierNote + "</p>",
     );
     document.querySelector(
       '[data-quantity-service="interiorWindowsCleaning"] strong',
-    ).textContent = "Interior windows without tracks";
+    ).textContent = "Interior windows without tracks*";
+    document.querySelector('[data-quantity-service="interiorWindowsCleaning"] small').textContent = "$6/window";
+    document.getElementById("quote2InteriorWindowsWithTracks").closest(".quote2-quantity-item").querySelector("small").textContent = "$8/window";
     document.querySelector(
       '[data-quantity-service="blindsCleaning"] small',
     ).textContent = "$8 per blind. Two blinds on one window: $8 + $8.";
@@ -145,7 +147,7 @@
     );
     originalQuantities.insertAdjacentHTML(
       "afterend",
-      '<p class="calculator-note">' +
+      '<p class="calculator-note">* Standard-size windows.</p><p class="calculator-note">' +
         chandelierNote +
         '</p><p class="calculator-note">Blinds: $8 per blind. Two blinds on one window: $8 + $8.</p>',
     );
@@ -153,7 +155,8 @@
       .getElementById("windows-qty")
       .closest(".quantity-item")
       .querySelector(".quantity-label").textContent =
-      "Interior windows without tracks ($6/window)";
+      "Interior windows without tracks* ($6/window)";
+    document.getElementById("interiorWindowsWithTracks-qty").closest(".quantity-item").querySelector(".quantity-label").textContent = "Interior windows with tracks* ($8/window)";
     document
       .getElementById("blinds-qty")
       .closest(".quantity-item")
