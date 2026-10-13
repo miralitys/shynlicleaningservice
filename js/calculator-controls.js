@@ -97,7 +97,7 @@
     document.getElementById("quote2InteriorWindowsWithTracks").closest(".quote2-quantity-item").querySelector("small").textContent = "$8/window";
     document.querySelector(
       '[data-quantity-service="blindsCleaning"] small',
-    ).textContent = "$8 per blind. Two blinds on one window: $8 + $8.";
+    ).textContent = "Blinds: $8 each. If a window has two blinds, the total is $16.";
     document
       .querySelector("#quote2HasPets")
       .closest("label")
@@ -149,7 +149,7 @@
       "afterend",
       '<p class="calculator-note">* Standard-size windows.</p><p class="calculator-note">' +
         chandelierNote +
-        '</p><p class="calculator-note">Blinds: $8 per blind. Two blinds on one window: $8 + $8.</p>',
+        '</p><p class="calculator-note">Blinds: $8 each. If a window has two blinds, the total is $16.</p>',
     );
     document
       .getElementById("windows-qty")
