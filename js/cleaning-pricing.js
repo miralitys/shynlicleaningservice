@@ -55,6 +55,7 @@
     squareFeetStepPrice: 20,
     services: Object.freeze({
       ovenCleaning: 45,
+      dishwasherCleaning: 30,
       refrigeratorCleaning: 45,
       baseboardCleaning: 22,
       doorsCleaning: 22,

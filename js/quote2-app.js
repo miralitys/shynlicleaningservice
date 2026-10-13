@@ -29,6 +29,7 @@
 
   const PRICING = window.ShynliPricing.PRICING;
   window.ShynliCalculatorControls.mountQuote();
+  window.mountSimpleQuote();
 
   const SERVICE_LABELS = {
     regular: "Regular Cleaning",
@@ -463,6 +464,7 @@
   }
 
   function getSelectedServiceType() {
+    if (document.getElementById("quote2InitialCleaning").value === "yes") return "deep";
     return elements.serviceType.value || "regular";
   }
 
@@ -472,10 +474,6 @@
 
   function getQuantityServices() {
     const quantities = Object.fromEntries(Object.entries(elements.quantities).map(([key, input]) => [key, Number(input.value || 0)]));
-    const count = quantities.interiorWindowsCleaning;
-    const withTracks = document.getElementById("quote2WindowType").value === "with";
-    quantities.interiorWindowsCleaning = withTracks ? 0 : count;
-    quantities.interiorWindowsWithTracks = withTracks ? count : 0;
     return quantities;
   }
 
@@ -568,13 +566,13 @@
       refrigeratorCondition: elements.refrigeratorCondition.value, cabinetsCondition: elements.cabinetsCondition.value,
       services: getSelectedServices(), quantityServices: getQuantityServices()
     });
-    document.getElementById("quote2FrequencyNotice").hidden = !result.frequencyNotice;
+    document.getElementById("quote2FrequencyNotice").hidden = true;
     elements.refrigeratorCondition.disabled = !result.services.includes("refrigeratorCleaning");
     elements.cabinetsCondition.disabled = !result.services.includes("insideCabinets");
     Object.values(elements.additionalRooms).forEach(input => {
       input.closest(".quote2-quantity-item").querySelector("small").textContent = "+$" + PRICING[result.serviceType].roomPrice + " each";
     });
-    document.querySelector("[data-deep-only]").hidden = result.serviceType === "regular";
+    document.querySelector("[data-deep-only]").hidden = true;
     return { ...result, squareFeet: result.squareMeters, selectedServices: result.services,
       durationLabel: result.durationLabel };
   }
@@ -952,7 +950,7 @@
         const target = document.getElementById(targetId);
         const direction = Number.parseInt(button.getAttribute("data-stepper-direction") || "0", 10);
         if (!target) return;
-        const nextValue = Math.min(Number(target.max) || 200, Math.max(0, (Number.parseInt(target.value || "0", 10) || 0) + direction));
+        const nextValue = Math.min(Number(target.max) || 200, Math.max(Number(target.min) || 0, (Number(target.value || "0") || 0) + direction * (Number(target.step) || 1)));
         target.value = String(nextValue);
         updateEstimateTargets();
       });
@@ -1007,8 +1005,16 @@
   }
 
   function initGeneralFieldListeners() {
+    document.getElementById("quote2InitialCleaning").addEventListener("change", function () {
+      const defaults = PRICING[getSelectedServiceType()].defaultSelectedServices;
+      elements.services.filter(input => input.closest("label").hidden).forEach(input => {
+        input.checked = defaults.includes(input.value);
+      });
+      updateEstimateTargets();
+    });
     [
       elements.frequency,
+      document.getElementById("quote2InitialCleaning"),
       elements.rooms,
       elements.bathrooms,
       elements.squareFeet,
