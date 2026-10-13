@@ -22,6 +22,15 @@
       Object.keys(controls.quantityLabels).map((key) => [key, key]),
     ),
   };
+  for (const id of Object.keys(quantityKeys)) {
+    if (!document.getElementById(id + "-price")) {
+      const price = document.createElement("span");
+      price.id = id + "-price";
+      price.className = "quantity-price";
+      price.textContent = "$0";
+      document.getElementById(id + "-qty").closest(".quantity-item").append(price);
+    }
+  }
   function value(id) {
     return document.getElementById(id).value;
   }
