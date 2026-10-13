@@ -470,39 +470,6 @@
     return elements.frequency.value || "biweekly";
   }
 
-  function calculateCleaningTime(rooms, bathrooms, serviceType) {
-    let baseMin = 2.0;
-    let baseMax = 2.5;
-
-    if (serviceType === "regular") {
-      const extraTime = Math.max(0, rooms - 1) * 0.25 + Math.max(0, bathrooms - 1) * 0.75;
-      baseMin += extraTime;
-      baseMax += extraTime;
-    } else if (serviceType === "deep") {
-      const extraTime = Math.max(0, rooms - 1) * 0.25 + Math.max(0, bathrooms - 1) * 0.75;
-      baseMin = (2.0 + extraTime) * 2;
-      baseMax = (2.5 + extraTime) * 2;
-    } else {
-      const extraTime = Math.max(0, rooms - 1) * 0.25 + Math.max(0, bathrooms - 1) * 0.75;
-      baseMin = (2.0 + extraTime) * 1.5;
-      baseMax = (2.5 + extraTime) * 1.5;
-    }
-
-    baseMin = Math.ceil(baseMin * 4) / 4;
-    baseMax = Math.ceil(baseMax * 4) / 4;
-
-    function formatHour(hours) {
-      const wholeHours = Math.floor(hours);
-      const minutes = Math.round((hours - wholeHours) * 60);
-      if (minutes === 0) return `${wholeHours}h`;
-      return `${wholeHours}h ${String(minutes)}m`;
-    }
-
-    return baseMax - baseMin <= 0.5
-      ? formatHour(baseMax)
-      : `${formatHour(baseMin)} - ${formatHour(baseMax)}`;
-  }
-
   function getQuantityServices() {
     return Object.fromEntries(Object.entries(elements.quantities).map(([key, input]) => [key, Number(input.value || 0)]));
   }
@@ -604,7 +571,7 @@
     });
     document.querySelector("[data-deep-only]").hidden = result.serviceType === "regular";
     return { ...result, squareFeet: result.squareMeters, selectedServices: result.services,
-      durationLabel: calculateCleaningTime(result.rooms, result.bathrooms, result.serviceType) };
+      durationLabel: result.durationLabel };
   }
 
   function getScheduleLabel(dateValue, timeValue) {
@@ -841,6 +808,15 @@
       target.textContent = NO_PRICE_MODE ? "Free quote" : formatCurrency(pricing.totalPrice);
     });
     elements.submitButton.textContent = NO_PRICE_MODE ? "Submit Request" : `Submit Request — ${formatCurrency(pricing.totalPrice)}`;
+    let duration = document.getElementById("quote2DurationEstimate");
+    if (!duration) {
+      duration = document.createElement("p");
+      duration.id = "quote2DurationEstimate";
+      duration.className = "quote2-section-copy";
+      elements.submitButton.before(duration);
+    }
+    duration.hidden = NO_PRICE_MODE;
+    duration.textContent = `Estimated cleaning time: ${pricing.durationLabel} (2 cleaners)`;
     elements.continueToNotes.disabled = !isAddressStepComplete();
   }
 
@@ -1458,6 +1434,9 @@
       cabinetsCondition: pricing.cabinetsCondition,
       additionalDetails: elements.additionalDetails.value.trim(),
       totalPrice: pricing.totalPrice,
+      fullPriceBeforeDiscount: pricing.totalPrice,
+      serviceDurationMinutes: pricing.serviceDurationMinutes,
+      cleanerCount: pricing.cleanerCount,
       selectedDate: elements.selectedDate.value,
       selectedTime: elements.selectedTime.value,
       formattedDateTime: buildFormattedDateTime(elements.selectedDate.value, elements.selectedTime.value),

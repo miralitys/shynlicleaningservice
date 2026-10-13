@@ -48,6 +48,15 @@
       ).map((input) => serviceKeys[input.id.slice(type.length + 1)]),
     };
     const result = engine.calculateQuotePricing(inputs);
+    let duration = document.getElementById("pricingDurationEstimate");
+    if (!duration) {
+      duration = document.createElement("p");
+      duration.id = "pricingDurationEstimate";
+      duration.className = "calculator-note";
+      document.getElementById("totalPrice").after(duration);
+    }
+    duration.hidden = !type;
+    duration.textContent = `Estimated cleaning time: ${result.durationLabel} (2 cleaners)`;
     document.getElementById("totalPrice").textContent = type
       ? "$" +
         result.totalPrice.toLocaleString("en-US", { maximumFractionDigits: 2 })

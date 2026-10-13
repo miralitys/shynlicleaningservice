@@ -74,6 +74,7 @@ test("admin reprices changed rooms and new extras, preserves explicit manager am
     }
     let page = await html();
     assert.match(page, /name="totalPrice"\s+value="397(?:\.00)?"/);
+    assert.match(page, /name="serviceDurationHours"[\s\S]*?value="5"/);
     assert.match(page, /name="quoteOffice" value="2"/);
     assert.match(page, /name="quoteInteriorWindowsWithTracks" value="2"/);
     assert.match(
@@ -86,6 +87,8 @@ test("admin reprices changed rooms and new extras, preserves explicit manager am
     );
     page = await html();
     assert.match(page, /name="totalPrice"\s+value="333(?:\.00)?"/);
+    // The manual payment amount must not shorten the undiscounted estimate ($409).
+    assert.match(page, /name="serviceDurationHours"[\s\S]*?value="5"/);
     assert.equal(
       (
         await post({

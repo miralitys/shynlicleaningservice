@@ -363,10 +363,27 @@
           ? "Every 3 weeks is estimated at the biweekly rate. Your manager may adjust it to the monthly rate based on home condition."
           : "",
       totalPrice,
+      fullPriceBeforeDiscount: totalPrice,
+      ...calculateCleaningDuration(totalPrice, 2),
       totalPriceCents: Math.round(totalPrice * 100),
       currency: "usd",
       serviceName: SERVICE_TYPE_NAMES[quote.serviceType] || "Cleaning Service",
     };
+  }
+
+  function calculateCleaningDuration(fullPrice, cleanerCount = 2) {
+    const count = Number(cleanerCount);
+    const cleaners = Number.isInteger(count) && count > 0 ? count : 2;
+    const price = Math.max(0, Number(fullPrice) || 0);
+    const estimatedDurationMinutes = Math.round((price / 45 / cleaners * 60) / 15) * 15;
+    const serviceDurationMinutes = price > 0 ? estimatedDurationMinutes + 30 : 0;
+    function label(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const remainder = minutes % 60;
+      return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+    }
+    return { cleanerCount: cleaners, estimatedDurationMinutes, serviceDurationMinutes,
+      durationLabel: `${label(estimatedDurationMinutes)} - ${label(serviceDurationMinutes)}` };
   }
 
   function getServicePrice(service, quote = {}) {
@@ -389,6 +406,7 @@
     PRICING,
     SERVICE_TYPE_NAMES,
     calculateQuotePricing,
+    calculateCleaningDuration,
     getServicePrice,
     calculateBathroomPrice,
     calculateBedroomPrice,
