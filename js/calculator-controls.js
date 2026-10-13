@@ -15,7 +15,7 @@
   const preparationNote =
     "* Please empty your refrigerator and cabinets before cleaning. There is no need to switch off the refrigerator.";
   const chandelierNote =
-    "* Chandelier cleaning: if safely reachable from a small 2-3 step ladder. Work at height requires a manager quote.";
+    "*Chandelier cleaning is available only if the chandelier can be safely reached with a small 2\u20133-step ladder. Cleaning at greater heights requires a manager\u2019s quote.";
   const frequencyNote =
     "Every 3 weeks is estimated at the biweekly rate. Your manager may adjust it to the monthly rate based on home condition.";
   function suffix(key) {
@@ -88,7 +88,7 @@
     );
     quantities.insertAdjacentHTML(
       "afterend",
-      '<p class="quote2-section-copy">* Standard-size windows.</p><p class="quote2-section-copy">' + chandelierNote + "</p>",
+      '<p class="quote2-section-copy">*Pricing applies to standard-size windows.</p><p class="quote2-section-copy">' + chandelierNote + "</p>",
     );
     document.querySelector(
       '[data-quantity-service="interiorWindowsCleaning"] strong',
@@ -97,7 +97,7 @@
     document.getElementById("quote2InteriorWindowsWithTracks").closest(".quote2-quantity-item").querySelector("small").textContent = "$8/window";
     document.querySelector(
       '[data-quantity-service="blindsCleaning"] small',
-    ).textContent = "Blinds: $8 each. If a window has two blinds, the total is $16.";
+    ).textContent = "Blinds: $8 each. If one window has two separate blinds, the total is $16.";
     document
       .querySelector("#quote2HasPets")
       .closest("label")
@@ -147,9 +147,9 @@
     );
     originalQuantities.insertAdjacentHTML(
       "afterend",
-      '<p class="calculator-note">* Standard-size windows.</p><p class="calculator-note">' +
+      '<p class="calculator-note">*Pricing applies to standard-size windows.</p><p class="calculator-note">' +
         chandelierNote +
-        '</p><p class="calculator-note">Blinds: $8 each. If a window has two blinds, the total is $16.</p>',
+        '</p><p class="calculator-note">Blinds: $8 each. If one window has two separate blinds, the total is $16.</p>',
     );
     document
       .getElementById("windows-qty")
