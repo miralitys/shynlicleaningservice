@@ -156,8 +156,16 @@
       "Basement Cleaning: Yes (+$" + engine.getBasementCleaningFee(type) + ")";
     calculate();
   }
-  form.addEventListener("input", calculate);
+  function selectConditionService(event) {
+    const addon = { refrigeratorCondition: "fridge", cabinetsCondition: "cabinets" }[event.target.id];
+    if (addon) document.getElementById(value("serviceType") + "-" + addon).checked = true;
+  }
+  form.addEventListener("input", (event) => {
+    selectConditionService(event);
+    calculate();
+  });
   form.addEventListener("change", (event) => {
+    selectConditionService(event);
     if (event.target.id === "serviceType") setType();
     else calculate();
   });
