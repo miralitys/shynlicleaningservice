@@ -4,6 +4,9 @@
   const controls = window.ShynliCalculatorControls;
   controls.mountPricing();
   document.querySelector('#frequency option[value="every3weeks"]').textContent = "Every 3 weeks";
+  document.querySelector('#frequency option[value="biweekly"]').after(
+    document.querySelector('#frequency option[value="every3weeks"]'),
+  );
   document.getElementById("pricingFrequencyNotice").textContent = "";
   const form = document.getElementById("cleaningCalculator");
   const serviceKeys = {
