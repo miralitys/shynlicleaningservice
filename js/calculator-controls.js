@@ -97,6 +97,7 @@
       .querySelector("#quote2HasPets")
       .closest("label")
       .querySelector("span").textContent = "Pets in the home (+$25)";
+    document.getElementById("quote2HasPets").add(new Option("Yes / other pets", "yes"));
   }
   function mountPricing() {
     const form = document.getElementById("cleaningCalculator");
