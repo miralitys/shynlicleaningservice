@@ -101,6 +101,9 @@ test("admin reprices changed rooms and new extras, preserves explicit manager am
     );
     page = await html();
     assert.match(page, /name="totalPrice"\s+value="333(?:\.00)?"/);
+    assert.equal((await post({ ...fields, quoteRooms: "4", quoteServices: "doorsCleaning" })).status, 303);
+    page = await html();
+    assert.match(page, /name="totalPrice"\s+value="376(?:\.00)?"/);
   } finally {
     await stopServer(started.child);
   }

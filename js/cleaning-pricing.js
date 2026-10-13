@@ -58,7 +58,7 @@
       dishwasherCleaning: 30,
       refrigeratorCleaning: 45,
       baseboardCleaning: 22,
-      doorsCleaning: 22,
+      doorsCleaning: 45,
       insideCabinets: 45,
       rangeHood: 22,
       furniturePolishing: 20,
@@ -388,11 +388,6 @@
   }
 
   function getServicePrice(service, quote = {}) {
-    if (
-      service === "doorsCleaning" &&
-      normalizeServiceType(quote.serviceType) !== "regular"
-    )
-      return 45;
     if (service === "refrigeratorCleaning")
       return quote.refrigeratorCondition === "notEmptied" ? 90 : 45;
     if (service === "insideCabinets")

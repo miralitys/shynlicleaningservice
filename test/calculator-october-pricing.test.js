@@ -28,7 +28,7 @@ test("doors are removable while baseboards stay included", () => {
   }
   assert.equal(
     calculateQuotePricing({ services: ["doorsCleaning"] }).totalPrice,
-    167,
+    190,
   );
 });
 test("all additional rooms use bedroom rate for each service", () => {
