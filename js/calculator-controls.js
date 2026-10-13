@@ -21,6 +21,16 @@
   function suffix(key) {
     return key.charAt(0).toUpperCase() + key.slice(1);
   }
+  function combineWindows(quote) {
+    const count = document.getElementById(quote ? "quote2InteriorWindowsCleaning" : "windows-qty");
+    const row = count.closest(quote ? ".quote2-quantity-item" : ".quantity-item");
+    document.getElementById(quote ? "quote2InteriorWindowsWithTracks" : "interiorWindowsWithTracks-qty").closest(quote ? ".quote2-quantity-item" : ".quantity-item").hidden = true;
+    const label = row.querySelector(quote ? "strong" : ".quantity-label");
+    label.textContent = "Interior windows cleaning*";
+    if (quote) row.querySelector("small").hidden = true;
+    label.insertAdjacentHTML("afterend", `<select id="${quote ? "quote2WindowType" : "pricingWindowType"}" aria-label="Interior window cleaning type" class="${quote ? "quote2-input" : "form-select"} window-type-select"><option value="without">Without tracks ($6/window)</option><option value="with">With tracks ($8/window)</option></select>`);
+    document.getElementById(quote ? "quote2WindowType" : "pricingWindowType").addEventListener("change", () => count.dispatchEvent(new Event("input", { bubbles: true })));
+  }
   function stepper(key, label, price, quote, room) {
     const id = quote ? "quote2" + suffix(key) : key + "-qty";
     if (quote)
@@ -103,6 +113,7 @@
       .closest("label")
       .querySelector("span").textContent = "Pets in the home (+$25)";
     document.getElementById("quote2HasPets").add(new Option("Yes / other pets", "yes"));
+    combineWindows(true);
   }
   function mountPricing() {
     const form = document.getElementById("cleaningCalculator");
@@ -179,6 +190,7 @@
           `<div class="addon-item" onclick="toggleAddon('${type}-top-cabinets')"><input type="checkbox" class="addon-checkbox" id="${type}-top-cabinets" data-service="topKitchenCabinets"><span class="addon-label">Top of kitchen cabinets</span><span class="addon-price">$45</span></div>`,
         );
     }
+    combineWindows(false);
   }
   window.ShynliCalculatorControls = {
     mountQuote,

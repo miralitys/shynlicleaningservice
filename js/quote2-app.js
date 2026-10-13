@@ -471,7 +471,12 @@
   }
 
   function getQuantityServices() {
-    return Object.fromEntries(Object.entries(elements.quantities).map(([key, input]) => [key, Number(input.value || 0)]));
+    const quantities = Object.fromEntries(Object.entries(elements.quantities).map(([key, input]) => [key, Number(input.value || 0)]));
+    const count = quantities.interiorWindowsCleaning;
+    const withTracks = document.getElementById("quote2WindowType").value === "with";
+    quantities.interiorWindowsCleaning = withTracks ? 0 : count;
+    quantities.interiorWindowsWithTracks = withTracks ? count : 0;
+    return quantities;
   }
 
   function setFieldPriceLabel(serviceKey, label) {

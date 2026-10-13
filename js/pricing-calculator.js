@@ -47,6 +47,10 @@
         form.querySelectorAll(".addons-section.active .addon-checkbox:checked"),
       ).map((input) => serviceKeys[input.id.slice(type.length + 1)]),
     };
+    const windows = Number(value("windows-qty")) || 0;
+    const withTracks = value("pricingWindowType") === "with";
+    inputs.quantityServices.interiorWindowsCleaning = withTracks ? 0 : windows;
+    inputs.quantityServices.interiorWindowsWithTracks = withTracks ? windows : 0;
     const result = engine.calculateQuotePricing(inputs);
     let duration = document.getElementById("pricingDurationEstimate");
     if (!duration) {
@@ -106,7 +110,7 @@
       if (price)
         price.textContent =
           "$" +
-          result.quantityServices[key] * engine.PRICING.quantityServices[key];
+          (id === "windows" ? windows * (withTracks ? 8 : 6) : result.quantityServices[key] * engine.PRICING.quantityServices[key]);
     }
     window.shynliPricingResult = result;
   }

@@ -4,6 +4,17 @@
   line-height: 1.5;
   margin: 12px 0;
 }
+.window-type-select {
+  margin-top: 8px;
+  max-width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  padding: 12px 28px 12px 10px;
+}
+#cleaningCalculator .window-type-select {
+  flex: 1 1 240px;
+  margin: 0;
+}
 .calculator-note,
 #cleaningCalculator .form-group > label,
 #cleaningCalculator .form-group > span {
