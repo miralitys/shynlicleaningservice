@@ -1441,6 +1441,8 @@
       basementCleaning: elements.basementCleaning.value,
       serviceType: pricing.serviceType,
       frequency: pricing.frequency,
+      initialCleaning: document.getElementById("quote2InitialCleaning").value === "yes",
+      requestedFrequency: getSelectedFrequency(),
       services: pricing.selectedServices,
       quantityServices: pricing.quantityServices,
       additionalRooms: pricing.additionalRooms,
