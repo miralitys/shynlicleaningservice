@@ -78,6 +78,15 @@
 [hidden] {
   display: none !important;
 }
+#cleaningCalculator .quantity-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+#cleaningCalculator .quantity-input::-webkit-inner-spin-button,
+#cleaningCalculator .quantity-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 @media (max-width: 480px) {
   .quote2-quantity-item {
     display: grid;
