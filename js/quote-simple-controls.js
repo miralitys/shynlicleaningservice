@@ -15,6 +15,10 @@
     frequency.querySelector('[value="every3weeks"]').textContent = "Every 3 weeks";
     frequency.querySelector('[value="biweekly"]').after(frequency.querySelector('[value="every3weeks"]'));
     frequency.closest("label").insertAdjacentHTML("afterend", '<label class="quote2-field"><span>Initial Cleaning Needed</span><select id="quote2InitialCleaning" class="quote2-input"><option value="no">No</option><option value="yes">Yes</option></select><small>If your home has not had professional cleaning in the past 2 months or requires extra attention, please select Yes.</small></label>');
+    const initial = document.getElementById("quote2InitialCleaning").closest("label");
+    initial.classList.add("quote-simple-initial");
+    frequency.closest(".quote2-field-grid").before(initial);
+    profile.classList.add("quote-simple-profile");
     const addons = document.getElementById("quote2FixedServices");
     const allowed = ["ovenCleaning", "refrigeratorCleaning", "insideCabinets"];
     addons.querySelectorAll('input[name="services"]').forEach(input => {
@@ -35,6 +39,7 @@
     tracks.hidden = false;
     tracks.querySelector("strong").textContent = "Interior windows with tracks*";
     const quantities = windows.closest(".quote2-quantity-grid");
+    quantities.classList.add("quote-simple-quantities");
     quantities.nextElementSibling.nextElementSibling.hidden = true;
     const pets = document.getElementById("quote2HasPets");
     pets.innerHTML = '<option value="no">No</option><option value="yes">Yes</option>';

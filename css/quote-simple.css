@@ -1,0 +1,30 @@
+.quote-simple-initial {
+  margin: 18px 0;
+  max-width: 640px;
+}
+.quote-simple-profile .quote2-field-grid {
+  align-items: start;
+}
+.quote-simple-profile .quote2-field {
+  align-content: start;
+}
+.quote-simple-quantities {
+  margin-top: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.quote-simple-quantities .quote2-quantity-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+}
+[data-step-card="addons"] .quote2-step-actions {
+  margin-top: 20px;
+}
+@media (max-width: 600px) {
+  .quote-simple-quantities {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .quote-simple-quantities .quote2-quantity-item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

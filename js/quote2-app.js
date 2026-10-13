@@ -913,6 +913,9 @@
 
   function setServiceType(serviceType) {
     const nextValue = serviceType || "regular";
+    const initial = document.getElementById("quote2InitialCleaning");
+    initial.value = "no";
+    initial.closest("label").hidden = nextValue !== "regular";
     elements.serviceType.value = nextValue;
     elements.serviceButtons.forEach(function (button) {
       button.classList.toggle("is-active", button.getAttribute("data-service") === nextValue);
