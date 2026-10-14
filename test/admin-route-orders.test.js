@@ -994,8 +994,10 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(addonSummaryField, /Окна внутри без направляющих — 5/);
     assert.doesNotMatch(addonSummaryField, /Не выбраны/);
     const serviceLabels = [...servicesFields.matchAll(/class="admin-order-quote-field-label">([^<]+)</g)].map(match => match[1]);
-    assert.deepEqual(serviceLabels.slice(1, 5), ["Окна внутри без направляющих", "Окна внутри с направляющими ($8)",
+    assert.deepEqual(serviceLabels.slice(1, 9), ["Холодильник внутри", "Духовка внутри", "Вытяжка", "Шкафы внутри",
+      "Окна внутри без направляющих", "Окна внутри с направляющими ($8)",
       "Стеклянные двери изнутри с направляющими ($12)", "Стеклянные двери с двух сторон с направляющими ($20)"]);
+    assert.deepEqual(serviceLabels.slice(9, 12), ["Chandelier safely reachable ($65)", "Bed Linen / Sofa Cover Change", "Blinds Cleaning"]);
     assert.match(updatedOrderBody, /Apt \/ suite[\s\S]*Suite 8/);
     assert.match(updatedOrderBody, /ZIP[\s\S]*60540/);
     assert.match(updatedOrderBody, /Комментарий клиента[\s\S]*Please focus on the basement shelves\./);

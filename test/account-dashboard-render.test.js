@@ -773,6 +773,7 @@ test("renders mobile order details from the saved client address when calculator
           },
           adminClient: {
             addressBook: [
+              { address: "Another Home Address", roomCount: "9", bathroomCount: "8", squareFootage: "9000 sq ft" },
               {
                 address: "Client Address Detail Address",
                 roomCount: "2",
@@ -798,6 +799,32 @@ test("renders mobile order details from the saved client address when calculator
   assert.match(detailView, /Питомцы[\s\S]*dog/);
   assert.match(detailView, /Комментарий клиента/);
   assert.match(detailView, /Gate code 2040\. Please use side entrance\./);
+  assert.doesNotMatch(detailView, /9000 sq ft/);
+});
+
+test("cleaner never sees another home's parameters and keeps visit-specific room, bath and area values", () => {
+  const { renderDashboardPage } = createRenderers();
+  for (const [id, quoteData, address] of [
+    ["unmatched", {}, "Different Address"],
+    ["explicit", { bedrooms: "4", bathroomCount: "3", squareFeet: "2200 sq ft" }, "Profile Client Address"],
+  ]) {
+    const html = renderDashboardPage({
+      user: { id: "cleaner", name: "Cleaner", email: "cleaner@example.com", staffId: "staff-1", role: "cleaner" },
+      staffRecord: { id: "staff-1", name: "Cleaner", status: "active" },
+      assignedOrders: [buildOrder({ id, customerName: "Profile Client", scheduleDate: "2099-01-05",
+        updatedAt: "2099-01-03T12:00:00.000Z", confirmed: true, quoteData,
+        payloadExtras: { adminClient: { addressBook: [{ address, roomCount: "9", bathroomCount: "8", squareFootage: "9000 sq ft" }] } },
+      })],
+      calendarMeta: { configured: false, connected: false }, payrollSummary: { records: [], totals: {} },
+    });
+    const detail = getMobileDetailView(html, `account-mobile-order-detail-${id}`);
+    assert.doesNotMatch(detail, /9000 sq ft/);
+    if (id === "explicit") {
+      assert.match(detail, /Спальни[\s\S]*4/);
+      assert.match(detail, /Ванные[\s\S]*3/);
+      assert.match(detail, /Площадь[\s\S]*2200 sq ft/);
+    }
+  }
 });
 
 test("repairs legacy mobile bathroom data stored in the square footage slot", () => {
