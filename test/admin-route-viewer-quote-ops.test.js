@@ -13,6 +13,7 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
   }]);
   const env = {
     ADMIN_MASTER_SECRET: "admin_secret_test",
+    ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS: "10",
     ADMIN_STAFF_STORE_PATH: path.join(tempDir, "staff.json"),
     ADMIN_USERS_STORE_PATH: usersPath,
     GHL_API_KEY: "ghl_test_key", GHL_LOCATION_ID: "location-test",
@@ -62,6 +63,15 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     };
     const viewerCookie = await login("observer@shynli.local");
     const evaCookie = await login("eva@shynli.local");
+    const evaBeforeRelogin = JSON.parse(await fs.readFile(usersPath, "utf8")).users.find(user => user.email === "eva@shynli.local");
+    for (const [route, cookie] of [["/admin/login", evaCookie], ["/account/login", ""]]) {
+      const relogin = await post(route, cookie, { email: "eva@shynli.local", password: "TestPass123!" });
+      assert.equal(relogin.status, 303, route);
+      assert.equal(relogin.headers.get("location"), "/admin", route);
+    }
+    const evaAfterRelogin = JSON.parse(await fs.readFile(usersPath, "utf8")).users.find(user => user.email === "eva@shynli.local");
+    for (const key of ["id", "email", "role", "passwordHash"]) assert.equal(evaAfterRelogin[key], evaBeforeRelogin[key], key);
+    assert.equal((await post("/admin/login", evaCookie, { email: "eva@shynli.local", password: "WrongPassword!" })).status, 401);
     const managerCookie = await login("manager@shynli.local");
     const users = JSON.parse(await fs.readFile(usersPath, "utf8")).users;
     const managerId = users.find((user) => user.role === "manager").id;
@@ -254,6 +264,14 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     assert.match(finalTasks.html, /Future manual task/);
     assert.doesNotMatch(finalTasks.html, /Do not create|Forbidden change/);
     const evaTasks = await get(`/admin/quote-ops?section=tasks&task=${futureId}`, evaCookie);
+    assert.match(evaTasks.html, /data-admin-dialog-open="admin-quote-create-task-dialog">Создать таск/);
+    const evaCreateDialog = evaTasks.html.match(/<dialog[^>]*id="admin-quote-create-task-dialog"[^>]*>[\s\S]*?<\/dialog>/)[0];
+    assert.match(evaCreateDialog, /name="action" value="create-observer-task"/);
+    assert.match(evaCreateDialog, /id="admin-observer-task-search"/);
+    assert.match(evaCreateDialog, new RegExp(`<option value="${entryId}">`));
+    assert.match(evaCreateDialog, /name="taskDueAt"/);
+    assert.match(evaCreateDialog, /name="taskComment"/);
+    assert.doesNotMatch(evaCreateDialog, /Без клиента|name="assigneeId"|name="taskTitle"/);
     assert.match(evaTasks.html, /name="action" value="update-task-status"/);
     assert.doesNotMatch(evaTasks.html, /name="action" value="(?:delete-lead-task|create-lead-task|update-lead-status|send-quote-sms)"/);
     for (const route of ["/admin/orders", "/admin/clients", "/admin/settings", "/admin/staff", "/admin/staff?section=calendar", "/admin/settings?section=pricing"]) {
@@ -337,6 +355,7 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     assert.match(callbackDialogs[0][0], /name="taskDueAt" value="2099-11-25T11:30"/);
     assert.match(callbackDialogs[0][0], /admin-quote-task-dialog-manager">manager<\/p>/);
     assert.doesNotMatch(openCallbacks.html, /Injected title|Injected assignee|Injected lead notes/);
+    assert.match(openCallbacks.html, /Комментарий: Eva new callback &lt;safe&gt;/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
