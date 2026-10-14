@@ -311,6 +311,32 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     const canceledPage = await get(`/admin/quote-ops?section=tasks&task=${cancelDialog[1]}&taskStatus=canceled`, evaCookie);
     assert.match(canceledPage.html, /Eva cancellation test/);
     assert.match(canceledPage.html, /No longer needed/);
+    await post("/admin/quote-ops", adminCookie, { action: "update-lead-manager", entryId, managerId });
+    const evaRequest = await get(`/admin/quote-ops?entry=${entryId}`, evaCookie);
+    assert.match(evaRequest.html, /name="action" value="create-observer-task"/);
+    const evaFragment = await get(`/admin/quote-ops?fragment=entry-dialog&entry=${entryId}`, evaCookie);
+    assert.match(evaFragment.html, /name="action" value="create-observer-task"/);
+    assert.doesNotMatch(evaFragment.html, /name="action" value="update-lead-status"/);
+    for (const cookie of [viewerCookie, managerCookie]) {
+      assert.equal((await post("/admin/quote-ops", cookie, { action: "create-observer-task", entryId, taskDueAt: "2099-11-25T11:30" })).status, 403);
+    }
+    assert.equal((await post("/admin/quote-ops", evaCookie, { action: "create-observer-task", entryId: "standalone", taskDueAt: "2099-11-25T11:30" })).status, 403);
+    assert.equal((await post("/admin/quote-ops", evaCookie, { action: "create-observer-task", entryId: "nonexistent", taskDueAt: "2099-11-25T11:30" })).status, 404);
+    assert.equal((await post("/admin/quote-ops", evaCookie, { action: "create-observer-task", entryId, taskDueAt: "invalid" })).status, 400);
+    const createValues = { action: "create-observer-task", entryId, taskDueAt: "2099-11-25T11:30", taskComment: "Eva new callback <safe>",
+      taskTitle: "Injected title", assigneeId: "Injected assignee", leadStatus: "declined", notes: "Injected lead notes" };
+    const createdTask = await post("/admin/quote-ops", evaCookie, createValues);
+    assert.equal(createdTask.status, 303);
+    assert.match(createdTask.headers.get("location"), /notice=task-created/);
+    assert.equal((await post("/admin/quote-ops", evaCookie, createValues)).status, 303);
+    const openCallbacks = await get("/admin/quote-ops?section=tasks&taskStatus=open&dueFrom=2099-11-25&dueTo=2099-11-25", evaCookie);
+    const callbackDialogs = [...openCallbacks.html.matchAll(/<dialog\b[^>]*id="admin-quote-task-result-dialog-([^"]+)"[^>]*>[\s\S]*?<\/dialog>/g)]
+      .filter(match => match[0].includes("Eva new callback &lt;safe&gt;"));
+    assert.equal(callbackDialogs.length, 1);
+    assert.match(callbackDialogs[0][0], /Связаться с клиентом в назначенное время/);
+    assert.match(callbackDialogs[0][0], /name="taskDueAt" value="2099-11-25T11:30"/);
+    assert.match(callbackDialogs[0][0], /admin-quote-task-dialog-manager">manager<\/p>/);
+    assert.doesNotMatch(openCallbacks.html, /Injected title|Injected assignee|Injected lead notes/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

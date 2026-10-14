@@ -15,7 +15,8 @@ test("Eva deadline edits persist their audit without syncing orders or creating 
     getEntryAdminLeadData: entry => entry.payloadForRetry.adminLead,
   });
   const original = { id: "lead", payloadForRetry: { adminLead: {
-    status: "new", tasks: [{ id: "task", status: "open", dueAt: "2026-10-15T16:00:00.000Z" }],
+    status: "new", managerId: "ramina", managerName: "Ramina",
+    tasks: [{ id: "task", status: "open", dueAt: "2026-10-15T16:00:00.000Z" }],
   } } };
   let persisted;
   let orderSyncs = 0;
@@ -38,6 +39,17 @@ test("Eva deadline edits persist their audit without syncing orders or creating 
   assert.equal(orderSyncs, 0);
   failWrite = true;
   await assert.rejects(store.updateLeadEntry("lead", updates), /not persisted/);
+  assert.equal(orderSyncs, 0);
+  failWrite = false;
+  const creation = { taskCreateOnly: { dueAt: "2026-10-20T12:30", comment: "New callback",
+    actorId: "eva", actorEmail: "eva@shynli.local" } };
+  await store.updateLeadEntry("lead", creation);
+  assert.equal(persisted.payloadForRetry.adminLead.tasks.length, 2);
+  assert.equal(persisted.payloadForRetry.adminLead.tasks[1].assigneeId, "ramina");
+  assert.equal(persisted.payloadForRetry.adminLead.taskCreationAudit[0].deadline, "2026-10-20T17:30:00.000Z");
+  assert.equal(orderSyncs, 0);
+  failWrite = true;
+  await assert.rejects(store.updateLeadEntry("lead", creation), /not persisted/);
   assert.equal(orderSyncs, 0);
 });
 

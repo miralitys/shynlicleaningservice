@@ -86,3 +86,37 @@ test("deadline-only updates log the Chicago time conversion and preserve every o
   assert.equal(entry.payloadForRetry.adminLead.tasks[0].dueAt, "2026-12-20T18:30:00.000Z");
   assert.equal(entry.payloadForRetry.adminLead.tasks[0].comment, "Rescheduled");
 });
+
+test("Eva creation uses the current request manager and fixed title, audits it and changes no request fields", () => {
+  const domain = createAdminLeadDomain({ normalizeString: (value, max = 500) => String(value || "").trim().slice(0, max),
+    getEntryPayload: entry => entry.payloadForRetry, getEntryAdminLeadData: entry => entry.payloadForRetry.adminLead });
+  const entry = { id: "request", kind: "quote_submission", totalPrice: 220, selectedDate: "2099-01-01",
+    payloadForRetry: { adminOrder: { status: "scheduled" }, adminLead: { status: "discussion", notes: "Keep notes",
+      managerId: "ramina", managerName: "Ramina", managerEmail: "ramina@example.com", tasks: [{ id: "closed", status: "completed" }] } } };
+  const original = structuredClone(entry);
+  const updates = { now: "2026-10-14T16:00:00.000Z", taskCreateOnly: {
+    dueAt: "2026-10-20T12:30", comment: "Call then", actorId: "eva", actorEmail: "eva@shynli.local",
+    assigneeId: "attacker", title: "Other title" }, status: "declined", notes: "Injected", totalPrice: 0 };
+  domain.applyLeadEntryUpdates(entry, updates);
+  const lead = entry.payloadForRetry.adminLead;
+  const task = lead.tasks[1];
+  assert.equal(task.title, "Связаться с клиентом в назначенное время");
+  assert.equal(task.kind, "discussion-followup");
+  assert.equal(task.status, "open");
+  assert.equal(task.assigneeId, "ramina");
+  assert.equal(task.assigneeName, "Ramina");
+  assert.equal(task.dueAt, "2026-10-20T17:30:00.000Z");
+  assert.equal(task.comment, "Call then");
+  assert.deepEqual(lead.taskCreationAudit[0], { permission: "tasks.update_status", actorId: "eva", actorEmail: "eva@shynli.local",
+    at: updates.now, requestId: entry.id, taskId: task.id, deadline: task.dueAt, comment: "Call then", assigneeId: "ramina" });
+  assert.deepEqual(lead.tasks[0], original.payloadForRetry.adminLead.tasks[0]);
+  assert.deepEqual(entry.payloadForRetry.adminOrder, original.payloadForRetry.adminOrder);
+  assert.equal(entry.totalPrice, 220);
+  assert.equal(lead.status, "discussion");
+  assert.equal(lead.notes, "Keep notes");
+  domain.applyLeadEntryUpdates(entry, updates);
+  assert.equal(entry.payloadForRetry.adminLead.tasks.length, 2);
+  assert.equal(entry.payloadForRetry.adminLead.taskCreationAudit.length, 1);
+  delete lead.managerId;
+  assert.throws(() => domain.applyLeadEntryUpdates(entry, updates), { code: "TASK_MANAGER_REQUIRED" });
+});
