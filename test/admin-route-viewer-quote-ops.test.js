@@ -264,6 +264,27 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     }
     assert.equal((await post("/admin/quote-ops", viewerCookie, { action: "update-task-status", entryId, taskId: futureId, taskStatus: "completed" })).status, 403);
     assert.equal((await post("/admin/quote-ops", evaCookie, { action: "update-task-status", entryId, taskId: futureId, taskStatus: "open" })).status, 403);
+    assert.match(evaTasks.html, /name="action" value="update-task-deadline"/);
+    assert.equal((await post("/admin/quote-ops", viewerCookie, {
+      action: "update-task-deadline", entryId, taskId: futureId, taskDueAt: "2099-11-23T14:45",
+    })).status, 403);
+    for (const taskDueAt of ["", "not-a-date", "2099-02-30T10:00", "2099-11-23T25:00"]) {
+      assert.equal((await post("/admin/quote-ops", evaCookie, {
+        action: "update-task-deadline", entryId, taskId: futureId, taskDueAt,
+      })).status, 400, taskDueAt);
+    }
+    const rescheduled = await post("/admin/quote-ops", evaCookie, {
+      action: "update-task-deadline", entryId, taskId: futureId, taskDueAt: "2099-11-23T14:45",
+      taskComment: "Eva rescheduled <safe>", taskTitle: "Forbidden title", assigneeId: "forbidden-assignee",
+      leadStatus: "declined", notes: "Forbidden lead change", totalPrice: "1",
+    });
+    assert.equal(rescheduled.status, 303);
+    assert.match(rescheduled.headers.get("location"), /notice=task-saved/);
+    const rescheduledPage = await get(`/admin/quote-ops?section=tasks&task=${futureId}`, evaCookie);
+    assert.match(rescheduledPage.html, /name="taskDueAt" value="2099-11-23T14:45"/);
+    assert.match(rescheduledPage.html, /Eva rescheduled &lt;safe&gt;/);
+    assert.match(rescheduledPage.html, /Future manual task/);
+    assert.doesNotMatch(rescheduledPage.html, /Forbidden title|Forbidden lead change/);
     assert.equal((await post("/admin/quote-ops", evaCookie, {
       action: "update-task-status", entryId, taskId: futureId, taskStatus: "completed", taskComment: "Eva closing <safe>",
       leadStatus: "declined", totalPrice: "1", notes: "Do not write lead notes",
@@ -273,6 +294,10 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     assert.doesNotMatch(evaClosed.html, /Do not write lead notes/);
     const closedDialog = evaClosed.html.match(new RegExp(`<dialog[^>]*id="admin-quote-task-result-dialog-${futureId}"[^>]*>[\\s\\S]*?<\\/dialog>`))[0];
     assert.doesNotMatch(closedDialog, /name="action" value="update-task-status"/);
+    assert.doesNotMatch(closedDialog, /name="action" value="update-task-deadline"/);
+    assert.equal((await post("/admin/quote-ops", evaCookie, {
+      action: "update-task-deadline", entryId, taskId: futureId, taskDueAt: "2099-11-24T10:00",
+    })).status, 409);
     await post("/admin/quote-ops", managerCookie, { action: "create-lead-task", entryId,
       taskTitle: "Eva cancellation test", taskDueAt: "2099-11-20T12:30", assigneeId: managerId });
     const beforeCancel = await get("/admin/quote-ops?section=tasks", managerCookie);

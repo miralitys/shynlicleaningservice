@@ -8,6 +8,39 @@ function normalizeString(value, maxLength = 500) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+test("Eva deadline edits persist their audit without syncing orders or creating follow-ups", async () => {
+  const { createAdminLeadDomain } = require("../lib/admin/domain-leads");
+  const domain = createAdminLeadDomain({ normalizeString,
+    getEntryPayload: entry => entry.payloadForRetry,
+    getEntryAdminLeadData: entry => entry.payloadForRetry.adminLead,
+  });
+  const original = { id: "lead", payloadForRetry: { adminLead: {
+    status: "new", tasks: [{ id: "task", status: "open", dueAt: "2026-10-15T16:00:00.000Z" }],
+  } } };
+  let persisted;
+  let orderSyncs = 0;
+  let failWrite = false;
+  const store = createQuoteOpsStore({ QUOTE_OPS_LEDGER_LIMIT: 25, normalizeString,
+    applyLeadEntryUpdates: domain.applyLeadEntryUpdates,
+    orderStore: { async upsertEntry() { orderSyncs++; } },
+    createSupabaseQuoteOpsClient: () => ({ config: { configured: true }, isConfigured: () => true,
+      async fetchEntryById() { return structuredClone(original); },
+      async upsertEntry(entry) { if (failWrite) throw new Error("Offline"); persisted = structuredClone(entry); },
+    }),
+  });
+  const updates = { taskDeadlineOnly: { taskId: "task", dueAt: "2026-10-20T12:30",
+    actorId: "eva", actorEmail: "eva@shynli.local", comment: "Checked" } };
+  await store.updateLeadEntry("lead", updates);
+  assert.equal(persisted.payloadForRetry.adminLead.tasks.length, 1);
+  assert.equal(persisted.payloadForRetry.adminLead.tasks[0].dueAt, "2026-10-20T17:30:00.000Z");
+  assert.equal(persisted.payloadForRetry.adminLead.taskDeadlineAudit[0].oldDeadline, "2026-10-15T16:00:00.000Z");
+  assert.equal(persisted.payloadForRetry.adminLead.taskDeadlineAudit[0].actorEmail, "eva@shynli.local");
+  assert.equal(orderSyncs, 0);
+  failWrite = true;
+  await assert.rejects(store.updateLeadEntry("lead", updates), /not persisted/);
+  assert.equal(orderSyncs, 0);
+});
+
 test("guarded background order writes use compare-and-set and stop on a concurrent deletion", async () => {
   const original = {
     id: "visit", updatedAt: "2026-10-08T12:00:00.000Z",
