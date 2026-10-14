@@ -45,7 +45,7 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
 
   try {
     const adminCookie = `shynli_admin_session=${await createAdminSession(started.baseUrl, loadAdminConfig(env))}`;
-    for (const [role, email] of [["viewer", "eva@shynli.local"], ["manager", "manager@shynli.local"]]) {
+    for (const [role, email] of [["viewer", "observer@shynli.local"], ["viewer", "eva@shynli.local"], ["manager", "manager@shynli.local"]]) {
       const response = await post("/admin/settings", adminCookie, {
         action: "create_user", role, email, name: role, password: "TestPass123!",
         status: "active", staffStatus: "active", phone: "3125550100", address: "Test address",
@@ -60,7 +60,8 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
       assert.ok(session);
       return `shynli_user_session=${session}`;
     };
-    const viewerCookie = await login("eva@shynli.local");
+    const viewerCookie = await login("observer@shynli.local");
+    const evaCookie = await login("eva@shynli.local");
     const managerCookie = await login("manager@shynli.local");
     const users = JSON.parse(await fs.readFile(usersPath, "utf8")).users;
     const managerId = users.find((user) => user.role === "manager").id;
@@ -252,6 +253,39 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     const finalTasks = await get("/admin/quote-ops?section=tasks", viewerCookie);
     assert.match(finalTasks.html, /Future manual task/);
     assert.doesNotMatch(finalTasks.html, /Do not create|Forbidden change/);
+    const evaTasks = await get(`/admin/quote-ops?section=tasks&task=${futureId}`, evaCookie);
+    assert.match(evaTasks.html, /name="action" value="update-task-status"/);
+    assert.doesNotMatch(evaTasks.html, /name="action" value="(?:delete-lead-task|create-lead-task|update-lead-status|send-quote-sms)"/);
+    for (const route of ["/admin/orders", "/admin/clients", "/admin/settings", "/admin/staff", "/admin/staff?section=calendar", "/admin/settings?section=pricing"]) {
+      assert.equal((await post(route, evaCookie, { action: "save", entryId })).status, 403, route);
+    }
+    for (const action of ["complete-lead-task", "update-lead-notes", "update-lead-status", "create-lead-task", "delete-lead-task", "send-quote-sms", "create-order-from-request"]) {
+      assert.equal((await post("/admin/quote-ops", evaCookie, { action, entryId, taskId: futureId, taskAction: "complete" })).status, 403, action);
+    }
+    assert.equal((await post("/admin/quote-ops", viewerCookie, { action: "update-task-status", entryId, taskId: futureId, taskStatus: "completed" })).status, 403);
+    assert.equal((await post("/admin/quote-ops", evaCookie, { action: "update-task-status", entryId, taskId: futureId, taskStatus: "open" })).status, 403);
+    assert.equal((await post("/admin/quote-ops", evaCookie, {
+      action: "update-task-status", entryId, taskId: futureId, taskStatus: "completed", taskComment: "Eva closing <safe>",
+      leadStatus: "declined", totalPrice: "1", notes: "Do not write lead notes",
+    })).status, 303);
+    const evaClosed = await get(`/admin/quote-ops?section=tasks&task=${futureId}`, evaCookie);
+    assert.match(evaClosed.html, /Eva closing &lt;safe&gt;/);
+    assert.doesNotMatch(evaClosed.html, /Do not write lead notes/);
+    const closedDialog = evaClosed.html.match(new RegExp(`<dialog[^>]*id="admin-quote-task-result-dialog-${futureId}"[^>]*>[\\s\\S]*?<\\/dialog>`))[0];
+    assert.doesNotMatch(closedDialog, /name="action" value="update-task-status"/);
+    await post("/admin/quote-ops", managerCookie, { action: "create-lead-task", entryId,
+      taskTitle: "Eva cancellation test", taskDueAt: "2099-11-20T12:30", assigneeId: managerId });
+    const beforeCancel = await get("/admin/quote-ops?section=tasks", managerCookie);
+    const cancelDialog = [...beforeCancel.html.matchAll(/<dialog\b[^>]*id="admin-quote-task-result-dialog-([^"]+)"[^>]*>[\s\S]*?<\/dialog>/g)]
+      .find(match => match[0].includes("Eva cancellation test"));
+    assert.ok(cancelDialog);
+    const canceledResponse = await post("/admin/quote-ops", evaCookie, {
+      action: "update-task-status", entryId, taskId: cancelDialog[1], taskStatus: "canceled", taskComment: "No longer needed",
+    });
+    assert.match(canceledResponse.headers.get("location"), /notice=task-saved/);
+    const canceledPage = await get(`/admin/quote-ops?section=tasks&task=${cancelDialog[1]}&taskStatus=canceled`, evaCookie);
+    assert.match(canceledPage.html, /Eva cancellation test/);
+    assert.match(canceledPage.html, /No longer needed/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();
