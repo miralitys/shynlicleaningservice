@@ -987,7 +987,15 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(updatedOrderBody, /Питомцы[\s\S]*Собака/);
     assert.match(updatedOrderBody, /Inside Cabinets Cleaning/);
     assert.match(updatedOrderBody, /Inside Refrigerator Cleaning/);
-    assert.match(updatedOrderBody, /Interior Windows Cleaning[\s\S]*5/);
+    assert.match(updatedOrderBody, /Окна внутри без направляющих[\s\S]*5/);
+    const servicesFields = updatedOrderBody.split('class="admin-order-quote-fields admin-order-quote-fields-services"')[1].split("</article>")[0];
+    const addonSummaryField = servicesFields.split("</article>")[0].split('class="admin-order-quote-fields"')[0];
+    assert.match(addonSummaryField, /Шкафы внутри/);
+    assert.match(addonSummaryField, /Окна внутри без направляющих — 5/);
+    assert.doesNotMatch(addonSummaryField, /Не выбраны/);
+    const serviceLabels = [...servicesFields.matchAll(/class="admin-order-quote-field-label">([^<]+)</g)].map(match => match[1]);
+    assert.deepEqual(serviceLabels.slice(1, 5), ["Окна внутри без направляющих", "Окна внутри с направляющими ($8)",
+      "Стеклянные двери изнутри с направляющими ($12)", "Стеклянные двери с двух сторон с направляющими ($20)"]);
     assert.match(updatedOrderBody, /Apt \/ suite[\s\S]*Suite 8/);
     assert.match(updatedOrderBody, /ZIP[\s\S]*60540/);
     assert.match(updatedOrderBody, /Комментарий клиента[\s\S]*Please focus on the basement shelves\./);
