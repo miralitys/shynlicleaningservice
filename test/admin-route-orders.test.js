@@ -387,6 +387,10 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(detailsOrderBody, /Manual Details Customer/);
     assert.match(detailsOrderBody, /Спальни[\s\S]*2/);
     assert.match(detailsOrderBody, /Санузлы[\s\S]*2/);
+    assert.doesNotMatch(detailsOrderBody, /Частота, выбранная клиентом/);
+    const homeFields = detailsOrderBody.split('<h4 class="admin-subsection-title">Дом и условия</h4>')[1].split("</article>")[0];
+    assert.ok(homeFields.indexOf("Спальни") < homeFields.indexOf("Санузлы"));
+    assert.ok(homeFields.indexOf("Санузлы") < homeFields.indexOf("Office"));
     assert.match(detailsOrderBody, /Размер дома[\s\S]*1500 sq ft/);
     assert.match(detailsOrderBody, /Питомцы[\s\S]*Собака/);
     const detailsLookupDataMatch = detailsOrderBody.match(
@@ -973,6 +977,10 @@ test("allows admins to edit client form fields inside an order", async () => {
     assert.match(updatedOrderBody, /Поля из формы клиента обновлены/);
     assert.match(updatedOrderBody, /500 New Quote Lane, Naperville, IL 60540/);
     assert.match(updatedOrderBody, /Повторяемость[\s\S]*Monthly/);
+    assert.doesNotMatch(updatedOrderBody, /Частота, выбранная клиентом/);
+    const updatedHomeFields = updatedOrderBody.split('<h4 class="admin-subsection-title">Дом и условия</h4>')[1].split("</article>")[0];
+    assert.ok(updatedHomeFields.indexOf("Спальни") < updatedHomeFields.indexOf("Санузлы"));
+    assert.ok(updatedHomeFields.indexOf("Санузлы") < updatedHomeFields.indexOf("Office"));
     assert.match(updatedOrderBody, /Запрошенный слот[\s\S]*06\/03\/2026, 09:00 AM/);
     assert.match(updatedOrderBody, /Спальни[\s\S]*4/);
     assert.match(updatedOrderBody, /Санузлы[\s\S]*3/);

@@ -697,11 +697,17 @@ test("renders client quote options and comments in the mobile order detail", () 
           hasPets: "dog",
           basementCleaning: "yes",
           services: ["ovenCleaning", "insideCabinets"],
+          refrigeratorCondition: "notEmptied",
+          cabinetsCondition: "emptied",
+          totalPrice: 9876.54,
           extras: ["insideFridge"],
           quantityServices: {
             interiorWindowsCleaning: 4,
             blindsCleaning: 2,
             bedLinenChange: 1,
+            interiorWindowsWithTracks: 3,
+            slidingDoorBothSides: 2,
+            chandelierCleaning: 1,
           },
           additionalDetails: "Gate code 1942.\nPlease focus the kitchen first.",
         },
@@ -717,6 +723,12 @@ test("renders client quote options and comments in the mobile order detail", () 
   assert.match(detailView, /Oven Cleaning/);
   assert.match(detailView, /Inside Cabinets Cleaning/);
   assert.match(detailView, /Inside Refrigerator Cleaning/);
+  assert.match(detailView, /Inside Cabinets Cleaning[^<]*Убрать внутри; освобождены/);
+  assert.match(detailView, /Inside Refrigerator Cleaning[^<]*Убрать внутри; вещи\/продукты не убраны/);
+  assert.match(detailView, /Interior windows with tracks: 3/);
+  assert.match(detailView, /Sliding \/ glass door both sides with tracks: 2/);
+  assert.match(detailView, /Chandelier safely reachable: 1/);
+  assert.doesNotMatch(detailView, /9876\.54|\(\$45\)|\(\$90\)|\(\$8\)|\(\$20\)|\(\$65\)/);
   assert.match(detailView, /Interior Windows Cleaning: 4/);
   assert.match(detailView, /Blinds Cleaning: 2/);
   assert.match(detailView, /Bed Linen \/ Sofa Cover Change: 1/);
