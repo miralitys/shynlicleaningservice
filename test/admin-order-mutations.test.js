@@ -264,6 +264,14 @@ test("persists service duration and carries it into recurring orders", () => {
   assert.equal(getEntryOrderState(entry).serviceDurationMinutes, 150);
   assert.equal(getEntryPayload(entry).calculatorData.serviceDurationMinutes, 150);
 
+  applyOrderEntryUpdates(entry, {
+    serviceDurationMinutes: 150,
+    assignedStaff: "Cleaner One, Cleaner Two",
+    fullPriceBeforeDiscount: 534,
+  });
+  assert.equal(entry.serviceDurationMinutes, 150);
+  assert.equal(entry.totalPrice, 240);
+
   const recurringSubmission = buildRecurringOrderSubmission(entry);
   assert.ok(recurringSubmission);
   assert.equal(recurringSubmission.payloadForRetry.calculatorData.serviceDurationMinutes, 150);

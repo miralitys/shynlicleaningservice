@@ -79,8 +79,8 @@ test("single-visit schedule and team edits do not extend a recurring series", ()
   assert.equal(shouldExtendRecurringSeries({ resetFutureVisitsForEdit: true }), true);
 });
 
-test("initial scheduling, completion and frequency changes still extend recurring series", () => {
-  for (const property of ["transitionedToScheduled", "transitionedToCompleted", "frequencyChanged"]) {
+test("initial scheduling, manager approval, completion and frequency changes still extend recurring series", () => {
+  for (const property of ["transitionedToScheduled", "managerConfirmed", "transitionedToCompleted", "frequencyChanged"]) {
     assert.equal(shouldExtendRecurringSeries({ editScope: "current", [property]: true }), true);
   }
 });

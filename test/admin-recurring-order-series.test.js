@@ -177,6 +177,32 @@ function createStaffStore(status = "planned") {
   };
 }
 
+test("website recurring orders wait for manager confirmation, including after policy signing", async () => {
+  for (const frequency of ["weekly", "biweekly", "monthly"]) {
+    for (const status of ["new", "scheduled"]) {
+      const domain = createDomain();
+      const root = createEntry({ id: "website", date: "2026-11-01", frequency, status, seriesId: "" });
+      root.sourceRoute = "/quote";
+      delete root.payloadForRetry.orderState.recurringSeriesId;
+      delete root.payloadForRetry.adminOrder.recurringSeriesId;
+      const ledger = createLedger(domain, [root]);
+      const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+
+      assert.deepEqual(await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root }), []);
+      assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: ledger, today: "2026-10-16" }), []);
+      assert.equal((await ledger.listEntries()).length, 1);
+      assert.equal(getEntryOrderState(root).recurringSeriesId, undefined);
+      assert.equal(getEntryOrderState(root).frequency, frequency);
+
+      await ledger.updateOrderEntry(root.id, { orderStatus: "scheduled", managerConfirmedAt: "2026-10-16T15:00:00.000Z" });
+      assert.ok((await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root })).length > 0);
+      const count = (await ledger.listEntries()).length;
+      assert.deepEqual(await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root }), []);
+      assert.equal((await ledger.listEntries()).length, count);
+    }
+  }
+});
+
 test("series generation uses the complete ledger, not the latest 1000 records", async () => {
   const domain = createDomain();
   const root = createEntry({ id: "kylie", date: "2026-10-11", frequency: "weekly" });

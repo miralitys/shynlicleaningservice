@@ -117,6 +117,27 @@ test("moving a new order to scheduled still announces its existing assignment", 
   assert.deepEqual(result.calls, { assignments: 1, notifications: 1 });
 });
 
+test("manager scheduling records approval even if policy acceptance already scheduled the order", async () => {
+  for (const status of ["new", "scheduled"]) {
+    const result = await updateOrder({ orderStatus: "scheduled" }, status);
+    assert.ok(Number.isFinite(Date.parse(result.entry.payloadForRetry.orderState.managerConfirmedAt)));
+  }
+  const paymentOnly = await updateOrder({ paymentStatus: "paid" });
+  assert.equal(paymentOnly.entry.payloadForRetry.orderState.managerConfirmedAt, undefined);
+});
+
+test("saving unchanged new-order fields is not manager approval, but assigning its schedule is", async () => {
+  const unchanged = await updateOrder({
+    assignedStaff: ["Anastasiia", "Tolkun"], selectedDate: "2026-08-23", selectedTime: "07:00",
+    serviceDurationHours: "2", serviceDurationMinutes: "30",
+  }, "new");
+  assert.equal(unchanged.entry.payloadForRetry.orderState.managerConfirmedAt, undefined);
+  for (const fields of [{ selectedTime: "10:00" }, { assignedStaff: ["Zilola"] }]) {
+    const assigned = await updateOrder(fields, "new");
+    assert.ok(assigned.entry.payloadForRetry.orderState.managerConfirmedAt);
+  }
+});
+
 test("editing a completed visit updates that visit, not the next visit", async () => {
   const result = await updateOrder({
     orderStatus: "scheduled", selectedDate: "2026-10-18", selectedTime: "10:00",

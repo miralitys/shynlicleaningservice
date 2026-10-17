@@ -37,6 +37,17 @@ const { createStripeStub } = require("./server-test-helpers");
 const DIRECT_REVIEW_URL_PATTERN =
   /https:\/\/g\.page\/r\/CUxwaxYdaymBEAI\/review/;
 
+async function confirmOrderAsManager(baseUrl, session, entryId) {
+  const response = await fetch(`${baseUrl}/admin/orders`, {
+    method: "POST",
+    redirect: "manual",
+    headers: { "content-type": "application/x-www-form-urlencoded", cookie: `shynli_admin_session=${session}` },
+    body: new URLSearchParams({ entryId, orderStatus: "scheduled" }),
+  });
+  assert.equal(response.status, 303);
+  assert.match(response.headers.get("location") || "", /notice=order-saved/);
+}
+
 async function waitFor(predicate, options = {}) {
   const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : 3000;
   const intervalMs = Number.isFinite(options.intervalMs) ? options.intervalMs : 50;
@@ -1665,6 +1676,7 @@ test("creates the next recurring order when a recurring order is completed", asy
         sessionCookieValue,
         recurringCase.requestId
       );
+      await confirmOrderAsManager(started.baseUrl, sessionCookieValue, recurringCase.entryId);
 
       const completeResponse = await fetch(`${started.baseUrl}/admin/orders`, {
         method: "POST",
@@ -1899,6 +1911,7 @@ test("recognizes the next recurring visit created by the six-month schedule", as
     const originalOrderBody = await originalOrderResponse.text();
     assert.equal(originalOrderResponse.status, 200);
     assert.match(originalOrderBody, /Запланировать следующий визит/);
+    await confirmOrderAsManager(started.baseUrl, sessionCookieValue, entryId);
 
     const scheduleNextResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -2300,6 +2313,7 @@ test("creates follow-ups only without future orders and records the next cleanin
     const bookedEntryId = await createOrderFromQuoteRequest(
       started.baseUrl, sessionCookieValue, "completed-followup-already-booked"
     );
+    await confirmOrderAsManager(started.baseUrl, sessionCookieValue, bookedEntryId);
     const completeBooked = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST", redirect: "manual",
       headers: { "content-type": "application/x-www-form-urlencoded", cookie: `shynli_admin_session=${sessionCookieValue}` },
