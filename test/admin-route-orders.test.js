@@ -3242,6 +3242,7 @@ test("treats GHL no-answer call statuses as missed calls", async () => {
 
 test("keeps storage diagnostics hidden on admin orders when Supabase falls back to memory", async () => {
   const fetchStub = createFetchStub([
+    { match: "/rest/v1/admin_audit_events", status: 200, body: [] },
     {
       method: "GET",
       match: "/rest/v1/admin_staff_assignments",

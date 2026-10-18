@@ -18,6 +18,8 @@ const {
   sendTestEmail,
 } = require("./lib/account-invite-email");
 const { createAutoNotificationService } = require("./lib/auto-notifications");
+const { createAdminAuditStore } = require("./lib/admin-audit-store");
+const { createAuditedQuoteOpsLedger, runAuditContext } = require("./lib/admin-audit");
 const { createAdminMailStore } = require("./lib/admin-mail-store");
 const {
   createAdminGoogleMailClient,
@@ -207,6 +209,7 @@ const ADMIN_APP_ROUTES = new Set([
   ADMIN_STAFF_PATH,
   ADMIN_SETTINGS_PATH,
   ADMIN_QUOTE_OPS_PATH,
+  "/admin/audit",
 ]);
 const ADMIN_ALL_ROUTES = new Set([
   ...ADMIN_APP_ROUTES,
@@ -262,6 +265,10 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
   {
     path: ADMIN_SETTINGS_PATH,
     label: "Настройки",
+  },
+  {
+    path: "/admin/audit",
+    label: "Журнал действий",
   },
 ]);
 const ORDER_STATUS_VALUES = new Set(["new", "scheduled", "in-progress", "completed", "canceled", "rescheduled"]);
@@ -1908,7 +1915,8 @@ async function main() {
     roundNumber,
   });
   const eventLoopStats = createEventLoopStats({ roundNumber });
-  const quoteOpsLedger = createQuoteOpsStoreModule({
+  const auditStore = createAdminAuditStore();
+  const quoteOpsLedger = createAuditedQuoteOpsLedger(createQuoteOpsStoreModule({
     QUOTE_OPS_LEDGER_LIMIT,
     applyLeadEntryUpdates,
     applyClientEntryUpdates,
@@ -1916,7 +1924,7 @@ async function main() {
     applyPaymentEntryUpdates,
     createSupabaseQuoteOpsClient,
     normalizeString,
-  });
+  }), auditStore, event => requestLogger.log(event), { previewOrderUpdate: applyOrderEntryUpdates });
   const settingsStore = createAdminSettingsStore();
   usersStore = createAdminUsersStore({
     createSupabaseAdminUsersClient,
@@ -2238,21 +2246,23 @@ async function main() {
       requestLogger.log(logLine);
     });
 
-    await handleSiteRequest(req, res, requestStartNs, requestContext, requestLogger, {
-      autoNotificationService,
-      eventLoopStats,
-      googleMailIntegration,
-      htmlCache,
-      googleCalendarIntegration,
-      quoteOpsLedger,
-      requestPerfWindow,
-      runtimeIndex,
-      usersStore,
-      settingsStore,
-      staffStore,
-      orderMediaStorage,
-      accountInviteEmail,
-    });
+    await runAuditContext({ method: req.method, route: String(req.url || "/").split("?")[0] }, () =>
+      handleSiteRequest(req, res, requestStartNs, requestContext, requestLogger, {
+        auditStore,
+        autoNotificationService,
+        eventLoopStats,
+        googleMailIntegration,
+        htmlCache,
+        googleCalendarIntegration,
+        quoteOpsLedger,
+        requestPerfWindow,
+        runtimeIndex,
+        usersStore,
+        settingsStore,
+        staffStore,
+        orderMediaStorage,
+        accountInviteEmail,
+      }));
   });
 
   let shuttingDown = false;

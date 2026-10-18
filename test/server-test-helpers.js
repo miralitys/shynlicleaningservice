@@ -139,6 +139,7 @@ function buildIsolatedServerEnv(env = {}) {
   const staffDocumentsDir = path.join(tempDataRoot, "staff-documents");
 
   applyDefaultEnvValue(nextEnv, "ADMIN_USERS_STORE_PATH", path.join(tempDataRoot, "admin-users-store.json"));
+  applyDefaultEnvValue(nextEnv, "ADMIN_AUDIT_STORE_PATH", path.join(tempDataRoot, "admin-audit.jsonl"));
   applyDefaultEnvValue(nextEnv, "ADMIN_STAFF_STORE_PATH", path.join(tempDataRoot, "admin-staff-store.json"));
   applyDefaultEnvValue(nextEnv, "ADMIN_MAIL_STORE_PATH", path.join(tempDataRoot, "admin-mail-store.json"));
   applyDefaultEnvValue(nextEnv, "ADMIN_SETTINGS_STORE_PATH", path.join(tempDataRoot, "admin-settings-store.json"));
