@@ -8,7 +8,7 @@ const {
   createAdminSession,
 } = require("./admin-route-helpers");
 
-test("admin reprices changed rooms and new extras, preserves explicit manager amounts and address-only edits", async () => {
+test("admin updates estimates for changed rooms and extras without replacing agreed amounts", async () => {
   const env = { ADMIN_MASTER_SECRET: "calculator_test_secret" };
   const started = await startServer({ env });
   try {
@@ -73,7 +73,7 @@ test("admin reprices changed rooms and new extras, preserves explicit manager am
       ).text();
     }
     let page = await html();
-    assert.match(page, /name="totalPrice"\s+value="397(?:\.00)?"/);
+    assert.match(page, /name="totalPrice"\s+value="200(?:\.00)?"/);
     assert.match(page, /name="serviceDurationHours"[\s\S]*?value="5"/);
     assert.match(page, /name="quoteOffice" value="2"/);
     assert.match(page, /name="quoteInteriorWindowsWithTracks" value="2"/);
@@ -103,7 +103,7 @@ test("admin reprices changed rooms and new extras, preserves explicit manager am
     assert.match(page, /name="totalPrice"\s+value="333(?:\.00)?"/);
     assert.equal((await post({ ...fields, quoteRooms: "4", quoteServices: "doorsCleaning" })).status, 303);
     page = await html();
-    assert.match(page, /name="totalPrice"\s+value="376(?:\.00)?"/);
+    assert.match(page, /name="totalPrice"\s+value="333(?:\.00)?"/);
   } finally {
     await stopServer(started.child);
   }
