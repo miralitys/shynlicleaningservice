@@ -9,7 +9,12 @@ return 403. Existing order/client permissions are unchanged.
 The page filters by Chicago calendar dates (`from`, `to`, both inclusive),
 customer name (`q`), actor email (`actor`), `entityType` (`client`, `order`),
 `entityId`, `action` (`create`, `update`, `delete`), and result `status`.
-Pagination uses `offset`, 50 visible events per page.
+Pagination uses `offset`, 50 events per batch. With JavaScript, "Далее" appends
+the next batch below existing rows without navigation, preserving filters,
+expanded details and scroll position. `GET /admin/audit?fragment=entries`
+returns just the table and pagination markup under the same access checks.
+Normal pagination links remain usable without JavaScript. Loading failures
+leave the current rows intact and allow retrying the same batch.
 
 Auditing wraps the shared quote ledger used by admin, cleaner, website and
 background handlers. It records customer profile and order creation, business
@@ -88,7 +93,7 @@ contact details and order comments, so its storage and backups are private.
 ## Verify and roll back
 
 ```sh
-node --test test/admin-audit.test.js test/admin-route-audit.test.js
+node --test test/admin-audit.test.js test/admin-route-audit.test.js test/admin-audit-pagination.test.js
 ```
 
 To roll back, deploy the preceding application build. Keep the audit table and

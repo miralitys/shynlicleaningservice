@@ -60,6 +60,14 @@ test("audit page logs real admin order/client mutations, personal actors, and de
     assert.match(html, /<form method="get" action="\/admin\/audit"/);
     assert.doesNotMatch(html, /<form[^>]*method="post"[^>]*action="\/admin\/audit"/);
     assert.equal((await get("/admin/audit", viewer)).status, 403);
+    assert.equal((await get("/admin/audit?fragment=entries&offset=50", viewer)).status, 403);
+    assert.equal((await get("/admin/audit?fragment=entries")).status, 303);
+    const fragment = await get("/admin/audit?fragment=entries", manager);
+    assert.equal(fragment.status, 200);
+    const fragmentHtml = await fragment.text();
+    assert.match(fragmentHtml, /data-audit-entries/);
+    assert.match(fragmentHtml, /Сумма: \$250.00 → \$534.00/);
+    assert.doesNotMatch(fragmentHtml, /<html|<script/);
     assert.equal((await get("/admin/audit", cleaner)).status, 303);
     for (const cookie of [admin, manager, viewer]) assert.equal((await post("/admin/audit", cookie, {})).status, 403);
     assert.doesNotMatch(await (await get("/admin", viewer)).text(), /href="\/admin\/audit"/);
