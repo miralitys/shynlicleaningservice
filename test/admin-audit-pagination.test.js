@@ -44,6 +44,20 @@ test("audit pages progressively load 50 records, keep filters, and retain GET li
   assert.match(await render("?offset=105&fragment=entries"), /Записей пока нет/);
 });
 
+test("each audit event keeps its full-width details in the same appendable table group", async () => {
+  const html = await render("");
+  assert.match(html, /<table class="audit-table" data-audit-entries>/);
+  assert.match(html, /<tbody data-audit-event-id="event-104"><tr>/);
+  assert.match(html, /<summary aria-controls="audit-details-event-104">/);
+  assert.match(html, /<tr class="audit-details-row" id="audit-details-event-104"><td colspan="5">/);
+  assert.match(html, /\.audit-table>tbody:has\(>tr>td>details\[open\]\)>\.audit-details-row\{display:table-row\}/);
+  assert.equal((html.match(/class="audit-details-row"/g) || []).length, 50);
+  assert.doesNotMatch(html, /<summary[^>]*>[^<]*<\/summary><div/);
+  const fragment = await render("?offset=50&fragment=entries");
+  assert.equal((fragment.match(/class="audit-details-row"/g) || []).length, ids(fragment).length);
+  assert.match(fragment, /<tbody data-audit-event-id="event-54"><tr>/);
+});
+
 test("audit load-more keeps existing rows, prevents double requests, and permits retry after a failure", async () => {
   const row = id => ({ dataset: { auditEventId: id } });
   const rows = [row("first")];
