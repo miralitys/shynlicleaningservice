@@ -18,12 +18,11 @@ test("initial metadata and dishwasher survive submission and admin editing witho
     async function post(path, fields) {
       return fetch(started.baseUrl + path, { method: "POST", redirect: "manual", headers: { cookie, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(fields) });
     }
-    await post("/admin/quote-ops", { action: "create-order-from-request", entryId: id });
     async function read() { return fetch(started.baseUrl + "/admin/orders?order=" + id, { headers: { cookie } }).then(r => r.text()); }
     function verify(html) {
       assert.match(html, /value="dishwasherCleaning"\s+checked/);
       assert.match(html, /Initial Cleaning[\s\S]*?Yes/);
-      assert.match(html, /Частота, выбранная клиентом[\s\S]*?Every 3 weeks/);
+      assert.match(html, /Повторяемость[\s\S]*?Every 3 weeks/);
       assert.match(html, new RegExp('name="totalPrice"\\s+value="' + pricing.totalPrice + '(?:\\.00)?"'));
       const hours = html.match(/name="serviceDurationHours"[\s\S]*?value="([^"]*)"/)[1];
       const minutes = html.match(/name="serviceDurationMinutes"[\s\S]*?value="([^"]*)"/)[1];

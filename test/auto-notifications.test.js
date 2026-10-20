@@ -7,6 +7,7 @@ const {
   buildClientVisitReminderSmsMessage,
   buildUpdatedClientVisitReminderSmsMessage,
   buildQuoteConfirmationSmsMessage,
+  buildManagerLeadAlertSmsMessage,
   buildScheduleLabel,
   createAutoNotificationService,
   getOrderNotificationState,
@@ -16,6 +17,16 @@ const {
 
 const DIRECT_REVIEW_URL_PATTERN =
   /https:\/\/g\.page\/r\/CUxwaxYdaymBEAI\/review/;
+
+test("manager alerts open new website orders directly while legacy leads retain their history URL", () => {
+  const entry = { id: "website-order", customerName: "Website Client", payloadForRetry: {
+    orderState: { status: "new", managerConfirmationRequired: true },
+  } };
+  assert.match(buildManagerLeadAlertSmsMessage(entry, {}, "https://example.com"),
+    /Admin: https:\/\/example\.com\/admin\/orders\?order=website-order/);
+  assert.match(buildManagerLeadAlertSmsMessage({ ...entry, payloadForRetry: {} }, {}, "https://example.com"),
+    /Admin: https:\/\/example\.com\/admin\/quote-ops/);
+});
 
 test("formats SMS schedule labels in US date and AM/PM time", () => {
   assert.equal(buildScheduleLabel("2026-05-12", "11:18"), "05/12/2026, 11:18 AM");
@@ -1345,4 +1356,23 @@ test("repairs a fully assigned signed order that is still marked new", async () 
   });
 
   assert.equal(entry.payloadForRetry.adminOrder.status, "scheduled");
+});
+
+test("reminder sweep does not approve or send appointment reminders for an unconfirmed website order", async () => {
+  const entry = createOrderEntry({
+    id: "website-order-awaiting-manager",
+    selectedDate: "2026-09-19", selectedTime: "09:00",
+    payloadForRetry: {
+      orderState: { status: "new", managerConfirmationRequired: true,
+        assignedStaff: "Zilola Furkatovna", policyAcceptance: { policyAccepted: true } },
+    },
+  });
+  const ledger = createMutableLedger(entry);
+  ledger.listReminderEntries = async () => [entry];
+  const service = createAutoNotificationService({ quoteOpsLedger: ledger });
+  const result = await service.runClientReminderSweep({
+    now: new Date("2026-09-17T18:00:00.000Z"), leadConnectorClient: createLeadConnectorStub(),
+  });
+  assert.equal(entry.payloadForRetry.orderState.status, "new");
+  assert.equal(result.sent, 0);
 });

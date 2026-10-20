@@ -1763,6 +1763,7 @@ const {
   STRIPE_MAX_AMOUNT_CENTS,
   STRIPE_MIN_AMOUNT_CENTS,
   QuoteTokenError,
+  applyOrderEntryUpdates,
   calculateQuotePricing,
   createQuoteToken,
   enforcePostRateLimit,

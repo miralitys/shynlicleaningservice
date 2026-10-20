@@ -319,7 +319,7 @@ test("writes successful quote leads to Google Sheets and Telegram without blocki
     assert.match(telegramPayload.text, /Test Run/);
     assert.match(telegramPayload.text, /Deep Cleaning/);
     assert.match(telegramPayload.text, /Price: \$\d+\.\d{2}/);
-    assert.match(telegramPayload.text, /CRM: https:\/\/shynlicleaningservice\.com\/admin\/quote-ops\?entry=/);
+    assert.match(telegramPayload.text, /CRM: https:\/\/shynlicleaningservice\.com\/admin\/orders\?order=/);
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

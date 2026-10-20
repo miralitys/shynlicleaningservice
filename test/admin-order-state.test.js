@@ -8,7 +8,17 @@ const {
   getEntryOrderState,
   getPayloadOrderState,
   hasEntryOrderState,
+  isAwaitingOrderManagerConfirmation,
 } = require("../lib/admin-order-state");
+
+test("only the new website workflow waits for an explicit manager confirmation", () => {
+  assert.equal(isAwaitingOrderManagerConfirmation({}), false);
+  assert.equal(isAwaitingOrderManagerConfirmation({ payloadForRetry: { adminOrder: { status: "new" } } }), false);
+  const entry = { payloadForRetry: { orderState: { managerConfirmationRequired: true } } };
+  assert.equal(isAwaitingOrderManagerConfirmation(entry), true);
+  entry.payloadForRetry.orderState.managerConfirmedAt = "2026-10-20T20:00:00.000Z";
+  assert.equal(isAwaitingOrderManagerConfirmation(entry), false);
+});
 
 test("getPayloadOrderState prefers orderState and falls back to adminOrder", () => {
   assert.deepEqual(getPayloadOrderState({ orderState: { status: "scheduled" } }), {

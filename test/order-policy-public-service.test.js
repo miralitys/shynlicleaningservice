@@ -112,3 +112,18 @@ test("does not schedule a signed order until a team is assigned", async () => {
 
   assert.equal(updates.some((patch) => patch.orderStatus === "scheduled"), false);
 });
+
+test("a new website order stays New after policy signing until the manager confirms it", async () => {
+  const entry = createEntry();
+  entry.payloadForRetry.orderState.managerConfirmationRequired = true;
+  entry.payloadForRetry.adminOrder.managerConfirmationRequired = true;
+  const updates = [];
+  const ledger = { async updateOrderEntry(id, patch) { updates.push(patch); return entry; } };
+  const service = createService(entry, updates);
+  const result = await service.submitAcceptance(ledger, "token", {
+    acceptedTerms: true, acceptedPaymentCancellation: true, typedSignature: "Website Client",
+  }, { headers: {} });
+  assert.equal(result.record.policyAccepted, true);
+  assert.equal(entry.payloadForRetry.orderState.status, "new");
+  assert.equal(updates.some(patch => patch.orderStatus), false);
+});

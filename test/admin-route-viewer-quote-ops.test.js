@@ -254,7 +254,8 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
       assert.equal(editable.status, 200);
       assert.match(editable.html, /name="action" value="update-lead-status"/);
       assert.match(editable.html, /name="action" value="delete-lead-entry"/);
-      assert.match(editable.html, /name="action" value="create-order-from-request"/);
+      assert.match(editable.html, /Открыть заказ<\/a>/);
+      assert.doesNotMatch(editable.html, /name="action" value="create-order-from-request"/);
       assert.equal((await post("/admin/quote-ops", cookie, { action: "update-lead-notes", entryId, notes: "Allowed update" })).status, 303);
       const page = await get("/admin/quote-ops?section=tasks", cookie);
       assert.match(page.html, /Создать таск/);
