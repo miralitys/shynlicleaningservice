@@ -73,6 +73,8 @@ const {
 const { evaluateStartupEnvIntegrity } = require("./lib/runtime/env-integrity");
 const { createAdminOrderMediaStorage } = require("./lib/admin-order-media-storage");
 const { getEntryOrderState } = require("./lib/admin-order-state");
+const { createAdminOrdersRecurringHelpers } = require("./lib/admin/handlers-orders-recurring");
+const { startRecurringOrderMaintenance } = require("./lib/recurring-order-maintenance");
 const { createStaffTravelEstimateService } = require("./lib/staff-travel-estimates");
 let createSupabaseQuoteOpsClient;
 let loadSupabaseQuoteOpsConfig;
@@ -1947,6 +1949,17 @@ async function main() {
     fetch: global.fetch,
   });
   leadManagersStaffStore = staffStore;
+  let recurringOrderMaintenance = null;
+  if (process.env.RECURRING_ORDER_MAINTENANCE_ENABLED !== "0") {
+    const { ensureAllRecurringOrderSeries } = createAdminOrdersRecurringHelpers({
+      addRecurringScheduleDate, buildRecurringOrderSeriesSubmissions, getEntryOrderState,
+      normalizeString,
+    });
+    recurringOrderMaintenance = startRecurringOrderMaintenance({
+      runSweep: () => ensureAllRecurringOrderSeries({ quoteOpsLedger, staffStore }),
+      log: entry => requestLogger.log(entry),
+    });
+  }
   const orderMediaStorage = createAdminOrderMediaStorage({
     env: process.env,
     fetch: global.fetch,
@@ -2274,6 +2287,7 @@ async function main() {
   function shutdown(signal) {
     if (shuttingDown) return;
     shuttingDown = true;
+    recurringOrderMaintenance?.stop();
     clearInterval(autoNotificationSweepTimer);
     clearInterval(perfSummaryTimer);
     eventLoopStats.close();

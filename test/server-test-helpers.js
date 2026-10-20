@@ -136,6 +136,7 @@ function applyDefaultEnvValue(target, key, value) {
 function buildIsolatedServerEnv(env = {}) {
   const tempDataRoot = fs.mkdtempSync(path.join(os.tmpdir(), "shynli-test-data-"));
   const nextEnv = { ...env };
+  applyDefaultEnvValue(nextEnv, "RECURRING_ORDER_MAINTENANCE_ENABLED", "0");
   const staffDocumentsDir = path.join(tempDataRoot, "staff-documents");
 
   applyDefaultEnvValue(nextEnv, "ADMIN_USERS_STORE_PATH", path.join(tempDataRoot, "admin-users-store.json"));
@@ -304,12 +305,14 @@ const fs = require("node:fs");
 const routes = ${serializedRoutes};
 const captureFile = ${JSON.stringify(captureFile)};
 
-function createResponse(status, body) {
+function createResponse(status, body, headers = {}) {
   return {
     ok: status >= 200 && status < 300,
     status,
     headers: {
       get(name) {
+        const key = String(name || "").toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(headers, key)) return headers[key];
         return String(name || "").toLowerCase() === "content-type"
           ? "application/json; charset=utf-8"
           : null;
@@ -342,7 +345,11 @@ module.exports = async function fetchStub(url, options = {}) {
     throw new Error(\`No fetch stub route matched \${method} \${url}\`);
   }
 
-  return createResponse(Number(match.status) || 200, match.body || {});
+  const headers = { ...(match.headers || {}) };
+  if (options.headers?.Prefer === "count=exact" && Array.isArray(match.body) && !Object.hasOwn(headers, "content-range")) {
+    headers["content-range"] = "0-" + Math.max(0, match.body.length - 1) + "/" + match.body.length;
+  }
+  return createResponse(Number(match.status) || 200, match.body || {}, headers);
 };
 `;
 
