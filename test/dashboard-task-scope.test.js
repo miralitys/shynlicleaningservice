@@ -14,7 +14,7 @@ test("viewer and manager dashboards load the same deep task history, including s
   } };
   const renderer = createDashboardPageRenderer({
     ADMIN_QUOTE_OPS_PATH: "/admin/quote-ops", ADMIN_ROOT_PATH: "/admin",
-    DASHBOARD_NEW_REQUESTS_LIMIT: 5, DASHBOARD_QUOTE_OPS_PAGE_LIMIT: 120, QUOTE_OPS_TASK_CLIENT_LEDGER_LIMIT: 1000,
+    DASHBOARD_NEW_ORDERS_LIMIT: 5, DASHBOARD_QUOTE_OPS_PAGE_LIMIT: 1000, QUOTE_OPS_TASK_CLIENT_LEDGER_LIMIT: 1000,
     STAFF_TEAM_CALENDAR_TIME_ZONE: "America/Chicago", buildFormattedScheduleLabel: () => "",
     buildQuoteOpsTaskRecords: (entries) => entries.map((entry) => ({ entry, id: entry.id, status: "open", dueAt: "2020-01-01T15:00:00Z",
       title: "Old task", customerName: "Client", leadStatus: "discussion", manager: {}, serviceLabel: "Standard" })),

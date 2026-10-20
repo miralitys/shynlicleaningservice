@@ -215,17 +215,17 @@ test("renders overview tables for unassigned clients and today's orders", async 
     });
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
-    assert.match(dashboardBody, /Новые заявки/i);
+    assert.match(dashboardBody, /Новые заказы/i);
     assert.match(dashboardBody, /Таски на контроле/i);
     assert.match(dashboardBody, /Заказы без команды/i);
     assert.match(dashboardBody, /Заказы на сегодня/i);
-    assert.ok(dashboardBody.indexOf("Назначена дата") < dashboardBody.indexOf("Новые заявки"));
-    assert.ok(dashboardBody.indexOf("Новые заявки") < dashboardBody.indexOf("Таски на контроле"));
+    assert.ok(dashboardBody.indexOf("Назначена дата") < dashboardBody.indexOf("Новые заказы"));
+    assert.ok(dashboardBody.indexOf("Новые заказы") < dashboardBody.indexOf("Таски на контроле"));
     assert.ok(dashboardBody.indexOf("Таски на контроле") < dashboardBody.indexOf("Заказы без команды"));
     assert.ok(dashboardBody.indexOf("Заказы без команды") < dashboardBody.indexOf("Заказы на сегодня"));
 
     const newRequestsSection = dashboardBody.match(
-      /data-admin-dashboard-new-requests="true"[\s\S]*?<\/table>/
+      /data-admin-dashboard-new-orders="true"[\s\S]*?<\/table>/
     )?.[0];
     const tasksSection = dashboardBody.match(
       /data-admin-dashboard-tasks="true"[\s\S]*?<\/table>/
@@ -242,12 +242,11 @@ test("renders overview tables for unassigned clients and today's orders", async 
     assert.ok(unassignedSection);
     assert.ok(todaySection);
     assert.match(newRequestsSection, /Fresh Lead/);
-    assert.match(newRequestsSection, /data-admin-dialog-row="true"/);
-    assert.match(newRequestsSection, /<span class="admin-table-link">Fresh Lead<\/span>/);
-    assert.doesNotMatch(newRequestsSection, /<a class="admin-table-link"/);
+    assert.match(newRequestsSection, /<a class="admin-table-link" href="\/admin\/orders\?order=[^"]+">Fresh Lead<\/a>/);
+    assert.doesNotMatch(newRequestsSection, /admin-quote-detail-dialog/);
     assert.match(newRequestsSection, /overview-new-1/);
     assert.doesNotMatch(newRequestsSection, /Today Assigned/);
-    assert.doesNotMatch(newRequestsSection, /Future No Team/);
+    assert.match(newRequestsSection, /Future No Team/);
     assert.match(dashboardBody, /Overdue Task Lead/);
     assert.match(dashboardBody, /Fresh Lead/);
     assert.doesNotMatch(dashboardBody, /Просроченные/);
