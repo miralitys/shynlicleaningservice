@@ -166,7 +166,7 @@ async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
   return entryIdMatch[1];
 }
 
-test("shows new quote and task badges in the sidebar until the lead leaves the new stage", async () => {
+test("shows the task badge on standalone Tasks without a lead badge", async () => {
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -220,8 +220,7 @@ test("shows new quote and task badges in the sidebar until the lead leaves the n
     });
     const dashboardBody = await dashboardResponse.text();
     assert.equal(dashboardResponse.status, 200);
-    assert.match(dashboardBody, /data-admin-nav-new-quote-count="1"/);
-    assert.match(dashboardBody, />1 заявка</);
+    assert.doesNotMatch(dashboardBody, /data-admin-nav-new-quote-count=/);
     assert.match(dashboardBody, /data-admin-nav-new-task-count="1"/);
     assert.match(dashboardBody, />1 задача</);
 
@@ -458,8 +457,8 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     });
     const funnelBody = await funnelResponse.text();
     assert.equal(funnelResponse.status, 200);
-    assert.match(funnelBody, /Статус заявок/);
-    assert.match(funnelBody, /class="admin-nav-sublink admin-nav-sublink-active" href="\/admin\/quote-ops\?section=funnel"/);
+    assert.match(funnelBody, /Статусы архива/);
+    assert.match(funnelBody, /class="admin-subnav-link admin-subnav-link-active" href="\/admin\/quote-ops\?section=funnel&amp;archive=1"/);
     assert.match(funnelBody, /href="\/admin\/quote-ops\?section=tasks"/);
     assert.doesNotMatch(funnelBody, /Весь поток заявок с сайта\./);
     assert.doesNotMatch(funnelBody, /За 24 часа/);
@@ -599,7 +598,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     );
     const tasksBody = await tasksResponse.text();
     assert.equal(tasksResponse.status, 200);
-    assert.match(tasksBody, /Таски по заявкам/);
+    assert.match(tasksBody, /<title>Таски/);
     assert.doesNotMatch(tasksBody, /Весь поток заявок с сайта\./);
     assert.doesNotMatch(tasksBody, /За 24 часа/);
     assert.doesNotMatch(tasksBody, /admin-quote-manual-task-card/);
@@ -629,7 +628,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(tasksBody, /admin-orders-filter-toggle/);
     assert.match(tasksBody, /admin-clients-search-form/);
     assert.match(tasksBody, /admin-quote-task-table/);
-    assert.match(tasksBody, /<th>Таск<\/th>\s*<th>Дедлайн<\/th>\s*<th>Этап<\/th>\s*<th>Исполнитель<\/th>\s*<th>Заявка<\/th>/);
+    assert.match(tasksBody, /<th>Таск<\/th>\s*<th>Дедлайн<\/th>\s*<th>Этап<\/th>\s*<th>Исполнитель<\/th>\s*<th>Клиент \/ заказ<\/th>/);
     assert.doesNotMatch(tasksBody, /<th>Действия<\/th>/);
     assert.match(tasksBody, /data-admin-dialog-row="true"/);
     assert.match(tasksBody, /admin-quote-task-row-overdue td/);

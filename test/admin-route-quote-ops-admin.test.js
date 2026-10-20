@@ -719,7 +719,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.equal(quoteOpsResponse.status, 200);
     assert.match(quoteOpsBody, /Jane Doe/);
     assert.match(quoteOpsBody, /ops-request-1/);
-    assert.match(quoteOpsBody, /Лента заявок/);
+    assert.match(quoteOpsBody, /Архив заявок/);
     assert.match(quoteOpsBody, /Быстро найти нужную заявку/);
     assert.match(quoteOpsBody, /Подтверждено/);
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);

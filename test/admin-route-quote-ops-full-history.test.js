@@ -48,7 +48,7 @@ test("quote list, stage filter, search, funnel, counts and tasks cover old leads
     for (const lead of leads.filter(lead => !lead.id.startsWith("removed-recurring-visit"))) assert.match(all, new RegExp(lead.customer_name));
     assert.doesNotMatch(all, /Removed Recurring Shell|Legacy Recurring Shell New/);
     assert.match(all, /Показано 5 из 5 заявок/);
-    assert.match(all, /data-admin-nav-new-quote-count="1"/);
+    assert.doesNotMatch(all, /data-admin-nav-new-quote-count=/);
     assert.doesNotMatch(all, /Internal Staff Record/);
     const stage = await get("?leadStatus=no-response");
     assert.match(stage, /Archived Client 0/);
@@ -63,7 +63,7 @@ test("quote list, stage filter, search, funnel, counts and tasks cover old leads
     const newLeads = await get("?section=funnel&leadStatus=new");
     assert.match(newLeads, /Archived Client 2/);
     assert.doesNotMatch(newLeads, /Removed Recurring Shell|Legacy Recurring Shell New|Real Recurring Visit/);
-    assert.match(newLeads, /data-admin-nav-new-quote-count="1"/);
+    assert.doesNotMatch(newLeads, /data-admin-nav-new-quote-count=/);
     const tasks = await get("?section=tasks");
     assert.match(tasks, /old-task-0/);
     assert.match(tasks, /old-task-1/);

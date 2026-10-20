@@ -244,7 +244,11 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
   },
   {
     path: ADMIN_QUOTE_OPS_PATH,
-    label: "Заявки",
+    label: "Архив заявок",
+  },
+  {
+    path: `${ADMIN_QUOTE_OPS_PATH}?section=tasks`,
+    label: "Таски",
   },
   {
     path: ADMIN_ORDERS_PATH,

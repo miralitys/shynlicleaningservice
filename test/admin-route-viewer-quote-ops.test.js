@@ -116,11 +116,11 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
       action: "complete-lead-task", entryId, taskId: closedId, taskAction: "complete",
     })).status, 303);
 
-    for (const route of ["/admin/quote-ops", "/admin/quote-ops?section=funnel", "/admin/quote-ops?section=tasks"]) {
+    for (const route of ["/admin/quote-ops", "/admin/quote-ops?section=archive", "/admin/quote-ops?section=funnel", "/admin/quote-ops?section=tasks"]) {
       const page = await get(route, viewerCookie);
       assert.equal(page.status, 200);
       assertReadOnly(page.html);
-      assert.match(page.html, /href="\/admin\/quote-ops"/);
+      assert.match(page.html, /href="\/admin\/quote-ops\?section=archive"/);
       assert.match(page.html, /href="\/admin\/quote-ops\?section=tasks"/);
       assert.match(page.html, /href="\/admin\/staff\?section=calendar"/);
       assert.doesNotMatch(page.html, /href="\/admin\/(staff|settings)"/);
@@ -244,6 +244,7 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
       })).status, 403, action);
     }
     assert.equal((await post("/admin/quote-ops/retry", viewerCookie, { entryId })).status, 403);
+    assert.equal((await post("/admin/quote-ops?section=archive", viewerCookie, { action: "update-lead-status", entryId, leadStatus: "confirmed" })).status, 403);
     assert.equal((await post("/admin/orders", viewerCookie, { entryId, paymentStatus: "paid" })).status, 403);
     assert.equal((await post("/admin/clients", viewerCookie, { action: "save-client" })).status, 403);
     assert.equal((await get("/admin/orders", viewerCookie)).status, 200);
