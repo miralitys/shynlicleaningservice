@@ -19,6 +19,9 @@ test("quote list, stage filter, search, funnel, counts and tasks cover old leads
     { ...leads[2], id: "removed-recurring-visit", request_id: "recurring-series-next-20991101",
       customer_name: "Removed Recurring Shell", code: "RECURRING_ORDER_CREATED",
       payload_for_retry: { calculatorData: {} } },
+    { ...leads[2], id: "removed-recurring-visit-new", request_id: "legacy-series-next-20991101",
+      customer_name: "Legacy Recurring Shell New", code: "RECURRING_ORDER_CREATED",
+      payload_for_retry: { calculatorData: {}, adminLead: { status: "new" } } },
     { ...leads[2], id: "real-recurring-visit", request_id: "recurring-series-next-20991101",
       customer_name: "Real Recurring Visit", code: "RECURRING_ORDER_CREATED",
       payload_for_retry: { calculatorData: {}, orderState: { status: "scheduled" } } },
@@ -42,8 +45,8 @@ test("quote list, stage filter, search, funnel, counts and tasks cover old leads
       return response.text();
     };
     const all = await get("");
-    for (const lead of leads.filter(lead => lead.id !== "removed-recurring-visit")) assert.match(all, new RegExp(lead.customer_name));
-    assert.doesNotMatch(all, /Removed Recurring Shell/);
+    for (const lead of leads.filter(lead => !lead.id.startsWith("removed-recurring-visit"))) assert.match(all, new RegExp(lead.customer_name));
+    assert.doesNotMatch(all, /Removed Recurring Shell|Legacy Recurring Shell New/);
     assert.match(all, /Показано 5 из 5 заявок/);
     assert.match(all, /data-admin-nav-new-quote-count="1"/);
     assert.doesNotMatch(all, /Internal Staff Record/);
@@ -59,7 +62,7 @@ test("quote list, stage filter, search, funnel, counts and tasks cover old leads
     assert.doesNotMatch(funnel, /Archived Client [023]/);
     const newLeads = await get("?section=funnel&leadStatus=new");
     assert.match(newLeads, /Archived Client 2/);
-    assert.doesNotMatch(newLeads, /Removed Recurring Shell|Real Recurring Visit/);
+    assert.doesNotMatch(newLeads, /Removed Recurring Shell|Legacy Recurring Shell New|Real Recurring Visit/);
     assert.match(newLeads, /data-admin-nav-new-quote-count="1"/);
     const tasks = await get("?section=tasks");
     assert.match(tasks, /old-task-0/);

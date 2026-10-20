@@ -322,16 +322,18 @@ test("quote workspace hides removed recurring shells without altering real order
   const entries = [
     { id: "removed-visit", code: "RECURRING_ORDER_CREATED", payloadForRetry: { calculatorData: {} } },
     { id: "empty-legacy-visit", code: "RECURRING_ORDER_CREATED", payloadForRetry: { orderState: {}, adminOrder: {} } },
+    { id: "removed-visit-with-new-stage", code: "RECURRING_ORDER_CREATED", payloadForRetry: { adminLead: { status: "new" } } },
     { id: "live-visit", code: "RECURRING_ORDER_CREATED", payloadForRetry: { orderState: { status: "scheduled" } } },
     { id: "legacy-live-visit", code: "RECURRING_ORDER_CREATED", payloadForRetry: { adminOrder: { status: "scheduled" } } },
     { id: "canceled-visit", code: "RECURRING_ORDER_CREATED", payloadForRetry: { orderState: { status: "canceled" } } },
-    { id: "explicit-lead", code: "RECURRING_ORDER_CREATED", payloadForRetry: { adminLead: { status: "new" } } },
+    { id: "explicit-lead", code: "QUOTE_CREATED", payloadForRetry: { adminLead: { status: "new" } } },
+    { id: "ongoing-followup", code: "RECURRING_ORDER_CREATED", payloadForRetry: { adminLead: { status: "discussion" } } },
     { id: "website-request", payloadForRetry: { calculatorData: { frequency: "weekly" } } },
     { id: "manual-request", sourceRoute: "/admin/orders", payloadForRetry: {} },
   ];
   const original = structuredClone(entries);
   const visible = filterQuoteOpsEntries(entries, { excludeRemovedRecurringOrders: true }, normalizeString);
-  assert.deepEqual(visible.map(entry => entry.id), entries.slice(2).map(entry => entry.id));
+  assert.deepEqual(visible.map(entry => entry.id), entries.slice(3).map(entry => entry.id));
   const newLeads = filterQuoteOpsEntries(entries, { excludeRemovedRecurringOrders: true, leadStatus: "new" }, normalizeString);
   assert.deepEqual(newLeads.map(entry => entry.id), ["explicit-lead", "website-request", "manual-request"]);
   assert.deepEqual(filterQuoteOpsEntries(entries, { includeHidden: true }, normalizeString), entries);
