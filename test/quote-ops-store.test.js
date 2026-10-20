@@ -97,6 +97,30 @@ test("guarded background writes skip an already deleted order", async () => {
   assert.equal(writes, 0);
 });
 
+test("a rejected reschedule never updates the order cache or pretends the save succeeded", async () => {
+  for (const code of ["23505", "40001", "40P01"]) {
+    let rejectWrites = false;
+    let syncs = 0;
+    const store = createQuoteOpsStore({ QUOTE_OPS_LEDGER_LIMIT: 100, normalizeString,
+      applyOrderEntryUpdates(entry, updates) { entry.selectedDate = updates.selectedDate; return entry; },
+      orderStore: { async upsertEntry() { syncs++; } },
+      createSupabaseQuoteOpsClient: () => ({ isConfigured: () => true,
+        async fetchEntryById() { throw new Error("Temporary read failure"); },
+        async fetchEntries() { throw new Error("Temporary read failure"); },
+        async upsertEntry() { if (rejectWrites) throw Object.assign(new Error("Conflicting slot"), { code }); },
+      }),
+    });
+    const entry = await store.recordSubmission({ ok: true, selectedDate: "2099-11-01",
+      payloadForRetry: { orderState: { isCreated: true, status: "scheduled" } } });
+    const before = structuredClone(entry);
+    const oldSyncs = syncs;
+    rejectWrites = true;
+    assert.equal(await store.updateOrderEntry(entry.id, { selectedDate: "2099-11-08" }), null);
+    assert.equal(syncs, oldSyncs);
+    assert.deepEqual(await store.getEntry(entry.id), before);
+  }
+});
+
 test("complete series reads fail closed instead of using a partial memory fallback", async () => {
   const store = createQuoteOpsStore({
     QUOTE_OPS_LEDGER_LIMIT: 25,

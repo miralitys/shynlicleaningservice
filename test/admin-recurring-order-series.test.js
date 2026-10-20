@@ -232,6 +232,16 @@ test("a failed complete read creates nothing and releases the series generation 
   assert.ok((await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root })).length > 0);
 });
 
+test("a failed guarded source update aborts generation instead of using the stale source", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly" });
+  const ledger = createLedger(domain, [root]);
+  ledger.updateOrderEntry = async () => null;
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await assert.rejects(helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root }), /source changed/);
+  assert.equal((await ledger.listEntries()).length, 1);
+});
+
 test("overlapping series generators from separate handlers cannot insert duplicate visits", async () => {
   const domain = createDomain();
   const root = createEntry({ id: "kylie", date: "2026-10-11", frequency: "weekly" });
@@ -247,6 +257,182 @@ test("overlapping series generators from separate handlers cannot insert duplica
 
   assert.equal(new Set(entries.map((entry) => entry.requestId)).size, entries.length);
   assert.equal(created.filter((items) => items.length > 0).length, 1);
+});
+
+test("legacy flattened parent links preserve distinct occurrence dates rather than assigning every child index one", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly", seriesId: "legacy-series" });
+  const first = createEntry({ id: "first", date: "2026-11-08", frequency: "weekly", sourceEntryId: root.id, seriesId: "legacy-series" });
+  const second = createEntry({ id: "second", date: "2026-11-15", frequency: "weekly", sourceEntryId: root.id, seriesId: "legacy-series" });
+  const ledger = createLedger(domain, [root, first, second]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  assert.equal(getEntryOrderState(first).recurringOccurrenceIndex, 1);
+  assert.equal(getEntryOrderState(second).recurringOccurrenceIndex, 2);
+  assert.equal(getEntryOrderState(second).recurringOccurrenceDate, "2026-11-15");
+  assert.equal((await ledger.listEntries()).filter(entry => entry.selectedDate === "2026-11-15").length, 1);
+});
+
+test("a legacy visit with inconsistent canonical metadata still blocks another order in its actual date/time slot", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly" });
+  const existing = createEntry({ id: "existing", date: "2026-11-15", frequency: "weekly", sourceEntryId: root.id });
+  for (const entry of [root, existing]) {
+    await domain.applyOrderEntryUpdates(entry, {
+      recurringAnchorDate: "2026-11-01", recurringOccurrenceDate: entry === root ? "2026-11-01" : "2026-11-08",
+      recurringOccurrenceIndex: entry === root ? 0 : 1,
+    });
+  }
+  const ledger = createLedger(domain, [root, existing]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  assert.equal((await ledger.listEntries()).filter(entry => entry.selectedDate === "2026-11-15").length, 1);
+  assert.equal(existing.selectedDate, "2026-11-15");
+  assert.equal(existing.selectedTime, "11:00");
+});
+
+test("a canceled moved occurrence reserves its own canonical date, not another legitimate visit's actual slot", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly" });
+  const canceled = createEntry({ id: "canceled", date: "2026-11-15", frequency: "weekly", status: "canceled", sourceEntryId: root.id });
+  domain.applyOrderEntryUpdates(canceled, {
+    recurringAnchorDate: "2026-11-01", recurringOccurrenceDate: "2026-11-08", recurringOccurrenceIndex: 1,
+  });
+  const ledger = createLedger(domain, [root, canceled]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  const created = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  assert.equal(created.filter(entry => entry.selectedDate === "2026-11-15").length, 1);
+  assert.equal(created.filter(entry => entry.selectedDate === "2026-11-08").length, 0);
+  assert.equal(getEntryOrderState(canceled).status, "canceled");
+});
+
+test("legacy nested request IDs and missing series metadata join one canonical series before generation", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly", seriesId: "" });
+  root.requestId = "legacy-root";
+  const first = createEntry({ id: "first", date: "2026-11-08", frequency: "weekly", sourceEntryId: root.id, seriesId: "" });
+  first.requestId = "legacy-root-next-20261108";
+  const second = createEntry({ id: "second", date: "2026-11-15", frequency: "weekly", sourceEntryId: first.id, seriesId: "" });
+  second.requestId = "legacy-root-next-20261108-next-20261115";
+  const ledger = createLedger(domain, [root, first, second]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: second });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  const entries = await ledger.listEntries();
+  assert.ok(entries.every(entry => getEntryOrderState(entry).recurringSeriesId === "legacy-root"));
+  assert.equal(entries.filter(entry => entry.selectedDate === "2026-11-15").length, 1);
+  assert.equal(entries.filter(entry => entry.selectedDate === "2026-11-22").length, 1);
+});
+
+test("generator request lookup does not suppress another raw series whose display request IDs collide", async () => {
+  const domain = createDomain();
+  const first = createEntry({ id: "first", date: "2026-11-01", frequency: "weekly", seriesId: "Series_A" });
+  const second = createEntry({ id: "second", date: "2026-11-01", frequency: "weekly", seriesId: "series-a" });
+  const ledger = createLedger(domain, [first, second]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  const a = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: first });
+  const b = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: second });
+  assert.ok(a.length > 0);
+  assert.equal(a.length, b.length);
+  assert.ok(a.every(entry => getEntryOrderState(entry).recurringSeriesId === "Series_A"));
+  assert.ok(b.every(entry => getEntryOrderState(entry).recurringSeriesId === "series-a"));
+});
+
+test("a future-series reset waits for an in-flight generation and removes the old cadence", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly" });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  let started;
+  let release;
+  const pendingInsert = new Promise(resolve => { started = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  const insert = ledger.recordSubmission;
+  let first = true;
+  ledger.recordSubmission = async input => {
+    if (first) { first = false; started(); await gate; }
+    return insert(input);
+  };
+  const generation = helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  await pendingInsert;
+  await ledger.updateOrderEntry(root.id, { selectedDate: "2026-11-02" });
+  const reset = helpers.resetRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root, resetFromDate: "2026-11-01" });
+  release();
+  await generation;
+  await reset;
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  const entries = await ledger.listEntries();
+  assert.equal(getEntryOrderState(root).recurringAnchorDate, "2026-11-02");
+  assert.ok(entries.every(entry => new Date(`${entry.selectedDate}T12:00:00Z`).getUTCDay() === 1));
+  assert.equal(new Set(entries.map(entry => entry.selectedDate)).size, entries.length);
+});
+
+test("a reset using a stale legacy-child snapshot shares the root generator's canonical lock", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly", seriesId: "canonical-id" });
+  const child = createEntry({ id: "child", date: "2026-11-08", frequency: "weekly", seriesId: "", sourceEntryId: root.id });
+  const staleChild = structuredClone(child);
+  const ledger = createLedger(domain, [root, child]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  let started;
+  let release;
+  const pending = new Promise(resolve => { started = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  const insert = ledger.recordSubmission;
+  let first = true;
+  ledger.recordSubmission = async input => {
+    if (first) { first = false; started(); await gate; }
+    return insert(input);
+  };
+  const generation = helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  await pending;
+  await ledger.updateOrderEntry(child.id, { selectedDate: "2026-11-15" });
+  let resetFinished = false;
+  const reset = helpers.resetRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: staleChild }).then(() => { resetFinished = true; });
+  await new Promise(resolve => setImmediate(resolve));
+  const raced = resetFinished;
+  release();
+  await generation;
+  await reset;
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: child });
+  assert.equal(raced, false);
+  assert.equal((await ledger.listEntries()).filter(entry => entry.selectedDate === "2026-11-15").length, 1);
+});
+
+test("missing root metadata reuses an established sibling anchor instead of the root's one-off moved date", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-02", frequency: "weekly" });
+  const sibling = createEntry({ id: "sibling", date: "2026-11-09", frequency: "weekly", sourceEntryId: root.id });
+  domain.applyOrderEntryUpdates(sibling, {
+    recurringAnchorDate: "2026-11-01", recurringOccurrenceDate: "2026-11-08", recurringOccurrenceIndex: 1,
+  });
+  const ledger = createLedger(domain, [root, sibling]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  const entries = await ledger.listEntries();
+  assert.equal(getEntryOrderState(root).recurringAnchorDate, "2026-11-01");
+  assert.equal(entries.filter(entry => entry.selectedDate === "2026-11-09").length, 1);
+  assert.equal(entries.filter(entry => entry.selectedDate === "2026-11-15").length, 1);
+  assert.equal(entries.filter(entry => entry.selectedDate === "2026-11-16").length, 0);
+});
+
+test("resetting a previously moved visit uses its canonical occurrence boundary, not its temporary actual date", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly" });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  const created = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  const moved = created.find(entry => entry.selectedDate === "2026-11-08");
+  await ledger.updateOrderEntry(moved.id, { selectedDate: "2026-11-27" });
+  await helpers.resetRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: moved, resetFromDate: "2026-11-27" });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: moved });
+  const entries = await ledger.listEntries();
+  assert.equal(entries.filter(entry => entry.selectedDate === "2026-11-15").length, 0);
+  assert.equal(entries.filter(entry => entry.selectedDate === "2026-11-22").length, 0);
+  for (const entry of entries) {
+    const next = entries.find(candidate => candidate.id === getEntryOrderState(entry).recurringNextEntryId);
+    if (next) assert.ok(entry.selectedDate < next.selectedDate, "next pointers must not go backwards");
+  }
 });
 
 test("a sweep cannot revive a visit deleted while its stale series list is being processed", async () => {
@@ -277,6 +463,20 @@ test("a sweep cannot revive a visit deleted while its stale series list is being
   assert.deepEqual(getEntryOrderState(victim), {});
   assert.equal(assignedIds.includes(victim.id), false);
   assert.equal((await ledger.listEntries()).filter((entry) => entry.requestId === victim.requestId).length, 1);
+});
+
+test("removed shells reserve their occurrence but are never linked as the next real visit", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "root", date: "2026-11-01", frequency: "weekly" });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  const created = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  const removed = created[0];
+  domain.applyOrderEntryUpdates(removed, { removeOrder: true });
+  assert.deepEqual(await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root }), []);
+  assert.deepEqual(getEntryOrderState(removed), {});
+  assert.ok((await ledger.listEntries()).filter(entry => Object.keys(getEntryOrderState(entry)).length)
+    .every(entry => getEntryOrderState(entry).recurringNextEntryId !== removed.id));
 });
 
 test("keeps confirmed staff assignments on generated recurring visits", async () => {

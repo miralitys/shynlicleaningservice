@@ -7,6 +7,66 @@ const {
   isOpaqueSupabaseApiKey,
 } = require("../lib/supabase-quote-ops");
 
+test("recurring inserts use the atomic source-guarded RPC and return the persisted visit", async () => {
+  const calls = [];
+  const existing = { id: "visit", request_id: "series-next-20991101", total_price: 280,
+    payload_for_retry: { orderState: { assignedStaff: "Cleaner A" } } };
+  const client = createSupabaseQuoteOpsClient({
+    env: { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test" },
+    fetch: async (url, options) => {
+      calls.push({ url: new URL(url), options });
+      return { ok: true, status: 200, text: async () => JSON.stringify({ entry: existing, inserted: false }) };
+    },
+  });
+  const guard = { entryId: "source", state: { frequency: "weekly" } };
+  const result = await client.insertRecurringEntry({ id: "visit", requestId: existing.request_id, totalPrice: 534 }, guard);
+  assert.equal(result.inserted, false);
+  assert.equal(result.entry.totalPrice, 280);
+  assert.equal(result.entry.payloadForRetry.orderState.assignedStaff, "Cleaner A");
+  assert.equal(calls[0].url.pathname, "/rest/v1/rpc/insert_recurring_quote_order");
+  assert.deepEqual(JSON.parse(calls[0].options.body).p_source_guard, guard);
+  assert.equal(calls[0].options.method, "POST");
+  assert.equal(calls.length, 1);
+});
+
+test("recurring lookup is exact, paginated, and prefers a real legacy order to a newer deleted shell", async () => {
+  const queries = [];
+  const requestId = "series-next-20991101";
+  const client = createSupabaseQuoteOpsClient({
+    env: { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test" },
+    fetch: async url => {
+      const query = new URL(url).searchParams;
+      queries.push(query);
+      const rows = query.get("offset") === "0"
+        ? Array.from({ length: 500 }, (_, i) => ({ id: `shell-${i}`, request_id: requestId,
+          updated_at: "2026-10-20T12:00:00Z", payload_for_retry: {} }))
+        : [{ id: "legacy-order", request_id: requestId, updated_at: "2026-09-01T12:00:00Z",
+          payload_for_retry: { adminOrder: { isCreated: true, status: "scheduled" } } }];
+      return { ok: true, status: 200, text: async () => JSON.stringify(rows) };
+    },
+  });
+  assert.equal((await client.fetchEntryByRequestId(requestId)).id, "legacy-order");
+  assert.deepEqual(queries.map(query => query.get("offset")), ["0", "500"]);
+  assert.ok(queries.every(query => query.get("request_id") === `eq.${requestId}`));
+});
+
+test("invalid recurring lookup and insert responses do not masquerade as a missing or persisted visit", async () => {
+  const client = createSupabaseQuoteOpsClient({
+    env: { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test" },
+    fetch: async () => ({ ok: true, status: 200, text: async () => "null" }),
+  });
+  await assert.rejects(client.fetchEntryByRequestId("series-next-20991101"), /Invalid occurrence lookup response/);
+  await assert.rejects(client.insertRecurringEntry({ id: "visit" }, {}), /Invalid recurring insert response/);
+});
+
+test("database conflict codes reach the store so a rejected reschedule cannot become a cached success", async () => {
+  const client = createSupabaseQuoteOpsClient({
+    env: { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test" },
+    fetch: async () => ({ ok: false, status: 409, text: async () => JSON.stringify({ code: "23505", message: "Recurring slot already occupied" }) }),
+  });
+  await assert.rejects(client.upsertEntry({ id: "visit" }), error => error.code === "23505");
+});
+
 test("complete ledger reads paginate past 1000 rows without a creation-date cutoff", async () => {
   const calls = [];
   const client = createSupabaseQuoteOpsClient({
