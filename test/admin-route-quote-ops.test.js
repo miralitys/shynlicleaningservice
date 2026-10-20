@@ -960,7 +960,7 @@ test("auto-assigns new quote submissions to managers in round robin order", asyn
   }
 });
 
-test("manual task picker includes clients outside the clients page ledger window", async () => {
+test("quote search and manual task picker include clients outside the former ledger window", async () => {
   const fetchStub = createFetchStub([
     {
       method: "POST",
@@ -1025,8 +1025,8 @@ test("manual task picker includes clients outside the clients page ledger window
     );
     const recentWorkspaceBody = await recentWorkspaceResponse.text();
     assert.equal(recentWorkspaceResponse.status, 200);
-    assert.match(recentWorkspaceBody, /Найдено 0 из 180 заявок/);
-    assert.doesNotMatch(recentWorkspaceBody, /manual-suganya-swamy-e8n84g/);
+    assert.match(recentWorkspaceBody, /Найдено 1 из 501 заявок/);
+    assert.match(recentWorkspaceBody, /manual-suganya-swamy-e8n84g/);
 
     const tasksResponse = await fetch(`${started.baseUrl}/admin/quote-ops?section=tasks`, {
       headers: {
