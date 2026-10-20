@@ -215,6 +215,8 @@ const ADMIN_APP_ROUTES = new Set([
 ]);
 const ADMIN_ALL_ROUTES = new Set([
   ...ADMIN_APP_ROUTES,
+  "/admin/profitability",
+  "/admin/profitability/api",
   ADMIN_STAFF_CONTRACT_DOWNLOAD_PATH,
   ADMIN_STAFF_W9_DOWNLOAD_PATH,
   ADMIN_STAFF_GOOGLE_CONNECT_PATH,
