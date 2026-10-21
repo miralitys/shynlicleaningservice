@@ -7,6 +7,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const { startServer, stopServer } = require("./server-test-helpers");
 const { documentMarkup, assertNoTildaRuntime, assertSharedNavigation, jsonLdNodes } = require("./site-markup-helpers");
+const { SERVICE_AREA_ZIP_MAP } = require("../lib/service-area-zips");
 
 let serverProcess = null;
 let BASE_URL = null;
@@ -87,6 +88,19 @@ const EXPECTED_SERVICE_ZIP_LOOKUP = {
   "60189": zipTargets(["Wheaton", "/wheaton"]),
   "60190": zipTargets(["Winfield", "/winfield"]),
   "60191": zipTargets(["Wood Dale", "/wooddale"]),
+  "60403": zipTargets(["Crest Hill","/cresthill"], ["Joliet","/joliet"]),
+  "60404": zipTargets(["Shorewood","/shorewood"], ["Joliet","/joliet"]),
+  "60410": zipTargets(["Channahon","/channahon"]),
+  "60431": zipTargets(["Joliet","/joliet"], ["Shorewood","/shorewood"]),
+  "60432": zipTargets(["Joliet","/joliet"]),
+  "60433": zipTargets(["Joliet","/joliet"]),
+  "60435": zipTargets(["Joliet","/joliet"], ["Crest Hill","/cresthill"]),
+  "60436": zipTargets(["Joliet","/joliet"], ["Shorewood","/shorewood"]),
+  "60447": zipTargets(["Minooka","/minooka"]),
+  "60480": zipTargets(["Willow Springs","/willowsprings"]),
+  "60511": zipTargets(["Big Rock","/bigrock"]),
+  "60545": zipTargets(["Plano","/plano"]),
+  "60548": zipTargets(["Sandwich","/sandwich"]),
   "60439": zipTargets(["Lemont", "/lemont"]),
   "60440": zipTargets(["Bolingbrook", "/bolingbrook"]),
   "60441": zipTargets(["Homer Glen", "/homerglen"], ["Lockport", "/lockport"]),
@@ -635,6 +649,15 @@ test("redirects removed copy and archive routes to canonical pages", async () =>
 
 test("serves all city pilot pages without zero/lazyload runtimes", async () => {
   const cityRoutes = [
+    ["/shorewood", "Shorewood"],
+    ["/channahon", "Channahon"],
+    ["/joliet", "Joliet"],
+    ["/minooka", "Minooka"],
+    ["/bigrock", "Big Rock"],
+    ["/cresthill", "Crest Hill"],
+    ["/plano", "Plano"],
+    ["/sandwich", "Sandwich"],
+    ["/willowsprings", "Willow Springs"],
     ["/addison", "Addison"],
     ["/aurora", "Aurora"],
     ["/bartlett", "Bartlett"],
@@ -797,7 +820,7 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
       assert.equal(response.headers.get("x-robots-tag"), null, route);
       assert.match(body, /<main class="sa-page"/, route);
       assert.match(body, /href="\/css\/service-areas-copy\.css\?v=10"/, route);
-      assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/, route);
+      assert.match(body, /src="\/js\/service-areas-copy\.js\?v=10"/, route);
       assert.doesNotMatch(body, /id="shynli-home-page-runtime"/, route);
       assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/, route);
       assert.doesNotMatch(
@@ -834,7 +857,7 @@ test("shows the newly added cities on the service areas page and ZIP lookup", as
   assert.doesNotMatch(body, /Now serving these cities too/);
   assert.match(body, /data-zip-form/);
   assert.match(body, /Find your area by ZIP code/);
-  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
+  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=10"/);
   assert.doesNotMatch(body, /<h2 id="city-modal-title">Choose your city<\/h2>/);
   assert.doesNotMatch(body, /const serviceZips=/);
 });
@@ -845,7 +868,8 @@ test("uses the exact ZIP lookup map and supports shared ZIP matches", async () =
   const zipLookupData = extractServiceZipLookupData();
 
   assert.deepEqual(zipLookupData, EXPECTED_SERVICE_ZIP_LOOKUP);
-  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
+  assert.deepEqual(SERVICE_AREA_ZIP_MAP, EXPECTED_SERVICE_ZIP_LOOKUP);
+  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=10"/);
 
   let runtime = createServiceAreasZipRuntime("60521");
   runtime.listeners.submit({ preventDefault() {} });
@@ -952,7 +976,7 @@ test("serves the service areas main route as clean hand-coded markup", async () 
   assert.doesNotMatch(body, /<meta name="robots"[^>]+noindex/i);
   assert.match(body, /<main class="sa-page"/);
   assert.match(body, /href="\/css\/service-areas-copy\.css\?v=10"/);
-  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=9"/);
+  assert.match(body, /src="\/js\/service-areas-copy\.js\?v=10"/);
   assert.match(body, /src="\/images\/shynli-sugargrove-area-map\.svg"/);
   assert.match(body, /Serving <span>Chicagoland<\/span> Communities/i);
   assert.match(body, /Get Your Home Professionally Cleaned/i);
