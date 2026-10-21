@@ -56,6 +56,8 @@ Card fee = round(paid cents * Invoice basis points / 10000).
 Profit = paid - expenses; margin = profit / paid; profit per hour uses actual
 minutes, defaulting to planned minutes. Debt for completed service stages is
 payable - paid; negative debt is a credit/advance, not an extra charge.
+For an unentered paid amount, debt is unknown, not the full price. Such records
+are excluded from the debt filter and counted as missing payments in totals.
 Canceled orders are excluded from totals/profit even when visible by filter.
 Tips are separate from both agreed price and paid cleaning revenue; no tip
 allocation or cleaner share is inferred.

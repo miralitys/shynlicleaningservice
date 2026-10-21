@@ -62,6 +62,8 @@ test("all seven formulas are exact for one-off, recurring and canceled visits wi
   assert.deepEqual([canceled.profitCents, canceled.marginPercent, canceled.profitPerHourCents, canceled.debtCents, canceled.canceled], [0, null, null, 0, true]);
   assert.deepEqual(order, before);
   assert.equal(calculateProfitability({ ...order, paymentStatus: "paid" }, {}, team, settings).complete, false);
+  assert.equal(calculateProfitability({ ...order, paymentStatus: "paid" }, {}, team, settings).debtCents, null);
+  assert.equal(calculateProfitability(order, { paidCents: 0 }, team, settings).debtCents, 30000);
   assert.equal(calculateProfitability(order, { paidCents: 10000, payouts: [{ staffId: "a", cents: 0 }] }, team, settings).complete, false);
   assert.equal(calculateProfitability(order, { paidCents: 10000, payouts: [{ staffId: "a", cents: 0 }, { staffId: "b", cents: 0 }] }, team, settings).complete, true);
   const removed = calculateProfitability(order, { paidCents: 20000, payouts: [{ staffId: "a", cents: 6000 }, { staffId: "removed", cents: 4000 }] }, [{ id: "a" }], settings);

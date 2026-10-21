@@ -77,6 +77,17 @@ test("all 34 CSV columns agree with the report and keep more than three and reti
   assert.equal(cleaners.find(item => item.id === "retired").paidCents, 0);
 });
 
+test("unentered historical payments are unknown debt, never invented arrears or confirmed profit", () => {
+  const rows = withCustomerHistory([makeRow("unknown", "2026-10-01", "client-a", { data: { paidCents: null } }),
+    makeRow("unpaid", "2026-10-02", "client-b", { data: { paidCents: 0 } })]);
+  assert.equal(rows[0].metrics.debtCents, null);
+  assert.equal(rowValues(rows[0])[32], "");
+  const total = aggregate(rows);
+  assert.equal(total.debtCents, 30000);
+  assert.equal(total.unknownDebt, 1);
+  assert.equal(total.knownDebt, 1);
+});
+
 test("full financial form, filters, CSV, summaries and history work without mutating a preview order", async () => {
   const preview = await startPreview();
   const id = "10000000-0000-4000-8000-000000000001";
