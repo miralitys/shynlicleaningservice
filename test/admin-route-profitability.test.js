@@ -167,6 +167,7 @@ test("Eva viewer can read both reports and audit only the five allowed UI/API fi
     const assign = await post("/admin/orders", owner, [["action", "update-order"], ["entryId", id], ["assignedStaff", "Cleaner A"], ["assignedStaff", "Cleaner B"]]);
     assert.equal(assign.status, 303);
     const seed = await post("/admin/profitability", owner, { action: "update", entryId: id, version: "0", paidAmount: "500", source: "google",
+      orderUpdatedAt: (await (await get(`/admin/profitability/api?entryId=${id}`, owner)).json()).orderUpdatedAt,
       "payout:a": "100", "payout:b": "90", comment: "Keep financial comment" });
     assert.equal(seed.status, 303, await seed.text());
     const eva = await login(users[0]);
@@ -183,12 +184,14 @@ test("Eva viewer can read both reports and audit only the five allowed UI/API fi
     assert.match(html, /<select[^>]*form="profit-[^"]+" name="source"/);
     assert.match(await (await get("/admin/orders", eva)).text(), /href="\/admin\/profitability"/);
     assert.equal((await get("/admin/profitability?view=summary", eva)).status, 200);
-    const patch = (patch, version, extra = {}) => fetch(app.baseUrl + "/admin/profitability/api", { method: "PATCH",
-      headers: { cookie: eva, "content-type": "application/json" }, body: JSON.stringify({ entryId: id, version, patch, ...extra }) });
+    const patch = async (patch, version, extra = {}) => fetch(app.baseUrl + "/admin/profitability/api", { method: "PATCH",
+      headers: { cookie: eva, "content-type": "application/json" }, body: JSON.stringify({ entryId: id, version, patch,
+        orderUpdatedAt: (await (await get(`/admin/profitability/api?entryId=${id}`, eva)).json()).orderUpdatedAt, ...extra }) });
     const updated = await patch({ payouts: [{ staffId: "a", cents: 12500 }] }, 1);
     assert.equal(updated.status, 200, await updated.clone().text());
     assert.equal((await updated.json()).version, 2);
-    const uiUpdate = await post("/admin/profitability", eva, { action: "update", entryId: id, version: "2", "payout:b": "95.50" });
+    const uiUpdate = await post("/admin/profitability", eva, { action: "update", entryId: id, version: "2", "payout:b": "95.50",
+      orderUpdatedAt: (await (await get(`/admin/profitability/api?entryId=${id}`, eva)).json()).orderUpdatedAt });
     assert.equal(uiUpdate.status, 303, await uiUpdate.text());
     assert.equal((await patch({ payouts: [{ staffId: "a", cents: 1 }] }, 1)).status, 409);
     for (const field of ["paidCents", "basePriceCents", "addonsCents", "discountCents", "leadCostCents", "tipsCents", "tipsPassed",
@@ -210,7 +213,9 @@ test("Eva viewer can read both reports and audit only the five allowed UI/API fi
     assert.equal(sourceUpdate.status, 200);
     const sourceForm = await post("/admin/profitability", eva, { action: "update", entryId: id, version: "4", source: "thumbtack", paymentMethod: "check", paidAt: "2026-10-22", comment: "Form comment" });
     assert.equal(sourceForm.status, 303);
-    assert.equal(await (await get(orderUrl, owner)).text(), before, "financial writes never mutate the original order");
+    const after = await (await get(orderUrl, owner)).text();
+    const withoutPayoutValues = html => html.replace(/value="(?:100\.00|90\.00|125\.00|95\.50)"/g, 'value="PAYOUT"');
+    assert.equal(withoutPayoutValues(after), withoutPayoutValues(before), "only authorized per-cleaner payout values change; client price, team, date and status are untouched");
     const state = JSON.parse(await fs.readFile(env.PROFITABILITY_STORE_PATH, "utf8"));
     assert.deepEqual(state.records[id].data, { paidCents: 50000, source: "thumbtack", comment: "Form comment", paymentMethod: "check", paidAt: "2026-10-22",
       payouts: [{ staffId: "a", cents: 12500 }, { staffId: "b", cents: 9550 }] });

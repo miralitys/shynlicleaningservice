@@ -1,7 +1,8 @@
 # Profitability
 
 The section includes all 34 columns and the Summary screen. Financial data and
-history are isolated from orders, customers, staff planning, and notifications.
+history are private. Cleaner payouts share the order's per-visit payroll source;
+other financial fields remain isolated from operational order data.
 
 ## Included
 
@@ -37,10 +38,26 @@ history are isolated from orders, customers, staff planning, and notifications.
 
 ## Financial Boundaries
 
-New fields live ONLY in `profitability_records`, with private events in
-`profitability_events`. No finance edit calls order/client mutations, payroll
-logic, series generation, calendar sync or notifications. Existing order cards,
-cleaner APIs and the general action journal never read these tables. The
+New financial fields live in `profitability_records`, with private events in
+`profitability_events`. The authorized exception is per-cleaner payout: it uses
+the order's `payrollOverrides` and accrued `payroll.items`, also used by cleaner
+earnings and admin payroll. Paid items always take precedence and are immutable,
+including zero amounts and paid staff no longer on the team. Future fixed pay
+is visible immediately, but is not accrued until the normal completion stage.
+Unconfirmed future percentage estimates are not treated as confirmed financial
+costs. Clearing an unpaid fixed override restores the usual payroll rule.
+Changing another financial field does not convert percentage payouts to fixed.
+
+`supabase/profitability_payroll.sql` installs the service-role-only atomic payout
+RPC: compare both finance version and order timestamp, lock the row, update only
+the native payroll fields, save the finance patch and private before/after event
+in one transaction. A conflict or audit failure rolls back everything. Reads,
+schema installation and deployment never migrate or rewrite existing orders.
+The financial payout array is an audit mirror, not another source of truth.
+Cleaner navigation cache is invalidated after a successful payout save.
+No series generation, staff reassignment, calendar sync or notifications run.
+Client prices, payment states, visit dates and statuses remain untouched. The
+general action journal does not read the private finance tables. The
 finance journal is intentionally separate because managers can read the normal
 action journal.
 
@@ -121,16 +138,18 @@ they do not mark an order Paid or rewrite its operational payment state or notes
 
 Eva uses the existing session cookie for both UI and API requests:
 
-- POST `/admin/profitability`: `action=update`, `entryId`, `version`, and any
+- POST `/admin/profitability`: `action=update`, `entryId`, `version`, `orderUpdatedAt`, and any
   of `payout:<staffId>` (dollars), `source`, `paymentMethod`, `paidAt` (YYYY-MM-DD),
   `comment`. Settings/import/unknown fields return 403, including mixed requests.
-- PATCH `/admin/profitability/api`: `{entryId, version, patch}` with only the
+- PATCH `/admin/profitability/api`: `{entryId, version, orderUpdatedAt, patch}` with only the
   five permitted keys above; each payout is `{staffId, cents}`. Partial payout
   patches preserve payouts not included in the request. Staff IDs must already
   belong to the team or existing historical payouts; no team edits are performed.
 - Every save and audit event are atomic in the existing store, with actor user
   ID/email, permission, server timestamp, record ID, and full before/after data.
   Stale versions return 409 without changing data or writing an event.
+  GET returns `orderUpdatedAt`; send that exact value back for payout changes.
+  Missing/stale timestamps return 409 rather than overwrite newer native edits.
 
 To revoke only Eva's financial access, remove the account-specific rule in
 `canEditAssistantProfitabilityFields` (or revert the permission change) and
@@ -139,7 +158,7 @@ instead hide the section for everyone, so is not a per-account rollback.
 
 Before rollout:
 
-1. Run `supabase/profitability_schema.sql` in the existing Supabase project.
+1. Run `supabase/profitability_schema.sql`, then `supabase/profitability_payroll.sql` in the existing Supabase project.
 2. Set the two personal user IDs and `PROFITABILITY_ENABLED=1` in Render.
 3. Deploy, then check the real accounts, menu, direct URL, exports and API.
 
@@ -158,7 +177,10 @@ actor/before/after event commit together. Concurrent stale saves return 409.
 
 Rollback: set `PROFITABILITY_ENABLED=0`, or deploy the previous app version.
 Leave private tables intact so history is not lost. No order data rollback is
-necessary because the feature does not rewrite existing orders.
+necessary for deployment because it does not backfill orders. For the unified
+payout change, reverting the application keeps saved native fixed payouts and
+paid history; leave the RPC and private history intact. Do not restore old order
+snapshots or the old empty finance payout mirror over newer native payouts.
 
 ## Assistant API: Not Enabled
 
@@ -168,7 +190,7 @@ The separate future permission is `profitability.update_fields`.
 
 - `GET /admin/profitability/api?entryId=...` with its dedicated Bearer key
   returns only version and source/paid amount/date/method/payout fields.
-- `PATCH /admin/profitability/api`: JSON `{entryId, version, patch}`. Allowed
+- `PATCH /admin/profitability/api`: JSON `{entryId, version, orderUpdatedAt, patch}`. Allowed
   patch keys: `source`, `paidCents`, `paidAt`, `paymentMethod`, `payouts`.
   Each payout is `{staffId, cents}`. No role/session change for Eva is needed.
 - No profit, expenses, settings, comments, discounts, deletion, creation,

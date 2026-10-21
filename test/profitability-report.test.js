@@ -102,7 +102,7 @@ test("full financial form, filters, CSV, summaries and history work without muta
     const html = await (await get("?status=all")).text();
     assert.equal((html.match(/<th scope="col">/g) || []).length, 34);
     for (const name of ["leadCost", "addons", "discount", "paymentMethod", "paidAt", "tips", "tipsPassed", "actualHours", "comment", "cleaner", "debt", "serviceType"]) assert.ok(html.includes(`name="${name}"`), name);
-    const fields = { action: "update", entryId: id, version: "1", source: "google_lsa", paidAmount: "200", leadCost: "15", addons: "40", discount: "15",
+    const fields = { action: "update", entryId: id, version: "1", orderUpdatedAt: "2026-10-01T12:00:00Z", source: "google_lsa", paidAmount: "200", leadCost: "15", addons: "40", discount: "15",
       paymentMethod: "invoice", paidAt: "2026-10-20", tips: "25", tipsPassed: "yes", actualHours: "2.5", comment: '<script>alert("x")</script>',
       "payout:demo-cleaner-1": "60", "payout:demo-cleaner-2": "50" };
     const updated = await post(fields);

@@ -11,6 +11,7 @@ const { createProfitabilityHandler } = require("../lib/admin/handlers-profitabil
 const { createAdminSharedRenderers } = require("../lib/admin/render-shared");
 const { createRequestHelpers } = require("../lib/http/request");
 const { createTimingHelpers } = require("../lib/http/timing");
+const { getEntryOrderState, setEntryOrderState } = require("../lib/admin-order-state");
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 
 async function startPreview({ access = { authorized: true, role: "admin", source: "admin-session", user: null } } = {}) {
@@ -24,7 +25,7 @@ async function startPreview({ access = { authorized: true, role: "admin", source
     { id: "10000000-0000-4000-8000-000000000003", customerName: "Пример: отменённая уборка", totalPrice: 240, serviceType: "standard", selectedDate: "2026-10-24", state: { status: "canceled", serviceDurationMinutes: 150 } },
     { id: "10000000-0000-4000-8000-000000000004", customerName: "Пример: регулярная уборка", totalPrice: 250, serviceType: "standard", selectedDate: "2026-11-03", state: { status: "scheduled", frequency: "biweekly", serviceDurationMinutes: 180 } },
     { id: "10000000-0000-4000-8000-000000000005", customerName: "Пример: перенесённая уборка", totalPrice: 320, serviceType: "deep", selectedDate: "2026-10-28", state: { status: "rescheduled", serviceDurationMinutes: 180 } },
-  ].map((item, index) => ({ ...item, kind: "quote_submission", status: "success", requestId: `demo-order-${index + 1}`, createdAt: "2026-10-01T12:00:00Z",
+  ].map((item, index) => ({ ...item, kind: "quote_submission", status: "success", requestId: `demo-order-${index + 1}`, createdAt: "2026-10-01T12:00:00Z", updatedAt: "2026-10-01T12:00:00Z",
     customerPhone: `630555010${index === 3 ? 1 : index}`, customerEmail: `demo${index === 3 ? 1 : index}@example.test`, fullAddress: "Тестовый адрес", selectedTime: "09:00",
     payloadForRetry: { orderState: { ...item.state, isCreated: true, assignedStaff: index === 0 ? "Клинер 1, Клинер 2" : "Клинер 1" }, calculatorData: {} } }));
   const snapshot = { staff, assignments: entries.map((entry, index) => ({ id: `assignment-${index}`, entryId: entry.id,
@@ -37,12 +38,24 @@ async function startPreview({ access = { authorized: true, role: "admin", source
   await store.save(entries[2].id, { source: "website", paidCents: 0, payouts: [{ staffId: staff[0].id, cents: 0 }] }, 0, actor);
   await store.save(entries[3].id, { source: "referral" }, 0, actor);
   await store.save(entries[4].id, { source: "nextdoor" }, 0, actor);
+  for (const entry of entries) {
+    const finance = await store.get(entry.id);
+    setEntryOrderState(entry, { ...getEntryOrderState(entry), payrollOverrides: Object.fromEntries((finance.data.payouts || []).map(item => [item.staffId, (item.cents / 100).toFixed(2)])) });
+  }
   const shared = createAdminSharedRenderers({ ADMIN_APP_NAV_ITEMS: [{ path: "/admin", label: "Дашборд" }, { path: "/admin/orders", label: "Заказы" }, { path: "/admin/clients", label: "Клиенты" }],
     ADMIN_LOGOUT_PATH: "/admin/logout", escapeHtml, escapeHtmlAttribute: escapeHtml, escapeHtmlText: escapeHtml });
   const handle = createProfitabilityHandler({ store, shared, env, escapeHtml,
     ...createRequestHelpers({ MAX_JSON_BODY_BYTES: 100000, normalizeString: (value, max = 500) => String(value || "").slice(0, max) }),
     ...createTimingHelpers() });
-  const ledger = { listOrderListEntries: async () => structuredClone(entries) };
+  const ledger = { listOrderListEntries: async () => structuredClone(entries),
+    getEntry: async id => structuredClone(entries.find(entry => entry.id === id)),
+    updateOrderEntry: async (id, updates) => {
+      const entry = entries.find(entry => entry.id === id);
+      if (!entry) return null;
+      setEntryOrderState(entry, { ...getEntryOrderState(entry), ...updates });
+      entry.updatedAt = new Date().toISOString();
+      return structuredClone(entry);
+    } };
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://localhost");
     if (url.pathname === "/") { res.writeHead(302, { Location: "/admin/profitability?status=all" }); res.end(); return; }
