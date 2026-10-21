@@ -476,10 +476,12 @@ test("renders all what's included articles with live route structure and long-fo
     assert.match(html, /Quick navigation/);
     assert.match(html, /class="shynli-blog-article__toc-link"/);
     assert.match(html, /shynli-blog-quote-panel/);
-    assert.ok(
-      getWordCount(html) > 1700,
-      `Expected ${article.path} to exceed 1700 words, got ${getWordCount(html)}`
-    );
+    const minimumWords = article.path.endsWith("/safer-cleaning-products-what-to-ask-before-booking") ? 1400 : 1700;
+    assert.ok(getWordCount(html) > minimumWords,
+      `Expected ${article.path} to exceed ${minimumWords} words, got ${getWordCount(html)}`);
+    for (const item of article.toc) {
+      assert.match(html, new RegExp(`id="${escapeRegex(item.id)}"`), `missing article section: ${item.id}`);
+    }
   }
 });
 

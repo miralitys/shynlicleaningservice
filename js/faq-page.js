@@ -70,7 +70,7 @@
   }
 
   const cleanerModal = document.querySelector("[data-cleaner-modal]");
-  const cleanerOpeners = Array.from(document.querySelectorAll("[data-cleaner-open]"));
+  const cleanerOpeners = Array.from(document.querySelectorAll("[data-cleaner-open], a[href='/faq#clean']"));
   const cleanerClosers = Array.from(document.querySelectorAll("[data-cleaner-close]"));
   const cleanerForm = document.querySelector("[data-cleaner-form]");
   const cleanerMessage = document.querySelector("[data-cleaner-message]");
@@ -115,6 +115,12 @@
   cleanerClosers.forEach((closer) => {
     closer.addEventListener("click", closeCleanerModal);
   });
+
+  const openLinkedCleanerForm = () => {
+    if (window.location.hash === "#clean") openCleanerModal();
+  };
+  window.addEventListener("hashchange", openLinkedCleanerForm);
+  openLinkedCleanerForm();
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeCleanerModal();

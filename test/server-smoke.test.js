@@ -6,6 +6,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const { startServer, stopServer } = require("./server-test-helpers");
+const { documentMarkup, assertNoTildaRuntime, assertSharedNavigation, jsonLdNodes } = require("./site-markup-helpers");
 
 let serverProcess = null;
 let BASE_URL = null;
@@ -364,7 +365,7 @@ test("serves the homepage ads duplicate as an indexable sitemap route", async ()
 test("serves home-like routes without zero/lazyload runtimes", async () => {
   const homeLikeRoutes = [
     { route: "/home-calculator", expectedTitle: /Instant House Cleaning Cost Calculator/i },
-    { route: "/home-simple", expectedTitle: /House Cleaning Services in Naperville<br>&amp; Chicago Suburbs/i },
+    { route: "/home-simple", expectedTitle: /<h1>House Cleaning[\s\S]*?Services in Naperville<br>&amp; Chicago Suburbs<\/h1>/i },
   ];
 
   for (const { route, expectedTitle } of homeLikeRoutes) {
@@ -379,10 +380,14 @@ test("serves home-like routes without zero/lazyload runtimes", async () => {
     assert.doesNotMatch(body, /js\/tilda-blocks-page[^"]+\.min\.js/, route);
     assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/, route);
     assert.doesNotMatch(body, /data-original=/, route);
-    assert.match(body, /id="shynli-home-page-runtime"/, route);
-    assert.match(body, /id="shynli-zero-runtime-stub"/, route);
-    assert.match(body, /href="#city"/, route);
-    assert.match(body, /href="#clean"/, route);
+    if (route === "/home-simple") {
+      assertNoTildaRuntime(body, route);
+      assert.doesNotMatch(body, /id="shynli-home-page-runtime"|id="shynli-zero-runtime-stub"/);
+    } else {
+      assert.match(body, /id="shynli-home-page-runtime"/, route);
+      assert.match(body, /id="shynli-zero-runtime-stub"/, route);
+    }
+    assertSharedNavigation(body, route);
   }
 });
 
@@ -529,17 +534,16 @@ test("serves city landing pages from the clean shared city template", async () =
   assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
   assert.match(body, /id="shynli-zero-runtime-stub"/);
-  assert.match(body, /src="images\/shynli-logo-primary\.png"/);
+  assert.match(body, /src="\/images\/shynli-logo-primary\.png"/);
   assert.match(body, /href="\/images\/shynli-icon-32\.png"/);
   assert.doesNotMatch(body, /js\/tilda-events-1\.0\.min\.js/);
   assert.match(body, /href="\/quote"/);
-  assert.match(body, /href="#city"/);
-  assert.match(body, /href="#clean"/);
+  assertSharedNavigation(body);
   assert.match(
     body,
-    /<a class="sg-button sg-button--outline sg-city-button"[^>]*>Romeoville<\/a>/
+    /<a class="sg-area-summary__city" href="\/romeoville">Romeoville<\/a>/
   );
-  assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i);
+  assertNoTildaRuntime(body);
 });
 
 test("serves the clean Sugar Grove copy on /sugargrove", async () => {
@@ -754,7 +758,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     assert.match(body, new RegExp(`Get a Free Quote for House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
     assert.match(
       body,
-      new RegExp(`<a class="sg-button sg-button--outline sg-city-button"[^>]*>${cityPattern}<\\/a>`),
+      new RegExp(`<a class="sg-area-summary__city" href="${route}">${cityPattern}<\\/a>`),
       route
     );
     assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/, route);
@@ -764,8 +768,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i, route);
     assert.match(body, /id="shynli-home-page-runtime"/, route);
     assert.match(body, /id="shynli-zero-runtime-stub"/, route);
-    assert.match(body, /href="#city"/, route);
-    assert.match(body, /href="#clean"/, route);
+    assertSharedNavigation(body, route);
   }
 });
 
@@ -777,7 +780,7 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
     ["/pricing", /Pricing|Instant Quote/i],
     ["/service-areas", /Service Areas/i],
   ];
-  const cleanStaticRoutes = new Set(["/contacts", "/faq", "/service-areas"]);
+  const cleanStaticRoutes = new Set(["/about-us", "/contacts", "/faq", "/service-areas"]);
 
   for (const [route, expectedTitle] of staticRoutes) {
     const response = await fetch(`${BASE_URL}${route}`);
@@ -809,12 +812,7 @@ test("serves static marketing pilots without zero/lazyload runtimes", async () =
       assert.match(body, /id="shynli-home-page-runtime"/, route);
       assert.match(body, /id="shynli-zero-runtime-stub"/, route);
     }
-    if (cleanStaticRoutes.has(route)) {
-      assert.match(body, /data-city-open/, route);
-    } else {
-      assert.match(body, /href="#city"/, route);
-    }
-    assert.match(body, /href="#clean"/, route);
+    assertSharedNavigation(body, route);
   }
 });
 
@@ -935,8 +933,7 @@ test("serves the regular-cleaning main route as clean hand-coded markup", async 
   assert.doesNotMatch(body, /__resize__20x__/);
   assert.doesNotMatch(body, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
-  assert.match(body, /href="\/services\/regular-cleaning#city"/);
-  assert.match(body, /href="#clean"/);
+  assertSharedNavigation(body);
 });
 
 test("serves the service areas main route as clean hand-coded markup", async () => {
@@ -962,9 +959,8 @@ test("serves the service areas main route as clean hand-coded markup", async () 
   assert.match(body, /<h2 class="sa-sr-only" id="city-modal-title">Choose your city<\/h2>/);
   assert.match(body, /<h3>A-D:<\/h3>/);
   assert.match(body, /<ul class="sa-city-modal__list">/);
-  assert.match(body, /data-city-open/);
-  assert.match(body, /href="#clean"/);
-  assert.doesNotMatch(body, /tild|tilda|t-rec|t396|tn-atom|data-tilda|allrecords|t-body/i);
+  assertSharedNavigation(body);
+  assertNoTildaRuntime(body);
   assert.doesNotMatch(body, /js\/tilda|css\/tilda|data-original=/i);
   assert.doesNotMatch(body, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
@@ -984,7 +980,7 @@ test("serves the commercial-cleaning main route as clean hand-coded markup", asy
   assert.match(body, /<meta name="robots" content="index,follow"\s*\/?>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/commercial-cleaning"\s*\/?>/);
   assert.match(body, /class="commercial-clean-page"/);
-  assert.match(body, /data-city-open/);
+  assertSharedNavigation(body);
   assert.match(body, /data-city-modal/);
   assert.match(body, /A-D:/);
   assert.match(body, /Addison/);
@@ -997,7 +993,7 @@ test("serves the commercial-cleaning main route as clean hand-coded markup", asy
   assert.doesNotMatch(body, /css\/tilda-[^"]+/);
   assert.doesNotMatch(body, /data-original=/);
   assert.doesNotMatch(body, /data-tilda/i);
-  assert.doesNotMatch(body, /(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b)/);
+  assertNoTildaRuntime(body);
   assert.doesNotMatch(body, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
   assert.doesNotMatch(body, /id="shynli-menu-widgeticons-runtime-stub"/);
@@ -1007,7 +1003,6 @@ test("serves the commercial-cleaning main route as clean hand-coded markup", asy
 test("serves the move-in move-out main route as the clean hand-coded page", async () => {
   const response = await fetch(`${BASE_URL}/services/move-in-move-out-cleaning`);
   const body = await response.text();
-  const tildaMarkers = /(?:tild|tilda|data-tilda|allrecords|\bt-rec\b|\bt396\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i;
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
@@ -1021,7 +1016,7 @@ test("serves the move-in move-out main route as the clean hand-coded page", asyn
   );
   assert.match(body, /\/images\/shynli-move-cleaning-hero\.png/);
   assert.match(body, /\/images\/shynli-icon-32\.png/);
-  assert.doesNotMatch(body, tildaMarkers);
+  assertNoTildaRuntime(body);
   assert.doesNotMatch(body, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);
   assert.doesNotMatch(body, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
@@ -1104,20 +1099,20 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /Deep Cleaning Services/i);
-  assert.match(body, /Deep House Cleaning Service in Chicagoland &mdash; Full Home Reset/);
-  assert.match(body, /When your home needs a full reset and a &#39;like new&#39; feeling/);
-  assert.match(body, /Deep house cleaning, also known as detailed cleaning or one-time deep cleaning/);
+  assert.match(body, /<h1[^>]*>[\s\S]*?Deep House Cleaning Service in<\/span><span[^>]*>Chicagoland &mdash; Full Home Reset<\/span><\/h1>/);
+  assert.match(body, /class="dc-hero__lead"[\s\S]*?shynli-deep-ads-hero-offer/);
+  assert.match(body, /class="dc-button dc-hero__cta" href="\/quote-no-price">Get Instant Quote<\/a>/);
   assert.match(body, /From <span class="shynli-service-ads-price-new">\$195<\/span>/);
   assert.doesNotMatch(body, /shynli-service-ads-price-old/);
   assert.match(body, /&middot; Same-Day Available &middot; Pay After We Clean &middot; Fully Insured/);
   assert.doesNotMatch(body, /Offer ends in/);
   assert.doesNotMatch(body, /data-shynli-ads-countdown/);
-  assert.match(body, /GET FREE QUOTE/);
+  assert.match(body, /Get Instant Quote/);
   assert.doesNotMatch(body, /id="shynli-ads-countdown-runtime"/);
-  assert.match(body, /Deep cleaning starts from \$195 for typical homes/);
-  assert.match(body, /final price based on size and condition &mdash; <a href="\/quote-no-calculator">get instant quote<\/a>/);
+  assert.match(body, /id="included-title"/);
+  assert.match(body, /id="addons-title"/);
   assert.match(body, /id="shynli-deep-cleaning-ads-layout-fix"/);
-  assert.match(body, /id="deep-cleaning-addons-static"/);
+  assert.match(body, /class="dc-section dc-addons"/);
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
@@ -1439,22 +1434,7 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
       assert.match(body, /id="shynli-home-page-runtime"/, route);
       assert.match(body, /id="shynli-zero-runtime-stub"/, route);
     }
-    assert.match(
-      body,
-      route === "/services/commercial-cleaning"
-        ? /data-city-open/
-        : route === "/services/airbnb-cleaning"
-          ? /class="city-trigger"/
-        : /href="(?:#city|\/services\/regular-cleaning#city)"/,
-      route
-    );
-    assert.match(
-      body,
-      route === "/services/commercial-cleaning" || route === "/services/airbnb-cleaning"
-        ? /href="\/become-a-cleaner"/
-        : /href="#clean"/,
-      route
-    );
+    assertSharedNavigation(body, route);
   }
 });
 
@@ -1706,12 +1686,19 @@ test("emits FAQ and Service structured data on matching page types", async () =>
   const faqResponse = await fetch(`${BASE_URL}/faq`);
   const faqBody = await faqResponse.text();
   assert.equal(faqResponse.status, 200);
-  assert.match(faqBody, /"@type":"FAQPage"/);
-  assert.match(faqBody, /"How is pricing calculated\?"/);
+  const faq = jsonLdNodes(faqBody).find(node => node["@type"] === "FAQPage");
+  assert.ok(faq);
+  assert.ok(faq.mainEntity.length > 0);
+  const visibleFaq = documentMarkup(faqBody);
+  for (const item of faq.mainEntity) {
+    assert.ok(visibleFaq.includes(item.name), `FAQ question is visible: ${item.name}`);
+    assert.ok(item.acceptedAnswer.text);
+  }
 
   const serviceResponse = await fetch(`${BASE_URL}/services/deep-cleaning`);
   const serviceBody = await serviceResponse.text();
   assert.equal(serviceResponse.status, 200);
-  assert.match(serviceBody, /"@type":"Service"/);
-  assert.match(serviceBody, /"name":"Deep Cleaning"/);
+  const service = jsonLdNodes(serviceBody).find(node => node["@type"] === "Service");
+  assert.ok(service);
+  assert.equal(service.name, "Deep Cleaning");
 });

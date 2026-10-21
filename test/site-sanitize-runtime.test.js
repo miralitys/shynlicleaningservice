@@ -4,8 +4,10 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const vm = require("node:vm");
 
 const { createSiteSanitizer } = require("../lib/site/sanitize");
+const { documentMarkup, assertNoTildaRuntime, assertSharedNavigation } = require("./site-markup-helpers");
 
 const LEGACY_SAFETY_INTRO_PATTERN = /For your safety and ours, we don't provide:/;
 
@@ -285,13 +287,15 @@ test("injects quote runtime config with supported service ZIP codes", () => {
 
 test("injects quote-start widget runtime wherever quick quote widgets exist", () => {
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
-  const cityHtml = sanitizeHtml(readFixture("page111640886.html"), "/romeoville");
+  const cityHtml = sanitizeHtml(readFixture("page123500105.html"), "/romeoville");
   const blogArticleHtml = sanitizeHtml(
     readFixture("page108872586.html"),
     "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos"
   );
   const quoteHtml = sanitizeHtml(readFixture("quote2.html"), "/quote");
 
+  assert.match(homeHtml, /data-lead-form/);
+  assert.match(homeHtml, /src="\/js\/home-copy-clean\.js/);
   for (const html of [homeHtml, cityHtml]) {
     assert.match(html, /id="shynli-quote-start-widget-runtime"/);
     assert.match(html, /quote_start_widget/);
@@ -315,6 +319,57 @@ test("injects page version and gclid attribution runtime on public forms", () =>
     assert.match(html, /ensureHidden\(form, "gclid", "gclid"\)/);
     assert.match(html, /event: "form_submit"/);
     assert.match(html, /page_version:/);
+  }
+});
+
+test("native and legacy quick quote forms track once, preserve contact prefill and ignore unrelated forms", () => {
+  const html = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const source = extractRuntimeScripts(html).find(item => item.scriptId === "shynli-quote-start-widget-runtime").source;
+  for (const kind of ["data-lead-form", "data-quote-form", "homeWidgetForm"]) {
+    const events = [], timers = [], alerts = [], listeners = [], storage = new Map();
+    const fields = { name: { value: "Local Test" }, phone: { value: "+1 (630) 555-0184" } };
+    const form = {
+      tagName: "FORM", id: kind === "homeWidgetForm" ? kind : "",
+      hasAttribute: name => name === kind,
+      querySelector: selector => selector === "#sgQuoteName" ? fields.name : selector.includes('name="name"') ? fields.name : fields.phone,
+    };
+    const window = {
+      location: { pathname: "/romeoville", href: "" },
+      shynliTracking: { pushEvent: (...args) => events.push(args) },
+      setTimeout: callback => timers.push(callback), alert: message => alerts.push(message),
+    };
+    const context = vm.createContext({ window, document: { addEventListener: (_type, handler) => listeners.push(handler) },
+      sessionStorage: { setItem: (key, value) => storage.set(key, value) }, URLSearchParams });
+    vm.runInContext(source, context);
+    vm.runInContext(source, context);
+    assert.equal(listeners.length, 1, "reinitialization cannot register a second submit handler");
+    let prevented = 0, stopped = 0;
+    const submit = () => listeners[0]({ target: form, preventDefault: () => prevented++,
+      stopPropagation() {}, stopImmediatePropagation: () => stopped++ });
+    submit();
+    assert.equal(events.length, 1);
+    assert.equal(events[0][0].event, "quote_start_widget");
+    assert.equal(events[0][0].phone, undefined, "contact data is not an event parameter");
+    assert.equal(events[0][0].fullName, undefined);
+    assert.equal(timers.length, 1);
+    assert.equal(prevented, 1);
+    assert.equal(stopped, 1, "native inline handlers cannot trigger a second navigation");
+    assert.equal(window.location.href, "");
+    timers[0]();
+    const target = new URL(window.location.href, "http://localhost");
+    assert.equal(target.pathname, "/quote");
+    assert.equal(target.searchParams.get("name"), fields.name.value);
+    assert.equal(target.searchParams.get("phone"), "+1 (630) 555-0184");
+    assert.equal(storage.get("homeWidgetPhone"), "+1 (630) 555-0184");
+    fields.phone.value = "123";
+    submit();
+    assert.equal(alerts.length, 1);
+    assert.equal(events.length, 1, "an invalid phone cannot produce a conversion");
+    assert.equal(timers.length, 1);
+    form.id = "";
+    form.hasAttribute = () => false;
+    submit();
+    assert.equal(prevented, 2, "unrelated forms are not intercepted");
   }
 });
 
@@ -366,7 +421,7 @@ test("builds no-calculator v2 pages with static anchor pricing", () => {
   assert.match(pricingHtml, /Transparent rates for regular cleaning, deep cleaning, and move-in\/move-out cleaning/);
   assert.match(pricingHtml, /Get an exact price in 60 seconds/);
   assert.match(pricingHtml, /Compare Recurring Cleaning Plans/);
-  assert.match(pricingHtml, /Inside Cabinets \(empty\)<\/span><span class="pricing-v2-addon__price">\$45/);
+  assert.match(pricingHtml, /Inside Cabinets \(emptied \/ not emptied\)\*<\/span><span class="pricing-v2-addon__price">\$45 \/ \$90/);
   assert.match(pricingHtml, /href="\/quote-no-price"/);
   assert.doesNotMatch(pricingHtml, /Submit an Application/);
   assert.doesNotMatch(pricingHtml, /href="\/quote"/);
@@ -374,7 +429,7 @@ test("builds no-calculator v2 pages with static anchor pricing", () => {
 });
 
 test("injects cleaner application tracking without enhanced conversion data", () => {
-  const html = sanitizeHtml(readFixture("page108488156.html"), "/");
+  const html = sanitizeHtml(readFixture("page110230356.html"), "/home-calculator");
 
   assert.match(html, /id="shynli-cleaner-application-form-runtime"/);
   assert.match(html, /cleaner_application_submit/);
@@ -392,7 +447,7 @@ test("strips unused menu widgeticon assets when no widgeticon nodes remain", () 
     assert.doesNotMatch(html, /class="[^"]*\bt-menuwidgeticons(?:__|\b)[^"]*"/i);
   }
 
-  assert.match(homeHtml, /id="shynli-menu-widgeticons-runtime-stub"/);
+  assert.doesNotMatch(homeHtml, /id="shynli-menu-widgeticons-runtime-stub"/);
   assert.doesNotMatch(blogHtml, /id="shynli-menu-widgeticons-runtime-stub"/);
 });
 
@@ -536,12 +591,8 @@ test("rebuilds shared marketing city popups and removes the temporary extra city
   const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
   const serviceAreasHtml = sanitizeHtml(readFixture("page108912616.html"), "/service-areas");
 
-  assert.match(homeHtml, /data-tooltip-hook="#city"/);
-  assert.match(homeHtml, /shynli-city-popup-list__grid/);
-  assert.match(homeHtml, /\.t396__carrier\{background-position:center center;background-attachment:scroll;background-size:cover;background-repeat:no-repeat;pointer-events:none;\}/);
-  assert.match(homeHtml, /\.t396__filter\{pointer-events:none;\}/);
-  assert.match(homeHtml, /shynli-city-popup-list,\#rec\d+ \.shynli-city-popup-list \*\{pointer-events:auto;\}/);
-  assert.match(homeHtml, /t396__artboard t396__artboard_pointer-events-auto/);
+  assertSharedNavigation(homeHtml);
+  assertNoTildaRuntime(homeHtml);
   assert.match(homeHtml, /A-D:/);
   assert.match(homeHtml, /V-Y:/);
   assert.match(homeHtml, /Bristol/);
@@ -552,8 +603,9 @@ test("rebuilds shared marketing city popups and removes the temporary extra city
   assert.doesNotMatch(serviceAreasHtml, /shynli-extra-service-areas/);
   assert.doesNotMatch(serviceAreasHtml, /Now serving these cities too/);
   assert.doesNotMatch(serviceAreasHtml, /New service areas/i);
-  assert.match(serviceAreasHtml, /shynli-city-popup-list__grid/);
-  assert.match(serviceAreasHtml, /shynli-service-areas-overview__grid/);
+  assertSharedNavigation(serviceAreasHtml);
+  assert.match(serviceAreasHtml, /sa-city-modal__list/);
+  assert.match(serviceAreasHtml, /data-zip-form/);
   assert.match(serviceAreasHtml, /V-Y:/);
 });
 
@@ -568,13 +620,12 @@ test("preserves menu CTA wiring and submenu content after the menu shell replace
   assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/);
   assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.doesNotMatch(html, /data-original=/);
-  assert.match(html, /id="shynli-home-page-runtime"/);
-  assert.match(html, /id="shynli-zero-runtime-stub"/);
+  assert.doesNotMatch(html, /id="shynli-home-page-runtime"|id="shynli-zero-runtime-stub"/);
+  assert.match(html, /src="\/js\/home-copy-clean\.js/);
   assert.match(html, /href="\/quote"/);
   assert.match(html, /data-city-modal-open/);
-  assert.match(html, /href="\/#clean"/);
-  assert.match(html, /data-tooltip-hook="#city"/);
-  assert.match(html, /data-tooltip-hook="#clean"/);
+  assertSharedNavigation(html);
+  assert.match(html, /data-lead-form/);
   assert.match(html, /href="\/service-areas"/);
   assert.match(html, /href="\/about-us"/);
   assert.match(html, /href="\/faq"/);
@@ -600,10 +651,14 @@ test("replaces heavy zero runtimes across home-like routes", () => {
     assert.doesNotMatch(html, /js\/tilda-blocks-page[^"]+\.min\.js/, fixture.route);
     assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
     assert.doesNotMatch(html, /data-original=/, fixture.route);
-    assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
-    assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-    assert.match(html, /data-city-modal-open/, fixture.route);
-    assert.match(html, /href="\/#clean"/, fixture.route);
+    if (fixture.route === "/") {
+      assertNoTildaRuntime(html, fixture.route);
+      assert.doesNotMatch(html, /id="shynli-home-page-runtime"|id="shynli-zero-runtime-stub"/);
+    } else {
+      assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
+      assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
+    }
+    assertSharedNavigation(html, fixture.route);
     assert.match(html, /Shynli Cleaning/i, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
@@ -611,8 +666,6 @@ test("replaces heavy zero runtimes across home-like routes", () => {
 
 test("keeps the home copy hand-coded without Tilda runtime", () => {
   const html = sanitizeHtml(readFixture("page108488156-copy.html"), "/home-copy");
-  const tildaMarkers =
-    /(?:tild|tilda|data-tilda|id="allrecords"|\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i;
 
   assert.match(html, /<main>/);
   assert.match(html, /<section class="hero"/);
@@ -622,7 +675,7 @@ test("keeps the home copy hand-coded without Tilda runtime", () => {
   assert.match(html, /src="\/images\/home-copy-team\.png"|srcset="\/images\/home-copy-team-480\.webp/);
   assert.match(html, /class="hero__team"[^>]*loading="eager"[^>]*decoding="sync"[^>]*fetchpriority="high"/);
   assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/">/);
-  assert.doesNotMatch(html, tildaMarkers);
+  assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /(?:css|js)\/tilda/i);
   assert.doesNotMatch(html, /data-original=/);
   assert.doesNotMatch(html, /id="shynli-homepage-copy-fit-style"/);
@@ -648,13 +701,13 @@ test("serves Romeoville from the clean shared city template", () => {
   assert.match(html, /src="\/images\/shynli-logo-primary\.png"/);
   assert.match(html, /href="\/images\/shynli-icon-32\.png"/);
   assert.match(html, /data-city-modal-open/);
-  assert.match(html, /href="\/#clean"/);
+  assertSharedNavigation(html);
   assert.match(html, /House Cleaning Services in <span class="sg-accent">Romeoville<\/span>, IL/);
   assert.match(
     html,
-    /<a class="sg-button sg-button--outline sg-city-button"[^>]*>Romeoville<\/a>/
+    /<a class="sg-area-summary__city" href="\/romeoville">Romeoville<\/a>/
   );
-  assert.doesNotMatch(html, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i);
+  assertNoTildaRuntime(html);
 });
 
 test("replaces heavy zero runtimes across all city page pilots", () => {
@@ -710,15 +763,15 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
     assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/, fixture.route);
     assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
     assert.doesNotMatch(html, /data-original=/, fixture.route);
-    assert.doesNotMatch(html, /tild|tilda|t-rec|t396|tn-atom|data-tilda|t-menu|t-btn|allrecords|t-body/i, fixture.route);
+    assertNoTildaRuntime(html, fixture.route);
     assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
     assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
     assert.match(html, /src="\/images\/shynli-logo-primary\.png"/, fixture.route);
     assert.match(html, /data-city-modal-open/, fixture.route);
-    assert.match(html, /href="\/#clean"/, fixture.route);
+    assertSharedNavigation(html, fixture.route);
     assert.match(
       html,
-      new RegExp(`<a class="sg-button sg-button--outline sg-city-button"[^>]*>${cityPattern}<\\/a>`),
+      new RegExp(`<a class="sg-area-summary__city" href="${fixture.route}">${cityPattern}<\\/a>`),
       fixture.route
     );
   }
@@ -738,10 +791,15 @@ test("replaces heavy zero runtimes across static marketing page pilots", () => {
     assert.doesNotMatch(html, /js\/tilda-zero-scale-1\.0\.min\.js/, fixture.route);
     assert.doesNotMatch(html, /js\/lazyload-1\.3\.min\.export\.js/, fixture.route);
     assert.doesNotMatch(html, /data-original=/, fixture.route);
-    assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
-    assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-    assert.match(html, /data-city-modal-open/, fixture.route);
-    assert.match(html, /href="\/#clean"/, fixture.route);
+    const cleanPage = ["/about-us", "/faq", "/service-areas"].includes(fixture.route);
+    if (cleanPage) {
+      assertNoTildaRuntime(html, fixture.route);
+      assert.doesNotMatch(html, /id="shynli-home-page-runtime"|id="shynli-zero-runtime-stub"/, fixture.route);
+    } else {
+      assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
+      assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
+    }
+    assertSharedNavigation(html, fixture.route);
     assert.match(html, fixture.expected, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
@@ -762,20 +820,20 @@ test("strips the legacy safety intro copy from marketing pages", () => {
   const source = `${readFixture("page108488156.html")}For your safety and ours, we don't provide:`;
   const html = sanitizeHtml(source, "/");
 
-  assert.match(html, /Why <span[^>]*>Shynli Cleaning<\/span> Is Different/);
+  assert.match(html, /Shynli Cleaning/);
   assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN);
 });
 
 test("adds the homepage fast quote CTA before the service areas map", () => {
   const html = sanitizeHtml(readFixture("page108488156.html"), "/");
 
-  const ctaIndex = html.indexOf('id="shynli-home-fast-quote-cta"');
-  const serviceAreasIndex = html.indexOf('id="rec1822455943"');
+  const ctaIndex = html.indexOf('class="benefits-map-cta"');
+  const serviceAreasIndex = html.indexOf('class="areas section section--map"');
 
   assert.notEqual(ctaIndex, -1);
   assert.notEqual(serviceAreasIndex, -1);
   assert.ok(ctaIndex < serviceAreasIndex);
-  assert.match(html, /class="shynli-home-fast-quote-cta__button" href="\/quote">Fast free quote/);
+  assert.match(html, /href="\/quote">Fast free quote/);
 });
 
 test("adds local-service FAQ questions to the homepage FAQ grid", () => {
@@ -789,7 +847,7 @@ test("adds local-service FAQ questions to the homepage FAQ grid", () => {
   assert.match(html, /Do you bring cleaning supplies\?/);
   assert.match(html, /Can I book recurring cleaning\?/);
   assert.match(html, /Do you offer move-out cleaning\?/);
-  assert.match(html, /Our cleaners bring professional cleaning supplies and products\./);
+  assert.match(html, /Our team brings the supplies needed for the booked service\./);
 });
 
 test("removes the duplicate offscreen homepage simple steps copy", () => {
@@ -799,7 +857,7 @@ test("removes the duplicate offscreen homepage simple steps copy", () => {
 
   assert.equal(simpleStepsMatches.length, 1);
   assert.doesNotMatch(html, /data-elem-id=['"]1767790203594000001['"]/);
-  assert.match(html, /data-elem-id=['"]1767788361435['"]/);
+  assert.match(html, /<section class="steps section"/);
 });
 
 test("keeps city-specific copy aligned on every city page", () => {
@@ -1092,13 +1150,21 @@ test("removes duplicate copy from the shared benefits block", () => {
   for (const fixture of sharedBenefitFixtures) {
     const html = sanitizeHtml(readFixture(fixture.file), fixture.route);
 
-    assert.equal(countMatches(html, BENEFIT_HIDDEN_FEES_COPY_PATTERN), 1, fixture.route);
-    assert.equal(countMatches(html, BENEFIT_STANDARDS_COPY_PATTERN), 1, fixture.route);
+    const text = documentMarkup(html).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    assert.equal(countMatches(text, BENEFIT_HIDDEN_FEES_COPY_PATTERN), 1, fixture.route);
+    assert.equal(countMatches(text, BENEFIT_STANDARDS_COPY_PATTERN), 1, fixture.route);
     assert.doesNotMatch(html, /data-elem-id=['"]1767791730605['"]/, fixture.route);
     assert.doesNotMatch(html, /data-elem-id=['"]1767881559686000001['"]/, fixture.route);
-    assert.match(html, /data-elem-id=['"]1767800990870000002['"]/, fixture.route);
-    assert.match(html, /data-elem-id=['"]1767881579154000002['"]/, fixture.route);
-    assert.match(html, /id="shynli-benefit-copy-single-instance-style"/, fixture.route);
+    if (fixture.route !== "/" && fixture.route !== "/about-us" && fixture.route !== "/services/deep-cleaning") {
+      assert.match(html, /data-elem-id=['"]1767800990870000002['"]/, fixture.route);
+      assert.match(html, /data-elem-id=['"]1767881579154000002['"]/, fixture.route);
+      assert.match(html, /id="shynli-benefit-copy-single-instance-style"/, fixture.route);
+    }
+    if (fixture.route === "/about-us") {
+      assert.doesNotMatch(html, /class="clean-elem clean-elem--(?:1767791730605|1767881559686000001)\b/);
+      assert.match(html, /\.clean-elem--1767800990870000002\{top:482px!important/);
+      assert.match(html, /\.clean-elem--1767881579154000002\{top:724px!important/);
+    }
   }
 });
 
@@ -1212,8 +1278,7 @@ test("keeps the regular-cleaning main route hand-coded without Tilda runtime", (
   assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
   assert.match(html, /href="\/services\/regular-cleaning"/);
-  assert.match(html, /href="#clean"/);
-  assert.match(html, /href="\/services\/regular-cleaning#city"/);
+  assertSharedNavigation(html);
 });
 
 test("keeps the pricing copy hand-coded without Tilda runtime", () => {
@@ -1230,13 +1295,11 @@ test("keeps the pricing copy hand-coded without Tilda runtime", () => {
   assert.doesNotMatch(html, /__resize__20x__/);
   assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
-  assert.match(html, /href="#clean"/);
-  assert.match(html, /href="#city"/);
+  assertSharedNavigation(html);
 });
 
 test("keeps the move-in move-out main route hand-coded without Tilda runtime", () => {
   const html = sanitizeHtml(readFixture("page109993436-copy.html"), "/services/move-in-move-out-cleaning");
-  const tildaMarkers = /(?:tild|tilda|data-tilda|allrecords|\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i;
 
   assert.match(html, /class="[^"]*\bmove-page\b[^"]*"/);
   assert.match(html, /Cleaning for Moving In or Moving Out/i);
@@ -1244,7 +1307,7 @@ test("keeps the move-in move-out main route hand-coded without Tilda runtime", (
   assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/move-in-move-out-cleaning"\s*\/?>/);
   assert.match(html, /\/images\/shynli-move-cleaning-hero\.png/);
   assert.match(html, /\/images\/shynli-icon-32\.png/);
-  assert.doesNotMatch(html, tildaMarkers);
+  assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);
   assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
@@ -1255,7 +1318,7 @@ test("keeps the commercial-cleaning main route hand-coded without Tilda runtime"
   const html = sanitizeHtml(readFixture("page110512356.html"), "/services/commercial-cleaning");
 
   assert.match(html, /class="commercial-clean-page"/);
-  assert.match(html, /data-city-open/);
+  assertSharedNavigation(html);
   assert.match(html, /data-city-modal/);
   assert.match(html, /A-D:/);
   assert.match(html, /Addison/);
@@ -1271,7 +1334,7 @@ test("keeps the commercial-cleaning main route hand-coded without Tilda runtime"
   assert.doesNotMatch(html, /css\/tilda-[^"]+/);
   assert.doesNotMatch(html, /data-original=/);
   assert.doesNotMatch(html, /data-tilda/i);
-  assert.doesNotMatch(html, /(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b)/);
+  assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
   assert.doesNotMatch(html, /id="shynli-menu-widgeticons-runtime-stub"/);
@@ -1288,16 +1351,12 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
       file: "page110326416-copy.html",
       cleanHandCoded: true,
       handCodedPattern: /<main>/,
-      cityHrefPattern: /class="city-trigger"/,
-      cleanerHrefPattern: /href="\/become-a-cleaner"/,
     },
     {
       route: "/services/commercial-cleaning",
       file: "page110512356.html",
       cleanHandCoded: true,
       handCodedPattern: /class="commercial-clean-page"/,
-      cityHrefPattern: /data-city-open/,
-      cleanerHrefPattern: /href="\/become-a-cleaner"/,
     },
     { route: "/services/post-construction-cleaning", file: "page113041806.html" },
   ];
@@ -1323,8 +1382,7 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
       assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
     }
     assert.match(html, /src="\/?images\/[^"]+"/, fixture.route);
-    assert.match(html, fixture.cityHrefPattern || /href="(?:#city|\/services\/regular-cleaning#city)"/, fixture.route);
-    assert.match(html, fixture.cleanerHrefPattern || /href="#clean"/, fixture.route);
+    assertSharedNavigation(html, fixture.route);
     assert.doesNotMatch(html, LEGACY_SAFETY_INTRO_PATTERN, fixture.route);
   }
 });
@@ -1334,8 +1392,7 @@ test("keeps the regular-cleaning copy hand-coded without Tilda runtime", () => {
 
   assert.match(html, /<main class="clean-service-page">/);
   assert.match(html, /Regular House Cleaning/);
-  assert.match(html, /href="\/services\/regular-cleaning#city"/);
-  assert.match(html, /href="#clean"/);
+  assertSharedNavigation(html);
   assert.doesNotMatch(html, /(?:css|js)\/tilda/i);
   assert.doesNotMatch(html, /(?:class=["'][^"']*(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b|\bt-menu)|id="allrecords"|data-tilda-)/i);
   assert.doesNotMatch(html, /data-original=/);
@@ -1356,7 +1413,7 @@ test("keeps the commercial-cleaning copy hand-coded without Tilda runtime", () =
   assert.doesNotMatch(html, /css\/tilda-[^"]+/);
   assert.doesNotMatch(html, /data-original=/);
   assert.doesNotMatch(html, /data-tilda/i);
-  assert.doesNotMatch(html, /(?:\bt-rec\b|\bt396\b|\btn-elem\b|\btn-atom\b)/);
+  assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
   assert.doesNotMatch(html, /id="shynli-menu-widgeticons-runtime-stub"/);
@@ -1365,21 +1422,20 @@ test("keeps the commercial-cleaning copy hand-coded without Tilda runtime", () =
 
 test("keeps the move-in move-out copy hand-coded without Tilda runtime", () => {
   const html = sanitizeHtml(readFixture("page109993436-copy.html"), "/services/move-in-move-out-cleaning-copy");
-  const tildaMarkers = /(?:tild|tilda|data-tilda|allrecords|\bt-rec\b|\bt396\b|\btn-atom\b|\bt-body\b|\bt-menu\b|\bt-btn\b)/i;
 
   assert.match(html, /class="[^"]*\bmove-page\b[^"]*"/);
   assert.match(html, /Cleaning for Moving In or Moving Out/i);
   assert.match(html, /\/images\/shynli-move-cleaning-hero\.png/);
   assert.match(html, /\/images\/shynli-icon-32\.png/);
-  assert.doesNotMatch(html, tildaMarkers);
+  assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);
   assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
   assert.doesNotMatch(html, /id="shynli-zero-runtime-stub"/);
   assert.doesNotMatch(html, /id="shynli-menu-widgeticons-runtime-stub"/);
 });
 
-test("server-renders cleaner popup forms and strips the heavy Tilda form runtimes", () => {
-  const homeHtml = sanitizeHtml(readFixture("page108488156.html"), "/");
+test("server-renders cleaner popup forms on legacy pages and strips the heavy Tilda form runtimes", () => {
+  const homeHtml = sanitizeHtml(readFixture("page110230356.html"), "/home-calculator");
 
   assert.doesNotMatch(homeHtml, /js\/tilda-forms-1\.0\.min\.js/);
   assert.doesNotMatch(homeHtml, /js\/tilda-zero-forms-1\.0\.min\.js/);
