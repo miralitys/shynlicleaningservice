@@ -1,0 +1,421 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": [
+          "HouseCleaningService",
+          "LocalBusiness"
+        ],
+        "@id": "https://shynlicleaningservice.com/#localbusiness",
+        "name": "Shynli Cleaning Service",
+        "url": "https://shynlicleaningservice.com/",
+        "telephone": "+1-630-812-7077",
+        "image": "https://shynlicleaningservice.com/images/shynli-og-photo.png",
+        "logo": "https://shynlicleaningservice.com/images/tild3531-6535-4863-b761-323963303436__logo_2.png",
+        "priceRange": "$$",
+        "description": "House cleaning in the western Chicago suburbs. Regular, deep, and move-in or move-out cleaning for local homes.",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Naperville",
+          "addressRegion": "IL",
+          "addressCountry": "US"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ],
+            "opens": "09:00",
+            "closes": "18:00"
+          }
+        ],
+        "sameAs": [
+          "https://www.google.com/maps?cid=9307087877612204108",
+          "https://www.bbb.org/us/il/naperville/profile/cleaning-services/shynli-cleaning-service-0654-1000144666",
+          "https://www.thumbtack.com/il/naperville/house-cleaning/shynli-cleaning-service/service/572036872380112901",
+          "https://www.yelp.com/biz/shiny-naperville-house-cleaning-service-naperville",
+          "https://nextdoor.com/pages/shynli-cleaning/"
+        ],
+        "areaServed": [
+          {
+            "@type": "City",
+            "name": "Addison, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Aurora, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Bartlett, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Batavia, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Big Rock, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Bolingbrook, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Bristol, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Burr Ridge, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Carol Stream, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Channahon, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Clarendon Hills, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Crest Hill, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Darien, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Downers Grove, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Elmhurst, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Geneva, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Glen Ellyn, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Hinsdale, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Homer Glen, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Itasca, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Joliet, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Lemont, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Lisle, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Lockport, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Lombard, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Minooka, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Montgomery, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Naperville, IL"
+          },
+          {
+            "@type": "City",
+            "name": "North Aurora, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Oak Brook, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Oswego, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Plainfield, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Plano, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Romeoville, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Sandwich, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Shorewood, IL"
+          },
+          {
+            "@type": "City",
+            "name": "St. Charles, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Streamwood, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Sugar Grove, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Villa Park, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Warrenville, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Wayne, IL"
+          },
+          {
+            "@type": "City",
+            "name": "West Chicago, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Westmont, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Wheaton, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Willow Springs, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Willowbrook, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Winfield, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Wood Dale, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Woodridge, IL"
+          },
+          {
+            "@type": "City",
+            "name": "Yorkville, IL"
+          }
+        ],
+        "hasOfferCatalog": {
+          "@type": "OfferCatalog",
+          "name": "Cleaning services",
+          "itemListElement": [
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Airbnb Cleaning",
+                "url": "https://shynlicleaningservice.com/services/airbnb-cleaning"
+              }
+            },
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Commercial Cleaning",
+                "url": "https://shynlicleaningservice.com/services/commercial-cleaning"
+              }
+            },
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Deep Cleaning",
+                "url": "https://shynlicleaningservice.com/services/deep-cleaning"
+              }
+            },
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Move In Move Out Cleaning",
+                "url": "https://shynlicleaningservice.com/services/move-in-move-out-cleaning"
+              }
+            },
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Post Construction Cleaning",
+                "url": "https://shynlicleaningservice.com/services/post-construction-cleaning"
+              }
+            },
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Regular Cleaning",
+                "url": "https://shynlicleaningservice.com/services/regular-cleaning"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://shynlicleaningservice.com/#website",
+        "url": "https://shynlicleaningservice.com/",
+        "name": "Shynli Cleaning",
+        "publisher": {
+          "@id": "https://shynlicleaningservice.com/#localbusiness"
+        }
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Do you offer house cleaning in Naperville and Aurora?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Shynli Cleaning serves Naperville, Aurora, Sugar Grove, and nearby Chicago suburbs."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you bring cleaning supplies?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Our team brings the supplies needed for the booked service."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I book recurring cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Weekly, bi-weekly, and monthly visits are available."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you offer move-out cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Move-in and move-out cleaning is available for houses, apartments, and condos."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you offer one-time cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can book a one-time clean without starting a recurring plan."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How often should I schedule cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most clients choose weekly or bi-weekly service depending on household traffic."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is deep cleaning required every visit?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Deep cleaning is usually a reset, then regular cleaning maintains the home."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I pause or change my cleaning schedule?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Contact us and we will help adjust your upcoming appointments."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need to be home during cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Many clients provide access instructions and return to a clean home."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How long does a cleaning take?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Timing depends on home size, condition, and service type."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will I get the same cleaner each visit?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "We try to keep your team consistent whenever scheduling allows."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is pricing calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Pricing is based on service type, home size, bathrooms, condition, and add-ons."
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,139 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://shynlicleaningservice.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Aurora",
+        "item": "https://shynlicleaningservice.com/aurora"
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": "https://shynlicleaningservice.com/aurora#service",
+    "name": "House Cleaning in Aurora, IL",
+    "serviceType": "House cleaning",
+    "description": "Professional house cleaning services in Aurora, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
+    "url": "https://shynlicleaningservice.com/aurora",
+    "provider": {
+      "@id": "https://shynlicleaningservice.com/#localbusiness"
+    },
+    "areaServed": {
+      "@type": "City",
+      "name": "Aurora, IL"
+    },
+    "sameAs": [
+      "https://www.google.com/maps?cid=5408416184318024401"
+    ],
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Cleaning services",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Airbnb Cleaning",
+            "url": "https://shynlicleaningservice.com/services/airbnb-cleaning"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Commercial Cleaning",
+            "url": "https://shynlicleaningservice.com/services/commercial-cleaning"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Deep Cleaning",
+            "url": "https://shynlicleaningservice.com/services/deep-cleaning"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Move In Move Out Cleaning",
+            "url": "https://shynlicleaningservice.com/services/move-in-move-out-cleaning"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Post Construction Cleaning",
+            "url": "https://shynlicleaningservice.com/services/post-construction-cleaning"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Regular Cleaning",
+            "url": "https://shynlicleaningservice.com/services/regular-cleaning"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How much does house cleaning cost in Aurora?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "House cleaning pricing in Aurora depends on your home’s size, number of bedrooms and bathrooms, cleaning frequency, service type, and current condition."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you offer recurring cleaning in Aurora?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Shynli Cleaning offers weekly, bi-weekly, and monthly recurring house cleaning in Aurora."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you provide deep cleaning in Aurora?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. We provide deep cleaning services in Aurora for seasonal refreshes, first visits, and homes that need extra attention."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you offer move-in and move-out cleaning in Aurora?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. We offer move-in and move-out cleaning in Aurora for houses, apartments, condos, and townhomes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I get a free quote for house cleaning in Aurora?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can request a free quote for house cleaning in Aurora, and we’ll confirm the details before service."
+        }
+      }
+    ]
+  }
+]

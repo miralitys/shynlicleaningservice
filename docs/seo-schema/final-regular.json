@@ -1,0 +1,279 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://shynlicleaningservice.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Services",
+        "item": "https://shynlicleaningservice.com/services"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Regular Cleaning",
+        "item": "https://shynlicleaningservice.com/services/regular-cleaning"
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": "https://shynlicleaningservice.com/services/regular-cleaning#service",
+    "name": "Regular Cleaning",
+    "serviceType": "Regular Cleaning",
+    "description": "Reliable regular home cleaning services for busy households. Weekly, bi-weekly, and monthly cleaning plans with trusted local cleaners. Get a free quote today.",
+    "url": "https://shynlicleaningservice.com/services/regular-cleaning",
+    "provider": {
+      "@id": "https://shynlicleaningservice.com/#localbusiness"
+    },
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Addison, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Aurora, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Bartlett, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Batavia, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Big Rock, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Bolingbrook, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Bristol, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Burr Ridge, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Carol Stream, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Channahon, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Clarendon Hills, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Crest Hill, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Darien, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Downers Grove, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Elmhurst, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Geneva, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Glen Ellyn, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Hinsdale, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Homer Glen, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Itasca, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Joliet, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Lemont, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Lisle, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Lockport, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Lombard, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Minooka, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Montgomery, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Naperville, IL"
+      },
+      {
+        "@type": "City",
+        "name": "North Aurora, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Oak Brook, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Oswego, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Plainfield, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Plano, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Romeoville, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Sandwich, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Shorewood, IL"
+      },
+      {
+        "@type": "City",
+        "name": "St. Charles, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Streamwood, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Sugar Grove, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Villa Park, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Warrenville, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Wayne, IL"
+      },
+      {
+        "@type": "City",
+        "name": "West Chicago, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Westmont, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Wheaton, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Willow Springs, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Willowbrook, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Winfield, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Wood Dale, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Woodridge, IL"
+      },
+      {
+        "@type": "City",
+        "name": "Yorkville, IL"
+      }
+    ],
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Weekly Cleaning",
+        "priceCurrency": "USD",
+        "priceSpecification": {
+          "@type": "PriceSpecification",
+          "minPrice": 135,
+          "priceCurrency": "USD"
+        },
+        "url": "https://shynlicleaningservice.com/services/regular-cleaning"
+      },
+      {
+        "@type": "Offer",
+        "name": "Bi-Weekly Cleaning",
+        "priceCurrency": "USD",
+        "priceSpecification": {
+          "@type": "PriceSpecification",
+          "minPrice": 145,
+          "priceCurrency": "USD"
+        },
+        "url": "https://shynlicleaningservice.com/services/regular-cleaning"
+      },
+      {
+        "@type": "Offer",
+        "name": "Monthly Cleaning",
+        "priceCurrency": "USD",
+        "priceSpecification": {
+          "@type": "PriceSpecification",
+          "minPrice": 155,
+          "priceCurrency": "USD"
+        },
+        "url": "https://shynlicleaningservice.com/services/regular-cleaning"
+      }
+    ]
+  }
+]
