@@ -305,7 +305,7 @@ test("serves the home page through the custom route layer", async () => {
   });
 });
 
-test("serves the homepage ads duplicate as an indexable sitemap route", async () => {
+test("serves the homepage ads duplicate with noindex and outside the sitemap", async () => {
   const response = await fetch(`${BASE_URL}/ads/`);
   const body = await response.text();
   const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
@@ -354,10 +354,10 @@ test("serves the homepage ads duplicate as an indexable sitemap route", async ()
   assert.doesNotMatch(body, /js\/tilda-zero-1\.1\.min\.js/);
   assert.doesNotMatch(body, /js\/lazyload-1\.3\.min\.export\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
-  assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<meta name="robots" content="noindex,follow" \/>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/ads"\s*\/?>/);
   assert.equal(sitemapResponse.status, 200);
-  assert.match(sitemapBody, /<loc>https:\/\/shynlicleaningservice\.com\/ads<\/loc>/);
+  assert.doesNotMatch(sitemapBody, /<loc>https:\/\/shynlicleaningservice\.com\/ads<\/loc>/);
   assert.equal(robotsResponse.status, 200);
   assert.doesNotMatch(robotsBody, /Disallow: \/ads\//);
 });
@@ -1022,7 +1022,7 @@ test("serves the move-in move-out main route as the clean hand-coded page", asyn
   assert.doesNotMatch(body, /id="shynli-zero-runtime-stub"/);
 });
 
-test("serves the regular-cleaning ads duplicate as an indexable sitemap route", async () => {
+test("serves the regular-cleaning ads duplicate with noindex and outside the sitemap", async () => {
   const response = await fetch(`${BASE_URL}/services/regular-cleaning/ads/`);
   const body = await response.text();
   const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
@@ -1077,10 +1077,10 @@ test("serves the regular-cleaning ads duplicate as an indexable sitemap route", 
   assert.match(body, /Deep Cleaning/);
   assert.match(body, /POPUP_DELAY_MS = 5000/);
   assert.match(body, /\/api\/quote\/submit/);
-  assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<meta name="robots" content="noindex,follow" \/>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/regular-cleaning\/ads"\s*\/?>/);
   assert.equal(sitemapResponse.status, 200);
-  assert.match(
+  assert.doesNotMatch(
     sitemapBody,
     /<loc>https:\/\/shynlicleaningservice\.com\/services\/regular-cleaning\/ads<\/loc>/
   );
@@ -1088,7 +1088,7 @@ test("serves the regular-cleaning ads duplicate as an indexable sitemap route", 
   assert.doesNotMatch(robotsBody, /Disallow: \/services\/regular-cleaning\/ads\//);
 });
 
-test("serves the deep-cleaning ads duplicate as an indexable sitemap route", async () => {
+test("serves the deep-cleaning ads duplicate with noindex and outside the sitemap", async () => {
   const response = await fetch(`${BASE_URL}/services/deep-cleaning/ads/`);
   const body = await response.text();
   const sitemapResponse = await fetch(`${BASE_URL}/sitemap.xml`);
@@ -1123,10 +1123,10 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   assert.match(body, /Deep Cleaning/);
   assert.match(body, /POPUP_DELAY_MS = 5000/);
   assert.match(body, /\/api\/quote\/submit/);
-  assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/);
+  assert.match(body, /<meta name="robots" content="noindex,follow" \/>/);
   assert.match(body, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/deep-cleaning\/ads"\s*\/?>/);
   assert.equal(sitemapResponse.status, 200);
-  assert.match(
+  assert.doesNotMatch(
     sitemapBody,
     /<loc>https:\/\/shynlicleaningservice\.com\/services\/deep-cleaning\/ads<\/loc>/
   );
@@ -1134,10 +1134,12 @@ test("serves the deep-cleaning ads duplicate as an indexable sitemap route", asy
   assert.doesNotMatch(robotsBody, /Disallow: \/services\/deep-cleaning\/ads\//);
 });
 
-test("serves all ads landing routes as indexable self-canonical pages without redirects", async () => {
+test("keeps all advertising duplicates usable but noindex and outside the sitemap", async () => {
   const routes = [
     "/ads",
     "/ads-v2",
+    "/pricing-v2",
+    "/service-areas-v2",
     "/services/regular-cleaning/ads",
     "/services/regular-cleaning/ads-v2",
     "/services/deep-cleaning/ads",
@@ -1153,22 +1155,33 @@ test("serves all ads landing routes as indexable self-canonical pages without re
   assert.equal(sitemapResponse.status, 200);
   assert.equal(robotsResponse.status, 200);
 
+  for (const route of ["/", "/pricing", "/service-areas", "/services/regular-cleaning", "/services/deep-cleaning", "/services/move-in-move-out-cleaning"]) {
+    const response = await fetch(`${BASE_URL}${route}`);
+    const body = await response.text();
+    assert.equal(response.status, 200, route);
+    assert.doesNotMatch(response.headers.get("x-robots-tag") || "", /noindex/i, route);
+    assert.doesNotMatch(body, /<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i, route);
+    assert.match(sitemapBody, new RegExp(`<loc>${escapeRegExp(`https://shynlicleaningservice.com${route}`)}</loc>`), route);
+  }
+
   for (const route of routes) {
-    const response = await fetch(`${BASE_URL}${route}`, { redirect: "manual" });
+    const response = await fetch(`${BASE_URL}${route}?utm_source=google&gclid=qa`, { redirect: "manual" });
     const body = await response.text();
     const absoluteUrl = `https://shynlicleaningservice.com${route}`;
 
     assert.equal(response.status, 200, route);
     assert.equal(response.headers.get("location"), null, route);
-    assert.doesNotMatch(response.headers.get("x-robots-tag") || "", /noindex/i, route);
-    assert.doesNotMatch(body, /<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i, route);
+    assert.equal(response.headers.get("x-robots-tag"), "noindex, follow", route);
+    const robotsTags = body.match(/<meta[^>]+name=["'](?:robots|googlebot)["'][^>]*>/gi) || [];
+    assert.equal(robotsTags.length, 1, route);
+    assert.match(robotsTags[0], /content="noindex,follow"/, route);
     assert.doesNotMatch(body, /<!--\s*\/?noindex\s*-->/i, route);
     assert.match(
       body,
       new RegExp(`<link rel="canonical" href="${escapeRegExp(absoluteUrl)}"\\s*/?>`),
       route
     );
-    assert.match(
+    assert.doesNotMatch(
       sitemapBody,
       new RegExp(`<loc>${escapeRegExp(absoluteUrl)}</loc>`),
       route
@@ -1181,7 +1194,7 @@ test("serves all ads landing routes as indexable self-canonical pages without re
   }
 });
 
-test("serves ads v2 no-calculator variants as indexable routes", async () => {
+test("serves advertising v2 no-calculator variants with noindex outside the sitemap", async () => {
   const routes = [
     "/ads-v2",
     "/service-areas-v2",
@@ -1211,8 +1224,8 @@ test("serves ads v2 no-calculator variants as indexable routes", async () => {
       assert.match(body, /id="shynli-form-attribution-runtime"/, route);
     }
     assert.doesNotMatch(body, /id="cleaningCalculator"/, route);
-    assert.doesNotMatch(body, /<meta name="robots" content="noindex,nofollow" \/>/, route);
-    assert.match(sitemapBody, new RegExp(`<loc>https://shynlicleaningservice\\.com${route}</loc>`), route);
+    assert.match(body, /<meta name="robots" content="noindex,follow" \/>/, route);
+    assert.doesNotMatch(sitemapBody, new RegExp(`<loc>https://shynlicleaningservice\\.com${route}</loc>`), route);
   }
 
   const pricingV2Response = await fetch(`${BASE_URL}/pricing-v2`);

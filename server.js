@@ -501,7 +501,20 @@ const MANAGED_BLOG_HTML_ROUTES = Object.freeze([
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, BLOG_ROUTE_HTML_FILE]),
   ...BLOG_ARTICLE_PAGES.map((page) => [page.path, BLOG_ROUTE_HTML_FILE]),
 ]);
+const ADVERTISING_NOINDEX_ROUTES = new Set([
+  "/ads",
+  "/ads-v2",
+  "/pricing-v2",
+  "/service-areas-v2",
+  "/services/deep-cleaning/ads",
+  "/services/deep-cleaning/ads-v2",
+  "/services/move-in-move-out-cleaning/ads",
+  "/services/move-in-move-out-cleaning/ads-v2",
+  "/services/regular-cleaning/ads",
+  "/services/regular-cleaning/ads-v2",
+]);
 const NOINDEX_ROUTES = new Set([
+  ...ADVERTISING_NOINDEX_ROUTES,
   "/home-calculator",
   "/oauth/callback",
   "/quote",
@@ -638,6 +651,7 @@ const ROUTE_META_OVERRIDES = {
   },
   "/services/deep-cleaning": {
     title: "Deep Cleaning Services | Shynli Cleaning",
+    robots: "index,follow",
   },
   "/services/deep-cleaning/ads": {
     title: "Deep Cleaning Services | Shynli Cleaning",
@@ -1822,6 +1836,7 @@ const { sanitizeHtml } = createSiteSanitizer({
 });
 
 const siteStaticHelpers = createSiteStaticHelpers({
+  ADVERTISING_NOINDEX_ROUTES,
   CONTENT_TYPES,
   HTML_CACHE_WARM_MODE,
   IMAGE_EXTENSIONS,
