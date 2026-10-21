@@ -212,6 +212,7 @@ const ADMIN_APP_ROUTES = new Set([
   ADMIN_SETTINGS_PATH,
   ADMIN_QUOTE_OPS_PATH,
   "/admin/audit",
+  "/admin/trash",
 ]);
 const ADMIN_ALL_ROUTES = new Set([
   ...ADMIN_APP_ROUTES,
@@ -278,6 +279,7 @@ const ADMIN_APP_NAV_ITEMS = Object.freeze([
     path: "/admin/audit",
     label: "Журнал действий",
   },
+  { path: "/admin/trash", label: "Корзина" },
 ]);
 const ORDER_STATUS_VALUES = new Set(["new", "scheduled", "in-progress", "completed", "canceled", "rescheduled"]);
 const ORDER_FREQUENCY_VALUES = new Set(["weekly", "biweekly", "every3weeks", "monthly"]);

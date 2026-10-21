@@ -42,6 +42,14 @@ test("audit page logs real admin order/client mutations, personal actors, and de
     const manager = await login("audit.manager@example.com");
     const viewer = await login("audit.viewer@example.com");
     const cleaner = await login("audit.cleaner@example.com");
+    assert.equal((await get("/admin/trash", viewer)).status, 403);
+    assert.equal((await get("/admin/trash", cleaner)).status, 303);
+    assert.equal((await get("/admin/trash", manager)).status, 200);
+    assert.equal((await post("/admin/trash", viewer, { action: "restore", trashId: entryId })).status, 403);
+    const blockedLeadDelete = await post("/admin/quote-ops", manager, { action: "delete-lead-entry", entryId });
+    assert.equal(blockedLeadDelete.status, 409);
+    assert.match(await blockedLeadDelete.text(), /order-exists/);
+    assert.match(await (await get("/admin/orders", manager)).text(), new RegExp(entryId));
     const changed = await post("/admin/orders", manager, { entryId, totalPrice: "534" });
     assert.equal(changed.status, 303);
     assert.match(changed.headers.get("location"), /notice=order-saved/);
@@ -85,6 +93,17 @@ test("audit page logs real admin order/client mutations, personal actors, and de
     assert.equal(records.filter(event => event.action === "delete" && event.entity_type === "order").length, 1);
     assert.equal(records.filter(event => event.action === "delete" && event.entity_type === "client").length, 1);
     assert.ok(records.some(event => event.actor.email === "audit.manager@example.com" && event.changes.some(change => change.field === "totalPrice" && change.old === 250 && change.new === 534)));
+    const trashHtml = await (await get("/admin/trash", manager)).text();
+    assert.match(trashHtml, /Audit Client Renamed/);
+    const trashId = trashHtml.match(/name="trashId" value="([^"]+)"/)?.[1];
+    assert.ok(trashId);
+    assert.equal((await post("/admin/trash", manager, { action: "restore", trashId })).status, 303);
+    const restoredOrders = await (await get(`/admin/orders?order=${entryId}`, manager)).text();
+    assert.match(restoredOrders, /\$534\.00/);
+    assert.match(restoredOrders, new RegExp(entryId));
+    const restoredEvent = (await createAdminAuditStore({ env }).list()).find(event => event.action === "restore");
+    assert.equal(restoredEvent.actor.email, "audit.manager@example.com");
+    assert.equal(restoredEvent.entry_id, entryId);
   } finally {
     await stopServer(started.child);
     await fs.rm(root, { recursive: true, force: true });

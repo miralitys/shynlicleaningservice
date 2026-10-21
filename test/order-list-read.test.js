@@ -151,7 +151,7 @@ test("strict detail reads cannot substitute an old cached price when the authori
   let offline = false;
   const store = createQuoteOpsStore({ QUOTE_OPS_LEDGER_LIMIT: 250, normalizeString,
     createSupabaseQuoteOpsClient: () => ({ isConfigured: () => true,
-      upsertEntry: async () => { throw new Error("Only prime local memory"); },
+      upsertEntry: async () => {},
       fetchEntryById: async () => { if (offline) throw new Error("Database unavailable"); return null; },
     }) });
   const cached = await store.recordSubmission({ requestId: "cached", totalPrice: 250 });

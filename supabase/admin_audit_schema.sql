@@ -8,7 +8,7 @@ create table if not exists public.admin_audit_events (
   entity_id text not null,
   entity_label text not null default '',
   entry_id text,
-  action text not null check (action in ('create', 'update', 'delete')),
+  action text not null check (action in ('create', 'update', 'delete', 'restore')),
   status text not null check (status in ('pending', 'succeeded', 'failed', 'unconfirmed', 'noop')),
   route text not null default '',
   before_data jsonb,

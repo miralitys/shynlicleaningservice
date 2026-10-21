@@ -100,14 +100,15 @@ test("guarded background writes skip an already deleted order", async () => {
 test("a rejected reschedule never updates the order cache or pretends the save succeeded", async () => {
   for (const code of ["23505", "40001", "40P01"]) {
     let rejectWrites = false;
+    let saved;
     let syncs = 0;
     const store = createQuoteOpsStore({ QUOTE_OPS_LEDGER_LIMIT: 100, normalizeString,
       applyOrderEntryUpdates(entry, updates) { entry.selectedDate = updates.selectedDate; return entry; },
       orderStore: { async upsertEntry() { syncs++; } },
       createSupabaseQuoteOpsClient: () => ({ isConfigured: () => true,
-        async fetchEntryById() { throw new Error("Temporary read failure"); },
+        async fetchEntryById() { return structuredClone(saved); },
         async fetchEntries() { throw new Error("Temporary read failure"); },
-        async upsertEntry() { if (rejectWrites) throw Object.assign(new Error("Conflicting slot"), { code }); },
+        async upsertEntry(entry) { if (rejectWrites) throw Object.assign(new Error("Conflicting slot"), { code }); saved = structuredClone(entry); },
       }),
     });
     const entry = await store.recordSubmission({ ok: true, selectedDate: "2099-11-01",
@@ -115,7 +116,7 @@ test("a rejected reschedule never updates the order cache or pretends the save s
     const before = structuredClone(entry);
     const oldSyncs = syncs;
     rejectWrites = true;
-    assert.equal(await store.updateOrderEntry(entry.id, { selectedDate: "2099-11-08" }), null);
+    await assert.rejects(store.updateOrderEntry(entry.id, { selectedDate: "2099-11-08" }), error => error.code === code);
     assert.equal(syncs, oldSyncs);
     assert.deepEqual(await store.getEntry(entry.id), before);
   }
@@ -214,14 +215,14 @@ test("tracks diagnostics when Supabase write fails", async () => {
     normalizeString,
   });
 
-  const entry = await store.recordSubmission({
+  await assert.rejects(store.recordSubmission({
     ok: true,
     requestId: "diagnostics-write-1",
     customerName: "Test Client",
-  });
+  }), /supabase write failed/);
   const diagnostics = store.getDiagnostics();
 
-  assert.ok(entry && entry.id);
+  assert.equal((await store.listEntries()).length, 0);
   assert.equal(diagnostics.mode, "supabase");
   assert.match(diagnostics.lastWriteError, /supabase write failed/i);
   assert.ok(diagnostics.lastWriteAt);

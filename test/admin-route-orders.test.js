@@ -3307,7 +3307,7 @@ test("shows a retryable error without exposing a partial order list or storage d
       selectedTime: "15:00",
       fullAddress: "910 Warning St, Aurora, IL 60505",
     });
-    assert.equal(quoteResponse.status, 201);
+    assert.equal(quoteResponse.status, 500, "a database outage must never acknowledge an unsaved order");
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
     const beforeReadCalls = (await fs.readFile(fetchStub.captureFile, "utf8")).trim().split("\n").filter(Boolean).length;

@@ -758,8 +758,8 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     const quoteOpsDialogBody = await quoteOpsDialogResponse.text();
     assert.equal(quoteOpsDialogResponse.status, 200);
     assert.doesNotMatch(quoteOpsDialogBody, /<!DOCTYPE html>/i);
-    assert.match(quoteOpsDialogBody, /Удалить заявку/);
-    assert.match(quoteOpsDialogBody, /data-admin-confirm-message="Удалить эту заявку из системы без возможности восстановления\?"/);
+    assert.doesNotMatch(quoteOpsDialogBody, /name="action" value="delete-lead-entry"/);
+    assert.doesNotMatch(quoteOpsDialogBody, /без возможности восстановления/);
     assert.match(quoteOpsDialogBody, /Телефон: \+1\(312\)555-0100/);
     assert.match(quoteOpsDialogBody, /E-mail: jane@example\.com/);
     assert.match(quoteOpsDialogBody, /admin-client-metric-card-wide/);

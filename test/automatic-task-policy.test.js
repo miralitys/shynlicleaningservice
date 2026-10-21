@@ -166,6 +166,6 @@ test("a failed future-order write does not complete existing tasks", async () =>
     fetchTaskAutomationEntries: async () => [entry("past", "6305550100", [task("followup")])],
     updateTaskPayload: async () => { patches += 1; return true; },
   }) });
-  await store.recordSubmission(order("future", "6305550100"));
+  await assert.rejects(store.recordSubmission(order("future", "6305550100")), /write failed/);
   assert.equal(patches, 0);
 });

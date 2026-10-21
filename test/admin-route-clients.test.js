@@ -367,10 +367,10 @@ test("renders the clients table with filters and request history", async () => {
     assert.match(selectedClientDialog, /admin-client-delete-form/i);
     assert.match(selectedClientDialog, /admin-client-head-delete-form/i);
     assert.match(selectedClientDialog, /name="action" value="delete-client"/i);
-    assert.match(selectedClientDialog, /aria-label="Удалить клиента"/i);
+    assert.match(selectedClientDialog, /aria-label="В корзину"/i);
     assert.match(selectedClientDialog, /data-admin-toggle-companion="admin-client-edit-3125550100"/i);
     assert.match(selectedClientDialog, /data-admin-confirm-title="Точно удалить\?"/i);
-    assert.match(selectedClientDialog, /Удалить клиента Jane Doe и все связанные с ним заявки\?/i);
+    assert.match(selectedClientDialog, /Переместить клиента Jane Doe и все связанные с ним записи в корзину\?/i);
     assert.doesNotMatch(selectedClientDialog, /admin\/orders\?q=client-request-2&amp;order=/i);
     assert.doesNotMatch(selectedClientDialog, /<h3 class="admin-subsection-title">Контакты<\/h3>/);
     assert.match(selectedClientDialog, /\+1\(312\)555-0100/);
