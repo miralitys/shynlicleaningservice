@@ -1,0 +1,130 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://shynlicleaningservice.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "FAQ",
+        "item": "https://shynlicleaningservice.com/faq"
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Do you offer one-time cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. One-time cleaning is available, however ongoing weekly or bi-weekly service offers better pricing, priority scheduling, and more consistent results."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How often should I schedule cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most of our long-term clients choose bi-weekly cleaning as the best balance of cost and cleanliness. Weekly service is recommended for larger homes or families with pets."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is deep cleaning required every visit?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Deep cleaning is typically done during the first visit or as needed. Regular cleaning focuses on maintaining a consistently clean home."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I pause or change my cleaning schedule?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can reschedule, skip, or pause your service with advance notice. We offer flexible scheduling for recurring clients."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need to be home during cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Many clients are not home during service and provide access instructions in advance."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How long does a cleaning take?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cleaning time depends on your home's size, condition, and selected services. We'll confirm estimated timing before your appointment."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will I get the same cleaner each visit?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "For recurring clients, we aim to assign the same cleaner whenever possible to ensure consistency and familiarity with your home."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is pricing calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Pricing is based on home size, condition, frequency of service, and any selected add-ons."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is recurring cleaning cheaper than one-time service?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Weekly and bi-weekly recurring services are priced lower per visit than one-time or infrequent cleanings."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are there any hidden fees?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. We provide clear, upfront pricing with no hidden charges or surprise fees."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What if I'm not satisfied with the cleaning?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Please contact us within 24 hours and we'll address the issue promptly."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are your cleaners insured and carefully selected??",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Our cleaners are fully insured and carefully selected to ensure reliable, professional service in every home."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you bring your own cleaning supplies?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. We bring professional cleaning supplies and equipment. Safer product options are available upon request."
+        }
+      }
+    ]
+  }
+]

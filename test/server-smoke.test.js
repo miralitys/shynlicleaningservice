@@ -1259,7 +1259,8 @@ test("serves advertising v2 no-calculator variants with noindex outside the site
   assert.match(pricingV2Body, /Get an exact price in 60 seconds/);
   assert.match(pricingV2Body, /href="\/quote-no-price"/);
   assert.doesNotMatch(pricingV2Body, /href="\/quote"/);
-  assert.match(pricingV2Body, /"@type":"HouseCleaningBusiness"/);
+  assert.doesNotMatch(pricingV2Body, /"@type":"HouseCleaningBusiness"/);
+  assert.match(pricingV2Body, /"provider":\{"@id":"https:\/\/shynlicleaningservice\.com\/#localbusiness"\}/);
   assert.match(pricingV2Body, /"@type":"OfferCatalog"/);
   assert.match(pricingV2Body, /"serviceType":"Weekly Home Cleaning"/);
 
@@ -1269,7 +1270,7 @@ test("serves advertising v2 no-calculator variants with noindex outside the site
   assert.match(pricingBody, /House Cleaning Prices/);
 });
 
-test("serves cleaners-near-me with LocalBusiness and Service schema", async () => {
+test("serves cleaners-near-me with Service referencing the one homepage business", async () => {
   const response = await fetch(`${BASE_URL}/cleaners-near-me`);
   const body = await response.text();
   assert.equal(response.status, 200);
@@ -1285,10 +1286,10 @@ test("serves cleaners-near-me with LocalBusiness and Service schema", async () =
 
   assert.deepEqual(
     graph.map((node) => node["@type"]),
-    ["LocalBusiness", "Service"]
+    ["Service"]
   );
-  assert.equal(graph[1].provider["@id"], "https://shynlicleaningservice.com/#localbusiness");
-  assert.equal(graph[1].hasOfferCatalog.itemListElement.length, 3);
+  assert.equal(graph[0].provider["@id"], "https://shynlicleaningservice.com/#localbusiness");
+  assert.equal(graph[0].hasOfferCatalog.itemListElement.length, 3);
   assert.doesNotMatch(schemaText, /aggregateRating/);
   assert.doesNotMatch(schemaText, /HouseCleaningService/);
 });
