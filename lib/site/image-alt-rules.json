@@ -1,0 +1,498 @@
+{
+  "/images/shynli-logo-primary.png": {
+    "kind": "logo",
+    "alt": "Shynli Cleaning Service",
+    "description": "House mark and Shynli Cleaning wordmark"
+  },
+  "/images/home-copy-team-960.webp": {
+    "kind": "content",
+    "alt": "Shynli Cleaning team",
+    "description": "Four cleaners in burgundy aprons",
+    "keepExisting": true
+  },
+  "/images/home-copy-service-regular-640.webp": {
+    "kind": "content",
+    "alt": "Regular house cleaning illustration",
+    "description": "Cutaway home with cleaners maintaining rooms",
+    "keepExisting": true
+  },
+  "/images/home-copy-service-deep-640.webp": {
+    "kind": "content",
+    "alt": "Deep cleaning illustration",
+    "description": "Cutaway home with cleaners, stairs and garden",
+    "keepExisting": true
+  },
+  "/images/home-copy-service-move-640.webp": {
+    "kind": "content",
+    "alt": "Move cleaning illustration",
+    "description": "Cutaway empty home and a moving truck",
+    "keepExisting": true
+  },
+  "/images/home-copy-service-airbnb-640.webp": {
+    "kind": "content",
+    "alt": "Airbnb cleaning illustration",
+    "description": "Cutaway guest house with bedrooms and cleaners",
+    "keepExisting": true
+  },
+  "/images/home-copy-service-commercial-640.webp": {
+    "kind": "content",
+    "alt": "Commercial cleaning illustration",
+    "description": "Cutaway office with desks and meeting rooms",
+    "keepExisting": true
+  },
+  "/images/home-copy-service-post-construction-640.webp": {
+    "kind": "content",
+    "alt": "Post-construction cleaning illustration",
+    "description": "Workers cleaning a partly finished interior",
+    "keepExisting": true
+  },
+  "/images/home-copy-cta-house.w640.webp": {
+    "kind": "content",
+    "alt": "Clean home illustration",
+    "description": "Small house with red porch chairs and potted plants",
+    "keepExisting": true
+  },
+  "/images/shynli-footer-logo-light.png": {
+    "kind": "logo",
+    "alt": "Shynli Cleaning Service",
+    "description": "Light Shynli Cleaning wordmark with a house mark"
+  },
+  "/images/about-clean-logo.png": {
+    "kind": "logo",
+    "alt": "Shynli Cleaning Service",
+    "description": "Shynli Cleaning wordmark with a house mark"
+  },
+  "/images/about-copy-asset-010.png": {
+    "kind": "badge",
+    "alt": "Local team",
+    "description": "Badge reading Local team"
+  },
+  "/images/about-copy-asset-013.png": {
+    "kind": "badge",
+    "alt": "Safe products",
+    "description": "Badge reading Safe products"
+  },
+  "/images/about-copy-asset-037.png": {
+    "kind": "badge",
+    "alt": "High quality",
+    "description": "Badge reading High quality"
+  },
+  "/images/about-copy-asset-031.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Calendar icon beside scheduling text"
+  },
+  "/images/about-copy-asset-012.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "House-shaped brand ornament beside section text"
+  },
+  "/images/about-copy-asset-032.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Calendar icon beside scheduling text"
+  },
+  "/images/about-copy-asset-024.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "People icon beside team text"
+  },
+  "/images/about-copy-asset-015.svg": {
+    "kind": "content",
+    "alt": "Street map of communities in the western Chicago suburbs",
+    "description": "Line map of western Chicago suburbs"
+  },
+  "/images/about-copy-asset-043.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Four-point star ornament"
+  },
+  "/images/about-copy-asset-029.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Phone icon next to contact text"
+  },
+  "/images/shynli-logo-icon-white.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "House-shaped brand ornament inside the city hero statement"
+  },
+  "/images/shynli-quote-house.png": {
+    "kind": "content",
+    "alt": "Small house with red porch chairs and potted plants",
+    "description": "Small house with red porch chairs and potted plants",
+    "cityQuote": true
+  },
+  "/images/about-clean-hero-team.w1280.webp": {
+    "kind": "content",
+    "alt": "Shynli team vacuuming floors and wiping kitchen surfaces",
+    "description": "Collage of cleaners vacuuming and wiping surfaces"
+  },
+  "/images/home-copy-logo-320.webp": {
+    "kind": "logo",
+    "alt": "Shynli Cleaning Service",
+    "description": "Shynli Cleaning wordmark with a house mark"
+  },
+  "/images/home-copy-service-regular.w640.webp": {
+    "kind": "content",
+    "alt": "Regular house cleaning service",
+    "description": "Cutaway home with cleaners maintaining rooms",
+    "keepExisting": true
+  },
+  "/images/home-copy-service-deep.w640.webp": {
+    "kind": "content",
+    "alt": "Illustrated home with cleaners detailing rooms and stairs",
+    "description": "Cutaway two-story home with cleaners, stairs and garden"
+  },
+  "/images/home-copy-service-move.w640.webp": {
+    "kind": "content",
+    "alt": "Move in and move out cleaning service",
+    "description": "Cutaway empty home and moving truck",
+    "keepExisting": true
+  },
+  "/images/shynli-phone-cream.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Phone icon next to the written phone number"
+  },
+  "/images/shynli-email-cream.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Envelope icon next to the written email address"
+  },
+  "/images/tild3163-6235-4133-a564-316465373838__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Four-point star beside an FAQ category title"
+  },
+  "/images/tild6537-3537-4163-b235-386463616661__solar_calendar-bold.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Calendar icon beside an FAQ category title"
+  },
+  "/images/tild3864-3437-4562-b938-313765633536__vector_1.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Payment card icon beside an FAQ category title"
+  },
+  "/images/tild3964-3430-4138-b537-383733653464__fluent_people-team-1.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "People icon beside an FAQ category title"
+  },
+  "/images/tild3936-3764-4636-b239-626233383832__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Burgundy four-point star ornament"
+  },
+  "/images/tild3438-6434-4266-b238-656432326438__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Calendar icon beside a pricing explanation"
+  },
+  "/images/tild3331-3232-4634-b761-323734383862__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Burgundy four-point star ornament"
+  },
+  "/images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "House-shaped brand ornament beside pricing text"
+  },
+  "/images/tild6330-3932-4338-b530-313931356431__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Calendar icon beside scheduling text"
+  },
+  "/images/tild3863-6630-4164-a665-313534383764__vector1.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "People icon beside team text"
+  },
+  "/images/tild3433-6338-4136-b136-623833636265__svg_1767801678298.svg": {
+    "kind": "content",
+    "alt": "Street map of communities in the western Chicago suburbs",
+    "description": "Line map of western Chicago suburbs"
+  },
+  "/images/tild6566-6435-4131-a332-643333376335__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Four-point star ornament"
+  },
+  "/images/tild6233-6137-4533-b435-366133663338__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Phone icon next to contact text"
+  },
+  "/images/tild3364-3839-4665-b832-356539643234__5.svg": {
+    "kind": "badge",
+    "alt": "5",
+    "description": "Stylized numeral 5"
+  },
+  "/images/tild3437-6364-4734-b431-396533323234__1.svg": {
+    "kind": "badge",
+    "alt": "1",
+    "description": "Stylized numeral 1"
+  },
+  "/images/tild3261-6630-4232-a337-303332313661__4.svg": {
+    "kind": "badge",
+    "alt": "4",
+    "description": "Stylized numeral 4"
+  },
+  "/images/tild3237-3864-4539-b661-326231633861__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Vacuum cleaner icon beside a service explanation"
+  },
+  "/images/tild6266-3439-4838-b233-326632353564__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Four-point star ornament"
+  },
+  "/images/tild3532-3931-4138-b732-323361346535__vector1.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Calendar icon beside a pricing explanation"
+  },
+  "/images/tild6563-3235-4932-b863-633539643661__rectangle_41.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Dotted outline used as a background shape"
+  },
+  "/images/tild3638-6236-4262-b464-663130303432__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "People icon beside a service explanation"
+  },
+  "/images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Check mark beside an existing text label"
+  },
+  "/images/shynli-sugargrove-area-map.svg": {
+    "kind": "content",
+    "alt": "Street map of communities in the western Chicago suburbs",
+    "description": "Line map of western Chicago suburbs"
+  },
+  "/images/shynli-area-star.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Four-point star ornament"
+  },
+  "/images/shynli-airbnb-cleaning-hero.png": {
+    "kind": "content",
+    "alt": "Sunlit living room with a cream sofa and dining table",
+    "description": "Bright living room with a cream sofa, plants and dining table"
+  },
+  "/images/shynli-move-area-living-room.png": {
+    "kind": "content",
+    "alt": "Living room illustration with a sofa and wall-mounted television",
+    "description": "Cutaway living room with a sofa, round table and television"
+  },
+  "/images/shynli-move-area-bedroom.png": {
+    "kind": "content",
+    "alt": "Bedroom illustration with a double bed and bedside tables",
+    "description": "Cutaway bedroom with a double bed and bedside tables"
+  },
+  "/images/shynli-move-area-bathroom.png": {
+    "kind": "content",
+    "alt": "Bathroom illustration with a freestanding tub and double vanity",
+    "description": "Cutaway bathroom with a tub, shower and double vanity"
+  },
+  "/images/shynli-move-area-kitchen.png": {
+    "kind": "content",
+    "alt": "Kitchen illustration with an island, cabinets, and breakfast stools",
+    "description": "Cutaway kitchen with an island, cabinets and stools"
+  },
+  "/images/shynli-service-regular-cleaning.png": {
+    "kind": "content",
+    "alt": "Cleaners maintaining rooms inside an illustrated two-story home",
+    "description": "Cutaway home with cleaners maintaining rooms"
+  },
+  "/images/shynli-service-deep-cleaning.png": {
+    "kind": "content",
+    "alt": "Cleaners detailing an illustrated home, staircase, and outdoor areas",
+    "description": "Cutaway two-story home with cleaners, stairs and garden"
+  },
+  "/images/shynli-service-move-cleaning.png": {
+    "kind": "content",
+    "alt": "Cleaners preparing an empty home beside a moving truck",
+    "description": "Cutaway empty home and a moving truck"
+  },
+  "/images/shynli-service-commercial-cleaning.png": {
+    "kind": "content",
+    "alt": "Cleaners tidying an illustrated office with desks and meeting rooms",
+    "description": "Cutaway office with desks and meeting rooms"
+  },
+  "/images/tild3238-6662-4337-a363-396238396235__shynli_cleaning_2_7.png": {
+    "kind": "content",
+    "alt": "Office illustration with workstations, blue chairs, and meeting areas",
+    "description": "Cutaway office with workstations and blue chairs"
+  },
+  "/images/tild3639-3431-4737-b736-663238643665__shynli_cleaning_2_8.png": {
+    "kind": "content",
+    "alt": "Cafe illustration with dining tables, chairs, and a service counter",
+    "description": "Cutaway cafe with tables, seating and a service counter"
+  },
+  "/images/tild6164-3638-4561-a362-626530386230__shynli_cleaning_2_9.png": {
+    "kind": "content",
+    "alt": "Restroom illustration with toilet stalls and a long washbasin counter",
+    "description": "Cutaway restroom with toilet stalls and a washbasin counter"
+  },
+  "/images/tild3131-6539-4639-b134-316165356365__shynli_cleaning_2_10.png": {
+    "kind": "content",
+    "alt": "Reception lounge illustration with armchairs, plants, and a coffee table",
+    "description": "Cutaway reception lounge with armchairs and plants"
+  },
+  "/images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png": {
+    "kind": "content",
+    "alt": "Cleaners maintaining rooms inside an illustrated two-story home",
+    "description": "Cutaway home with cleaners maintaining rooms"
+  },
+  "/images/tild3731-3932-4336-a537-383932366533__shynli_cleaning_2_5.png": {
+    "kind": "content",
+    "alt": "Cleaners detailing an illustrated home, staircase, and outdoor areas",
+    "description": "Cutaway two-story home with cleaners, stairs and garden"
+  },
+  "/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png": {
+    "kind": "content",
+    "alt": "Cleaners preparing an empty home beside a moving truck",
+    "description": "Cutaway empty home and moving truck"
+  },
+  "/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png": {
+    "kind": "content",
+    "alt": "Illustrated guest house with cleaners preparing bedrooms and living areas",
+    "description": "Cutaway guest house with bedrooms and cleaners"
+  },
+  "/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png": {
+    "kind": "content",
+    "alt": "Small house with red porch chairs and potted plants",
+    "description": "Small house with red porch chairs and potted plants"
+  },
+  "/images/tild3237-3730-4638-a162-393866363766__group_195_1.png": {
+    "kind": "content",
+    "alt": "Shynli cleaners wiping a bathroom mirror and kitchen counters",
+    "description": "Collage of cleaners wiping a mirror and work surfaces"
+  },
+  "/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png": {
+    "kind": "content",
+    "alt": "Living room illustration with a sofa and wall-mounted television",
+    "description": "Cutaway living room with a sofa, round table and television"
+  },
+  "/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png": {
+    "kind": "content",
+    "alt": "Kitchen illustration with an island, cabinets, and breakfast stools",
+    "description": "Cutaway kitchen with an island, cabinets and stools"
+  },
+  "/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png": {
+    "kind": "content",
+    "alt": "Bathroom illustration with a freestanding tub and double vanity",
+    "description": "Cutaway bathroom with a tub, shower and double vanity"
+  },
+  "/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png": {
+    "kind": "content",
+    "alt": "Bedroom illustration with a double bed and bedside tables",
+    "description": "Cutaway bedroom with a double bed and bedside tables"
+  },
+  "/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png": {
+    "kind": "content",
+    "alt": "Cleaners tidying an illustrated office with desks and meeting rooms",
+    "description": "Cutaway office with desks and meeting rooms"
+  },
+  "/images/move-clean-original-07.png": {
+    "kind": "badge",
+    "alt": "Local team",
+    "description": "Badge reading Local team"
+  },
+  "/images/move-clean-original-17.png": {
+    "kind": "badge",
+    "alt": "Safe products",
+    "description": "Badge reading Safe products"
+  },
+  "/images/move-clean-original-09.png": {
+    "kind": "badge",
+    "alt": "High quality",
+    "description": "Badge reading High quality"
+  },
+  "/images/move-clean-original-26.svg": {
+    "kind": "badge",
+    "alt": "For",
+    "description": "Heading word For"
+  },
+  "/images/move-clean-original-18.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Eye icon beside text about attention to detail"
+  },
+  "/images/move-clean-original-06.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Magnifying glass beside text about inspection expectations"
+  },
+  "/images/move-clean-original-24.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Calendar icon beside scheduling text"
+  },
+  "/images/move-clean-original-19.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "People icon beside team text"
+  },
+  "/images/move-clean-original-23.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Phone icon beside written contact details"
+  },
+  "/images/tild3137-6333-4338-b436-376536336436__btn-2.png": {
+    "kind": "badge",
+    "alt": "Local team",
+    "description": "Badge reading Local team"
+  },
+  "/images/tild3832-3037-4230-a366-343661636134__btn.png": {
+    "kind": "badge",
+    "alt": "Safe products",
+    "description": "Badge reading Safe products"
+  },
+  "/images/tild3232-3663-4662-b161-383864656234__btn-1.png": {
+    "kind": "badge",
+    "alt": "High quality",
+    "description": "Badge reading High quality"
+  },
+  "/images/tild6530-6437-4133-a364-393966623964__for.svg": {
+    "kind": "badge",
+    "alt": "For",
+    "description": "Heading word For"
+  },
+  "/images/tild3835-3731-4166-b638-303635633062__vector.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Eye icon beside text about attention to detail"
+  },
+  "/images/tild3134-6531-4038-b733-323033643236__material-symbols_sea.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Magnifying glass beside text about inspection expectations"
+  },
+  "/images/tild3232-3034-4639-b536-663862613932__btn-2.png": {
+    "kind": "badge",
+    "alt": "Local team",
+    "description": "Badge reading Local team"
+  },
+  "/images/tild3263-6564-4438-b964-663738303764__btn.png": {
+    "kind": "badge",
+    "alt": "Safe products",
+    "description": "Badge reading Safe products"
+  },
+  "/images/tild3237-3162-4266-a465-323339306362__btn-1.png": {
+    "kind": "badge",
+    "alt": "High quality",
+    "description": "Badge reading High quality"
+  },
+  "/images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png": {
+    "kind": "logo",
+    "alt": "Shynli Cleaning Service",
+    "description": "Small blurred brand mark beside the written company name"
+  }
+}

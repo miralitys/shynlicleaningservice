@@ -1,0 +1,2245 @@
+{
+  "summary": {
+    "date": "2026-10-21",
+    "sitemapPages": 300,
+    "checkedPages": 318,
+    "sitemapImages": 818,
+    "allImages": 972,
+    "before": {
+      "nonempty": 619,
+      "doubleQuotedEmpty": 157,
+      "singleQuotedEmpty": 42,
+      "missing": 0
+    },
+    "after": {
+      "nonempty": 723,
+      "empty": 95,
+      "missing": 0
+    },
+    "blogsUnchanged": 233,
+    "jsonLdUnchanged": true,
+    "otherHtmlChanges": [],
+    "preview": "http://127.0.0.1:50024"
+  },
+  "assets": [
+    {
+      "id": 0,
+      "file": "/images/shynli-logo-primary.png",
+      "sourceAliases": [
+        "/images/shynli-logo-primary.png"
+      ],
+      "role": "logo",
+      "shows": "House mark and Shynli Cleaning wordmark",
+      "usedOn": [
+        "/",
+        "/about-us",
+        "/ads",
+        "/ads-v2",
+        "/addison",
+        "/aurora",
+        "/bartlett",
+        "/batavia",
+        "/bigrock",
+        "/bolingbrook",
+        "/bristol",
+        "/burrridge",
+        "/carolstream",
+        "/channahon",
+        "/clarendonhills",
+        "/cleaners-near-me",
+        "/contacts",
+        "/cresthill",
+        "/darien",
+        "/downersgrove",
+        "/elmhurst",
+        "/faq",
+        "/geneva",
+        "/glenellyn",
+        "/hinsdale",
+        "/home-calculator",
+        "/homerglen",
+        "/itasca",
+        "/joliet",
+        "/lemont",
+        "/lisle",
+        "/lockport",
+        "/lombard",
+        "/minooka",
+        "/montgomery",
+        "/naperville",
+        "/northaurora",
+        "/oakbrook",
+        "/oswego",
+        "/plainfield",
+        "/plano",
+        "/pricing",
+        "/pricing-v2",
+        "/quote",
+        "/quote-no-calculator",
+        "/quote-no-price",
+        "/romeoville",
+        "/sandwich",
+        "/service-areas",
+        "/service-areas-v2",
+        "/services/airbnb-cleaning",
+        "/services/commercial-cleaning",
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2",
+        "/services/move-in-move-out-cleaning",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/post-construction-cleaning",
+        "/services/regular-cleaning",
+        "/services/regular-cleaning/ads",
+        "/services/regular-cleaning/ads-v2",
+        "/stcharles",
+        "/shorewood",
+        "/streamwood",
+        "/sugargrove",
+        "/terms-of-service",
+        "/villapark",
+        "/warrenville",
+        "/wayne",
+        "/westchicago",
+        "/westmont",
+        "/wheaton",
+        "/willowbrook",
+        "/willowsprings",
+        "/winfield",
+        "/wooddale",
+        "/woodridge",
+        "/yorkville",
+        "/privacy-policy",
+        "/cancellation-policy"
+      ],
+      "originalAlts": [
+        "Shynli Cleaning"
+      ],
+      "finalAlts": [
+        "Shynli Cleaning Service",
+        "Shynli Cleaning"
+      ]
+    },
+    {
+      "id": 1,
+      "file": "/images/home-copy-team-960.webp",
+      "sourceAliases": [
+        "/images/home-copy-team-960.webp"
+      ],
+      "role": "content",
+      "shows": "Four cleaners in burgundy aprons",
+      "usedOn": [
+        "/",
+        "/ads",
+        "/ads-v2"
+      ],
+      "originalAlts": [
+        "Shynli Cleaning team"
+      ],
+      "finalAlts": [
+        "Shynli Cleaning team"
+      ]
+    },
+    {
+      "id": 2,
+      "file": "/images/home-copy-service-regular-640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-regular-640.webp"
+      ],
+      "role": "content",
+      "shows": "Cutaway home with cleaners maintaining rooms",
+      "usedOn": [
+        "/",
+        "/ads",
+        "/ads-v2"
+      ],
+      "originalAlts": [
+        "Regular house cleaning illustration"
+      ],
+      "finalAlts": [
+        "Regular house cleaning illustration"
+      ]
+    },
+    {
+      "id": 3,
+      "file": "/images/home-copy-service-deep-640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-deep-640.webp"
+      ],
+      "role": "content",
+      "shows": "Cutaway home with cleaners, stairs and garden",
+      "usedOn": [
+        "/",
+        "/ads",
+        "/ads-v2"
+      ],
+      "originalAlts": [
+        "Deep cleaning illustration"
+      ],
+      "finalAlts": [
+        "Deep cleaning illustration"
+      ]
+    },
+    {
+      "id": 4,
+      "file": "/images/home-copy-service-move-640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-move-640.webp"
+      ],
+      "role": "content",
+      "shows": "Cutaway empty home and a moving truck",
+      "usedOn": [
+        "/",
+        "/ads",
+        "/ads-v2"
+      ],
+      "originalAlts": [
+        "Move cleaning illustration"
+      ],
+      "finalAlts": [
+        "Move cleaning illustration"
+      ]
+    },
+    {
+      "id": 5,
+      "file": "/images/home-copy-service-airbnb-640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-airbnb-640.webp"
+      ],
+      "role": "content",
+      "shows": "Cutaway guest house with bedrooms and cleaners",
+      "usedOn": [
+        "/",
+        "/ads",
+        "/ads-v2"
+      ],
+      "originalAlts": [
+        "Airbnb cleaning illustration"
+      ],
+      "finalAlts": [
+        "Airbnb cleaning illustration"
+      ]
+    },
+    {
+      "id": 6,
+      "file": "/images/home-copy-service-commercial-640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-commercial-640.webp"
+      ],
+      "role": "content",
+      "shows": "Cutaway office with desks and meeting rooms",
+      "usedOn": [
+        "/",
+        "/ads",
+        "/ads-v2"
+      ],
+      "originalAlts": [
+        "Commercial cleaning illustration"
+      ],
+      "finalAlts": [
+        "Commercial cleaning illustration"
+      ]
+    },
+    {
+      "id": 7,
+      "file": "/images/home-copy-service-post-construction-640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-post-construction-640.webp"
+      ],
+      "role": "content",
+      "shows": "Workers cleaning a partly finished interior",
+      "usedOn": [
+        "/",
+        "/ads",
+        "/ads-v2"
+      ],
+      "originalAlts": [
+        "Post-construction cleaning illustration"
+      ],
+      "finalAlts": [
+        "Post-construction cleaning illustration"
+      ]
+    },
+    {
+      "id": 8,
+      "file": "/images/home-copy-cta-house.w640.webp",
+      "sourceAliases": [
+        "/images/home-copy-cta-house.w640.webp"
+      ],
+      "role": "content",
+      "shows": "Small house with red porch chairs and potted plants",
+      "usedOn": [
+        "/",
+        "/ads"
+      ],
+      "originalAlts": [
+        "Clean home illustration"
+      ],
+      "finalAlts": [
+        "Clean home illustration"
+      ]
+    },
+    {
+      "id": 9,
+      "file": "/images/shynli-footer-logo-light.png",
+      "sourceAliases": [
+        "/images/shynli-footer-logo-light.png"
+      ],
+      "role": "logo",
+      "shows": "Light Shynli Cleaning wordmark with a house mark",
+      "usedOn": [
+        "/",
+        "/about-us",
+        "/ads",
+        "/ads-v2",
+        "/addison",
+        "/aurora",
+        "/bartlett",
+        "/batavia",
+        "/bigrock",
+        "/bolingbrook",
+        "/bristol",
+        "/burrridge",
+        "/carolstream",
+        "/channahon",
+        "/clarendonhills",
+        "/cleaners-near-me",
+        "/contacts",
+        "/cresthill",
+        "/darien",
+        "/downersgrove",
+        "/elmhurst",
+        "/faq",
+        "/geneva",
+        "/glenellyn",
+        "/hinsdale",
+        "/home-calculator",
+        "/homerglen",
+        "/itasca",
+        "/joliet",
+        "/lemont",
+        "/lisle",
+        "/lockport",
+        "/lombard",
+        "/minooka",
+        "/montgomery",
+        "/naperville",
+        "/northaurora",
+        "/oakbrook",
+        "/oswego",
+        "/plainfield",
+        "/plano",
+        "/pricing",
+        "/pricing-v2",
+        "/quote",
+        "/quote-no-calculator",
+        "/quote-no-price",
+        "/romeoville",
+        "/sandwich",
+        "/service-areas",
+        "/service-areas-v2",
+        "/services/airbnb-cleaning",
+        "/services/commercial-cleaning",
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2",
+        "/services/move-in-move-out-cleaning",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/post-construction-cleaning",
+        "/services/regular-cleaning",
+        "/services/regular-cleaning/ads",
+        "/services/regular-cleaning/ads-v2",
+        "/stcharles",
+        "/shorewood",
+        "/streamwood",
+        "/sugargrove",
+        "/terms-of-service",
+        "/villapark",
+        "/warrenville",
+        "/wayne",
+        "/westchicago",
+        "/westmont",
+        "/wheaton",
+        "/willowbrook",
+        "/willowsprings",
+        "/winfield",
+        "/wooddale",
+        "/woodridge",
+        "/yorkville",
+        "/privacy-policy",
+        "/cancellation-policy"
+      ],
+      "originalAlts": [
+        "Shynli Cleaning"
+      ],
+      "finalAlts": [
+        "Shynli Cleaning Service",
+        "Shynli Cleaning"
+      ]
+    },
+    {
+      "id": 10,
+      "file": "/images/about-clean-logo.png",
+      "sourceAliases": [
+        "/images/about-clean-logo.png"
+      ],
+      "role": "logo",
+      "shows": "Shynli Cleaning wordmark with a house mark",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Shynli Cleaning Service"
+      ]
+    },
+    {
+      "id": 11,
+      "file": "/images/about-copy-asset-010.png",
+      "sourceAliases": [
+        "images/about-copy-asset-010.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading Local team",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Local team"
+      ]
+    },
+    {
+      "id": 12,
+      "file": "/images/about-copy-asset-013.png",
+      "sourceAliases": [
+        "images/about-copy-asset-013.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading Safe products",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Safe products"
+      ]
+    },
+    {
+      "id": 13,
+      "file": "/images/about-copy-asset-037.png",
+      "sourceAliases": [
+        "images/about-copy-asset-037.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading High quality",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "High quality"
+      ]
+    },
+    {
+      "id": 14,
+      "file": "/images/about-copy-asset-031.svg",
+      "sourceAliases": [
+        "images/about-copy-asset-031.svg"
+      ],
+      "role": "decorative",
+      "shows": "Calendar icon beside scheduling text",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 15,
+      "file": "/images/about-copy-asset-012.svg",
+      "sourceAliases": [
+        "images/about-copy-asset-012.svg"
+      ],
+      "role": "decorative",
+      "shows": "House-shaped brand ornament beside section text",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 16,
+      "file": "/images/about-copy-asset-032.svg",
+      "sourceAliases": [
+        "images/about-copy-asset-032.svg"
+      ],
+      "role": "decorative",
+      "shows": "Calendar icon beside scheduling text",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 17,
+      "file": "/images/about-copy-asset-024.svg",
+      "sourceAliases": [
+        "images/about-copy-asset-024.svg"
+      ],
+      "role": "decorative",
+      "shows": "People icon beside team text",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 18,
+      "file": "/images/about-copy-asset-015.svg",
+      "sourceAliases": [
+        "images/about-copy-asset-015.svg"
+      ],
+      "role": "content",
+      "shows": "Line map of western Chicago suburbs",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Street map of communities in the western Chicago suburbs"
+      ]
+    },
+    {
+      "id": 19,
+      "file": "/images/about-copy-asset-043.svg",
+      "sourceAliases": [
+        "images/about-copy-asset-043.svg"
+      ],
+      "role": "decorative",
+      "shows": "Four-point star ornament",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 20,
+      "file": "/images/about-copy-asset-029.svg",
+      "sourceAliases": [
+        "images/about-copy-asset-029.svg"
+      ],
+      "role": "decorative",
+      "shows": "Phone icon next to contact text",
+      "usedOn": [
+        "/about-us"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 21,
+      "file": "/images/shynli-logo-icon-white.svg",
+      "sourceAliases": [
+        "images/shynli-logo-icon-white.svg"
+      ],
+      "role": "decorative",
+      "shows": "House-shaped brand ornament inside the city hero statement",
+      "usedOn": [
+        "/addison",
+        "/aurora",
+        "/bartlett",
+        "/batavia",
+        "/bigrock",
+        "/bolingbrook",
+        "/bristol",
+        "/burrridge",
+        "/carolstream",
+        "/channahon",
+        "/clarendonhills",
+        "/cresthill",
+        "/darien",
+        "/downersgrove",
+        "/elmhurst",
+        "/geneva",
+        "/glenellyn",
+        "/hinsdale",
+        "/homerglen",
+        "/itasca",
+        "/joliet",
+        "/lemont",
+        "/lisle",
+        "/lockport",
+        "/lombard",
+        "/minooka",
+        "/montgomery",
+        "/naperville",
+        "/northaurora",
+        "/oakbrook",
+        "/oswego",
+        "/plainfield",
+        "/plano",
+        "/romeoville",
+        "/sandwich",
+        "/stcharles",
+        "/shorewood",
+        "/streamwood",
+        "/sugargrove",
+        "/villapark",
+        "/warrenville",
+        "/wayne",
+        "/westchicago",
+        "/westmont",
+        "/wheaton",
+        "/willowbrook",
+        "/willowsprings",
+        "/winfield",
+        "/wooddale",
+        "/woodridge",
+        "/yorkville"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 22,
+      "file": "/images/shynli-quote-house.png",
+      "sourceAliases": [
+        "images/shynli-quote-house.png",
+        "/images/shynli-quote-house.png"
+      ],
+      "role": "content",
+      "shows": "Small house with red porch chairs and potted plants",
+      "usedOn": [
+        "/addison",
+        "/aurora",
+        "/bartlett",
+        "/batavia",
+        "/bigrock",
+        "/bolingbrook",
+        "/bristol",
+        "/burrridge",
+        "/carolstream",
+        "/channahon",
+        "/clarendonhills",
+        "/contacts",
+        "/cresthill",
+        "/darien",
+        "/downersgrove",
+        "/elmhurst",
+        "/geneva",
+        "/glenellyn",
+        "/hinsdale",
+        "/homerglen",
+        "/itasca",
+        "/joliet",
+        "/lemont",
+        "/lisle",
+        "/lockport",
+        "/lombard",
+        "/minooka",
+        "/montgomery",
+        "/naperville",
+        "/northaurora",
+        "/oakbrook",
+        "/oswego",
+        "/plainfield",
+        "/plano",
+        "/romeoville",
+        "/sandwich",
+        "/services/airbnb-cleaning",
+        "/stcharles",
+        "/shorewood",
+        "/streamwood",
+        "/sugargrove",
+        "/villapark",
+        "/warrenville",
+        "/wayne",
+        "/westchicago",
+        "/westmont",
+        "/wheaton",
+        "/willowbrook",
+        "/willowsprings",
+        "/winfield",
+        "/wooddale",
+        "/woodridge",
+        "/yorkville",
+        "/service-areas",
+        "/service-areas-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "House with red porch chairs for a quote in Addison",
+        "House with red porch chairs for a quote in Aurora",
+        "House with red porch chairs for a quote in Bartlett",
+        "House with red porch chairs for a quote in Batavia",
+        "House with red porch chairs for a quote in Big Rock",
+        "House with red porch chairs for a quote in Bolingbrook",
+        "House with red porch chairs for a quote in Bristol",
+        "House with red porch chairs for a quote in Burr Ridge",
+        "House with red porch chairs for a quote in Carol Stream",
+        "House with red porch chairs for a quote in Channahon",
+        "House with red porch chairs for a quote in Clarendon Hills",
+        "Small house with red porch chairs and potted plants",
+        "House with red porch chairs for a quote in Crest Hill",
+        "House with red porch chairs for a quote in Darien",
+        "House with red porch chairs for a quote in Downers Grove",
+        "House with red porch chairs for a quote in Elmhurst",
+        "House with red porch chairs for a quote in Geneva",
+        "House with red porch chairs for a quote in Glen Ellyn",
+        "House with red porch chairs for a quote in Hinsdale",
+        "House with red porch chairs for a quote in Homer Glen",
+        "House with red porch chairs for a quote in Itasca",
+        "House with red porch chairs for a quote in Joliet",
+        "House with red porch chairs for a quote in Lemont",
+        "House with red porch chairs for a quote in Lisle",
+        "House with red porch chairs for a quote in Lockport",
+        "House with red porch chairs for a quote in Lombard",
+        "House with red porch chairs for a quote in Minooka",
+        "House with red porch chairs for a quote in Montgomery",
+        "House with red porch chairs for a quote in Naperville",
+        "House with red porch chairs for a quote in North Aurora",
+        "House with red porch chairs for a quote in Oak Brook",
+        "House with red porch chairs for a quote in Oswego",
+        "House with red porch chairs for a quote in Plainfield",
+        "House with red porch chairs for a quote in Plano",
+        "House with red porch chairs for a quote in Romeoville",
+        "House with red porch chairs for a quote in Sandwich",
+        "House with red porch chairs for a quote in St. Charles",
+        "House with red porch chairs for a quote in Shorewood",
+        "House with red porch chairs for a quote in Streamwood",
+        "House with red porch chairs for a quote in Sugar Grove",
+        "House with red porch chairs for a quote in Villa Park",
+        "House with red porch chairs for a quote in Warrenville",
+        "House with red porch chairs for a quote in Wayne",
+        "House with red porch chairs for a quote in West Chicago",
+        "House with red porch chairs for a quote in Westmont",
+        "House with red porch chairs for a quote in Wheaton",
+        "House with red porch chairs for a quote in Willowbrook",
+        "House with red porch chairs for a quote in Willow Springs",
+        "House with red porch chairs for a quote in Winfield",
+        "House with red porch chairs for a quote in Wood Dale",
+        "House with red porch chairs for a quote in Woodridge",
+        "House with red porch chairs for a quote in Yorkville"
+      ]
+    },
+    {
+      "id": 23,
+      "file": "/images/about-clean-hero-team.w1280.webp",
+      "sourceAliases": [
+        "/images/about-clean-hero-team.w1280.webp"
+      ],
+      "role": "content",
+      "shows": "Collage of cleaners vacuuming and wiping surfaces",
+      "usedOn": [
+        "/cleaners-near-me"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Shynli team vacuuming floors and wiping kitchen surfaces"
+      ]
+    },
+    {
+      "id": 24,
+      "file": "/images/home-copy-logo-320.webp",
+      "sourceAliases": [
+        "/images/home-copy-logo-320.webp"
+      ],
+      "role": "logo",
+      "shows": "Shynli Cleaning wordmark with a house mark",
+      "usedOn": [
+        "/cleaners-near-me/ads-lp",
+        "/services/deep-cleaning/ads-lp",
+        "/services/move-in-move-out-cleaning/ads-lp",
+        "/services/regular-cleaning/ads-lp"
+      ],
+      "originalAlts": [
+        "Shynli Cleaning"
+      ],
+      "finalAlts": [
+        "Shynli Cleaning Service"
+      ]
+    },
+    {
+      "id": 25,
+      "file": "/images/home-copy-service-regular.w640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-regular.w640.webp"
+      ],
+      "role": "content",
+      "shows": "Cutaway home with cleaners maintaining rooms",
+      "usedOn": [
+        "/cleaners-near-me/ads-lp"
+      ],
+      "originalAlts": [
+        "Regular house cleaning service"
+      ],
+      "finalAlts": [
+        "Regular house cleaning service"
+      ]
+    },
+    {
+      "id": 26,
+      "file": "/images/home-copy-service-deep.w640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-deep.w640.webp"
+      ],
+      "role": "content",
+      "shows": "Cutaway two-story home with cleaners, stairs and garden",
+      "usedOn": [
+        "/cleaners-near-me/ads-lp"
+      ],
+      "originalAlts": [
+        "Deep cleaning service in a kitchen"
+      ],
+      "finalAlts": [
+        "Illustrated home with cleaners detailing rooms and stairs"
+      ]
+    },
+    {
+      "id": 27,
+      "file": "/images/home-copy-service-move.w640.webp",
+      "sourceAliases": [
+        "/images/home-copy-service-move.w640.webp"
+      ],
+      "role": "content",
+      "shows": "Cutaway empty home and moving truck",
+      "usedOn": [
+        "/cleaners-near-me/ads-lp"
+      ],
+      "originalAlts": [
+        "Move in and move out cleaning service"
+      ],
+      "finalAlts": [
+        "Move in and move out cleaning service"
+      ]
+    },
+    {
+      "id": 28,
+      "file": "/images/shynli-phone-cream.svg",
+      "sourceAliases": [
+        "images/shynli-phone-cream.svg",
+        "/images/shynli-phone-cream.svg"
+      ],
+      "role": "decorative",
+      "shows": "Phone icon next to the written phone number",
+      "usedOn": [
+        "/contacts",
+        "/service-areas",
+        "/service-areas-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 29,
+      "file": "/images/shynli-email-cream.svg",
+      "sourceAliases": [
+        "images/shynli-email-cream.svg",
+        "/images/shynli-email-cream.svg"
+      ],
+      "role": "decorative",
+      "shows": "Envelope icon next to the written email address",
+      "usedOn": [
+        "/contacts",
+        "/service-areas",
+        "/service-areas-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 30,
+      "file": "/images/tild3163-6235-4133-a564-316465373838__vector.svg",
+      "sourceAliases": [
+        "/images/tild3163-6235-4133-a564-316465373838__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Four-point star beside an FAQ category title",
+      "usedOn": [
+        "/faq"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 31,
+      "file": "/images/tild6537-3537-4163-b235-386463616661__solar_calendar-bold.svg",
+      "sourceAliases": [
+        "/images/tild6537-3537-4163-b235-386463616661__solar_calendar-bold.svg"
+      ],
+      "role": "decorative",
+      "shows": "Calendar icon beside an FAQ category title",
+      "usedOn": [
+        "/faq"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 32,
+      "file": "/images/tild3864-3437-4562-b938-313765633536__vector_1.svg",
+      "sourceAliases": [
+        "/images/tild3864-3437-4562-b938-313765633536__vector_1.svg"
+      ],
+      "role": "decorative",
+      "shows": "Payment card icon beside an FAQ category title",
+      "usedOn": [
+        "/faq"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 33,
+      "file": "/images/tild3964-3430-4138-b537-383733653464__fluent_people-team-1.svg",
+      "sourceAliases": [
+        "/images/tild3964-3430-4138-b537-383733653464__fluent_people-team-1.svg"
+      ],
+      "role": "decorative",
+      "shows": "People icon beside an FAQ category title",
+      "usedOn": [
+        "/faq"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 34,
+      "file": "/images/tild3936-3764-4636-b239-626233383832__vector.svg",
+      "sourceAliases": [
+        "images/tild3936-3764-4636-b239-626233383832__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Burgundy four-point star ornament",
+      "usedOn": [
+        "/home-calculator"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 35,
+      "file": "/images/tild3438-6434-4266-b238-656432326438__vector.svg",
+      "sourceAliases": [
+        "images/tild3438-6434-4266-b238-656432326438__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Calendar icon beside a pricing explanation",
+      "usedOn": [
+        "/home-calculator",
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 36,
+      "file": "/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+      "sourceAliases": [
+        "images/tild3331-3232-4634-b761-323734383862__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Burgundy four-point star ornament",
+      "usedOn": [
+        "/home-calculator",
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 37,
+      "file": "/images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg",
+      "sourceAliases": [
+        "images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg"
+      ],
+      "role": "decorative",
+      "shows": "House-shaped brand ornament beside pricing text",
+      "usedOn": [
+        "/home-calculator",
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 38,
+      "file": "/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+      "sourceAliases": [
+        "images/tild6330-3932-4338-b530-313931356431__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Calendar icon beside scheduling text",
+      "usedOn": [
+        "/home-calculator",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/regular-cleaning",
+        "/services/regular-cleaning/ads",
+        "/services/regular-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 39,
+      "file": "/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+      "sourceAliases": [
+        "images/tild3863-6630-4164-a665-313534383764__vector1.svg"
+      ],
+      "role": "decorative",
+      "shows": "People icon beside team text",
+      "usedOn": [
+        "/home-calculator",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/regular-cleaning",
+        "/services/regular-cleaning/ads",
+        "/services/regular-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 40,
+      "file": "/images/tild3433-6338-4136-b136-623833636265__svg_1767801678298.svg",
+      "sourceAliases": [
+        "images/tild3433-6338-4136-b136-623833636265__svg_1767801678298.svg"
+      ],
+      "role": "content",
+      "shows": "Line map of western Chicago suburbs",
+      "usedOn": [
+        "/home-calculator"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Street map of communities in the western Chicago suburbs"
+      ]
+    },
+    {
+      "id": 41,
+      "file": "/images/tild6566-6435-4131-a332-643333376335__vector.svg",
+      "sourceAliases": [
+        "images/tild6566-6435-4131-a332-643333376335__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Four-point star ornament",
+      "usedOn": [
+        "/home-calculator"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 42,
+      "file": "/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+      "sourceAliases": [
+        "images/tild6233-6137-4533-b435-366133663338__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Phone icon next to contact text",
+      "usedOn": [
+        "/home-calculator",
+        "/pricing",
+        "/pricing-v2",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/regular-cleaning",
+        "/services/regular-cleaning/ads",
+        "/services/regular-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 43,
+      "file": "/images/tild3364-3839-4665-b832-356539643234__5.svg",
+      "sourceAliases": [
+        "images/tild3364-3839-4665-b832-356539643234__5.svg"
+      ],
+      "role": "badge",
+      "shows": "Stylized numeral 5",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "5"
+      ]
+    },
+    {
+      "id": 44,
+      "file": "/images/tild3437-6364-4734-b431-396533323234__1.svg",
+      "sourceAliases": [
+        "images/tild3437-6364-4734-b431-396533323234__1.svg"
+      ],
+      "role": "badge",
+      "shows": "Stylized numeral 1",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "1"
+      ]
+    },
+    {
+      "id": 45,
+      "file": "/images/tild3261-6630-4232-a337-303332313661__4.svg",
+      "sourceAliases": [
+        "images/tild3261-6630-4232-a337-303332313661__4.svg"
+      ],
+      "role": "badge",
+      "shows": "Stylized numeral 4",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "4"
+      ]
+    },
+    {
+      "id": 46,
+      "file": "/images/tild3237-3864-4539-b661-326231633861__vector.svg",
+      "sourceAliases": [
+        "images/tild3237-3864-4539-b661-326231633861__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Vacuum cleaner icon beside a service explanation",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 47,
+      "file": "/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+      "sourceAliases": [
+        "images/tild6266-3439-4838-b233-326632353564__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Four-point star ornament",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 48,
+      "file": "/images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+      "sourceAliases": [
+        "images/tild3532-3931-4138-b732-323361346535__vector1.svg"
+      ],
+      "role": "decorative",
+      "shows": "Calendar icon beside a pricing explanation",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 49,
+      "file": "/images/tild6563-3235-4932-b863-633539643661__rectangle_41.svg",
+      "sourceAliases": [
+        "images/tild6563-3235-4932-b863-633539643661__rectangle_41.svg"
+      ],
+      "role": "decorative",
+      "shows": "Dotted outline used as a background shape",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 50,
+      "file": "/images/tild3638-6236-4262-b464-663130303432__vector.svg",
+      "sourceAliases": [
+        "images/tild3638-6236-4262-b464-663130303432__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "People icon beside a service explanation",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 51,
+      "file": "/images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+      "sourceAliases": [
+        "images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg"
+      ],
+      "role": "decorative",
+      "shows": "Check mark beside an existing text label",
+      "usedOn": [
+        "/pricing",
+        "/pricing-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 52,
+      "file": "/images/shynli-sugargrove-area-map.svg",
+      "sourceAliases": [
+        "/images/shynli-sugargrove-area-map.svg"
+      ],
+      "role": "content",
+      "shows": "Line map of western Chicago suburbs",
+      "usedOn": [
+        "/service-areas",
+        "/service-areas-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Street map of communities in the western Chicago suburbs"
+      ]
+    },
+    {
+      "id": 53,
+      "file": "/images/shynli-area-star.svg",
+      "sourceAliases": [
+        "/images/shynli-area-star.svg"
+      ],
+      "role": "decorative",
+      "shows": "Four-point star ornament",
+      "usedOn": [
+        "/service-areas",
+        "/service-areas-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 54,
+      "file": "/images/shynli-airbnb-cleaning-hero.png",
+      "sourceAliases": [
+        "images/shynli-airbnb-cleaning-hero.png"
+      ],
+      "role": "content",
+      "shows": "Bright living room with a cream sofa, plants and dining table",
+      "usedOn": [
+        "/services/airbnb-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Sunlit living room with a cream sofa and dining table"
+      ]
+    },
+    {
+      "id": 55,
+      "file": "/images/shynli-move-area-living-room.png",
+      "sourceAliases": [
+        "images/shynli-move-area-living-room.png",
+        "/images/shynli-move-area-living-room.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway living room with a sofa, round table and television",
+      "usedOn": [
+        "/services/airbnb-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        "",
+        "Throughout the Entire Home"
+      ],
+      "finalAlts": [
+        "Living room illustration with a sofa and wall-mounted television"
+      ]
+    },
+    {
+      "id": 56,
+      "file": "/images/shynli-move-area-bedroom.png",
+      "sourceAliases": [
+        "images/shynli-move-area-bedroom.png",
+        "/images/shynli-move-area-bedroom.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway bedroom with a double bed and bedside tables",
+      "usedOn": [
+        "/services/airbnb-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        "",
+        "All Rooms"
+      ],
+      "finalAlts": [
+        "Bedroom illustration with a double bed and bedside tables"
+      ]
+    },
+    {
+      "id": 57,
+      "file": "/images/shynli-move-area-bathroom.png",
+      "sourceAliases": [
+        "images/shynli-move-area-bathroom.png",
+        "/images/shynli-move-area-bathroom.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway bathroom with a tub, shower and double vanity",
+      "usedOn": [
+        "/services/airbnb-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        "",
+        "Bathrooms"
+      ],
+      "finalAlts": [
+        "Bathroom illustration with a freestanding tub and double vanity"
+      ]
+    },
+    {
+      "id": 58,
+      "file": "/images/shynli-move-area-kitchen.png",
+      "sourceAliases": [
+        "images/shynli-move-area-kitchen.png",
+        "/images/shynli-move-area-kitchen.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway kitchen with an island, cabinets and stools",
+      "usedOn": [
+        "/services/airbnb-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        "",
+        "Kitchen"
+      ],
+      "finalAlts": [
+        "Kitchen illustration with an island, cabinets, and breakfast stools"
+      ]
+    },
+    {
+      "id": 59,
+      "file": "/images/shynli-service-regular-cleaning.png",
+      "sourceAliases": [
+        "images/shynli-service-regular-cleaning.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway home with cleaners maintaining rooms",
+      "usedOn": [
+        "/services/airbnb-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cleaners maintaining rooms inside an illustrated two-story home"
+      ]
+    },
+    {
+      "id": 60,
+      "file": "/images/shynli-service-deep-cleaning.png",
+      "sourceAliases": [
+        "images/shynli-service-deep-cleaning.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway two-story home with cleaners, stairs and garden",
+      "usedOn": [
+        "/services/airbnb-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cleaners detailing an illustrated home, staircase, and outdoor areas"
+      ]
+    },
+    {
+      "id": 61,
+      "file": "/images/shynli-service-move-cleaning.png",
+      "sourceAliases": [
+        "images/shynli-service-move-cleaning.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway empty home and a moving truck",
+      "usedOn": [
+        "/services/airbnb-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cleaners preparing an empty home beside a moving truck"
+      ]
+    },
+    {
+      "id": 62,
+      "file": "/images/shynli-service-commercial-cleaning.png",
+      "sourceAliases": [
+        "images/shynli-service-commercial-cleaning.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway office with desks and meeting rooms",
+      "usedOn": [
+        "/services/airbnb-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cleaners tidying an illustrated office with desks and meeting rooms"
+      ]
+    },
+    {
+      "id": 63,
+      "file": "/images/tild3238-6662-4337-a363-396238396235__shynli_cleaning_2_7.png",
+      "sourceAliases": [
+        "/images/tild3238-6662-4337-a363-396238396235__shynli_cleaning_2_7.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway office with workstations and blue chairs",
+      "usedOn": [
+        "/services/commercial-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Office illustration with workstations, blue chairs, and meeting areas"
+      ]
+    },
+    {
+      "id": 64,
+      "file": "/images/tild3639-3431-4737-b736-663238643665__shynli_cleaning_2_8.png",
+      "sourceAliases": [
+        "/images/tild3639-3431-4737-b736-663238643665__shynli_cleaning_2_8.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway cafe with tables, seating and a service counter",
+      "usedOn": [
+        "/services/commercial-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cafe illustration with dining tables, chairs, and a service counter"
+      ]
+    },
+    {
+      "id": 65,
+      "file": "/images/tild6164-3638-4561-a362-626530386230__shynli_cleaning_2_9.png",
+      "sourceAliases": [
+        "/images/tild6164-3638-4561-a362-626530386230__shynli_cleaning_2_9.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway restroom with toilet stalls and a washbasin counter",
+      "usedOn": [
+        "/services/commercial-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Restroom illustration with toilet stalls and a long washbasin counter"
+      ]
+    },
+    {
+      "id": 66,
+      "file": "/images/tild3131-6539-4639-b134-316165356365__shynli_cleaning_2_10.png",
+      "sourceAliases": [
+        "/images/tild3131-6539-4639-b134-316165356365__shynli_cleaning_2_10.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway reception lounge with armchairs and plants",
+      "usedOn": [
+        "/services/commercial-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Reception lounge illustration with armchairs, plants, and a coffee table"
+      ]
+    },
+    {
+      "id": 67,
+      "file": "/images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+      "sourceAliases": [
+        "/images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+        "images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway home with cleaners maintaining rooms",
+      "usedOn": [
+        "/services/commercial-cleaning",
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cleaners maintaining rooms inside an illustrated two-story home"
+      ]
+    },
+    {
+      "id": 68,
+      "file": "/images/tild3731-3932-4336-a537-383932366533__shynli_cleaning_2_5.png",
+      "sourceAliases": [
+        "/images/tild3731-3932-4336-a537-383932366533__shynli_cleaning_2_5.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway two-story home with cleaners, stairs and garden",
+      "usedOn": [
+        "/services/commercial-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cleaners detailing an illustrated home, staircase, and outdoor areas"
+      ]
+    },
+    {
+      "id": 69,
+      "file": "/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+      "sourceAliases": [
+        "/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway empty home and moving truck",
+      "usedOn": [
+        "/services/commercial-cleaning",
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cleaners preparing an empty home beside a moving truck"
+      ]
+    },
+    {
+      "id": 70,
+      "file": "/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+      "sourceAliases": [
+        "/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway guest house with bedrooms and cleaners",
+      "usedOn": [
+        "/services/commercial-cleaning",
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Illustrated guest house with cleaners preparing bedrooms and living areas"
+      ]
+    },
+    {
+      "id": 71,
+      "file": "/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+      "sourceAliases": [
+        "/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png"
+      ],
+      "role": "content",
+      "shows": "Small house with red porch chairs and potted plants",
+      "usedOn": [
+        "/services/commercial-cleaning",
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Small house with red porch chairs and potted plants"
+      ]
+    },
+    {
+      "id": 72,
+      "file": "/images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+      "sourceAliases": [
+        "images/tild3237-3730-4638-a162-393866363766__group_195_1.png"
+      ],
+      "role": "content",
+      "shows": "Collage of cleaners wiping a mirror and work surfaces",
+      "usedOn": [
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Shynli cleaners wiping a bathroom mirror and kitchen counters"
+      ]
+    },
+    {
+      "id": 73,
+      "file": "/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+      "sourceAliases": [
+        "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway living room with a sofa, round table and television",
+      "usedOn": [
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/regular-cleaning"
+      ],
+      "originalAlts": [
+        "",
+        "Throughout the Entire Home",
+        "Throughout the Home"
+      ],
+      "finalAlts": [
+        "Living room illustration with a sofa and wall-mounted television"
+      ]
+    },
+    {
+      "id": 74,
+      "file": "/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+      "sourceAliases": [
+        "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway kitchen with an island, cabinets and stools",
+      "usedOn": [
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/regular-cleaning"
+      ],
+      "originalAlts": [
+        "",
+        "Kitchen"
+      ],
+      "finalAlts": [
+        "Kitchen illustration with an island, cabinets, and breakfast stools"
+      ]
+    },
+    {
+      "id": 75,
+      "file": "/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+      "sourceAliases": [
+        "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway bathroom with a tub, shower and double vanity",
+      "usedOn": [
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/regular-cleaning"
+      ],
+      "originalAlts": [
+        "",
+        "Bathrooms"
+      ],
+      "finalAlts": [
+        "Bathroom illustration with a freestanding tub and double vanity"
+      ]
+    },
+    {
+      "id": 76,
+      "file": "/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+      "sourceAliases": [
+        "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway bedroom with a double bed and bedside tables",
+      "usedOn": [
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2",
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2",
+        "/services/regular-cleaning"
+      ],
+      "originalAlts": [
+        "",
+        "All Rooms",
+        "Bedrooms & Living Areas"
+      ],
+      "finalAlts": [
+        "Bedroom illustration with a double bed and bedside tables"
+      ]
+    },
+    {
+      "id": 77,
+      "file": "/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+      "sourceAliases": [
+        "images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png"
+      ],
+      "role": "content",
+      "shows": "Cutaway office with desks and meeting rooms",
+      "usedOn": [
+        "/services/deep-cleaning",
+        "/services/deep-cleaning/ads",
+        "/services/deep-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Cleaners tidying an illustrated office with desks and meeting rooms"
+      ]
+    },
+    {
+      "id": 78,
+      "file": "/images/move-clean-original-07.png",
+      "sourceAliases": [
+        "/images/move-clean-original-07.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading Local team",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Local team"
+      ]
+    },
+    {
+      "id": 79,
+      "file": "/images/move-clean-original-17.png",
+      "sourceAliases": [
+        "/images/move-clean-original-17.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading Safe products",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Safe products"
+      ]
+    },
+    {
+      "id": 80,
+      "file": "/images/move-clean-original-09.png",
+      "sourceAliases": [
+        "/images/move-clean-original-09.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading High quality",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "High quality"
+      ]
+    },
+    {
+      "id": 81,
+      "file": "/images/move-clean-original-26.svg",
+      "sourceAliases": [
+        "/images/move-clean-original-26.svg"
+      ],
+      "role": "badge",
+      "shows": "Heading word For",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "For"
+      ]
+    },
+    {
+      "id": 82,
+      "file": "/images/move-clean-original-18.svg",
+      "sourceAliases": [
+        "/images/move-clean-original-18.svg"
+      ],
+      "role": "decorative",
+      "shows": "Eye icon beside text about attention to detail",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 83,
+      "file": "/images/move-clean-original-06.svg",
+      "sourceAliases": [
+        "/images/move-clean-original-06.svg"
+      ],
+      "role": "decorative",
+      "shows": "Magnifying glass beside text about inspection expectations",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 84,
+      "file": "/images/move-clean-original-24.svg",
+      "sourceAliases": [
+        "/images/move-clean-original-24.svg"
+      ],
+      "role": "decorative",
+      "shows": "Calendar icon beside scheduling text",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 85,
+      "file": "/images/move-clean-original-19.svg",
+      "sourceAliases": [
+        "/images/move-clean-original-19.svg"
+      ],
+      "role": "decorative",
+      "shows": "People icon beside team text",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 86,
+      "file": "/images/move-clean-original-23.svg",
+      "sourceAliases": [
+        "/images/move-clean-original-23.svg"
+      ],
+      "role": "decorative",
+      "shows": "Phone icon beside written contact details",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 87,
+      "file": "/images/tild3137-6333-4338-b436-376536336436__btn-2.png",
+      "sourceAliases": [
+        "images/tild3137-6333-4338-b436-376536336436__btn-2.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading Local team",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Local team"
+      ]
+    },
+    {
+      "id": 88,
+      "file": "/images/tild3832-3037-4230-a366-343661636134__btn.png",
+      "sourceAliases": [
+        "images/tild3832-3037-4230-a366-343661636134__btn.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading Safe products",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Safe products"
+      ]
+    },
+    {
+      "id": 89,
+      "file": "/images/tild3232-3663-4662-b161-383864656234__btn-1.png",
+      "sourceAliases": [
+        "images/tild3232-3663-4662-b161-383864656234__btn-1.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading High quality",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "High quality"
+      ]
+    },
+    {
+      "id": 90,
+      "file": "/images/tild6530-6437-4133-a364-393966623964__for.svg",
+      "sourceAliases": [
+        "images/tild6530-6437-4133-a364-393966623964__for.svg"
+      ],
+      "role": "badge",
+      "shows": "Heading word For",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "For"
+      ]
+    },
+    {
+      "id": 91,
+      "file": "/images/tild3835-3731-4166-b638-303635633062__vector.svg",
+      "sourceAliases": [
+        "images/tild3835-3731-4166-b638-303635633062__vector.svg"
+      ],
+      "role": "decorative",
+      "shows": "Eye icon beside text about attention to detail",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 92,
+      "file": "/images/tild3134-6531-4038-b733-323033643236__material-symbols_sea.svg",
+      "sourceAliases": [
+        "images/tild3134-6531-4038-b733-323033643236__material-symbols_sea.svg"
+      ],
+      "role": "decorative",
+      "shows": "Magnifying glass beside text about inspection expectations",
+      "usedOn": [
+        "/services/move-in-move-out-cleaning/ads",
+        "/services/move-in-move-out-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        ""
+      ]
+    },
+    {
+      "id": 93,
+      "file": "/images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+      "sourceAliases": [
+        "images/tild3232-3034-4639-b536-663862613932__btn-2.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading Local team",
+      "usedOn": [
+        "/services/regular-cleaning",
+        "/services/regular-cleaning/ads",
+        "/services/regular-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Local team"
+      ]
+    },
+    {
+      "id": 94,
+      "file": "/images/tild3263-6564-4438-b964-663738303764__btn.png",
+      "sourceAliases": [
+        "images/tild3263-6564-4438-b964-663738303764__btn.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading Safe products",
+      "usedOn": [
+        "/services/regular-cleaning",
+        "/services/regular-cleaning/ads",
+        "/services/regular-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "Safe products"
+      ]
+    },
+    {
+      "id": 95,
+      "file": "/images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+      "sourceAliases": [
+        "images/tild3237-3162-4266-a465-323339306362__btn-1.png"
+      ],
+      "role": "badge",
+      "shows": "Badge reading High quality",
+      "usedOn": [
+        "/services/regular-cleaning",
+        "/services/regular-cleaning/ads",
+        "/services/regular-cleaning/ads-v2"
+      ],
+      "originalAlts": [
+        ""
+      ],
+      "finalAlts": [
+        "High quality"
+      ]
+    },
+    {
+      "id": 96,
+      "file": "/images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+      "sourceAliases": [
+        "images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png"
+      ],
+      "role": "logo",
+      "shows": "Small blurred brand mark beside the written company name",
+      "usedOn": [
+        "/terms-of-service",
+        "/privacy-policy",
+        "/cancellation-policy"
+      ],
+      "originalAlts": [
+        "Shynli Cleaning"
+      ],
+      "finalAlts": [
+        ""
+      ]
+    }
+  ],
+  "decorativeReasons": {
+    "Calendar icon beside scheduling text": 4,
+    "House-shaped brand ornament beside section text": 1,
+    "People icon beside team text": 3,
+    "Four-point star ornament": 6,
+    "Phone icon next to contact text": 3,
+    "House-shaped brand ornament inside the city hero statement": 51,
+    "Phone icon next to the written phone number": 2,
+    "Envelope icon next to the written email address": 2,
+    "Four-point star beside an FAQ category title": 1,
+    "Calendar icon beside an FAQ category title": 1,
+    "Payment card icon beside an FAQ category title": 1,
+    "People icon beside an FAQ category title": 1,
+    "Burgundy four-point star ornament": 4,
+    "House-shaped brand ornament beside pricing text": 1,
+    "Calendar icon beside a pricing explanation": 3,
+    "Vacuum cleaner icon beside a service explanation": 1,
+    "Dotted outline used as a background shape": 1,
+    "People icon beside a service explanation": 1,
+    "Check mark beside an existing text label": 2,
+    "Eye icon beside text about attention to detail": 1,
+    "Magnifying glass beside text about inspection expectations": 1,
+    "Phone icon beside written contact details": 1,
+    "Small blurred brand mark beside the written company name": 3
+  }
+}
