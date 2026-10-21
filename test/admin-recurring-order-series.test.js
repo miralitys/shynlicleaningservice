@@ -203,6 +203,28 @@ test("website recurring orders wait for manager confirmation, including after po
   }
 });
 
+test("maintenance cannot extend or stop a series while a rescheduled cadence change awaits confirmation", async () => {
+  for (const frequency of ["monthly", ""]) {
+    const domain = createDomain();
+    const root = createEntry({ id: "pending-root", date: "2026-11-01", frequency: "weekly" });
+    const ledger = createLedger(domain, [root]);
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    const generated = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+    assert.ok(generated.length > 0);
+    await ledger.updateOrderEntry(root.id, {
+      orderStatus: "rescheduled", selectedDate: "2026-11-03", frequency,
+      recurringPendingResetFromDate: "2026-11-01",
+    });
+    const before = JSON.stringify(await ledger.listEntries());
+    for (const method of ["updateOrderEntry", "recordSubmission", "deleteEntry"]) {
+      ledger[method] = async () => assert.fail(`maintenance must not call ${method} while confirmation is pending`);
+    }
+    assert.deepEqual(await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: generated[0] }), []);
+    assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: ledger, today: "2026-10-21" }), []);
+    assert.equal(JSON.stringify(await ledger.listEntries()), before, "all existing visits, prices and teams remain untouched");
+  }
+});
+
 test("series generation uses the complete ledger, not the latest 1000 records", async () => {
   const domain = createDomain();
   const root = createEntry({ id: "kylie", date: "2026-10-11", frequency: "weekly" });

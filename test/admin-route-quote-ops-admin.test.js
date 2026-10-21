@@ -102,9 +102,9 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
             bedLinenChange: 1,
           },
           additionalDetails: "Please call on arrival\nGate code 2040",
-          selectedDate: "2026-03-22",
+          selectedDate: "2099-03-22",
           selectedTime: "09:00",
-          formattedDateTime: "March 22, 2026 at 09:00",
+          formattedDateTime: "March 22, 2099 at 09:00",
           address: "123 Main St",
           addressLine2: "Apt 4B",
           city: "Romeoville",
@@ -224,11 +224,11 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(initialOrderBody, /Поля из формы клиента/);
     assert.match(initialOrderBody, /admin-delete-button/);
     assert.match(initialOrderBody, /Inside Cabinets Cleaning/);
-    assert.match(initialOrderBody, /Interior Windows Cleaning/);
+    assert.match(initialOrderBody, /Окна внутри без направляющих/);
     assert.match(initialOrderBody, /Apt 4B/);
     assert.match(initialOrderBody, /Romeoville/);
     assert.match(initialOrderBody, /Питомцы[\s\S]*Кошка/);
-    assert.match(initialOrderBody, /03\/22\/2026, 09:00 AM/);
+    assert.match(initialOrderBody, /03\/22\/2099, 09:00 AM/);
     assert.match(initialOrderBody, /Please call on arrival/);
     assert.match(initialOrderBody, /Gate code 2040/);
     assert.match(initialOrderBody, /Команда не назначена/);
@@ -610,7 +610,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     saveOrderForm.set("paymentStatus", "partial");
     saveOrderForm.set("paymentMethod", "card");
     saveOrderForm.set("totalPrice", "245.50");
-    saveOrderForm.set("selectedDate", "2026-03-24");
+    saveOrderForm.set("selectedDate", "2099-03-24");
     saveOrderForm.set("selectedTime", "11:30");
     saveOrderForm.set("frequency", "monthly");
 
@@ -666,7 +666,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(updatedOrdersBody, /\$245\.50/);
     assert.match(updatedOrdersBody, /name="totalPrice"/);
     assert.match(updatedOrdersBody, /value="245\.50"/);
-    assert.match(updatedOrdersBody, /value="03\/24\/2026"/);
+    assert.match(updatedOrdersBody, /value="03\/24\/2099"/);
     assert.match(updatedOrdersBody, /value="11:30 AM"/);
     assert.match(updatedOrdersBody, /Отчёт клинера/);
     assert.match(updatedOrdersBody, /Фото до/);
@@ -720,7 +720,7 @@ test("shows recent quote submissions in admin quote ops and retries CRM sync", a
     assert.match(quoteOpsBody, /Jane Doe/);
     assert.match(quoteOpsBody, /ops-request-1/);
     assert.match(quoteOpsBody, /Архив заявок/);
-    assert.match(quoteOpsBody, /Быстро найти нужную заявку/);
+    assert.match(quoteOpsBody, /Поиск по архиву/);
     assert.match(quoteOpsBody, /Подтверждено/);
     assert.match(quoteOpsBody, /admin-table admin-quote-success-table/);
     assert.match(quoteOpsBody, /<th>Клиент<\/th>\s*<th>Статус<\/th>/);

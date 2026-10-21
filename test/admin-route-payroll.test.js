@@ -514,8 +514,6 @@ test("shows employee-only payroll history inside the account workspace", async (
         action: "save-assignment",
         entryId,
         staffIds: staffId,
-        scheduleDate: "",
-        scheduleTime: "",
         status: "planned",
         notes: "",
       }),
@@ -537,6 +535,15 @@ test("shows employee-only payroll history inside the account workspace", async (
       }),
     });
     assert.equal(completeResponse.status, 303);
+
+    assert.match(completeResponse.headers.get("location") || "", /notice=order-saved/);
+    const assignedState = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
+    assert.ok(assignedState.assignments.some(item => item.entryId === entryId && item.staffIds.includes(staffId)), "the test order is assigned before checking employee payroll");
+    const userState = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
+    assert.equal(userState.users.find(user => user.email === "alina.payroll@example.com").staffId, staffId);
+    const accruedResponse = await fetch(`${started.baseUrl}/admin/payroll`, { headers: { cookie: `shynli_admin_session=${sessionCookieValue}` } });
+    assert.equal(accruedResponse.status, 200);
+    assert.match(await accruedResponse.text(), /Payroll Account Client/);
 
     const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
       method: "POST",
@@ -583,7 +590,14 @@ test("shows employee-only payroll history inside the account workspace", async (
     assert.match(accountCalendarBody, /Месяц/i);
     assert.match(accountCalendarBody, /Payroll Account Client/i);
     assert.match(accountCalendarBody, /610 Cleaner Route/i);
-    assert.match(accountCalendarBody, /href="\/account\?section=calendar" aria-current="page"[\s\S]*<strong>Календарь<\/strong>/);
+    const dateCheck = await fetch(`${started.baseUrl}/admin/orders?fragment=order-dialog&order=${entryId}`, { headers: { cookie: `shynli_admin_session=${sessionCookieValue}` } });
+    assert.equal(dateCheck.status, 200);
+    const savedOrder = await dateCheck.text();
+    assert.match(savedOrder, /05\/03\/2026/);
+    assert.match(savedOrder, /11:30 AM/);
+    assert.match(savedOrder, /\$240\.00/);
+    assert.match(savedOrder, /Alina Payroll/);
+    assert.match(accountCalendarBody, /href="\/account\?section=calendar&amp;tab=1" aria-current="page"[\s\S]*<strong>Календарь<\/strong>/);
 
     const usersStorePayload = JSON.parse(await fs.readFile(usersStorePath, "utf8"));
     const userId = usersStorePayload.users[0].id;

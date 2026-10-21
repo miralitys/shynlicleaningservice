@@ -211,7 +211,7 @@ test("renders the clients table with filters and request history", async () => {
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
     await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "client-request-1");
-    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "client-request-2");
+    const janeEntryId = await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "client-request-2");
     await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "client-request-3");
 
     const createStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
@@ -247,17 +247,14 @@ test("renders the clients table with filters and request history", async () => {
       },
     });
     const staffPageBody = await staffAssignmentsPageResponse.text();
-    const janeRowDialogIdMatch = staffPageBody.match(
-      /<tr\b(?:(?!<\/tr>).)*?data-admin-dialog-open="([^"]+)"(?:(?!<\/tr>).)*?client-request-2(?:(?!<\/tr>).)*?<\/tr>/s
-    );
-    const janeAssignmentDialogPattern = janeRowDialogIdMatch
-      ? new RegExp(`<dialog\\b(?:(?!<\\/dialog>).)*?id="${escapeRegex(janeRowDialogIdMatch[1])}"(?:(?!<\\/dialog>).)*?<\\/dialog>`, "s")
-      : null;
+    const janeDialogId = `admin-staff-assignment-dialog-${janeEntryId}`;
+    assert.match(staffPageBody, new RegExp(`data-admin-dialog-open="${escapeRegex(janeDialogId)}"`));
+    const janeAssignmentDialogPattern = new RegExp(`<dialog\\b(?:(?!<\\/dialog>).)*?id="${escapeRegex(janeDialogId)}"(?:(?!<\\/dialog>).)*?<\\/dialog>`, "s");
     const janeAssignmentDialog = janeAssignmentDialogPattern ? staffPageBody.match(janeAssignmentDialogPattern)?.[0] : null;
     const janeEntryIdMatch = janeAssignmentDialog ? janeAssignmentDialog.match(/name="entryId" value="([^"]+)"/) : null;
     assert.ok(staffIdMatch);
-    assert.ok(janeRowDialogIdMatch);
     assert.ok(janeEntryIdMatch);
+    assert.equal(janeEntryIdMatch[1], janeEntryId);
 
     const assignResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       method: "POST",
@@ -818,7 +815,8 @@ test("renders the clients table with filters and request history", async () => {
       String(record.url).includes("/conversations/messages")
     );
     assert.equal(contactCalls.length, 3);
-    assert.equal(autoSmsCalls.length, 4);
+    assert.equal(autoSmsCalls.length, 3);
+    assert.ok(autoSmsCalls.every(call => !/На вас назначена уборка/.test(JSON.parse(call.body).message)), "assigning a past visit must not send a new cleaner assignment SMS");
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });

@@ -486,6 +486,7 @@ test("persists editable client form fields into quote calculator data", () => {
     },
   };
 
+  entry.payloadForRetry.adminOrder.assignedStaff = "Existing Cleaner";
   applyOrderEntryUpdates(entry, {
     serviceType: "deep",
     serviceName: "Deep",
@@ -538,10 +539,16 @@ test("persists editable client form fields into quote calculator data", () => {
   assert.equal(payload.calculatorData.addOns, undefined);
   assert.deepEqual(payload.calculatorData.quantityServices, {
     interiorWindowsCleaning: 5,
+    interiorWindowsWithTracks: 0,
+    slidingDoorInterior: 0,
+    slidingDoorBothSides: 0,
+    chandelierCleaning: 0,
     blindsCleaning: 2,
     bedLinenChange: 1,
   });
   assert.equal(payload.calculatorData.addressLine2, "Suite 8");
+  assert.equal(entry.totalPrice, 240, "editing service parameters preserves the agreed price");
+  assert.equal(getEntryOrderState(entry).assignedStaff, "Existing Cleaner");
 });
 
 test("keeps recurring frequency for deep cleaning orders", () => {

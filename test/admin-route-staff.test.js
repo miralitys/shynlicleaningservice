@@ -131,7 +131,7 @@ async function submitQuote(baseUrl, options) {
 }
 
 async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
-  const quoteOpsResponse = await fetch(`${baseUrl}/admin/quote-ops?q=${encodeURIComponent(query)}`, {
+  const quoteOpsResponse = await fetch(`${baseUrl}/admin/orders?q=${encodeURIComponent(query)}`, {
     headers: {
       cookie: `shynli_admin_session=${sessionCookieValue}`,
     },
@@ -139,15 +139,15 @@ async function getQuoteOpsEntryId(baseUrl, sessionCookieValue, query) {
   const quoteOpsBody = await quoteOpsResponse.text();
   assert.equal(quoteOpsResponse.status, 200);
 
-  const entryIdMatch = quoteOpsBody.match(/name="entryId" value="([^"]+)"/);
-  assert.ok(entryIdMatch, `Expected quote ops entry for ${query}`);
+  const entryIdMatch = quoteOpsBody.match(/data-order-entry-id="([^"]+)"/);
+  assert.ok(entryIdMatch, `Expected website order for ${query}`);
   return entryIdMatch[1];
 }
 
 async function createOrderFromQuoteRequest(baseUrl, sessionCookieValue, query) {
   const entryId = await getQuoteOpsEntryId(baseUrl, sessionCookieValue, query);
 
-  const createOrderResponse = await fetch(`${baseUrl}/admin/quote-ops`, {
+  const createOrderResponse = await fetch(`${baseUrl}/admin/orders`, {
     method: "POST",
     redirect: "manual",
     headers: {
@@ -155,14 +155,15 @@ async function createOrderFromQuoteRequest(baseUrl, sessionCookieValue, query) {
       cookie: `shynli_admin_session=${sessionCookieValue}`,
     },
     body: new URLSearchParams({
-      action: "create-order-from-request",
+      action: "update-order",
       entryId,
-      returnTo: "/admin/quote-ops",
+      orderStatus: "scheduled",
+      returnTo: "/admin/orders",
     }),
   });
 
   assert.equal(createOrderResponse.status, 303);
-  assert.match(createOrderResponse.headers.get("location") || "", /notice=order-created/);
+  assert.match(createOrderResponse.headers.get("location") || "", /notice=order-saved/);
 
   return entryId;
 }
@@ -434,7 +435,7 @@ test("creates staff members and assigns them to orders through the staff workspa
     assert.match(calendarSectionBody, /admin-team-calendar-wrap-dragging/);
     assert.match(calendarSectionBody, /calendarView=month/);
     assert.match(calendarSectionBody, />1 месяц<\/a>/);
-    assert.match(calendarSectionBody, /class="admin-team-calendar-entry admin-team-calendar-entry-button admin-team-calendar-entry-order/);
+    assert.match(calendarSectionBody, /class="admin-team-calendar-entry admin-team-calendar-entry-positioned admin-team-calendar-entry-button admin-team-calendar-entry-order/);
     assert.match(calendarSectionBody, /data-admin-dialog-open="admin-staff-assignment-dialog-/);
     assert.match(calendarSectionBody, /aria-label="Открыть заказ Jane Doe"/);
     assert.match(calendarSectionBody, /class="admin-dialog admin-dialog-wide" id="admin-staff-assignment-dialog-/);

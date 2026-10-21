@@ -1384,12 +1384,21 @@ test("viewer account can inspect orders and clients without write or staff acces
     });
     assert.equal(blockedWriteResponse.status, 403);
 
-    const blockedStaffResponse = await fetch(`${started.baseUrl}/admin/staff`, {
+    const staffRedirectResponse = await fetch(`${started.baseUrl}/admin/staff`, {
       redirect: "manual",
       headers: { cookie: `shynli_user_session=${viewerSession}` },
     });
-    assert.equal(blockedStaffResponse.status, 303);
-    assert.equal(blockedStaffResponse.headers.get("location"), "/admin");
+    assert.equal(staffRedirectResponse.status, 303);
+    assert.equal(staffRedirectResponse.headers.get("location"), "/admin/staff?section=calendar");
+    const calendarResponse = await fetch(`${started.baseUrl}${staffRedirectResponse.headers.get("location")}`, {
+      headers: { cookie: `shynli_user_session=${viewerSession}` },
+    });
+    assert.equal(calendarResponse.status, 200);
+    const calendarWrite = await fetch(`${started.baseUrl}/admin/staff?section=calendar`, {
+      method: "POST", headers: { cookie: `shynli_user_session=${viewerSession}`, "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ action: "save-assignment", entryId: "forbidden", staffIds: "forbidden" }),
+    });
+    assert.equal(calendarWrite.status, 403);
   } finally {
     await stopServer(started.child);
     await fs.rm(tempDir, { recursive: true, force: true });

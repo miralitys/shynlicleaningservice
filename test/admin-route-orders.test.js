@@ -420,7 +420,7 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.ok(detailsDialogEnd > detailsDialogStart);
     const detailsDialogBody = detailsOrderBody.slice(detailsDialogStart, detailsDialogEnd);
     assert.match(detailsDialogBody, /Комментарий клиента[\s\S]*Не указано/);
-    assert.doesNotMatch(detailsDialogBody, /Gate code 2040\. Please use side entrance\./);
+    assert.match(detailsDialogBody, /Gate code 2040\. Please use side entrance\./, "instructions for this address remain visible on the order");
 
     const createExistingProfileSourceResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",
@@ -3240,7 +3240,7 @@ test("treats GHL no-answer call statuses as missed calls", async () => {
   }
 });
 
-test("keeps storage diagnostics hidden on admin orders when Supabase falls back to memory", async () => {
+test("shows a retryable error without exposing a partial order list or storage diagnostics when Supabase is unavailable", async () => {
   const fetchStub = createFetchStub([
     { match: "/rest/v1/admin_audit_events", status: 200, body: [] },
     {
@@ -3310,7 +3310,7 @@ test("keeps storage diagnostics hidden on admin orders when Supabase falls back 
     assert.equal(quoteResponse.status, 201);
 
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
-    await createOrderFromQuoteRequest(started.baseUrl, sessionCookieValue, "storage-warning-request-1");
+    const beforeReadCalls = (await fs.readFile(fetchStub.captureFile, "utf8")).trim().split("\n").filter(Boolean).length;
 
     const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       headers: {
@@ -3318,11 +3318,18 @@ test("keeps storage diagnostics hidden on admin orders when Supabase falls back 
       },
     });
     const ordersBody = await ordersResponse.text();
-    assert.equal(ordersResponse.status, 200);
-    assert.match(ordersBody, /Storage Warning/);
+    assert.equal(ordersResponse.status, 503);
+    assert.equal(ordersResponse.headers.get("retry-after"), "30");
+    assert.equal(ordersResponse.headers.get("cache-control"), "no-store");
+    assert.match(ordersBody, /Не удалось загрузить полный список заказов/);
+    assert.match(ordersBody, /Данные не изменены/);
+    assert.match(ordersBody, /href="\/admin\/orders">Повторить загрузку/);
+    assert.doesNotMatch(ordersBody, /Storage Warning|Нет заказов|data-order-entry-id=/);
     assert.doesNotMatch(ordersBody, /Persistent storage active/i);
     assert.doesNotMatch(ordersBody, /локальный fallback/i);
     assert.doesNotMatch(ordersBody, /quote_ops_entries/i);
+    const afterReadCalls = (await fs.readFile(fetchStub.captureFile, "utf8")).trim().split("\n").filter(Boolean).map(JSON.parse);
+    assert.ok(afterReadCalls.slice(beforeReadCalls).every(call => call.method === "GET"), "a failed list read cannot update orders or send messages");
   } finally {
     await stopServer(started.child);
     fetchStub.cleanup();

@@ -182,25 +182,16 @@ test("resends a W-9 reminder from the staff card when the form is still missing"
       /Please complete and sign your Contract and W-9 here:/i
     );
 
-    const verifyUrlMatch = rawEmail.match(/https?:\/\/[^\s"]+\/account\/verify-email\?token=[^\s"]+/);
-    assert.ok(verifyUrlMatch);
-    const verifyUrl = new URL(
-      verifyUrlMatch[0].replace(/=3D/g, "=").replace(/&amp;/g, "&")
+    const loginUrlMatch = rawEmail.match(/https?:\/\/[^\s"]+\/account\/login\?[^\s"<]+/);
+    assert.ok(loginUrlMatch);
+    assert.doesNotMatch(rawEmail, /\/account\/verify-email\?token=/);
+    const loginUrl = new URL(
+      loginUrlMatch[0].replace(/=3D/g, "=").replace(/&amp;/g, "&")
     );
-    assert.equal(verifyUrl.searchParams.get("next"), expectedW9Path);
-
-    const verifyResponse = await fetch(
-      `${started.baseUrl}${verifyUrl.pathname}${verifyUrl.search}`,
-      {
-        redirect: "manual",
-      }
-    );
-    assert.equal(verifyResponse.status, 303);
-    assert.match(verifyResponse.headers.get("location") || "", /notice=email-verified/);
-    assert.match(verifyResponse.headers.get("location") || "", /next=%2Faccount%3Ffocus%3Dw9%23account-w9/);
+    assert.equal(loginUrl.searchParams.get("next"), expectedW9Path);
 
     const reminderLoginPageResponse = await fetch(
-      `${started.baseUrl}${(verifyResponse.headers.get("location") || "").replace(/#.*$/, "")}`
+      `${started.baseUrl}${loginUrl.pathname}${loginUrl.search}`
     );
     const reminderLoginPageBody = await reminderLoginPageResponse.text();
     assert.equal(reminderLoginPageResponse.status, 200);
@@ -319,25 +310,16 @@ test("keeps W-9 reminder on the employee flow even for manager-linked users", as
     const rawEmail = decodeQuotedPrintable(
       smtpServer.messages[smtpServer.messages.length - 1].raw
     );
-    const verifyUrlMatch = rawEmail.match(/https?:\/\/[^\s"]+\/account\/verify-email\?token=[^\s"]+/);
-    assert.ok(verifyUrlMatch);
-    const verifyUrl = new URL(
-      verifyUrlMatch[0].replace(/=3D/g, "=").replace(/&amp;/g, "&")
+    const loginUrlMatch = rawEmail.match(/https?:\/\/[^\s"]+\/account\/login\?[^\s"<]+/);
+    assert.ok(loginUrlMatch);
+    assert.doesNotMatch(rawEmail, /\/account\/verify-email\?token=/);
+    const loginUrl = new URL(
+      loginUrlMatch[0].replace(/=3D/g, "=").replace(/&amp;/g, "&")
     );
-    assert.equal(verifyUrl.searchParams.get("next"), expectedW9Path);
-
-    const verifyResponse = await fetch(
-      `${started.baseUrl}${verifyUrl.pathname}${verifyUrl.search}`,
-      {
-        redirect: "manual",
-      }
-    );
-    assert.equal(verifyResponse.status, 303);
-    assert.match(verifyResponse.headers.get("location") || "", /notice=email-verified/);
-    assert.match(
-      verifyResponse.headers.get("location") || "",
-      /next=%2Faccount%3Ffocus%3Dw9%23account-w9/
-    );
+    assert.equal(loginUrl.searchParams.get("next"), expectedW9Path);
+    const loginPage = await fetch(`${started.baseUrl}${loginUrl.pathname}${loginUrl.search}`);
+    assert.equal(loginPage.status, 200);
+    assert.match(await loginPage.text(), /name="next" value="\/account\?focus=w9#account-w9"/i);
 
     const accountLoginResponse = await fetch(`${started.baseUrl}/account/login`, {
       method: "POST",
