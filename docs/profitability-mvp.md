@@ -107,6 +107,36 @@ Anastasiia user IDs before production rollout. The existing accounts were
 verified on 2026-10-20; their IDs are kept in deployment configuration, not
 hard-coded in the repository. No roles, passwords or accounts were changed.
 
+The active viewer account `eva@shynli.local` additionally has the narrow
+`profitability.update_assistant_fields` permission, following the existing
+account-specific task-permission pattern. It can view both screens, CSV and
+private history, but may edit only `payouts`, `source`, `paymentMethod`, `paidAt`
+and the financial `comment`. All other financial fields stay read-only; settings,
+source import and deletion are forbidden on the server. Other viewers, managers,
+cleaners and non-allowlisted admins remain excluded. Existing task permissions
+and other sections are unchanged. No account/role/password or schema changes
+are necessary, and no assistant key is enabled by this account permission.
+Payment method/date/comment are the separate financial fields in this section;
+they do not mark an order Paid or rewrite its operational payment state or notes.
+
+Eva uses the existing session cookie for both UI and API requests:
+
+- POST `/admin/profitability`: `action=update`, `entryId`, `version`, and any
+  of `payout:<staffId>` (dollars), `source`, `paymentMethod`, `paidAt` (YYYY-MM-DD),
+  `comment`. Settings/import/unknown fields return 403, including mixed requests.
+- PATCH `/admin/profitability/api`: `{entryId, version, patch}` with only the
+  five permitted keys above; each payout is `{staffId, cents}`. Partial payout
+  patches preserve payouts not included in the request. Staff IDs must already
+  belong to the team or existing historical payouts; no team edits are performed.
+- Every save and audit event are atomic in the existing store, with actor user
+  ID/email, permission, server timestamp, record ID, and full before/after data.
+  Stale versions return 409 without changing data or writing an event.
+
+To revoke only Eva's financial access, remove the account-specific rule in
+`canEditAssistantProfitabilityFields` (or revert the permission change) and
+redeploy. Leave finance/history tables intact. Disabling the feature flag would
+instead hide the section for everyone, so is not a per-account rollback.
+
 Before rollout:
 
 1. Run `supabase/profitability_schema.sql` in the existing Supabase project.

@@ -133,3 +133,125 @@ test("finance storage failures do not hide or disable the ordinary Orders page",
     assert.ok(calls.every(call => call.method === "GET"));
   } finally { await stopServer(app.child); stub.cleanup(); }
 });
+
+test("Eva viewer can read both reports and audit only the five allowed UI/API fields; other writes stay forbidden", async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-eva-payouts-"));
+  const users = [
+    { id: "eva", email: "eva@shynli.local", role: "viewer" },
+    { id: "observer", email: "other@shynli.local", role: "viewer" },
+    { id: "ramina", email: "ramina@example.test", role: "manager" },
+    { id: "cleaner", email: "cleaner@example.test", role: "cleaner" },
+  ].map(user => ({ ...user, staffId: `staff-${user.id}`, status: "active", passwordHash: hashPassword("LocalTest123!"), emailVerificationRequired: false }));
+  const env = { ADMIN_MASTER_SECRET: "eva-payout-test", PROFITABILITY_ENABLED: "1", ADMIN_LOGIN_RATE_LIMIT_MAX_REQUESTS: "100",
+    ADMIN_USERS_STORE_PATH: path.join(root, "users.json"), ADMIN_STAFF_STORE_PATH: path.join(root, "staff.json"),
+    PROFITABILITY_STORE_PATH: path.join(root, "finances.json"), SUPABASE_URL: "", SUPABASE_SERVICE_ROLE_KEY: "", GHL_API_KEY: "", GHL_LOCATION_ID: "" };
+  await fs.writeFile(env.ADMIN_USERS_STORE_PATH, JSON.stringify({ version: 1, users }));
+  await fs.writeFile(env.ADMIN_STAFF_STORE_PATH, JSON.stringify({ staff: [{ id: "a", name: "Cleaner A", status: "active", role: "cleaner" },
+    { id: "b", name: "Cleaner B", status: "active", role: "cleaner" }], assignments: [] }));
+  const app = await startServer({ env });
+  const post = (route, cookie, body) => fetch(app.baseUrl + route, { method: "POST", redirect: "manual",
+    headers: { cookie, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(body) });
+  const get = (route, cookie) => fetch(app.baseUrl + route, { redirect: "manual", headers: { cookie } });
+  const login = async user => {
+    const response = await post("/admin/login", "", { email: user.email, password: "LocalTest123!" });
+    assert.equal(response.status, 303);
+    return `shynli_user_session=${getCookieValue(getSetCookies(response), "shynli_user_session")}`;
+  };
+  try {
+    const owner = `shynli_admin_session=${await createAdminSession(app.baseUrl, loadAdminConfig(env))}`;
+    const created = await post("/admin/orders", owner, { action: "create-manual-order", customerName: "Payout QA", customerPhone: "6305550198",
+      fullAddress: "100 Test Street", totalPrice: "534", acquisitionSource: "referral", selectedDate: "2099-11-20", selectedTime: "09:00", assignedStaff: "Cleaner A, Cleaner B" });
+    assert.equal(created.status, 303);
+    const id = new URL(created.headers.get("location"), app.baseUrl).searchParams.get("order");
+    assert.ok(id);
+    const assign = await post("/admin/orders", owner, [["action", "update-order"], ["entryId", id], ["assignedStaff", "Cleaner A"], ["assignedStaff", "Cleaner B"]]);
+    assert.equal(assign.status, 303);
+    const seed = await post("/admin/profitability", owner, { action: "update", entryId: id, version: "0", paidAmount: "500", source: "google",
+      "payout:a": "100", "payout:b": "90", comment: "Keep financial comment" });
+    assert.equal(seed.status, 303, await seed.text());
+    const eva = await login(users[0]);
+    const orderUrl = `/admin/orders?fragment=order-dialog&order=${id}`;
+    const before = await (await get(orderUrl, owner)).text();
+    const html = await (await get("/admin/profitability", eva)).text();
+    assert.match(html, /name="payout:a"/);
+    assert.match(html, /name="payout:b"/);
+    assert.match(html, /Сохранить/);
+    assert.match(html, /История/);
+    assert.doesNotMatch(html, /name="(?:paidAmount|leadCost|addons|discount|tips|actualHours|tipsPassed)"/);
+    for (const name of ["paymentMethod", "paidAt", "comment"]) assert.ok(html.includes(`name="${name}"`), name);
+    assert.doesNotMatch(html, /value="(?:settings|preview-import|apply-import)"/);
+    assert.match(html, /<select[^>]*form="profit-[^"]+" name="source"/);
+    assert.match(await (await get("/admin/orders", eva)).text(), /href="\/admin\/profitability"/);
+    assert.equal((await get("/admin/profitability?view=summary", eva)).status, 200);
+    const patch = (patch, version, extra = {}) => fetch(app.baseUrl + "/admin/profitability/api", { method: "PATCH",
+      headers: { cookie: eva, "content-type": "application/json" }, body: JSON.stringify({ entryId: id, version, patch, ...extra }) });
+    const updated = await patch({ payouts: [{ staffId: "a", cents: 12500 }] }, 1);
+    assert.equal(updated.status, 200, await updated.clone().text());
+    assert.equal((await updated.json()).version, 2);
+    const uiUpdate = await post("/admin/profitability", eva, { action: "update", entryId: id, version: "2", "payout:b": "95.50" });
+    assert.equal(uiUpdate.status, 303, await uiUpdate.text());
+    assert.equal((await patch({ payouts: [{ staffId: "a", cents: 1 }] }, 1)).status, 409);
+    for (const field of ["paidCents", "basePriceCents", "addonsCents", "discountCents", "leadCostCents", "tipsCents", "tipsPassed",
+      "actualMinutes", "totalPrice", "orderStatus", "assignedStaff", "selectedDate"]) {
+      assert.equal((await patch({ payouts: [{ staffId: "a", cents: 1 }], [field]: "injected" }, 3)).status, 403, field);
+    }
+    assert.equal((await patch({ payouts: [] }, 3, { totalPrice: 1 })).status, 403);
+    for (const body of [{ action: "settings", supplies: "1" }, { action: "apply-import", csv: "id,source" },
+      { action: "preview-import", csv: "id,source" }, { action: "delete" },
+      { action: "update", entryId: id, version: "3", "payout:a": "1", paidAmount: "1" },
+      { action: "update", entryId: id, version: "3", "payout:attacker": "1" }]) {
+      assert.equal((await post("/admin/profitability", eva, body)).status, 403);
+    }
+    for (const method of ["DELETE", "PUT"]) assert.equal((await fetch(app.baseUrl + "/admin/profitability/api", { method, headers: { cookie: eva } })).status, 403);
+    for (const route of ["/admin/orders", "/admin/clients", "/admin/settings", "/admin/staff", "/admin/staff?section=calendar", "/admin/payroll"]) {
+      for (const action of ["update-order", "delete-order"]) assert.equal((await post(route, eva, { action, entryId: id, totalPrice: "1", orderStatus: "canceled" })).status, 403, route);
+    }
+    const sourceUpdate = await patch({ source: "nextdoor", paymentMethod: "cash", paidAt: "2026-10-21", comment: "API comment" }, 3);
+    assert.equal(sourceUpdate.status, 200);
+    const sourceForm = await post("/admin/profitability", eva, { action: "update", entryId: id, version: "4", source: "thumbtack", paymentMethod: "check", paidAt: "2026-10-22", comment: "Form comment" });
+    assert.equal(sourceForm.status, 303);
+    assert.equal(await (await get(orderUrl, owner)).text(), before, "financial writes never mutate the original order");
+    const state = JSON.parse(await fs.readFile(env.PROFITABILITY_STORE_PATH, "utf8"));
+    assert.deepEqual(state.records[id].data, { paidCents: 50000, source: "thumbtack", comment: "Form comment", paymentMethod: "check", paidAt: "2026-10-22",
+      payouts: [{ staffId: "a", cents: 12500 }, { staffId: "b", cents: 9550 }] });
+    assert.equal(state.events.length, 5, "forbidden and stale writes do not create history");
+    for (const event of state.events.slice(1)) {
+      assert.equal(event.actor.id, "eva");
+      assert.equal(event.actor.email, "eva@shynli.local");
+      assert.equal(event.actor.permission, "profitability.update_assistant_fields");
+      assert.ok(Number.isFinite(Date.parse(event.occurred_at)));
+      assert.equal(event.record_id, id);
+    }
+    assert.equal(state.events[1].before.payouts[0].cents, 10000);
+    assert.equal(state.events[1].after.payouts[0].cents, 12500);
+    assert.equal(state.events[2].before.payouts[1].cents, 9000);
+    assert.equal(state.events[2].after.payouts[1].cents, 9550);
+    assert.equal(state.events[3].before.source, "google");
+    assert.equal(state.events[3].after.source, "nextdoor");
+    assert.equal(state.events[4].before.source, "nextdoor");
+    assert.equal(state.events[4].after.source, "thumbtack");
+    assert.equal(state.events[3].before.comment, "Keep financial comment");
+    assert.equal(state.events[3].after.comment, "API comment");
+    assert.equal(state.events[4].before.paymentMethod, "cash");
+    assert.equal(state.events[4].after.paymentMethod, "check");
+    assert.equal(state.events[4].before.paidAt, "2026-10-21");
+    assert.equal(state.events[4].after.paidAt, "2026-10-22");
+    const readApi = await (await get(`/admin/profitability/api?entryId=${id}`, eva)).json();
+    assert.equal(readApi.fields.comment, "Form comment");
+    const history = await (await get(`/admin/profitability?history=${id}`, eva)).text();
+    assert.match(history, /eva@shynli.local/);
+    assert.match(history, /\$125\.00/);
+    assert.match(history, /\$95\.50/);
+    for (const user of users.slice(1)) {
+      const cookie = await login(user);
+      for (const route of ["/admin/profitability", "/admin/profitability?view=summary", `/admin/profitability/api?entryId=${id}`, `/admin/profitability?history=${id}`])
+        assert.equal((await get(route, cookie)).status, 403, `${user.id} ${route}`);
+      if (user.role !== "cleaner") assert.doesNotMatch(await (await get("/admin/orders", cookie)).text(), /href="\/admin\/profitability"/);
+    }
+    const persistedUsers = JSON.parse(await fs.readFile(env.ADMIN_USERS_STORE_PATH, "utf8")).users;
+    for (const user of users) {
+      const persisted = persistedUsers.find(item => item.id === user.id);
+      for (const key of ["role", "email", "passwordHash", "status"]) assert.equal(persisted[key], user[key], key);
+    }
+  } finally { await stopServer(app.child); await fs.rm(root, { recursive: true, force: true }); }
+});

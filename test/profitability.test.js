@@ -5,7 +5,7 @@ const crypto = require("node:crypto");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { canAccessProfitability, validAssistantKey, cents, normalizePatch, calculateProfitability, inheritedSource, sourceFromAttribution } = require("../lib/profitability");
+const { canAccessProfitability, canManageProfitability, canEditAssistantProfitabilityFields, ASSISTANT_ACCOUNT_PERMISSION, validAssistantKey, cents, normalizePatch, calculateProfitability, inheritedSource, sourceFromAttribution } = require("../lib/profitability");
 const { createProfitabilityStore } = require("../lib/profitability-store");
 const { parseSourceImport, csvCell } = require("../lib/admin/handlers-profitability");
 
@@ -18,6 +18,21 @@ test("profitability grants only the shared owner and two configured active perso
   assert.equal(canAccessProfitability({ authorized: true, role: "admin", user: { id: "tonya", status: "inactive" } }, env), false);
   assert.equal(canAccessProfitability({ authorized: false, role: "admin", source: "admin-session" }, env), false);
   assert.equal(canAccessProfitability({ authorized: true, role: "admin", source: "admin-session" }, {}), false);
+});
+
+test("Eva's active viewer account gets only the separate field permission, not financial management", () => {
+  const env = { PROFITABILITY_ENABLED: "1" };
+  const eva = { authorized: true, role: "viewer", user: { id: "eva", email: "eva@shynli.local", status: "active" } };
+  assert.equal(ASSISTANT_ACCOUNT_PERMISSION, "profitability.update_assistant_fields");
+  assert.equal(canAccessProfitability(eva, env), true);
+  assert.equal(canEditAssistantProfitabilityFields(eva, env), true);
+  assert.equal(canManageProfitability(eva, env), false);
+  for (const denied of [{ ...eva, authorized: false }, { ...eva, role: "manager" }, { ...eva, role: "cleaner" },
+    { ...eva, role: "admin" }, { ...eva, user: { ...eva.user, status: "inactive" } },
+    { ...eva, user: { ...eva.user, email: "other@shynli.local" } }, { ...eva, user: null }]) {
+    assert.equal(canAccessProfitability(denied, env), false);
+  }
+  assert.equal(canAccessProfitability(eva, {}), false);
 });
 
 test("the assistant key is disabled by default and has a separate explicit field allowlist", () => {

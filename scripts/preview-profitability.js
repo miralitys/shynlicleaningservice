@@ -13,7 +13,7 @@ const { createRequestHelpers } = require("../lib/http/request");
 const { createTimingHelpers } = require("../lib/http/timing");
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 
-async function startPreview() {
+async function startPreview({ access = { authorized: true, role: "admin", source: "admin-session", user: null } } = {}) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-profit-preview-"));
   const env = { PROFITABILITY_ENABLED: "1", PROFITABILITY_ALLOWED_USER_IDS: "preview-tonya,preview-nastya", PROFITABILITY_STORE_PATH: path.join(root, "finances.json") };
   const store = createProfitabilityStore({ env });
@@ -52,7 +52,7 @@ async function startPreview() {
       res.end(await fs.readFile(path.join(__dirname, "..", url.pathname))); return;
     }
     const handled = await handle({ req, res, requestStartNs: process.hrtime.bigint(),
-      currentUserAccess: { authorized: true, role: "admin", source: "admin-session", user: null }, quoteOpsLedger: ledger, staffStore: { getSnapshot: async () => structuredClone(snapshot) } });
+      currentUserAccess: access, quoteOpsLedger: ledger, staffStore: { getSnapshot: async () => structuredClone(snapshot) } });
     if (!handled) { res.writeHead(404); res.end("Local preview: /admin/profitability"); }
   });
   await new Promise((resolve, reject) => {
