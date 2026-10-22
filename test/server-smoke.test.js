@@ -729,6 +729,10 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
       assert.match(body, /Homes We Clean in <span class="sg-accent">Naperville/);
       assert.match(body, /DuPage and Will counties/);
       assert.doesNotMatch(body, /Fox Valley|300\+/);
+    } else if (require("../lib/site/city-editorial-data").cities[route.slice(1)]) {
+      assert.match(body, new RegExp(`Homes We Clean in <span class="sg-accent">${cityPattern}`), route);
+      assert.match(body, /data-city-editorial="true"/);
+      assert.doesNotMatch(body, /Fox Valley|300\+/);
     } else {
       assert.match(
         body,
@@ -778,17 +782,18 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
       new RegExp(`Most of our ${cityPattern} clients choose bi-weekly cleaning`),
       route
     );
-    if (route === "/naperville") {
+    if (route === "/naperville" || require("../lib/site/city-editorial-data").cities[route.slice(1)]) {
       assert.match(body, /How Our Pricing Works/);
-      assert.match(body, /FAQ About House Cleaning in <span class="sg-accent">Naperville/);
+      assert.match(body, new RegExp(`FAQ About House Cleaning in <span class="sg-accent">${cityPattern}`));
     } else {
       assert.match(body, new RegExp(`Pricing for home cleaning in <strong>${cityPattern}<\\/strong>`), route);
       assert.match(body, new RegExp(`FAQ About House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
     }
     const faqSection = body.match(/<section class="sg-section sg-faq" id="faq"[\s\S]*?<\/section>/);
     assert.ok(faqSection, route);
-    assert.equal((faqSection[0].match(/<details class="sg-faq__item">/g) || []).length, route === "/naperville" ? 7 : 5, route);
-    assert.match(faqSection[0], route === "/naperville" ? /Which ZIP codes in Naperville do you serve\?/ : new RegExp(`Can I get a free quote for house cleaning in ${cityPattern}\\?`), route);
+    const editorialCity = require("../lib/site/city-editorial-data").cities[route.slice(1)];
+    assert.equal((faqSection[0].match(/<details class="sg-faq__item">/g) || []).length, route === "/naperville" || editorialCity ? 7 : 5, route);
+    assert.match(faqSection[0], route === "/naperville" ? /Which ZIP codes in Naperville do you serve\?/ : editorialCity ? /ZIP code/ : new RegExp(`Can I get a free quote for house cleaning in ${cityPattern}\\?`), route);
     assert.doesNotMatch(faqSection[0], /Do I need to be home during the cleaning\?|How is pricing calculated\?/, route);
     assert.match(body, new RegExp(`Get a Free Quote for House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
     assert.match(

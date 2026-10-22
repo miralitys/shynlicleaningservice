@@ -1,0 +1,712 @@
+{
+  "version": "cities-65a452ca",
+  "baseCommit": "860290dd",
+  "checkedAt": "2026-10-22T12:25:39.725Z",
+  "base": "http://127.0.0.1:58250",
+  "deployed": false,
+  "releaseDate": "2026-10-22",
+  "pages": {
+    "/plainfield": {
+      "words": 1371,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 3,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 1
+        },
+        "outsideFaq": {
+          "bookingPreference": 1,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 1
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / PLAINFIELD / counties",
+          "line": "Counties: Will and Kendall."
+        },
+        {
+          "source": "User brief / PLAINFIELD / zips",
+          "line": "ZIP: 60544, 60585, 60586."
+        },
+        {
+          "source": "User brief / PLAINFIELD / bookings",
+          "line": "Most booked: regular cleaning (mostly every 2 weeks), then deep cleaning."
+        },
+        {
+          "source": "User brief / PLAINFIELD / home",
+          "line": "Typical home: 2 bedrooms, 2 bathrooms. Condos and apartments: yes."
+        },
+        {
+          "source": "User brief / PLAINFIELD / water",
+          "line": "Water: Lake Michigan water since April 2004, supplied through Illinois American Water; the village wells are kept only as backup."
+        },
+        {
+          "source": "User brief / PLAINFIELD / reviews",
+          "line": "City reviews first: Mona A. (Great experience! They are the best!), Suganya S."
+        }
+      ],
+      "reviews": 25,
+      "reviewOrder": [
+        "Mona A.",
+        "Suganya S.",
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S.",
+        "Siddique A."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ]
+    },
+    "/aurora": {
+      "words": 1391,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 1,
+          "countyStatement": 0,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 1
+        },
+        "outsideFaq": {
+          "bookingPreference": 1,
+          "countyStatement": 0,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 1
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / AURORA / zips",
+          "line": "ZIP: 60502, 60504, 60505, 60506."
+        },
+        {
+          "source": "User brief / AURORA / bookings",
+          "line": "Most booked: regular and deep cleaning about equally, move-in/move-out less often."
+        },
+        {
+          "source": "User brief / AURORA / home",
+          "line": "Typical home: 2 bedrooms, 2 bathrooms; apartments and townhomes are common among our clients here."
+        },
+        {
+          "source": "User brief / AURORA / water",
+          "line": "Water: from the Fox River plus wells, lime-softened; hardness about 6-10 grains per gallon (moderately hard). Practical line allowed: we pay extra attention to faucets, fixtures and shower glass."
+        },
+        {
+          "source": "User brief / AURORA / reviews",
+          "line": "City reviews first: Judy V., Tyshone J. (do not mention whose home it was)."
+        }
+      ],
+      "reviews": 25,
+      "reviewOrder": [
+        "Judy V.",
+        "Tyshone J.",
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S.",
+        "Mona A.",
+        "Siddique A."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ]
+    },
+    "/bolingbrook": {
+      "words": 1385,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 3,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 1
+        },
+        "outsideFaq": {
+          "bookingPreference": 1,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 1
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / BOLINGBROOK / counties",
+          "line": "Counties: Will and DuPage."
+        },
+        {
+          "source": "User brief / BOLINGBROOK / zips",
+          "line": "ZIP: 60440, 60490."
+        },
+        {
+          "source": "User brief / BOLINGBROOK / bookings",
+          "line": "Most booked: regular cleaning, then deep and move-in/move-out."
+        },
+        {
+          "source": "User brief / BOLINGBROOK / home",
+          "line": "Typical home: 3 bedrooms, 2 bathrooms."
+        },
+        {
+          "source": "User brief / BOLINGBROOK / reviews",
+          "line": "City review first: Siddique A. (Great people great service... definitely recommend them)."
+        }
+      ],
+      "reviews": 25,
+      "reviewOrder": [
+        "Siddique A.",
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S.",
+        "Mona A."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ]
+    },
+    "/yorkville": {
+      "words": 1387,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 1,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 1
+        },
+        "outsideFaq": {
+          "bookingPreference": 1,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 1
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / YORKVILLE / counties",
+          "line": "County: Kendall."
+        },
+        {
+          "source": "User brief / YORKVILLE / zips",
+          "line": "ZIP: 60560."
+        },
+        {
+          "source": "User brief / YORKVILLE / bookings",
+          "line": "Most booked: regular cleaning."
+        },
+        {
+          "source": "User brief / YORKVILLE / home",
+          "line": "Homes: larger family homes (typical 4 bedrooms)."
+        },
+        {
+          "source": "User brief / YORKVILLE / water",
+          "line": "Water: city wells today, treated by ion-exchange softening and radium removal; the city plans to switch to Lake Michigan water through the DuPage Water Commission, not before 2028. Practical line allowed about faucets and shower glass."
+        },
+        {
+          "source": "User brief / YORKVILLE / reviews",
+          "line": "No city reviews: show the general list."
+        }
+      ],
+      "reviews": 25,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S.",
+        "Mona A.",
+        "Siddique A."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ]
+    },
+    "/oswego": {
+      "words": 1398,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 1,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 1
+        },
+        "outsideFaq": {
+          "bookingPreference": 1,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 1
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / OSWEGO / counties",
+          "line": "County: Kendall."
+        },
+        {
+          "source": "User brief / OSWEGO / zips",
+          "line": "ZIP: 60543."
+        },
+        {
+          "source": "User brief / OSWEGO / bookings",
+          "line": "Most booked: regular cleaning, also move-in/move-out."
+        },
+        {
+          "source": "User brief / OSWEGO / home",
+          "line": "Homes: larger homes, typically 4-5 bedrooms."
+        },
+        {
+          "source": "User brief / OSWEGO / water",
+          "line": "Water: village wells until the planned switch to Lake Michigan water (WaterLink with Yorkville and Montgomery, through the DuPage Water Commission) expected in 2028."
+        },
+        {
+          "source": "User brief / OSWEGO / reviews",
+          "line": "No city reviews: show the general list."
+        }
+      ],
+      "reviews": 25,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S.",
+        "Mona A.",
+        "Siddique A."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 0,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/move-in-move-out-cleaning",
+        "/services/deep-cleaning"
+      ]
+    },
+    "/lombard": {
+      "words": 1396,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 2,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 1
+        },
+        "outsideFaq": {
+          "bookingPreference": 1,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 1
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / LOMBARD / counties",
+          "line": "County: DuPage."
+        },
+        {
+          "source": "User brief / LOMBARD / zips",
+          "line": "ZIP: 60148."
+        },
+        {
+          "source": "User brief / LOMBARD / bookings",
+          "line": "Most booked: regular and deep cleaning about equally, move-in/move-out less often."
+        },
+        {
+          "source": "User brief / LOMBARD / home",
+          "line": "Typical home: 2 bedrooms, 2 bathrooms; many condos and apartments."
+        },
+        {
+          "source": "User brief / LOMBARD / water",
+          "line": "Water: Lake Michigan water through the DuPage Water Commission."
+        },
+        {
+          "source": "User brief / LOMBARD / reviews",
+          "line": "City review first: Suzana D."
+        }
+      ],
+      "reviews": 25,
+      "reviewOrder": [
+        "Suzana D.",
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S.",
+        "Mona A.",
+        "Siddique A."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ]
+    },
+    "/batavia": {
+      "words": 1398,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 3,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 1,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / BATAVIA / counties",
+          "line": "County: Kane."
+        },
+        {
+          "source": "User brief / BATAVIA / zips",
+          "line": "ZIP: 60510."
+        },
+        {
+          "source": "User brief / BATAVIA / bookings",
+          "line": "Most booked: regular cleaning."
+        },
+        {
+          "source": "User brief / BATAVIA / reviews",
+          "line": "City review first: Ina S.; owner clarified this is a stars-only review, so use the general written-review list."
+        }
+      ],
+      "reviews": 25,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S.",
+        "Mona A.",
+        "Siddique A."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ]
+    }
+  },
+  "similarity": {
+    "/naperville": {
+      "/naperville": 100,
+      "/plainfield": 28.12,
+      "/aurora": 26.68,
+      "/bolingbrook": 27.94,
+      "/yorkville": 27.25,
+      "/oswego": 27.02,
+      "/lombard": 26.86,
+      "/batavia": 27.99
+    },
+    "/plainfield": {
+      "/naperville": 28.12,
+      "/plainfield": 100,
+      "/aurora": 29.66,
+      "/bolingbrook": 30.65,
+      "/yorkville": 30.31,
+      "/oswego": 29.61,
+      "/lombard": 31.5,
+      "/batavia": 30.9
+    },
+    "/aurora": {
+      "/naperville": 26.68,
+      "/plainfield": 29.66,
+      "/aurora": 100,
+      "/bolingbrook": 29.4,
+      "/yorkville": 30.14,
+      "/oswego": 29.56,
+      "/lombard": 30.8,
+      "/batavia": 29.27
+    },
+    "/bolingbrook": {
+      "/naperville": 27.94,
+      "/plainfield": 30.65,
+      "/aurora": 29.4,
+      "/bolingbrook": 100,
+      "/yorkville": 30.11,
+      "/oswego": 29.16,
+      "/lombard": 29.14,
+      "/batavia": 30.75
+    },
+    "/yorkville": {
+      "/naperville": 27.25,
+      "/plainfield": 30.31,
+      "/aurora": 30.14,
+      "/bolingbrook": 30.11,
+      "/yorkville": 100,
+      "/oswego": 30.27,
+      "/lombard": 30.06,
+      "/batavia": 30.99
+    },
+    "/oswego": {
+      "/naperville": 27.02,
+      "/plainfield": 29.61,
+      "/aurora": 29.56,
+      "/bolingbrook": 29.16,
+      "/yorkville": 30.27,
+      "/oswego": 100,
+      "/lombard": 28.99,
+      "/batavia": 29.78
+    },
+    "/lombard": {
+      "/naperville": 26.86,
+      "/plainfield": 31.5,
+      "/aurora": 30.8,
+      "/bolingbrook": 29.14,
+      "/yorkville": 30.06,
+      "/oswego": 28.99,
+      "/lombard": 100,
+      "/batavia": 29.63
+    },
+    "/batavia": {
+      "/naperville": 27.99,
+      "/plainfield": 30.9,
+      "/aurora": 29.27,
+      "/bolingbrook": 30.75,
+      "/yorkville": 30.99,
+      "/oswego": 29.78,
+      "/lombard": 29.63,
+      "/batavia": 100
+    }
+  },
+  "unchangedOutsideTarget": 294,
+  "outsideDifferences": [],
+  "sitemapUrlsUnchanged": true,
+  "sitemapDateChanges": [
+    {
+      "url": "https://shynlicleaningservice.com/aurora",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/batavia",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/bolingbrook",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/lombard",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/oswego",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/plainfield",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/yorkville",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    }
+  ],
+  "failures": []
+}

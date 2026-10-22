@@ -539,6 +539,7 @@ const SITEMAP_EXCLUDED_ROUTES = new Set([
 const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ...Object.entries(require("./lib/site/sitemap-preserved-lastmod.json")),
   ...require("./lib/site/naperville-pilot").napervilleLastmod(),
+  ...require("./lib/site/city-editorial").cityEditorialLastmod(),
   ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, latestBlogArticleLastmod(BLOG_ARTICLES.filter((article) => article.categoryPath === page.path))]),
   ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.modifiedAt || article.publishedAt)]),
