@@ -3,7 +3,7 @@ main[data-service-editorial] {
   --soft: #eee9e3; --paper: #fffdfb;
   --heading: "Playfair Display", Georgia, serif; --body: Montserrat, Arial, sans-serif;
   --t-headline-font: "Playfair Display", Georgia, serif; --t-text-font: Montserrat, Arial, sans-serif;
-  color: var(--ink); font-family: var(--body); background: #faf9f6;
+  color: var(--ink); font-family: var(--body); font-size: 16px; background: #faf9f6;
 }
 main[data-service-editorial] *, main[data-service-editorial] *::before, main[data-service-editorial] *::after { box-sizing: border-box; }
 main[data-service-editorial] .se-container { width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
