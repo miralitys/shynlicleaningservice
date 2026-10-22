@@ -86,6 +86,45 @@ test("every reviewed image rule describes a known role without client informatio
   }
 });
 
+test("move-cleaning For lettering repeats its heading, while pricing digits retain their complete image text", async () => {
+  const app = await startServer();
+  const plainText = (node) => node.nodeName === "#text" ? node.value
+    : ["style", "script", "template"].includes(node.tagName) ? ""
+      : (node.childNodes || []).map(plainText).join(" ").replace(/\s+/g, " ").trim();
+  const digits = new Map([
+    ["/images/tild3364-3839-4665-b832-356539643234__5.svg", "5"],
+    ["/images/tild3437-6364-4734-b431-396533323234__1.svg", "1"],
+    ["/images/tild3261-6630-4232-a337-303332313661__4.svg", "4"],
+  ]);
+  try {
+    for (const route of ["/pricing", "/pricing-v2"]) {
+      const html = await (await fetch(app.baseUrl + route)).text();
+      const images = inspectImages(html, route).filter(({ path }) => digits.has(path));
+      assert.equal(images.length, 3, route);
+      for (const { node, path } of images) {
+        const digit = digits.get(path);
+        assert.equal(attr(node, "alt"), digit);
+        assert.notEqual(attr(node, "aria-hidden"), "true");
+        const sectionText = plainText(node.parentNode.parentNode.parentNode);
+        assert.match(sectionText, /Our pricing depends on:/);
+        assert.doesNotMatch(sectionText, new RegExp(`\\b${digit}\\b`), `${route}: duplicate digit needs re-review`);
+      }
+    }
+    for (const route of ["/services/move-in-move-out-cleaning", "/services/move-in-move-out-cleaning/ads", "/services/move-in-move-out-cleaning/ads-v2"]) {
+      const html = await (await fetch(app.baseUrl + route)).text();
+      const images = inspectImages(html, route).filter(({ path }) => path === "/images/move-clean-original-26.svg"
+        || path === "/images/tild6530-6437-4133-a364-393966623964__for.svg");
+      assert.equal(images.length, 1, route);
+      const { node } = images[0];
+      assert.equal(attr(node, "alt"), "");
+      assert.equal(attr(node, "aria-hidden"), "true");
+      assert.match(plainText(node.parentNode.parentNode.parentNode), /Is Move Cleaning Right for You\?/);
+    }
+  } finally {
+    await stopServer(app.child);
+  }
+});
+
 test("all sitemap images have alt, and every empty alt is a reviewed decoration hidden from assistive technology", async () => {
   const app = await startServer();
   try {

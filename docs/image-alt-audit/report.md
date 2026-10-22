@@ -1,6 +1,12 @@
 # Alt-тексты изображений: проверка и результат
 
-Дата: 21 октября 2026, America/Chicago. Выполнено локально, без деплоя, коммита или отправки в main.
+Дата: 21 октября 2026, America/Chicago. Исходная версия выложена в 63e658f4; уточнение For и цифр ниже подготовлено локально, без нового деплоя.
+
+## Уточнение For и цифр
+
+- `move-clean-original-26.svg` содержит только слово For. Оно повторяет смысл соседнего HTML-заголовка Is Move Cleaning Right for You?, поэтому изображение декоративное: `alt="" aria-hidden="true"`. То же правило применено к идентичному For на рекламных копиях.
+- SVG цифр на /pricing и /pricing-v2 содержат только 5, 1, 4, без дополнительных слов. Эти цифры не повторяются в соседнем HTML-тексте. По условию сохранён весь текст изображений: `alt="5"`, `alt="1"`, `alt="4"`, без aria-hidden.
+- Новая проверка реальных страниц закрепляет оба случая. Целевой набор после уточнения: 64 проверки пройдены, 0 ошибок. Полный набор 766 проверок ниже относится к исходной версии до этого уточнения.
 
 ## Результат обхода
 
@@ -8,15 +14,15 @@
 | --- | --- |
 | URL из sitemap | 300 |
 | Всего тегов img в sitemap | 818 |
-| Непустой alt | 723 |
-| Пустой alt, только декоративные изображения | 95 |
+| Непустой alt | 722 |
+| Пустой alt, только декоративные изображения | 96 |
 | Изображений без атрибута alt | 0 |
 | Пустых alt без aria-hidden=true | 0 |
 | Дополнительная проверка, включая рекламные страницы | 318 URL / 972 изображения |
 | Страниц блога без изменений | 233 / 466 изображений |
 | Просмотрено уникальных файлов вне блога | 97 |
 
-Все 95 пустых alt принадлежат проверенным декоративным изображениям и имеют `aria-hidden="true"`. Пустой alt здесь правильный: скринридеру не нужно повторять названия звёздочек, телефонных и календарных иконок рядом с уже написанным текстом.
+Все 96 пустых alt принадлежат проверенным декоративным изображениям и имеют `aria-hidden="true"`. Пустой alt здесь правильный: скринридеру не нужно повторять названия звёздочек, телефонных и календарных иконок рядом с уже написанным текстом.
 
 Исходный HTML имел 619 непустых alt и 199 пустых. Из последних 157 записаны как `alt=""`, 42 как `alt=''`. Парсер не обнаружил отсутствующих атрибутов: число 42 из исходного аудита совпадает с количеством атрибутов в одинарных кавычках. В отчёте они не считаются отсутствующими.
 
@@ -76,6 +82,7 @@
 | Magnifying glass beside text about inspection expectations | 1 |
 | Phone icon beside written contact details | 1 |
 | Small blurred brand mark beside the written company name | 3 |
+| Decorative For lettering beside the existing Is Move Cleaning Right for You heading | 1 |
 
 ## Проверки границ изменений
 
@@ -174,7 +181,6 @@
 | `/images/move-clean-original-07.png` | badge | Local team |
 | `/images/move-clean-original-17.png` | badge | Safe products |
 | `/images/move-clean-original-09.png` | badge | High quality |
-| `/images/move-clean-original-26.svg` | badge | For |
 | `/images/shynli-move-area-bedroom.png` | content | Bedroom illustration with a double bed and bedside tables |
 | `/images/shynli-move-area-bathroom.png` | content | Bathroom illustration with a freestanding tub and double vanity |
 | `/images/shynli-move-area-kitchen.png` | content | Kitchen illustration with an island, cabinets, and breakfast stools |

@@ -228,17 +228,17 @@
   "/images/tild3364-3839-4665-b832-356539643234__5.svg": {
     "kind": "badge",
     "alt": "5",
-    "description": "Stylized numeral 5"
+    "description": "Pricing factor numeral 5; the SVG contains only 5 and adjacent text does not repeat it"
   },
   "/images/tild3437-6364-4734-b431-396533323234__1.svg": {
     "kind": "badge",
     "alt": "1",
-    "description": "Stylized numeral 1"
+    "description": "Pricing factor numeral 1; the SVG contains only 1 and adjacent text does not repeat it"
   },
   "/images/tild3261-6630-4232-a337-303332313661__4.svg": {
     "kind": "badge",
     "alt": "4",
-    "description": "Stylized numeral 4"
+    "description": "Pricing factor numeral 4; the SVG contains only 4 and adjacent text does not repeat it"
   },
   "/images/tild3237-3864-4539-b661-326231633861__vector.svg": {
     "kind": "decorative",
@@ -416,9 +416,9 @@
     "description": "Badge reading High quality"
   },
   "/images/move-clean-original-26.svg": {
-    "kind": "badge",
-    "alt": "For",
-    "description": "Heading word For"
+    "kind": "decorative",
+    "alt": "",
+    "description": "Decorative For lettering beside the existing Is Move Cleaning Right for You heading"
   },
   "/images/move-clean-original-18.svg": {
     "kind": "decorative",
@@ -461,9 +461,9 @@
     "description": "Badge reading High quality"
   },
   "/images/tild6530-6437-4133-a364-393966623964__for.svg": {
-    "kind": "badge",
-    "alt": "For",
-    "description": "Heading word For"
+    "kind": "decorative",
+    "alt": "",
+    "description": "Decorative For lettering beside the existing Is Move Cleaning Right for You heading"
   },
   "/images/tild3835-3731-4166-b638-303635633062__vector.svg": {
     "kind": "decorative",
