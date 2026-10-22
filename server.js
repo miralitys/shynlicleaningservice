@@ -290,6 +290,7 @@ const QUOTE_NO_PRICE_PUBLIC_PATH = "/quote-no-price";
 const QUOTE_V2_PUBLIC_PATH = "/quote2";
 const QUOTE_PUBLIC_PATHS = new Set([QUOTE_PUBLIC_PATH, QUOTE_NO_CALCULATOR_PUBLIC_PATH, QUOTE_NO_PRICE_PUBLIC_PATH, QUOTE_V2_PUBLIC_PATH]);
 const REDIRECT_ROUTES = new Map([
+  ["/cleaners-near-me", "/service-areas"],
   ["/home2", "/"],
   ["/home-copy", "/"],
   ["/home-simple", "/"],
@@ -557,7 +558,6 @@ const BREADCRUMB_LABELS = new Map([
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, page.label]),
   ...BLOG_ARTICLE_PAGES.map((page) => [page.path, page.label]),
   ["/cancellation-policy", "Cancellation Policy"],
-  ["/cleaners-near-me", "Cleaners Near Me"],
   ["/contacts", "Contact Us"],
   ["/faq", "FAQ"],
   ["/home-calculator", "Home Calculator"],
@@ -613,17 +613,6 @@ const ROUTE_META_OVERRIDES = {
   },
   "/contacts": {
     title: "Contact Shynli Cleaning | Chicago Suburbs",
-  },
-  "/cleaners-near-me": {
-    title: "Cleaners Near You in Chicago Suburbs | Shynli Cleaning",
-    description:
-      "Looking for cleaners near you in Chicagoland? Trusted local house cleaners serving DuPage, Will & Kane counties. Free quote in 60 seconds.",
-    canonical: `${SITE_ORIGIN}/cleaners-near-me/`,
-    ogUrl: `${SITE_ORIGIN}/cleaners-near-me/`,
-    ogTitle: "Cleaners Near You in Chicago Suburbs | Shynli Cleaning",
-    ogDescription:
-      "Trusted local house cleaners serving DuPage, Will & Kane counties. Free quote in 60 seconds.",
-    robots: "index,follow",
   },
   "/cleaners-near-me/ads-lp": {
     title: "House Cleaners Near You in Chicago Suburbs - $135 | Shynli Cleaning",

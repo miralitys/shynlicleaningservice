@@ -150,7 +150,7 @@ test("all served city and service pages have canonical company references and vi
   const app = await startServer();
   try {
     let businessCount = 0;
-    for (const route of ["/", "/faq", "/contacts", "/cleaners-near-me", "/ads-v2", "/pricing-v2", ...SERVICE_PAGES, ...CITY_PAGES.map(([path]) => path)]) {
+    for (const route of ["/", "/faq", "/contacts", "/ads-v2", "/pricing-v2", ...SERVICE_PAGES, ...CITY_PAGES.map(([path]) => path)]) {
       const response = await fetch(`${app.baseUrl}${route}`);
       assert.equal(response.status, 200, route);
       const html = await response.text();
