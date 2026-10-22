@@ -1,0 +1,1160 @@
+{
+  "version": "cities-b1-e70976df",
+  "baseCommit": "a9bf2152",
+  "checkedAt": "2026-10-22T14:02:30.729Z",
+  "base": "http://127.0.0.1:58250",
+  "deployed": false,
+  "releaseDate": "2026-10-22",
+  "pages": {
+    "/woodridge": {
+      "words": 1352,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / WOODRIDGE / local facts",
+          "line": "WOODRIDGE: mostly in DuPage County. ZIP 60517. Water: Lake Michigan water through the DuPage Water Commission."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "Woodridge is mostly in DuPage County",
+        "zips": [
+          "60517"
+        ],
+        "water": "Woodridge receives Lake Michigan water through the DuPage Water Commission."
+      }
+    },
+    "/warrenville": {
+      "words": 1367,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / WARRENVILLE / local facts",
+          "line": "WARRENVILLE: DuPage County. ZIP 60555. Water: the city's own wells; the city reports very hard water, 24-26 grains per gallon. Practical line allowed: we pay extra attention to faucets, shower glass and fixtures."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "DuPage County",
+        "zips": [
+          "60555"
+        ],
+        "water": "The supply is from the city's own wells. The city reports very hard water, 24-26 grains per gallon. We pay extra attention to faucets, shower glass, and fixtures."
+      }
+    },
+    "/sugargrove": {
+      "words": 1372,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / SUGAR GROVE / local facts",
+          "line": "SUGAR GROVE: Kane County. ZIP 60554. Water: well water."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "Kane County",
+        "zips": [
+          "60554"
+        ],
+        "water": "Sugar Grove uses well water."
+      }
+    },
+    "/oakbrook": {
+      "words": 1372,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / OAK BROOK / local facts",
+          "line": "OAK BROOK: DuPage County. ZIP 60523. Water: Lake Michigan water."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "DuPage County",
+        "zips": [
+          "60523"
+        ],
+        "water": "Oak Brook receives Lake Michigan water."
+      }
+    },
+    "/stcharles": {
+      "words": 1379,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / ST. CHARLES / local facts",
+          "line": "ST. CHARLES: Kane and DuPage counties. ZIP 60174, 60175. Water: well water."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "Kane and DuPage counties",
+        "zips": [
+          "60174",
+          "60175"
+        ],
+        "water": "St. Charles uses well water."
+      }
+    },
+    "/geneva": {
+      "words": 1382,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / GENEVA / local facts",
+          "line": "GENEVA: Kane County. ZIP 60134. Water: the city blends shallow and deep well water and treats it at the city plant."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "Kane County",
+        "zips": [
+          "60134"
+        ],
+        "water": "The city blends shallow and deep well water and treats it at the city plant."
+      }
+    },
+    "/downersgrove": {
+      "words": 1377,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / DOWNERS GROVE / local facts",
+          "line": "DOWNERS GROVE: DuPage County. ZIP 60515, 60516. Water: Lake Michigan water through the DuPage Water Commission."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "DuPage County",
+        "zips": [
+          "60515",
+          "60516"
+        ],
+        "water": "Downers Grove receives Lake Michigan water through the DuPage Water Commission."
+      }
+    },
+    "/romeoville": {
+      "words": 1368,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / ROMEOVILLE / local facts",
+          "line": "ROMEOVILLE: Will County. ZIP 60446. Water: well water until the switch to Lake Michigan water planned for 2030."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "Will County",
+        "zips": [
+          "60446"
+        ],
+        "water": "Romeoville uses well water until the switch to Lake Michigan water planned for 2030."
+      }
+    },
+    "/lockport": {
+      "words": 1371,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / LOCKPORT / local facts",
+          "line": "LOCKPORT: Will County. ZIP 60441. Water: no fact, do not write about water."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "Will County",
+        "zips": [
+          "60441"
+        ],
+        "water": null
+      }
+    },
+    "/cresthill": {
+      "words": 1388,
+      "repeatedFacts": {
+        "body": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 2,
+          "parking": 2,
+          "typicalHome": 0
+        },
+        "outsideFaq": {
+          "bookingPreference": 0,
+          "countyStatement": 1,
+          "supplies": 1,
+          "parking": 1,
+          "typicalHome": 0
+        }
+      },
+      "protectedDifferences": [],
+      "factsFromBrief": [
+        {
+          "source": "User brief / CREST HILL / local facts",
+          "line": "CREST HILL: Will County. ZIP 60403. Water: well water until the switch to Lake Michigan water planned for 2030."
+        }
+      ],
+      "reviews": 23,
+      "reviewOrder": [
+        "Amy K.",
+        "Erika B.",
+        "Eric J.",
+        "Dawn S.",
+        "Mariana S.",
+        "Cora T.",
+        "Karoline K.",
+        "Tyshone J.",
+        "Judy V.",
+        "Suzana D.",
+        "Hector A.",
+        "Lina G.",
+        "Munisa T.",
+        "Aimelek B.",
+        "Nataliia R.",
+        "Sanjar V.",
+        "Suganya S.",
+        "D B.",
+        "Yevgeniy M.",
+        "Aleksei K.",
+        "Max K.",
+        "Vlad B.",
+        "Maryna S."
+      ],
+      "faqMatchesJsonLd": true,
+      "jsonLdParses": true,
+      "legacyPhrasesAbsent": true,
+      "availabilityWording": 1,
+      "localKeywordCount": 2,
+      "ratingMatchesNaperville": true,
+      "dateModifiedValues": [],
+      "serviceOrder": [
+        "/services/regular-cleaning",
+        "/services/deep-cleaning",
+        "/services/move-in-move-out-cleaning"
+      ],
+      "reviewsMatchNaperville": true,
+      "prohibitedClaimsAbsent": true,
+      "noUnsupportedWaterClaim": true,
+      "factsUsed": {
+        "county": "Will County",
+        "zips": [
+          "60403"
+        ],
+        "water": "Crest Hill uses well water until the switch to Lake Michigan water planned for 2030."
+      }
+    }
+  },
+  "similarity": {
+    "/naperville": {
+      "/naperville": 100,
+      "/plainfield": 28.12,
+      "/aurora": 26.68,
+      "/bolingbrook": 27.94,
+      "/yorkville": 27.25,
+      "/oswego": 27.02,
+      "/lombard": 26.86,
+      "/batavia": 27.99,
+      "/woodridge": 28.78,
+      "/warrenville": 27.51,
+      "/sugargrove": 29.11,
+      "/oakbrook": 27.69,
+      "/stcharles": 28.35,
+      "/geneva": 27.66,
+      "/downersgrove": 29.09,
+      "/romeoville": 28.12,
+      "/lockport": 28.24,
+      "/cresthill": 28.17
+    },
+    "/plainfield": {
+      "/naperville": 28.12,
+      "/plainfield": 100,
+      "/aurora": 29.66,
+      "/bolingbrook": 30.65,
+      "/yorkville": 30.31,
+      "/oswego": 29.61,
+      "/lombard": 31.5,
+      "/batavia": 30.9,
+      "/woodridge": 30.47,
+      "/warrenville": 29.6,
+      "/sugargrove": 29.9,
+      "/oakbrook": 28.9,
+      "/stcharles": 29.89,
+      "/geneva": 28.92,
+      "/downersgrove": 30.98,
+      "/romeoville": 28.63,
+      "/lockport": 29.89,
+      "/cresthill": 29.64
+    },
+    "/aurora": {
+      "/naperville": 26.68,
+      "/plainfield": 29.66,
+      "/aurora": 100,
+      "/bolingbrook": 29.4,
+      "/yorkville": 30.14,
+      "/oswego": 29.56,
+      "/lombard": 30.8,
+      "/batavia": 29.27,
+      "/woodridge": 28.82,
+      "/warrenville": 29.36,
+      "/sugargrove": 28.97,
+      "/oakbrook": 28.86,
+      "/stcharles": 29.77,
+      "/geneva": 28.94,
+      "/downersgrove": 29.38,
+      "/romeoville": 28.72,
+      "/lockport": 28.16,
+      "/cresthill": 29.09
+    },
+    "/bolingbrook": {
+      "/naperville": 27.94,
+      "/plainfield": 30.65,
+      "/aurora": 29.4,
+      "/bolingbrook": 100,
+      "/yorkville": 30.11,
+      "/oswego": 29.16,
+      "/lombard": 29.14,
+      "/batavia": 30.75,
+      "/woodridge": 30.19,
+      "/warrenville": 28.77,
+      "/sugargrove": 28.94,
+      "/oakbrook": 28.65,
+      "/stcharles": 29.12,
+      "/geneva": 28.92,
+      "/downersgrove": 29.17,
+      "/romeoville": 28.94,
+      "/lockport": 29.69,
+      "/cresthill": 28.32
+    },
+    "/yorkville": {
+      "/naperville": 27.25,
+      "/plainfield": 30.31,
+      "/aurora": 30.14,
+      "/bolingbrook": 30.11,
+      "/yorkville": 100,
+      "/oswego": 30.27,
+      "/lombard": 30.06,
+      "/batavia": 30.99,
+      "/woodridge": 30.11,
+      "/warrenville": 30.02,
+      "/sugargrove": 29.37,
+      "/oakbrook": 29,
+      "/stcharles": 29.29,
+      "/geneva": 29.65,
+      "/downersgrove": 29.98,
+      "/romeoville": 29.87,
+      "/lockport": 29.8,
+      "/cresthill": 29.55
+    },
+    "/oswego": {
+      "/naperville": 27.02,
+      "/plainfield": 29.61,
+      "/aurora": 29.56,
+      "/bolingbrook": 29.16,
+      "/yorkville": 30.27,
+      "/oswego": 100,
+      "/lombard": 28.99,
+      "/batavia": 29.78,
+      "/woodridge": 29.34,
+      "/warrenville": 29.19,
+      "/sugargrove": 29.55,
+      "/oakbrook": 30.14,
+      "/stcharles": 29.16,
+      "/geneva": 29.02,
+      "/downersgrove": 29.02,
+      "/romeoville": 29.17,
+      "/lockport": 28.49,
+      "/cresthill": 29.35
+    },
+    "/lombard": {
+      "/naperville": 26.86,
+      "/plainfield": 31.5,
+      "/aurora": 30.8,
+      "/bolingbrook": 29.14,
+      "/yorkville": 30.06,
+      "/oswego": 28.99,
+      "/lombard": 100,
+      "/batavia": 29.63,
+      "/woodridge": 30.59,
+      "/warrenville": 28.79,
+      "/sugargrove": 29.27,
+      "/oakbrook": 29.48,
+      "/stcharles": 29.01,
+      "/geneva": 28.56,
+      "/downersgrove": 30,
+      "/romeoville": 28.65,
+      "/lockport": 28.77,
+      "/cresthill": 28.95
+    },
+    "/batavia": {
+      "/naperville": 27.99,
+      "/plainfield": 30.9,
+      "/aurora": 29.27,
+      "/bolingbrook": 30.75,
+      "/yorkville": 30.99,
+      "/oswego": 29.78,
+      "/lombard": 29.63,
+      "/batavia": 100,
+      "/woodridge": 32,
+      "/warrenville": 29.08,
+      "/sugargrove": 29.95,
+      "/oakbrook": 28.89,
+      "/stcharles": 29.8,
+      "/geneva": 29.1,
+      "/downersgrove": 29.86,
+      "/romeoville": 29.25,
+      "/lockport": 30.32,
+      "/cresthill": 29.62
+    },
+    "/woodridge": {
+      "/naperville": 28.78,
+      "/plainfield": 30.47,
+      "/aurora": 28.82,
+      "/bolingbrook": 30.19,
+      "/yorkville": 30.11,
+      "/oswego": 29.34,
+      "/lombard": 30.59,
+      "/batavia": 32,
+      "/woodridge": 100,
+      "/warrenville": 29.91,
+      "/sugargrove": 31.59,
+      "/oakbrook": 30.04,
+      "/stcharles": 31.24,
+      "/geneva": 30.57,
+      "/downersgrove": 32.64,
+      "/romeoville": 30.6,
+      "/lockport": 31.24,
+      "/cresthill": 30.66
+    },
+    "/warrenville": {
+      "/naperville": 27.51,
+      "/plainfield": 29.6,
+      "/aurora": 29.36,
+      "/bolingbrook": 28.77,
+      "/yorkville": 30.02,
+      "/oswego": 29.19,
+      "/lombard": 28.79,
+      "/batavia": 29.08,
+      "/woodridge": 29.91,
+      "/warrenville": 100,
+      "/sugargrove": 29.73,
+      "/oakbrook": 31.65,
+      "/stcharles": 29.65,
+      "/geneva": 30.73,
+      "/downersgrove": 30.42,
+      "/romeoville": 30.44,
+      "/lockport": 29.72,
+      "/cresthill": 30.63
+    },
+    "/sugargrove": {
+      "/naperville": 29.11,
+      "/plainfield": 29.9,
+      "/aurora": 28.97,
+      "/bolingbrook": 28.94,
+      "/yorkville": 29.37,
+      "/oswego": 29.55,
+      "/lombard": 29.27,
+      "/batavia": 29.95,
+      "/woodridge": 31.59,
+      "/warrenville": 29.73,
+      "/sugargrove": 100,
+      "/oakbrook": 29.86,
+      "/stcharles": 30.8,
+      "/geneva": 30.45,
+      "/downersgrove": 30.98,
+      "/romeoville": 29.97,
+      "/lockport": 31.38,
+      "/cresthill": 30.73
+    },
+    "/oakbrook": {
+      "/naperville": 27.69,
+      "/plainfield": 28.9,
+      "/aurora": 28.86,
+      "/bolingbrook": 28.65,
+      "/yorkville": 29,
+      "/oswego": 30.14,
+      "/lombard": 29.48,
+      "/batavia": 28.89,
+      "/woodridge": 30.04,
+      "/warrenville": 31.65,
+      "/sugargrove": 29.86,
+      "/oakbrook": 100,
+      "/stcharles": 29.78,
+      "/geneva": 31.25,
+      "/downersgrove": 30.42,
+      "/romeoville": 31.88,
+      "/lockport": 30.75,
+      "/cresthill": 30.63
+    },
+    "/stcharles": {
+      "/naperville": 28.35,
+      "/plainfield": 29.89,
+      "/aurora": 29.77,
+      "/bolingbrook": 29.12,
+      "/yorkville": 29.29,
+      "/oswego": 29.16,
+      "/lombard": 29.01,
+      "/batavia": 29.8,
+      "/woodridge": 31.24,
+      "/warrenville": 29.65,
+      "/sugargrove": 30.8,
+      "/oakbrook": 29.78,
+      "/stcharles": 100,
+      "/geneva": 29.54,
+      "/downersgrove": 30.97,
+      "/romeoville": 30.01,
+      "/lockport": 29.82,
+      "/cresthill": 30.59
+    },
+    "/geneva": {
+      "/naperville": 27.66,
+      "/plainfield": 28.92,
+      "/aurora": 28.94,
+      "/bolingbrook": 28.92,
+      "/yorkville": 29.65,
+      "/oswego": 29.02,
+      "/lombard": 28.56,
+      "/batavia": 29.1,
+      "/woodridge": 30.57,
+      "/warrenville": 30.73,
+      "/sugargrove": 30.45,
+      "/oakbrook": 31.25,
+      "/stcharles": 29.54,
+      "/geneva": 100,
+      "/downersgrove": 30.1,
+      "/romeoville": 31.22,
+      "/lockport": 30.95,
+      "/cresthill": 31.28
+    },
+    "/downersgrove": {
+      "/naperville": 29.09,
+      "/plainfield": 30.98,
+      "/aurora": 29.38,
+      "/bolingbrook": 29.17,
+      "/yorkville": 29.98,
+      "/oswego": 29.02,
+      "/lombard": 30,
+      "/batavia": 29.86,
+      "/woodridge": 32.64,
+      "/warrenville": 30.42,
+      "/sugargrove": 30.98,
+      "/oakbrook": 30.42,
+      "/stcharles": 30.97,
+      "/geneva": 30.1,
+      "/downersgrove": 100,
+      "/romeoville": 29.56,
+      "/lockport": 31.82,
+      "/cresthill": 31.3
+    },
+    "/romeoville": {
+      "/naperville": 28.12,
+      "/plainfield": 28.63,
+      "/aurora": 28.72,
+      "/bolingbrook": 28.94,
+      "/yorkville": 29.87,
+      "/oswego": 29.17,
+      "/lombard": 28.65,
+      "/batavia": 29.25,
+      "/woodridge": 30.6,
+      "/warrenville": 30.44,
+      "/sugargrove": 29.97,
+      "/oakbrook": 31.88,
+      "/stcharles": 30.01,
+      "/geneva": 31.22,
+      "/downersgrove": 29.56,
+      "/romeoville": 100,
+      "/lockport": 30.15,
+      "/cresthill": 32.56
+    },
+    "/lockport": {
+      "/naperville": 28.24,
+      "/plainfield": 29.89,
+      "/aurora": 28.16,
+      "/bolingbrook": 29.69,
+      "/yorkville": 29.8,
+      "/oswego": 28.49,
+      "/lombard": 28.77,
+      "/batavia": 30.32,
+      "/woodridge": 31.24,
+      "/warrenville": 29.72,
+      "/sugargrove": 31.38,
+      "/oakbrook": 30.75,
+      "/stcharles": 29.82,
+      "/geneva": 30.95,
+      "/downersgrove": 31.82,
+      "/romeoville": 30.15,
+      "/lockport": 100,
+      "/cresthill": 29.95
+    },
+    "/cresthill": {
+      "/naperville": 28.17,
+      "/plainfield": 29.64,
+      "/aurora": 29.09,
+      "/bolingbrook": 28.32,
+      "/yorkville": 29.55,
+      "/oswego": 29.35,
+      "/lombard": 28.95,
+      "/batavia": 29.62,
+      "/woodridge": 30.66,
+      "/warrenville": 30.63,
+      "/sugargrove": 30.73,
+      "/oakbrook": 30.63,
+      "/stcharles": 30.59,
+      "/geneva": 31.28,
+      "/downersgrove": 31.3,
+      "/romeoville": 32.56,
+      "/lockport": 29.95,
+      "/cresthill": 100
+    }
+  },
+  "unchangedOutsideTarget": 291,
+  "outsideDifferences": [],
+  "sitemapUrlsUnchanged": true,
+  "sitemapDateChanges": [
+    {
+      "url": "https://shynlicleaningservice.com/cresthill",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/downersgrove",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/geneva",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/lockport",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/oakbrook",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/romeoville",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/stcharles",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/sugargrove",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/warrenville",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    },
+    {
+      "url": "https://shynlicleaningservice.com/woodridge",
+      "lastmod": "2026-10-22T00:00:00.000Z"
+    }
+  ],
+  "failures": []
+}

@@ -534,7 +534,7 @@ test("serves city landing pages from the clean shared city template", async () =
   assert.match(response.headers.get("content-type") || "", /text\/html/);
   assert.match(body, /<title>House Cleaning Services in Romeoville, IL \| Shynli Cleaning<\/title>/);
   assert.match(body, /House Cleaning Services in <span class="sg-accent">Romeoville<\/span>, IL/);
-  assert.match(body, /Shynli Cleaning helps Romeoville homeowners/);
+  assert.match(body, /Homes We Clean in <span class="sg-accent">Romeoville/);
   assert.match(body, /class="sg-page"/);
   assert.doesNotMatch(body, /js\/tilda-scripts-3\.0\.min\.js/);
   assert.doesNotMatch(body, /js\/tilda-blocks-page111640886\.min\.js/);
@@ -581,21 +581,12 @@ test("serves the clean Sugar Grove copy on /sugargrove", async () => {
     body,
     /<h1>House Cleaning Services in <span class="sg-accent">Sugar Grove<\/span>, IL<\/h1>/
   );
-  assert.match(
-    body,
-    /Reliable regular, deep, and move-in\/move-out cleaning for homes in Sugar Grove and nearby areas\./
-  );
-  assert.match(
-    body,
-    /Local cleaning team &bull; Transparent pricing &bull; Weekly, bi-weekly, and one-time service/
-  );
+  assert.match(body, /Begin with a description of the home, not a guess/);
+  assert.match(body, /Serving Sugar Grove in Kane County/);
   assert.match(body, /<a class="sg-button sg-hero-panel__cta" href="\/quote">Get Free Quote<\/a>/);
-  assert.match(body, /Looking for a reliable house cleaning service in <strong>Sugar Grove\?<\/strong>/);
-  assert.match(body, /Shynli Cleaning helps Sugar Grove homeowners keep their homes clean, fresh, and easier to maintain with regular house cleaning/);
-  assert.match(body, /regular house cleaning, deep cleaning, and move-in\/move-out service/);
-  assert.match(body, /Whether you need weekly cleaning, bi-weekly cleaning, or a full deep clean before guests/);
-  assert.match(body, /Why Choose <span class="sg-accent">Recurring Cleaning in Sugar Grove\?<\/span>/);
-  assert.match(body, /Most Sugar Grove homeowners choose bi-weekly cleaning because it keeps the home consistently clean without the cost of weekly service/);
+  assert.match(body, /Homes We Clean in <span class="sg-accent">Sugar Grove/);
+  assert.match(body, /Sugar Grove uses well water/);
+  assert.doesNotMatch(body, /Most Sugar Grove homeowners|most booked|typical home|300\+|Fox Valley/);
   assert.match(body, /<section id="sugargrove-residential-services"/);
   assert.match(body, /<section id="sugargrove-recurring-cleaning"/);
   assert.match(body, /id="shynli-sugargrove-mobile-layout-fix"/);
@@ -729,7 +720,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
       assert.match(body, /Homes We Clean in <span class="sg-accent">Naperville/);
       assert.match(body, /DuPage and Will counties/);
       assert.doesNotMatch(body, /Fox Valley|300\+/);
-    } else if (require("../lib/site/city-editorial-data").cities[route.slice(1)]) {
+    } else if (require("../lib/site/city-editorial-data").cities[route.slice(1)] || require("../lib/site/city-batch-one-data").cities[route.slice(1)]) {
       assert.match(body, new RegExp(`Homes We Clean in <span class="sg-accent">${cityPattern}`), route);
       assert.match(body, /data-city-editorial="true"/);
       assert.doesNotMatch(body, /Fox Valley|300\+/);
@@ -782,7 +773,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
       new RegExp(`Most of our ${cityPattern} clients choose bi-weekly cleaning`),
       route
     );
-    if (route === "/naperville" || require("../lib/site/city-editorial-data").cities[route.slice(1)]) {
+    if (route === "/naperville" || require("../lib/site/city-editorial-data").cities[route.slice(1)] || require("../lib/site/city-batch-one-data").cities[route.slice(1)]) {
       assert.match(body, /How Our Pricing Works/);
       assert.match(body, new RegExp(`FAQ About House Cleaning in <span class="sg-accent">${cityPattern}`));
     } else {
@@ -791,8 +782,8 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
     }
     const faqSection = body.match(/<section class="sg-section sg-faq" id="faq"[\s\S]*?<\/section>/);
     assert.ok(faqSection, route);
-    const editorialCity = require("../lib/site/city-editorial-data").cities[route.slice(1)];
-    assert.equal((faqSection[0].match(/<details class="sg-faq__item">/g) || []).length, route === "/naperville" || editorialCity ? 7 : 5, route);
+    const editorialCity = require("../lib/site/city-editorial-data").cities[route.slice(1)] || require("../lib/site/city-batch-one-data").cities[route.slice(1)];
+    assert.equal((faqSection[0].match(/<details class="sg-faq__item">/g) || []).length, editorialCity ? editorialCity.faq.length + 4 : route === "/naperville" ? 7 : 5, route);
     assert.match(faqSection[0], route === "/naperville" ? /Which ZIP codes in Naperville do you serve\?/ : editorialCity ? /ZIP code/ : new RegExp(`Can I get a free quote for house cleaning in ${cityPattern}\\?`), route);
     assert.doesNotMatch(faqSection[0], /Do I need to be home during the cleaning\?|How is pricing calculated\?/, route);
     assert.match(body, new RegExp(`Get a Free Quote for House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);

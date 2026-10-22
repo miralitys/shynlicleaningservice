@@ -1026,7 +1026,7 @@ test("keeps city-specific copy aligned on every city page", () => {
     const text = toText(html);
     const cityPattern = fixture.city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    const editorial = require("../lib/site/city-editorial-data").cities[fixture.route.slice(1)];
+    const editorial = require("../lib/site/city-editorial-data").cities[fixture.route.slice(1)] || require("../lib/site/city-batch-one-data").cities[fixture.route.slice(1)];
     if (editorial) {
       assert.match(text, new RegExp(`Homes we clean in ${cityPattern}`, "i"));
       assert.doesNotMatch(text, /Fox Valley|300\+|Why Choose Recurring Cleaning/);
