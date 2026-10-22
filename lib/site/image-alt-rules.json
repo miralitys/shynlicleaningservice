@@ -133,23 +133,6 @@
     "alt": "Shynli Cleaning Service",
     "description": "Shynli Cleaning wordmark with a house mark"
   },
-  "/images/home-copy-service-regular.w640.webp": {
-    "kind": "content",
-    "alt": "Regular house cleaning service",
-    "description": "Cutaway home with cleaners maintaining rooms",
-    "keepExisting": true
-  },
-  "/images/home-copy-service-deep.w640.webp": {
-    "kind": "content",
-    "alt": "Illustrated home with cleaners detailing rooms and stairs",
-    "description": "Cutaway two-story home with cleaners, stairs and garden"
-  },
-  "/images/home-copy-service-move.w640.webp": {
-    "kind": "content",
-    "alt": "Move in and move out cleaning service",
-    "description": "Cutaway empty home and moving truck",
-    "keepExisting": true
-  },
   "/images/shynli-phone-cream.svg": {
     "kind": "decorative",
     "alt": "",

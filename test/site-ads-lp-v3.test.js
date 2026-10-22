@@ -10,14 +10,6 @@ let BASE_URL = null;
 
 const LANDING_ROUTES = [
   {
-    route: "/cleaners-near-me/ads-lp",
-    title: "House Cleaners Near You in Chicago Suburbs - $135 | Shynli Cleaning",
-    canonical: "https://shynlicleaningservice.com/cleaners-near-me/ads-lp",
-    bodyClass: "adlp-page--near",
-    service: "Regular Cleaning",
-    content: /Cities We Serve Near You/,
-  },
-  {
     route: "/services/regular-cleaning/ads-lp",
     title: "House Cleaning Service in Chicagoland - $135/Visit | Shynli Cleaning",
     canonical: "https://shynlicleaningservice.com/services/regular-cleaning/ads-lp",
@@ -122,13 +114,6 @@ test("serves ad-only v3 landing pages", async () => {
     assert.doesNotMatch(body, /adlp-hero__media|home-copy-team|Local team, local routes/, landing.route);
     assert.doesNotMatch(body, /\/services\/(?:regular-cleaning|deep-cleaning|move-in-move-out-cleaning)\/ads-v2/, landing.route);
     assert.doesNotMatch(body, /href="\/pricing-v2"/, landing.route);
-
-    if (landing.route === "/cleaners-near-me/ads-lp") {
-      const cityGridMatch = body.match(/<div class="adlp-city-grid">([\s\S]*?)<\/div>/);
-      const cityGrid = cityGridMatch ? cityGridMatch[1] : "";
-      assert.match(cityGrid, /<span>Naperville<\/span>/, landing.route);
-      assert.doesNotMatch(cityGrid, /<a\b|href=/i, landing.route);
-    }
 
     if (landing.route === "/services/deep-cleaning/ads-lp" || landing.route === "/services/move-in-move-out-cleaning/ads-lp") {
       assert.match(body, /<a href="#get-quote" data-adlp-modal-trigger>pricing options<\/a>/, landing.route);

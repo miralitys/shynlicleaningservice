@@ -7,7 +7,7 @@ const { createSiteSeoHelpers } = require("../lib/site/seo");
 test("advertising duplicates replace inherited robots with noindex while ad-only and quote routes stay noindex", () => {
   const ads = ["/ads", "/ads-v2", "/pricing-v2", "/service-areas-v2", ...["regular", "deep", "move-in-move-out"].flatMap(type =>
     [`/services/${type}-cleaning/ads`, `/services/${type}-cleaning/ads-v2`])];
-  const noindex = [...ads, "/quote", "/quote-no-price", "/quote-no-calculator", "/cleaners-near-me/ads-lp",
+  const noindex = [...ads, "/quote", "/quote-no-price", "/quote-no-calculator",
     "/services/deep-cleaning/ads-lp", "/services/regular-cleaning/ads-lp", "/services/move-in-move-out-cleaning/ads-lp"];
   const helpers = createSiteSeoHelpers({
     BREADCRUMB_LABELS: new Map(), NOINDEX_ROUTES: new Set(noindex), ROUTE_META_OVERRIDES: {},

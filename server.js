@@ -291,6 +291,7 @@ const QUOTE_V2_PUBLIC_PATH = "/quote2";
 const QUOTE_PUBLIC_PATHS = new Set([QUOTE_PUBLIC_PATH, QUOTE_NO_CALCULATOR_PUBLIC_PATH, QUOTE_NO_PRICE_PUBLIC_PATH, QUOTE_V2_PUBLIC_PATH]);
 const REDIRECT_ROUTES = new Map([
   ["/cleaners-near-me", "/service-areas"],
+  ["/cleaners-near-me/ads-lp", "/service-areas"],
   ["/home2", "/"],
   ["/home-copy", "/"],
   ["/home-simple", "/"],
@@ -525,7 +526,6 @@ const NOINDEX_ROUTES = new Set([
   "/quote-no-calculator",
   "/quote-no-price",
   "/quote2",
-  "/cleaners-near-me/ads-lp",
   "/services/deep-cleaning/ads-lp",
   "/services/move-in-move-out-cleaning/ads-lp",
   "/services/regular-cleaning/ads-lp",
@@ -613,17 +613,6 @@ const ROUTE_META_OVERRIDES = {
   },
   "/contacts": {
     title: "Contact Shynli Cleaning | Chicago Suburbs",
-  },
-  "/cleaners-near-me/ads-lp": {
-    title: "House Cleaners Near You in Chicago Suburbs - $135 | Shynli Cleaning",
-    description:
-      "Looking for house cleaners near you in Chicagoland? Trusted local cleaners serving DuPage, Will and Kane counties. Weekly $135. Free quote in 60 seconds.",
-    canonical: `${SITE_ORIGIN}/cleaners-near-me/ads-lp`,
-    ogUrl: `${SITE_ORIGIN}/cleaners-near-me/ads-lp`,
-    ogTitle: "House Cleaners Near You in Chicago Suburbs - $135 | Shynli Cleaning",
-    ogDescription:
-      "Trusted local house cleaners serving 40+ Chicago suburbs with regular, deep, and move cleaning quotes by text.",
-    robots: "noindex,follow",
   },
   "/home-calculator": {
     title: "Instant House Cleaning Cost Calculator | Shynli Cleaning",
