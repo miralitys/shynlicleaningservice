@@ -724,11 +724,17 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
       new RegExp(`<link rel="canonical" href="https:\\/\\/shynlicleaningservice\\.com${escapeRegExp(route)}">`),
       route
     );
-    assert.match(
-      body,
-      new RegExp(`House Cleaning Services in <span class="sg-accent">${cityPattern}<\\/span>, IL`),
-      route
-    );
+    if (route === "/naperville") {
+      assert.match(body, /House Cleaning Services in <span class="sg-accent">Naperville<\/span>, IL/);
+      assert.match(body, /Homes We Clean in <span class="sg-accent">Naperville/);
+      assert.match(body, /DuPage and Will counties/);
+      assert.doesNotMatch(body, /Fox Valley|300\+/);
+    } else {
+      assert.match(
+        body,
+        new RegExp(`House Cleaning Services in <span class="sg-accent">${cityPattern}<\\/span>, IL`),
+        route
+      );
     assert.match(body, new RegExp(`homes in ${cityPattern} and nearby areas`), route);
     assert.match(
       body,
@@ -748,6 +754,7 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
       ),
       route
     );
+    }
     const nearbyAreaBlock = body.match(
       /<div class="sg-area-links" aria-label="Nearby city links">([\s\S]*?)<\/div>\s*<div class="sg-zip/
     );
@@ -771,12 +778,17 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
       new RegExp(`Most of our ${cityPattern} clients choose bi-weekly cleaning`),
       route
     );
-    assert.match(body, new RegExp(`Pricing for home cleaning in <strong>${cityPattern}<\\/strong>`), route);
-    assert.match(body, new RegExp(`FAQ About House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
+    if (route === "/naperville") {
+      assert.match(body, /How Our Pricing Works/);
+      assert.match(body, /FAQ About House Cleaning in <span class="sg-accent">Naperville/);
+    } else {
+      assert.match(body, new RegExp(`Pricing for home cleaning in <strong>${cityPattern}<\\/strong>`), route);
+      assert.match(body, new RegExp(`FAQ About House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
+    }
     const faqSection = body.match(/<section class="sg-section sg-faq" id="faq"[\s\S]*?<\/section>/);
     assert.ok(faqSection, route);
-    assert.equal((faqSection[0].match(/<details class="sg-faq__item">/g) || []).length, 5, route);
-    assert.match(faqSection[0], new RegExp(`Can I get a free quote for house cleaning in ${cityPattern}\\?`), route);
+    assert.equal((faqSection[0].match(/<details class="sg-faq__item">/g) || []).length, route === "/naperville" ? 7 : 5, route);
+    assert.match(faqSection[0], route === "/naperville" ? /Which ZIP codes in Naperville do you serve\?/ : new RegExp(`Can I get a free quote for house cleaning in ${cityPattern}\\?`), route);
     assert.doesNotMatch(faqSection[0], /Do I need to be home during the cleaning\?|How is pricing calculated\?/, route);
     assert.match(body, new RegExp(`Get a Free Quote for House Cleaning in <span class="sg-accent">${cityPattern}<\\/span>`), route);
     assert.match(

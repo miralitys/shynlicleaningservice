@@ -1,0 +1,247 @@
+{
+  "deployed": false,
+  "wordCount": 1115,
+  "editorialWordCount": 678,
+  "wordCountNote": "The user requested fuller copy after previewing the first draft; total includes all 24 review cards. No font sizes were increased.",
+  "similarities": {
+    "/plainfield": 5.6,
+    "/aurora": 5.61,
+    "/bolingbrook": 5.62,
+    "/yorkville": 5.61,
+    "/oswego": 5.61,
+    "/lombard": 5.63,
+    "/batavia": 5.63
+  },
+  "similaritiesWithoutReviews": {
+    "/plainfield": 7.51,
+    "/aurora": 7.53,
+    "/bolingbrook": 7.53,
+    "/yorkville": 7.53,
+    "/oswego": 7.52,
+    "/lombard": 7.54,
+    "/batavia": 7.56
+  },
+  "nonNapervilleDifferences": [],
+  "protectedDifferences": [],
+  "sitemapDifferences": [
+    {
+      "path": "/naperville",
+      "lastmod": "2026-10-21T00:00:00.000Z"
+    }
+  ],
+  "hasUnverifiedReviewCount": false,
+  "hasFoxValley": false,
+  "reviews": 24,
+  "faq": [
+    {
+      "@type": "Question",
+      "name": "Do you clean condos and apartments in Naperville?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. We clean condos and apartments as well as houses."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which ZIP codes in Naperville do you serve?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We serve 60540, 60563, 60564, and 60565."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can you do a deep cleaning before or after a move?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Deep cleaning and move-in/move-out cleaning are among our most booked services in Naperville, and both are available before or after a move."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you bring supplies?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We bring all cleaning supplies and equipment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where will the cleaners park?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Before the first cleaning, we ask where our cleaners can park."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you offer one-time cleaning?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. You can book a one-time clean without starting a recurring plan."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I book recurring cleaning?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. You can book weekly, bi-weekly, or monthly recurring cleaning."
+      }
+    }
+  ],
+  "schemas": [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://shynlicleaningservice.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Naperville",
+          "item": "https://shynlicleaningservice.com/naperville"
+        }
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": "https://shynlicleaningservice.com/naperville#service",
+      "name": "House Cleaning in Naperville, IL",
+      "serviceType": "House cleaning",
+      "description": "Professional house cleaning services in Naperville, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.",
+      "url": "https://shynlicleaningservice.com/naperville",
+      "provider": {
+        "@id": "https://shynlicleaningservice.com/#localbusiness"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Naperville, IL"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Cleaning services",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Airbnb Cleaning",
+              "url": "https://shynlicleaningservice.com/services/airbnb-cleaning"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Commercial Cleaning",
+              "url": "https://shynlicleaningservice.com/services/commercial-cleaning"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Deep Cleaning",
+              "url": "https://shynlicleaningservice.com/services/deep-cleaning"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Move In Move Out Cleaning",
+              "url": "https://shynlicleaningservice.com/services/move-in-move-out-cleaning"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Post Construction Cleaning",
+              "url": "https://shynlicleaningservice.com/services/post-construction-cleaning"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Regular Cleaning",
+              "url": "https://shynlicleaningservice.com/services/regular-cleaning"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Do you clean condos and apartments in Naperville?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. We clean condos and apartments as well as houses."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which ZIP codes in Naperville do you serve?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We serve 60540, 60563, 60564, and 60565."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you do a deep cleaning before or after a move?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Deep cleaning and move-in/move-out cleaning are among our most booked services in Naperville, and both are available before or after a move."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you bring supplies?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We bring all cleaning supplies and equipment."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where will the cleaners park?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Before the first cleaning, we ask where our cleaners can park."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you offer one-time cleaning?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. You can book a one-time clean without starting a recurring plan."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I book recurring cleaning?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. You can book weekly, bi-weekly, or monthly recurring cleaning."
+          }
+        }
+      ]
+    }
+  ],
+  "comparedOutsideNaperville": 300,
+  "sitemapUrlsUnchanged": true
+}

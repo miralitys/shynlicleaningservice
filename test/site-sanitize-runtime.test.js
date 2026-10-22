@@ -1026,6 +1026,16 @@ test("keeps city-specific copy aligned on every city page", () => {
     const text = toText(html);
     const cityPattern = fixture.city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+    if (fixture.route === "/naperville") {
+      assert.match(text, /Homes we clean in Naperville/i);
+      assert.match(text, /DuPage and Will counties/);
+      assert.doesNotMatch(text, /Fox Valley|300\+|Why Choose Recurring Cleaning/);
+      assert.equal(extractAreaLinks(html, fixture.route).length, 7);
+      assert.deepEqual(extractCityFaqItems(html, fixture.route).map(item => item.question),
+        require("../lib/site/naperville-pilot").FAQ.map(([question]) => question));
+      continue;
+    }
+
     assertOnlyCity(
       captureAll(text, /(?:Home|House) Cleaning Services in\s+([^,]+?)\s*,\s*IL/g),
       fixture.city,
