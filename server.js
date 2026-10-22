@@ -489,12 +489,15 @@ function toSitemapDateOnlyIso(value) {
   return new Date(parsed).toISOString();
 }
 
-const LATEST_BLOG_ARTICLE_LASTMOD = BLOG_ARTICLES.reduce((latest, article) => {
-  const current = toSitemapDateOnlyIso(article && article.publishedAt);
-  if (!current) return latest;
-  if (!latest) return current;
-  return current > latest ? current : latest;
-}, "");
+function latestBlogArticleLastmod(articles) {
+  return articles.reduce((latest, article) => {
+    const current = toSitemapDateOnlyIso(article && (article.modifiedAt || article.publishedAt));
+    if (!current) return latest;
+    if (!latest) return current;
+    return current > latest ? current : latest;
+  }, "");
+}
+const LATEST_BLOG_ARTICLE_LASTMOD = latestBlogArticleLastmod(BLOG_ARTICLES);
 const BLOG_ROUTE_HTML_FILE = "page108872586.html";
 const MANAGED_BLOG_HTML_ROUTES = Object.freeze([
   ["/blog", BLOG_ROUTE_HTML_FILE],
@@ -535,8 +538,8 @@ const SITEMAP_EXCLUDED_ROUTES = new Set([
 ]);
 const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
-  ...BLOG_CATEGORY_PAGES.map((page) => [page.path, LATEST_BLOG_ARTICLE_LASTMOD]),
-  ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.publishedAt)]),
+  ...BLOG_CATEGORY_PAGES.map((page) => [page.path, latestBlogArticleLastmod(BLOG_ARTICLES.filter((article) => article.categoryPath === page.path))]),
+  ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.modifiedAt || article.publishedAt)]),
 ]);
 const BREADCRUMB_LABELS = new Map([
   ["/ads", "Home"],
