@@ -1,0 +1,60 @@
+{
+  "before": {
+    "words": 1115,
+    "wordsWithFaqClosed": 1035,
+    "phrases": {
+      "body": {
+        "bookingRank": 6,
+        "counties": 5,
+        "supplies": 4,
+        "parking": 4,
+        "homeTypes": 7,
+        "typicalHome": 3
+      },
+      "outsideFaq": {
+        "bookingRank": 5,
+        "counties": 5,
+        "supplies": 3,
+        "parking": 3,
+        "homeTypes": 5,
+        "typicalHome": 3
+      }
+    }
+  },
+  "after": {
+    "words": 1382,
+    "wordsWithFaqClosed": 1302,
+    "phrases": {
+      "body": {
+        "bookingRank": 2,
+        "counties": 1,
+        "supplies": 2,
+        "parking": 2,
+        "homeTypes": 3,
+        "typicalHome": 1
+      },
+      "outsideFaq": {
+        "bookingRank": 1,
+        "counties": 1,
+        "supplies": 1,
+        "parking": 1,
+        "homeTypes": 1,
+        "typicalHome": 1
+      }
+    }
+  },
+  "otherDifferences": [],
+  "protectedDifferences": [],
+  "similarity": {
+    "/plainfield": 4.45,
+    "/aurora": 4.46,
+    "/bolingbrook": 4.46
+  },
+  "services": [
+    "A reset for homes that have not been professionally cleaned in months, or before starting recurring service. The work includes detailed dusting, hand-wiped baseboards and door frames, kitchen degreasing, and close attention to bathroom tile and grout.",
+    "Ongoing help for busy households that want the kitchen, bathrooms, and floors maintained between visits. Each appointment covers light dusting, vacuuming and mopping, appliance exteriors, the inside of the microwave, bathroom fixtures, and trash removal.",
+    "For renters, buyers, and property managers preparing a home for its next occupant or a final walkthrough. Work includes floors, closets, interior doors, and kitchen appliance interiors, with inside cabinets and drawers cleaned when empty."
+  ],
+  "preparation": "We bring all cleaning supplies and equipment. Before the first cleaning, we ask where our cleaners can park. Clear counters and floor space, put valuables away, and secure pets if they are anxious around vacuums or open doors. You do not need to stay home if you provide access instructions. Allow roughly 2 to 4 hours for regular cleaning or 4 to 6 for a deep clean. These are guide ranges, not a fixed appointment length. We confirm estimated timing before the visit based on your home's size, condition, and booked services.",
+  "jsonLdParses": true
+}

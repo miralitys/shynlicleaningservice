@@ -19,8 +19,8 @@ test("Naperville rewrite is route-scoped, preserves protected markup, and is ide
   const output = applyNapervillePilot(source, "/naperville");
   assert.equal(applyNapervillePilot(output, "/naperville"), output);
   for (const predicate of [
-    node => node.tagName === "header" || node.tagName === "footer" || node.tagName === "style" && attribute(node, "id") !== "naperville-copy-fit" || node.tagName === "script" || node.tagName === "form" || node.tagName === "img",
-    node => hasClass(node, "sg-quote") || hasClass(node, "sg-areas"),
+    node => node.tagName === "header" || node.tagName === "footer" || node.tagName === "style" && attribute(node, "id") !== "naperville-copy-fit" || node.tagName === "script" || node.tagName === "form" && attribute(node, "data-zip-form") === undefined || node.tagName === "img",
+    node => hasClass(node, "sg-quote") || hasClass(node, "sg-area-links"),
   ]) assert.deepEqual(markup(output, predicate), markup(source, predicate));
   for (const name of ["sg-hero__people", "sg-review-stack__icons", "sg-hero-panel__tiles", "sg-services__header", "sg-services__secondary", "sg-benefits", "sg-team__list"]) {
     assert.equal(markup(output, node => hasClass(node, name)).length, markup(source, node => hasClass(node, name)).length, name);
@@ -75,22 +75,24 @@ test("rendered Naperville meets the pilot brief and every city comparison stays 
     const facts = inspectHtml(html);
     const text = mainText(html);
     const editorialWords = mainText(html, { excludeReviews: true }).split(/\s+/).length;
-    assert.ok(editorialWords >= 450, `editorial words: ${editorialWords}`);
+    assert.ok(text.split(/\s+/).length >= 1150, `body words: ${text.split(/\s+/).length}`);
+    assert.ok(editorialWords >= 850, `editorial words: ${editorialWords}`);
     assert.doesNotMatch(html, /300\+|300 plus|Fox Valley|same-day|less than 60 seconds/i);
     assert.equal(markup(html, node => hasClass(node, "sg-price-card")).length, 0);
     const rating = markup(html, node => hasClass(node, "sg-rating"))[0];
     assert.match(rating, />5\/5<\/div>/);
+    assert.match(rating, /5 out of 5 on Google/);
     assert.doesNotMatch(rating, /5\.0\/5/);
     const benefits = markup(html, node => hasClass(node, "sg-benefits"))[0];
-    assert.match(benefits, /Deep, regular, and move-related cleaning/);
+    assert.match(benefits, /Put fragile items aside/);
     assert.doesNotMatch(benefits, /60540/);
-    const maryLouise = markup(html, node => attribute(node, "data-naperville-review") === reviews.reviews[3].reviewId)[0];
-    assert.match(maryLouise, /5-star Google rating\. No written comment\./);
-    assert.match(maryLouise, /Google rating only/);
+    assert.equal(markup(html, node => attribute(node, "data-naperville-review") === reviews.reviews[3].reviewId).length, 0);
+    assert.doesNotMatch(text, /No written comment|Google rating only/);
     for (const tile of markup(html, node => node.tagName === "p" && hasClass(node.parentNode, "sg-info-tile"))) assert.ok(tile.split(/\s+/).length >= 12);
     assert.match(text, /DuPage and Will counties/);
     assert.match(text, /three bedrooms and 2\.5 bathrooms/);
-    assert.match(text, /Lake Michigan water through the DuPage Water Commission/);
+    assert.doesNotMatch(text, /Lake Michigan|DuPage Water Commission/);
+    assert.match(text, /2 to 4 hours for regular cleaning or 4 to 6 for a deep clean/);
     for (const zip of [60540, 60563, 60564, 60565]) assert.ok(text.includes(String(zip)));
     assert.ok((text.match(/house cleaning in naperville|cleaning service in naperville/gi) || []).length <= 3);
     assert.deepEqual(facts.faq.map(item => [item.name, item.acceptedAnswer.text]), FAQ);
@@ -104,7 +106,17 @@ test("rendered Naperville meets the pilot brief and every city comparison stays 
     assert.ok(services[0].includes('/services/deep-cleaning"'));
     assert.ok(services[1].includes('/services/regular-cleaning"'));
     assert.ok(services[2].includes('/services/move-in-move-out-cleaning"'));
-    assert.equal(markup(html, node => Boolean(attribute(node, "data-naperville-review"))).length, 24);
+    assert.equal(markup(html, node => Boolean(attribute(node, "data-naperville-review"))).length, 23);
+    const renderedReviews = markup(html, node => Boolean(attribute(node, "data-naperville-review")));
+    for (const [index, review] of reviews.reviews.filter(item => item.quote.trim()).entries()) {
+      assert.ok(renderedReviews[index].includes(review.reviewId));
+      assert.equal(inspectHtml(`<main>${renderedReviews[index]}</main>`).main.childNodes[0].childNodes.find(node => hasClass(node, "clients-say-home__text")).childNodes.map(node => node.value || "").join(""), review.quote);
+    }
+    const { phraseCounts } = require("../scripts/audit-naperville-second-pass");
+    assert.ok(Object.values(phraseCounts(html).outsideFaq).every(count => count === 1));
+    assert.equal(markup(html, node => node.tagName === "h2" && node.childNodes?.some(child => child.value === "Choose your city")).length, 1);
+    assert.equal(markup(html, node => node.tagName === "label" && attribute(node, "for") === "sgZip").length, 0);
+    assert.match(markup(html, node => node.tagName === "input" && attribute(node, "id") === "sgZip")[0], /aria-label="ZIP code"/);
     assert.equal(markup(html, node => node.tagName === "form" && hasClass(node, "sg-quote-form")).length, 1);
     assert.equal(markup(html, node => node.tagName === "form" && attribute(node, "data-zip-form") !== undefined).length, 1);
     for (const route of COMPARISONS) {
