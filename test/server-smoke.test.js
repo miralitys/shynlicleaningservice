@@ -1278,28 +1278,26 @@ test("serves advertising v2 no-calculator variants with noindex outside the site
   assert.match(pricingBody, /House Cleaning Prices/);
 });
 
-test("serves cleaners-near-me with Service referencing the one homepage business", async () => {
-  const response = await fetch(`${BASE_URL}/cleaners-near-me`);
-  const body = await response.text();
-  assert.equal(response.status, 200);
-
-  const schemaMatch = body.match(
-    /<script type="application\/ld\+json" id="schema-cleaners-near-me">([\s\S]*?)<\/script>/
-  );
-  assert.ok(schemaMatch, "cleaners-near-me schema should be present");
-
-  const schema = JSON.parse(schemaMatch[1]);
-  const graph = schema["@graph"];
-  const schemaText = JSON.stringify(schema);
-
-  assert.deepEqual(
-    graph.map((node) => node["@type"]),
-    ["Service"]
-  );
-  assert.equal(graph[0].provider["@id"], "https://shynlicleaningservice.com/#localbusiness");
-  assert.equal(graph[0].hasOfferCatalog.itemListElement.length, 3);
-  assert.doesNotMatch(schemaText, /aggregateRating/);
-  assert.doesNotMatch(schemaText, /HouseCleaningService/);
+test("redirects the retired cleaners page in one hop without removing its ad landing", async () => {
+  for (const source of ["/cleaners-near-me", "/cleaners-near-me/"]) {
+    for (const method of ["GET", "HEAD"]) {
+      const response = await fetch(`${BASE_URL}${source}`, { method, redirect: "manual" });
+      assert.equal(response.status, 301, `${method} ${source}`);
+      assert.equal(response.headers.get("location"), "/service-areas");
+    }
+    const response = await fetch(`${BASE_URL}${source}?utm_source=old-ad`, { redirect: "manual" });
+    assert.equal(response.headers.get("location"), "/service-areas?utm_source=old-ad");
+  }
+  assert.equal((await fetch(`${BASE_URL}/service-areas`, { redirect: "manual" })).status, 200);
+  const ad = await fetch(`${BASE_URL}/cleaners-near-me/ads-lp`, { redirect: "manual" });
+  assert.equal(ad.status, 200);
+  assert.match(await ad.text(), /<meta[^>]+name="robots"[^>]+content="noindex,follow"/);
+  const sitemap = await (await fetch(`${BASE_URL}/sitemap.xml`)).text();
+  assert.doesNotMatch(sitemap, /cleaners-near-me/);
+  for (const route of ["/services/regular-cleaning/ads-lp", "/services/deep-cleaning/ads-lp", "/services/move-in-move-out-cleaning/ads-lp", "/cleaners-near-me/ads-lp", "/services/deep-cleaning/ads-v2", "/services/regular-cleaning/ads-v2"]) {
+    const html = await (await fetch(`${BASE_URL}${route}`)).text();
+    assert.doesNotMatch(html, /href=["'](?:https:\/\/shynlicleaningservice\.com)?\/cleaners-near-me\/?(?:[?#][^"']*)?["']/);
+  }
 });
 
 test("keeps v2 pages inside the v2 link environment", async () => {
