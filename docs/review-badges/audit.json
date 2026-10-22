@@ -1,0 +1,215 @@
+{
+  "version": "review-badges-827010ea8de2",
+  "deployed": false,
+  "baseline": "https://shynlicleaningservice.com",
+  "preview": "http://127.0.0.1:63757",
+  "checkedAt": "2026-10-22T22:31:28.584Z",
+  "sitemapPages": 308,
+  "totalPages": 329,
+  "changed": [
+    {
+      "route": "/",
+      "old": [
+        "300+ Customer Reviews"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/about-us",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/ads",
+      "old": [
+        "300+ Customer Reviews"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/home-simple",
+      "old": [
+        "300+ Customer Reviews"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/pricing",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/pricing-v2",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/airbnb-cleaning",
+      "old": [
+        "300+ Customer Reviews"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/commercial-cleaning",
+      "old": [
+        "300+ Customer Reviews"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/deep-cleaning",
+      "old": [
+        "300+ Customer Reviews"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/deep-cleaning/ads",
+      "old": [
+        "300+ Customer Reviews"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/deep-cleaning/ads-v2",
+      "old": [
+        "300+ Customer Reviews"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/move-in-move-out-cleaning",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/move-in-move-out-cleaning/ads",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/move-in-move-out-cleaning/ads-v2",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/regular-cleaning",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/regular-cleaning/ads",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    },
+    {
+      "route": "/services/regular-cleaning/ads-v2",
+      "old": [
+        "Customer Reviews 300+"
+      ],
+      "new": "58 Google reviews"
+    }
+  ],
+  "unchangedPages": 312,
+  "remainingLegacy": [],
+  "unexpectedHtmlChanges": [],
+  "schemaChanges": [],
+  "schemaReviewCounts": [],
+  "cleaningCountChanges": [],
+  "preservedCleaningCounts": [
+    {
+      "route": "/",
+      "occurrences": 1
+    },
+    {
+      "route": "/about-us",
+      "occurrences": 1
+    },
+    {
+      "route": "/ads",
+      "occurrences": 1
+    },
+    {
+      "route": "/ads-v2",
+      "occurrences": 1
+    },
+    {
+      "route": "/cleaners-near-me",
+      "occurrences": 1
+    },
+    {
+      "route": "/home-calculator",
+      "occurrences": 1
+    },
+    {
+      "route": "/home-simple",
+      "occurrences": 1
+    },
+    {
+      "route": "/pricing-v2",
+      "occurrences": 1
+    },
+    {
+      "route": "/services/airbnb-cleaning",
+      "occurrences": 1
+    },
+    {
+      "route": "/services/commercial-cleaning",
+      "occurrences": 1
+    },
+    {
+      "route": "/services/deep-cleaning",
+      "occurrences": 1
+    },
+    {
+      "route": "/services/deep-cleaning/ads",
+      "occurrences": 1
+    },
+    {
+      "route": "/services/deep-cleaning/ads-v2",
+      "occurrences": 2
+    },
+    {
+      "route": "/services/move-in-move-out-cleaning",
+      "occurrences": 1
+    },
+    {
+      "route": "/services/move-in-move-out-cleaning/ads",
+      "occurrences": 2
+    },
+    {
+      "route": "/services/move-in-move-out-cleaning/ads-v2",
+      "occurrences": 2
+    },
+    {
+      "route": "/services/regular-cleaning",
+      "occurrences": 1
+    },
+    {
+      "route": "/services/regular-cleaning/ads",
+      "occurrences": 2
+    },
+    {
+      "route": "/services/regular-cleaning/ads-v2",
+      "occurrences": 2
+    }
+  ],
+  "failedResponses": []
+}

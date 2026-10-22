@@ -1,0 +1,971 @@
+[
+  {
+    "route": "/",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 567.7265625,
+      "height": 28,
+      "left": 128,
+      "right": 256.65625,
+      "top": 539.7265625,
+      "width": 128.65625,
+      "x": 128,
+      "y": 539.7265625
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/deep-cleaning",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 592.3671875,
+      "height": 30.3984375,
+      "left": 109,
+      "right": 237.65625,
+      "top": 561.96875,
+      "width": 128.65625,
+      "x": 109,
+      "y": 561.96875
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/airbnb-cleaning",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 564.734375,
+      "height": 28,
+      "left": 110,
+      "right": 238.65625,
+      "top": 536.734375,
+      "width": 128.65625,
+      "x": 110,
+      "y": 536.734375
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/regular-cleaning",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 594,
+      "height": 28,
+      "left": 110,
+      "right": 238.65625,
+      "top": 566,
+      "width": 128.65625,
+      "x": 110,
+      "y": 566
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 642.171875,
+      "height": 28,
+      "left": 109,
+      "right": 237.65625,
+      "top": 614.171875,
+      "width": 128.65625,
+      "x": 109,
+      "y": 614.171875
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/about-us",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 600,
+      "height": 28,
+      "left": 110,
+      "right": 238.65625,
+      "top": 572,
+      "width": 128.65625,
+      "x": 110,
+      "y": 572
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/pricing",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 650,
+      "height": 28,
+      "left": 113,
+      "right": 241.65625,
+      "top": 622,
+      "width": 128.65625,
+      "x": 113,
+      "y": 622
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/commercial-cleaning",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 546,
+      "height": 30,
+      "left": 109,
+      "right": 237.65625,
+      "top": 516,
+      "width": 128.65625,
+      "x": 109,
+      "y": 516
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/ads",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 1027.3984375,
+      "height": 28,
+      "left": 128,
+      "right": 256.65625,
+      "top": 999.3984375,
+      "width": 128.65625,
+      "x": 128,
+      "y": 999.3984375
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/home-simple",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 567.7265625,
+      "height": 28,
+      "left": 128,
+      "right": 256.65625,
+      "top": 539.7265625,
+      "width": 128.65625,
+      "x": 128,
+      "y": 539.7265625
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/pricing-v2",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 650,
+      "height": 28,
+      "left": 113,
+      "right": 241.65625,
+      "top": 622,
+      "width": 128.65625,
+      "x": 113,
+      "y": 622
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/deep-cleaning/ads",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/deep-cleaning/ads-v2",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/regular-cleaning/ads",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 600,
+      "height": 28,
+      "left": 110,
+      "right": 238.65625,
+      "top": 572,
+      "width": 128.65625,
+      "x": 110,
+      "y": 572
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/regular-cleaning/ads-v2",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 600,
+      "height": 28,
+      "left": 110,
+      "right": 238.65625,
+      "top": 572,
+      "width": 128.65625,
+      "x": 110,
+      "y": 572
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 644,
+      "height": 28,
+      "left": 110,
+      "right": 238.65625,
+      "top": 616,
+      "width": 128.65625,
+      "x": 110,
+      "y": 616
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads-v2",
+    "requestedWidth": 360,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 644,
+      "height": 28,
+      "left": 110,
+      "right": 238.65625,
+      "top": 616,
+      "width": 128.65625,
+      "x": 110,
+      "y": 616
+    },
+    "text": "58 Google reviews",
+    "width": 360
+  },
+  {
+    "route": "/",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 580.390625,
+      "height": 28,
+      "left": 128,
+      "right": 256.65625,
+      "top": 552.390625,
+      "width": 128.65625,
+      "x": 128,
+      "y": 552.390625
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/deep-cleaning",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 592.3671875,
+      "height": 30.3984375,
+      "left": 124,
+      "right": 252.65625,
+      "top": 561.96875,
+      "width": 128.65625,
+      "x": 124,
+      "y": 561.96875
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/airbnb-cleaning",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 511.625,
+      "height": 28,
+      "left": 110,
+      "right": 238.65625,
+      "top": 483.625,
+      "width": 128.65625,
+      "x": 110,
+      "y": 483.625
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/regular-cleaning",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 594,
+      "height": 28,
+      "left": 125,
+      "right": 253.65625,
+      "top": 566,
+      "width": 128.65625,
+      "x": 125,
+      "y": 566
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 642.171875,
+      "height": 28,
+      "left": 124,
+      "right": 252.65625,
+      "top": 614.171875,
+      "width": 128.65625,
+      "x": 124,
+      "y": 614.171875
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/about-us",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 600,
+      "height": 28,
+      "left": 125,
+      "right": 253.65625,
+      "top": 572,
+      "width": 128.65625,
+      "x": 125,
+      "y": 572
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/pricing",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 650,
+      "height": 28,
+      "left": 128,
+      "right": 256.65625,
+      "top": 622,
+      "width": 128.65625,
+      "x": 128,
+      "y": 622
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/commercial-cleaning",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 546,
+      "height": 30,
+      "left": 124,
+      "right": 252.65625,
+      "top": 516,
+      "width": 128.65625,
+      "x": 124,
+      "y": 516
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/ads",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 1040.0625,
+      "height": 28,
+      "left": 128,
+      "right": 256.65625,
+      "top": 1012.0625,
+      "width": 128.65625,
+      "x": 128,
+      "y": 1012.0625
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/home-simple",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 580.390625,
+      "height": 28,
+      "left": 128,
+      "right": 256.65625,
+      "top": 552.390625,
+      "width": 128.65625,
+      "x": 128,
+      "y": 552.390625
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/pricing-v2",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 650,
+      "height": 28,
+      "left": 128,
+      "right": 256.65625,
+      "top": 622,
+      "width": 128.65625,
+      "x": 128,
+      "y": 622
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/deep-cleaning/ads",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/deep-cleaning/ads-v2",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/regular-cleaning/ads",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 600,
+      "height": 28,
+      "left": 125,
+      "right": 253.65625,
+      "top": 572,
+      "width": 128.65625,
+      "x": 125,
+      "y": 572
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/regular-cleaning/ads-v2",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 600,
+      "height": 28,
+      "left": 125,
+      "right": 253.65625,
+      "top": 572,
+      "width": 128.65625,
+      "x": 125,
+      "y": 572
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 644,
+      "height": 28,
+      "left": 125,
+      "right": 253.65625,
+      "top": 616,
+      "width": 128.65625,
+      "x": 125,
+      "y": 616
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads-v2",
+    "requestedWidth": 390,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 644,
+      "height": 28,
+      "left": 125,
+      "right": 253.65625,
+      "top": 616,
+      "width": 128.65625,
+      "x": 125,
+      "y": 616
+    },
+    "text": "58 Google reviews",
+    "width": 390
+  },
+  {
+    "route": "/",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 680.875,
+      "height": 28,
+      "left": 280,
+      "right": 408.65625,
+      "top": 652.875,
+      "width": 128.65625,
+      "x": 280,
+      "y": 652.875
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/deep-cleaning",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 707,
+      "height": 28,
+      "left": 250,
+      "right": 378.65625,
+      "top": 679,
+      "width": 128.65625,
+      "x": 250,
+      "y": 679
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/airbnb-cleaning",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 622.7890625,
+      "height": 28,
+      "left": 311,
+      "right": 439.65625,
+      "top": 594.7890625,
+      "width": 128.65625,
+      "x": 311,
+      "y": 594.7890625
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/regular-cleaning",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 767,
+      "height": 28,
+      "left": 251,
+      "right": 379.65625,
+      "top": 739,
+      "width": 128.65625,
+      "x": 251,
+      "y": 739
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 763.7265625,
+      "height": 28,
+      "left": 250,
+      "right": 378.65625,
+      "top": 735.7265625,
+      "width": 128.65625,
+      "x": 250,
+      "y": 735.7265625
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/about-us",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 761,
+      "height": 28,
+      "left": 281,
+      "right": 409.65625,
+      "top": 733,
+      "width": 128.65625,
+      "x": 281,
+      "y": 733
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/pricing",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 761,
+      "height": 28,
+      "left": 251,
+      "right": 379.65625,
+      "top": 733,
+      "width": 128.65625,
+      "x": 251,
+      "y": 733
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/commercial-cleaning",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 714,
+      "height": 33,
+      "left": 250,
+      "right": 378.65625,
+      "top": 681,
+      "width": 128.65625,
+      "x": 250,
+      "y": 681
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/ads",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 983.578125,
+      "height": 28,
+      "left": 280,
+      "right": 408.65625,
+      "top": 955.578125,
+      "width": 128.65625,
+      "x": 280,
+      "y": 955.578125
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/home-simple",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 680.875,
+      "height": 28,
+      "left": 280,
+      "right": 408.65625,
+      "top": 652.875,
+      "width": 128.65625,
+      "x": 280,
+      "y": 652.875
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/pricing-v2",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 761,
+      "height": 28,
+      "left": 251,
+      "right": 379.65625,
+      "top": 733,
+      "width": 128.65625,
+      "x": 251,
+      "y": 733
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/deep-cleaning/ads",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 705,
+      "height": 28,
+      "left": 250,
+      "right": 378.65625,
+      "top": 677,
+      "width": 128.65625,
+      "x": 250,
+      "y": 677
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/deep-cleaning/ads-v2",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 705,
+      "height": 28,
+      "left": 250,
+      "right": 378.65625,
+      "top": 677,
+      "width": 128.65625,
+      "x": 250,
+      "y": 677
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/regular-cleaning/ads",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 761,
+      "height": 28,
+      "left": 251,
+      "right": 379.65625,
+      "top": 733,
+      "width": 128.65625,
+      "x": 251,
+      "y": 733
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/regular-cleaning/ads-v2",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 761,
+      "height": 28,
+      "left": 251,
+      "right": 379.65625,
+      "top": 733,
+      "width": 128.65625,
+      "x": 251,
+      "y": 733
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 761,
+      "height": 28,
+      "left": 251,
+      "right": 379.65625,
+      "top": 733,
+      "width": 128.65625,
+      "x": 251,
+      "y": 733
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads-v2",
+    "requestedWidth": 1440,
+    "inside": true,
+    "oneLine": true,
+    "overlap": [],
+    "rect": {
+      "bottom": 761,
+      "height": 28,
+      "left": 251,
+      "right": 379.65625,
+      "top": 733,
+      "width": 128.65625,
+      "x": 251,
+      "y": 733
+    },
+    "text": "58 Google reviews",
+    "width": 1440
+  }
+]
