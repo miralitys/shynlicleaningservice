@@ -543,6 +543,7 @@ const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ...require("./lib/site/city-batch-one").cityBatchOneLastmod(),
   ...require("./lib/site/city-batch-two").cityBatchTwoLastmod(),
   ...require("./lib/site/city-batch-three").cityBatchThreeLastmod(),
+  ...require("./lib/site/city-batch-four").cityBatchFourLastmod(),
   ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, latestBlogArticleLastmod(BLOG_ARTICLES.filter((article) => article.categoryPath === page.path))]),
   ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.modifiedAt || article.publishedAt)]),
