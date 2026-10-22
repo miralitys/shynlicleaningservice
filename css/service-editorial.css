@@ -1,0 +1,48 @@
+main[data-service-editorial] {
+  --rose: #9e435a; --rose-dark: #84364b; --ink: #2f2f2d; --muted: #696661;
+  --soft: #eee9e3; --paper: #fffdfb;
+  --heading: "Playfair Display", Georgia, serif; --body: Montserrat, Arial, sans-serif;
+  --t-headline-font: "Playfair Display", Georgia, serif; --t-text-font: Montserrat, Arial, sans-serif;
+  color: var(--ink); font-family: var(--body); background: #faf9f6;
+}
+main[data-service-editorial] *, main[data-service-editorial] *::before, main[data-service-editorial] *::after { box-sizing: border-box; }
+main[data-service-editorial] .se-container { width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
+main[data-service-editorial] .se-section { padding: 36px 0; }
+main[data-service-editorial] .se-section h2 { margin: 0 0 28px; font-family: var(--heading); font-size: 42px; font-weight: 400; line-height: 1.2; letter-spacing: 0; text-align: center; }
+main[data-service-editorial] .se-section p { max-width: 1000px; margin: 0 auto 16px; font-size: 16px; line-height: 1.65; }
+main[data-service-editorial] .se-section p:last-child { margin-bottom: 0; }
+main[data-service-editorial] .se-section a { color: var(--rose); text-underline-offset: 3px; }
+main[data-service-editorial] .se-rooms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; margin-bottom: 24px; }
+main[data-service-editorial] .se-room { min-width: 0; padding: 20px 0; border-top: 1px solid #d8d3cc; }
+main[data-service-editorial] .se-room summary { display: flex; align-items: center; gap: 18px; cursor: pointer; font-family: var(--heading); font-size: 24px; font-weight: 400; line-height: 1.3; list-style: none; }
+main[data-service-editorial] .se-room summary::-webkit-details-marker { display: none; }
+main[data-service-editorial] .se-room summary::after { content: "+"; margin-left: auto; color: var(--rose); font-size: 24px; }
+main[data-service-editorial] .se-room[open] summary::after { content: "-"; }
+main[data-service-editorial] .se-room img { flex: 0 0 64px; width: 64px; height: 64px; object-fit: contain; }
+main[data-service-editorial] .se-room ul { padding-left: 22px; margin: 18px 0 0; }
+main[data-service-editorial] .se-room li { margin-bottom: 8px; font-size: 16px; line-height: 1.55; }
+main[data-service-editorial] .se-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; }
+main[data-service-editorial] .button { font: 600 16px var(--body); text-decoration: none; }
+main[data-service-editorial] .lead-form { display: block; gap: normal; }
+main[data-service-editorial] .lead__contact { text-decoration: none; }
+main[data-service-editorial] :is(input, button, summary, a):focus-visible { outline: 2px solid var(--rose); outline-offset: 4px; }
+main[data-service-editorial] .hero { padding-bottom: 48px; }
+main[data-service-editorial] .hero h1, main[data-service-editorial] .hero-copy h1 { font-size: 52px; line-height: 1.16; letter-spacing: 0; }
+main[data-service-editorial] .hero__copy { width: min(1160px, calc(100% - 48px)); }
+main[data-service-editorial] .hero__lead { max-width: 900px; line-height: 1.45; }
+main[data-service-editorial="/services/post-construction-cleaning"] .hero__media img { width: 100%; height: 100%; inset: 0; transform: none; object-fit: cover; object-position: center 55%; filter: none; }
+main[data-service-editorial] .clients-say-home__name { text-decoration: none; }
+@media (max-width: 767px) {
+  main[data-service-editorial] .se-container { width: calc(100% - 28px); }
+  main[data-service-editorial] .se-section { padding: 28px 0; }
+  main[data-service-editorial] .se-section h2 { font-size: 30px; margin-bottom: 24px; }
+  main[data-service-editorial] .se-rooms { grid-template-columns: 1fr; gap: 0; }
+  main[data-service-editorial] .se-actions { display: grid; grid-template-columns: 1fr; }
+  main[data-service-editorial] .se-actions a { width: 100%; }
+  main[data-service-editorial] .hero h1, main[data-service-editorial] .hero-copy h1 { font-size: 32px; line-height: 1.18; }
+  main[data-service-editorial] .hero__copy { width: calc(100% - 28px); }
+  main[data-service-editorial] .hero__lead { max-width: none; }
+}
+@media (max-width: 639px) {
+  main[data-service-editorial] .clients-say-home__group[aria-hidden="true"] { display: none; }
+}

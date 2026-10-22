@@ -1447,6 +1447,7 @@ test("serves all service page pilots without zero/lazyload runtimes", async () =
     "/services/move-in-move-out-cleaning",
     "/services/airbnb-cleaning",
     "/services/commercial-cleaning",
+    "/services/post-construction-cleaning",
   ]);
 
   for (const [route, expectedTitle] of serviceRoutes) {

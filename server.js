@@ -40,6 +40,7 @@ const { createRequestHelpers } = require("./lib/http/request");
 const { createTimingHelpers } = require("./lib/http/timing");
 const { createSiteStaticHelpers } = require("./lib/site/assets");
 const { BLOG_ARTICLES } = require("./lib/site/blog-articles");
+const { pages: SERVICE_EDITORIAL_PAGES } = require("./lib/site/service-editorial-data");
 const { DEFAULT_GOOGLE_TAG_MANAGER_CONTAINER_ID } = require("./lib/site/google-tag-manager");
 const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request-handler");
 const { createSiteSanitizer } = require("./lib/site/sanitize");
@@ -546,6 +547,7 @@ const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ...require("./lib/site/city-batch-three").cityBatchThreeLastmod(),
   ...require("./lib/site/city-batch-four").cityBatchFourLastmod(),
   ...require("./lib/site/service-city").serviceCityLastmod(),
+  ...require("./lib/site/service-editorial").serviceEditorialLastmod(),
   ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, latestBlogArticleLastmod(BLOG_ARTICLES.filter((article) => article.categoryPath === page.path))]),
   ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.modifiedAt || article.publishedAt)]),
@@ -636,18 +638,16 @@ const ROUTE_META_OVERRIDES = {
     robots: "noindex,follow",
   },
   "/services/post-construction-cleaning": {
-    title: "Post-Construction Cleaning Services | Shynli Cleaning",
-    description:
-      "Professional post-construction cleaning for renovated homes and newly finished spaces across Chicago suburbs. Remove dust, debris, and residue with a final detailed clean.",
-    ogTitle: "Post-Construction Cleaning Services | Shynli Cleaning",
-    ogDescription:
-      "Detailed post-construction cleaning for remodels, renovations, and newly completed spaces across Chicago suburbs.",
+    title: SERVICE_EDITORIAL_PAGES["/services/post-construction-cleaning"].title,
+    description: SERVICE_EDITORIAL_PAGES["/services/post-construction-cleaning"].description,
   },
   "/services/airbnb-cleaning": {
-    title: "Airbnb Cleaning Services | Shynli Cleaning",
+    title: SERVICE_EDITORIAL_PAGES["/services/airbnb-cleaning"].title,
+    description: SERVICE_EDITORIAL_PAGES["/services/airbnb-cleaning"].description,
   },
   "/services/commercial-cleaning": {
-    title: "Commercial Cleaning Services | Shynli Cleaning",
+    title: SERVICE_EDITORIAL_PAGES["/services/commercial-cleaning"].title,
+    description: SERVICE_EDITORIAL_PAGES["/services/commercial-cleaning"].description,
   },
   "/services/deep-cleaning": {
     title: "Deep Cleaning Services | Shynli Cleaning",

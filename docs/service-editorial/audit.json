@@ -1,0 +1,352 @@
+{
+  "version": "three-services-20261022",
+  "deployedAt": null,
+  "preview": "http://127.0.0.1:56667",
+  "checkedAt": "2026-10-22T23:21:37.279Z",
+  "pages": {
+    "/services/airbnb-cleaning": {
+      "beforeWords": 403,
+      "afterWords": 860,
+      "editorialWordsExcludingReviews": 750,
+      "beforeHadMain": true,
+      "mainCount": 1,
+      "title": "Airbnb Cleaning Services | Shynli Cleaning",
+      "canonical": "https://shynlicleaningservice.com/services/airbnb-cleaning",
+      "description": "Turnover cleaning between Airbnb guests, including same-day visits, host-free access and room-by-room cleaning. Request an individual quote from Shynli Cleaning.",
+      "schemaTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatchesSchema": true,
+      "forbiddenSchema": false,
+      "forbiddenCopy": false,
+      "badge": true,
+      "reviews": 6,
+      "requiredLinks": true,
+      "quoteForms": 1,
+      "sourceReferences": [
+        {
+          "key": "C1",
+          "source": "Common: locally owned residential and commercial company; local team, not contractors."
+        },
+        {
+          "key": "C2",
+          "source": "Common: fully insured up to $1 million."
+        },
+        {
+          "key": "C3",
+          "source": "Common: professional supplies and equipment; family/pet-safe products; safer options on request; customers may supply products."
+        },
+        {
+          "key": "C4",
+          "source": "Common: calls and texts daily 9 AM to 7 PM Central; (630) 812-7077; info@shynli.com."
+        },
+        {
+          "key": "C5",
+          "source": "Common: no deposit; payment after cleaning."
+        },
+        {
+          "key": "C6",
+          "source": "Common: reminders 48 hours, 24 hours and 1 hour before each visit."
+        },
+        {
+          "key": "C7",
+          "source": "Common: report missed work within 24 hours and we fix it."
+        },
+        {
+          "key": "C8",
+          "source": "Common: cancellation >48 hours free; 24-48 hours $50; 12-24 hours 50%; <12 hours/same day 100%."
+        },
+        {
+          "key": "C9",
+          "source": "Common: vacuuming only, no shampooing/steam cleaning, exterior windows or biohazard cleanup; garages after photo and manager approval only."
+        },
+        {
+          "key": "C10",
+          "source": "Common: the listed optional add-ons; walls after photos; add-on prices at /pricing."
+        },
+        {
+          "key": "C11",
+          "source": "Common: service area at /service-areas; manager quotes all three services, no new prices."
+        },
+        {
+          "key": "REVIEWS",
+          "source": "Current lib/site/naperville-reviews.json: existing verified written Google review excerpts, unchanged."
+        },
+        {
+          "key": "A1",
+          "source": "Airbnb: turnover cleaning between guests for the next check-in."
+        },
+        {
+          "key": "R_A",
+          "source": "Ramis confirmed 22.10: same-day turnovers, smart-lock code or lockbox key, host absent, photos on request."
+        },
+        {
+          "key": "A2",
+          "source": "Airbnb: the room-by-room checklist in the brief, with window spot-cleaning rather than full washing."
+        },
+        {
+          "key": "A3",
+          "source": "Airbnb: full interior glass/track washing is extra; exterior windows excluded."
+        },
+        {
+          "key": "A4",
+          "source": "Airbnb: quote needs address, bedrooms, bathrooms and how often guests change."
+        }
+      ]
+    },
+    "/services/commercial-cleaning": {
+      "beforeWords": 438,
+      "afterWords": 815,
+      "editorialWordsExcludingReviews": 705,
+      "beforeHadMain": true,
+      "mainCount": 1,
+      "title": "Commercial Cleaning Services | Shynli Cleaning",
+      "canonical": "https://shynlicleaningservice.com/services/commercial-cleaning",
+      "description": "Cleaning for offices, retail spaces and small businesses, with weekend visits and an agreed frequency. Ask Shynli Cleaning for an individual workspace quote.",
+      "schemaTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatchesSchema": true,
+      "forbiddenSchema": false,
+      "forbiddenCopy": false,
+      "badge": true,
+      "reviews": 6,
+      "requiredLinks": true,
+      "quoteForms": 1,
+      "sourceReferences": [
+        {
+          "key": "C1",
+          "source": "Common: locally owned residential and commercial company; local team, not contractors."
+        },
+        {
+          "key": "C2",
+          "source": "Common: fully insured up to $1 million."
+        },
+        {
+          "key": "C3",
+          "source": "Common: professional supplies and equipment; family/pet-safe products; safer options on request; customers may supply products."
+        },
+        {
+          "key": "C4",
+          "source": "Common: calls and texts daily 9 AM to 7 PM Central; (630) 812-7077; info@shynli.com."
+        },
+        {
+          "key": "C5",
+          "source": "Common: no deposit; payment after cleaning."
+        },
+        {
+          "key": "C6",
+          "source": "Common: reminders 48 hours, 24 hours and 1 hour before each visit."
+        },
+        {
+          "key": "C7",
+          "source": "Common: report missed work within 24 hours and we fix it."
+        },
+        {
+          "key": "C8",
+          "source": "Common: cancellation >48 hours free; 24-48 hours $50; 12-24 hours 50%; <12 hours/same day 100%."
+        },
+        {
+          "key": "C9",
+          "source": "Common: vacuuming only, no shampooing/steam cleaning, exterior windows or biohazard cleanup; garages after photo and manager approval only."
+        },
+        {
+          "key": "C10",
+          "source": "Common: the listed optional add-ons; walls after photos; add-on prices at /pricing."
+        },
+        {
+          "key": "C11",
+          "source": "Common: service area at /service-areas; manager quotes all three services, no new prices."
+        },
+        {
+          "key": "REVIEWS",
+          "source": "Current lib/site/naperville-reviews.json: existing verified written Google review excerpts, unchanged."
+        },
+        {
+          "key": "B1",
+          "source": "Commercial: offices, retail spaces and small businesses."
+        },
+        {
+          "key": "R_B",
+          "source": "Commercial / Ramis confirmed 22.10: weekend office visits; any agreed frequency, one-time, weekly or several times weekly."
+        },
+        {
+          "key": "B2",
+          "source": "Commercial: current room checklist, including customer-supplied paper products."
+        },
+        {
+          "key": "Current /services/commercial-cleaning room checklist",
+          "source": "Current /services/commercial-cleaning room checklist"
+        },
+        {
+          "key": "B4",
+          "source": "Commercial: quote needs address, space size, restroom count and frequency."
+        }
+      ]
+    },
+    "/services/post-construction-cleaning": {
+      "beforeWords": 218,
+      "afterWords": 908,
+      "editorialWordsExcludingReviews": 798,
+      "beforeHadMain": false,
+      "mainCount": 1,
+      "title": "Post-Construction Cleaning Services | Shynli Cleaning",
+      "canonical": "https://shynlicleaningservice.com/services/post-construction-cleaning",
+      "description": "A heavier clean for dust and residue after renovation or construction. Send photos and the area size for a manager quote from Shynli Cleaning.",
+      "schemaTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatchesSchema": true,
+      "forbiddenSchema": false,
+      "forbiddenCopy": false,
+      "badge": true,
+      "reviews": 6,
+      "requiredLinks": true,
+      "quoteForms": 1,
+      "sourceReferences": [
+        {
+          "key": "C1",
+          "source": "Common: locally owned residential and commercial company; local team, not contractors."
+        },
+        {
+          "key": "C2",
+          "source": "Common: fully insured up to $1 million."
+        },
+        {
+          "key": "C3",
+          "source": "Common: professional supplies and equipment; family/pet-safe products; safer options on request; customers may supply products."
+        },
+        {
+          "key": "C4",
+          "source": "Common: calls and texts daily 9 AM to 7 PM Central; (630) 812-7077; info@shynli.com."
+        },
+        {
+          "key": "C5",
+          "source": "Common: no deposit; payment after cleaning."
+        },
+        {
+          "key": "C6",
+          "source": "Common: reminders 48 hours, 24 hours and 1 hour before each visit."
+        },
+        {
+          "key": "C7",
+          "source": "Common: report missed work within 24 hours and we fix it."
+        },
+        {
+          "key": "C8",
+          "source": "Common: cancellation >48 hours free; 24-48 hours $50; 12-24 hours 50%; <12 hours/same day 100%."
+        },
+        {
+          "key": "C9",
+          "source": "Common: vacuuming only, no shampooing/steam cleaning, exterior windows or biohazard cleanup; garages after photo and manager approval only."
+        },
+        {
+          "key": "C10",
+          "source": "Common: the listed optional add-ons; walls after photos; add-on prices at /pricing."
+        },
+        {
+          "key": "C11",
+          "source": "Common: service area at /service-areas; manager quotes all three services, no new prices."
+        },
+        {
+          "key": "REVIEWS",
+          "source": "Current lib/site/naperville-reviews.json: existing verified written Google review excerpts, unchanged."
+        },
+        {
+          "key": "P1",
+          "source": "Post-construction: heavier than Deep Cleaning, for renovation/construction dust and residue."
+        },
+        {
+          "key": "P2",
+          "source": "Post-construction: individual quote after photos and area size; use the current Deep checklist as the base."
+        },
+        {
+          "key": "R_P",
+          "source": "Ramis confirmed 22.10: fine construction dust inside cabinets/drawers and in air vents; paint/sticker residue; tracks; no debris or heavy-trash hauling."
+        },
+        {
+          "key": "DEEP",
+          "source": "Current /services/deep-cleaning, What's Included in Deep Cleaning, four room groups (captured before editing)."
+        },
+        {
+          "key": "Current /services/deep-cleaning and /services/move-in-move-out-cleaning",
+          "source": "Current /services/deep-cleaning and /services/move-in-move-out-cleaning"
+        }
+      ]
+    }
+  },
+  "comparisonRoutes": [
+    "/services/airbnb-cleaning",
+    "/services/commercial-cleaning",
+    "/services/deep-cleaning",
+    "/services/move-in-move-out-cleaning",
+    "/services/post-construction-cleaning",
+    "/services/regular-cleaning"
+  ],
+  "similarities": {
+    "/services/airbnb-cleaning": {
+      "/services/airbnb-cleaning": 100,
+      "/services/commercial-cleaning": 32.08,
+      "/services/deep-cleaning": 0.87,
+      "/services/move-in-move-out-cleaning": 0.96,
+      "/services/post-construction-cleaning": 28.84,
+      "/services/regular-cleaning": 1.04
+    },
+    "/services/commercial-cleaning": {
+      "/services/airbnb-cleaning": 32.08,
+      "/services/commercial-cleaning": 100,
+      "/services/deep-cleaning": 0.9,
+      "/services/move-in-move-out-cleaning": 0.93,
+      "/services/post-construction-cleaning": 29.37,
+      "/services/regular-cleaning": 0.96
+    },
+    "/services/deep-cleaning": {
+      "/services/airbnb-cleaning": 0.87,
+      "/services/commercial-cleaning": 0.9,
+      "/services/deep-cleaning": 100,
+      "/services/move-in-move-out-cleaning": 40.06,
+      "/services/post-construction-cleaning": 1.09,
+      "/services/regular-cleaning": 40.37
+    },
+    "/services/move-in-move-out-cleaning": {
+      "/services/airbnb-cleaning": 0.96,
+      "/services/commercial-cleaning": 0.93,
+      "/services/deep-cleaning": 40.06,
+      "/services/move-in-move-out-cleaning": 100,
+      "/services/post-construction-cleaning": 0.98,
+      "/services/regular-cleaning": 47.31
+    },
+    "/services/post-construction-cleaning": {
+      "/services/airbnb-cleaning": 28.84,
+      "/services/commercial-cleaning": 29.37,
+      "/services/deep-cleaning": 1.09,
+      "/services/move-in-move-out-cleaning": 0.98,
+      "/services/post-construction-cleaning": 100,
+      "/services/regular-cleaning": 0.91
+    },
+    "/services/regular-cleaning": {
+      "/services/airbnb-cleaning": 1.04,
+      "/services/commercial-cleaning": 0.96,
+      "/services/deep-cleaning": 40.37,
+      "/services/move-in-move-out-cleaning": 47.31,
+      "/services/post-construction-cleaning": 0.91,
+      "/services/regular-cleaning": 100
+    }
+  },
+  "changedPages": [
+    "/services/airbnb-cleaning",
+    "/services/commercial-cleaning",
+    "/services/post-construction-cleaning"
+  ],
+  "unexpectedChanges": [],
+  "sitemapUrlsUnchanged": true,
+  "sitemapChanges": [],
+  "sourceFingerprint": "eab6ea8d4714409e489cc710345cae8a62d386286855822888d83a737970c4d8",
+  "wordCountMethod": "Server-rendered main text, including all accordion answers and six written review excerpts; scripts, styles, SVG, hidden decorations and header/footer/nav excluded. Before post-construction uses body fallback because no main existed. Also reports editorial count without reviews."
+}

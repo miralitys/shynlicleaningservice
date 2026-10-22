@@ -1,0 +1,17 @@
+[
+  {
+    "route": "/services/airbnb-cleaning",
+    "url": "http://127.0.0.1:56667/quote?name=Local+Preview+Test&phone=%2B1+%28202%29+555-0142",
+    "quotePage": true
+  },
+  {
+    "route": "/services/commercial-cleaning",
+    "url": "http://127.0.0.1:56667/quote?name=Local+Preview+Test&phone=%2B1+%28202%29+555-0142",
+    "quotePage": true
+  },
+  {
+    "route": "/services/post-construction-cleaning",
+    "url": "http://127.0.0.1:56667/quote?name=Local+Preview+Test&phone=%2B1+%28202%29+555-0142",
+    "quotePage": true
+  }
+]

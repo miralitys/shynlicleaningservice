@@ -1369,7 +1369,7 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
       route: "/services/airbnb-cleaning",
       file: "page110326416-copy.html",
       cleanHandCoded: true,
-      handCodedPattern: /<main>/,
+      handCodedPattern: /<main\b/,
     },
     {
       route: "/services/commercial-cleaning",
@@ -1377,7 +1377,7 @@ test("replaces heavy zero runtimes across all service page pilots", () => {
       cleanHandCoded: true,
       handCodedPattern: /class="commercial-clean-page"/,
     },
-    { route: "/services/post-construction-cleaning", file: "page113041806.html" },
+    { route: "/services/post-construction-cleaning", file: "page110326416-copy.html", cleanHandCoded: true, handCodedPattern: /data-service-editorial=/ },
   ];
 
   for (const fixture of serviceFixtures) {
