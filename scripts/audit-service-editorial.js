@@ -80,7 +80,8 @@ async function audit(base, baselineDirectory, outputDirectory) {
     route: new URL(visibleText(node.childNodes.find(child => child.tagName === "loc"))).pathname,
     lastmod: visibleText(node.childNodes.find(child => child.tagName === "lastmod")),
   }));
-  const liveSitemap = await (await fetch("https://shynlicleaningservice.com/sitemap.xml")).text();
+  const liveSitemap = await fs.readFile(path.join(baselineDirectory, "sitemap.xml"), "utf8")
+    .catch(async () => (await fetch("https://shynlicleaningservice.com/sitemap.xml")).text());
   const previewSitemap = await (await fetch(base + "/sitemap.xml")).text();
   const beforeSitemap = sitemapRows(liveSitemap), afterSitemap = sitemapRows(previewSitemap);
   report.sitemapUrlsUnchanged = JSON.stringify(beforeSitemap.map(item => item.route)) === JSON.stringify(afterSitemap.map(item => item.route));
