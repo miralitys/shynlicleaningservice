@@ -94,7 +94,7 @@ async function audit(base, baselineDirectory, outputDirectory, options = {}) {
       page.noUnsupportedWaterClaim = slug === "warrenville" || !/hard water|soft water|hardness|grains per gallon|softened|softening/i.test(text);
       page.factsUsed = { county: city.trust || city.counties, zips: city.zips, water: city.faq.find(([question]) => /water/i.test(question))?.[1] || null };
       if (!page.reviewsMatchNaperville || !page.prohibitedClaimsAbsent || !page.noUnsupportedWaterClaim) result.failures.push(`${route}: batch-one facts/reviews`);
-      if (slug === "lockport" && /\bwater\b/i.test(text)) result.failures.push(`${route}: unexpected water paragraph`);
+      if (slug === (options.noWaterSlug || "lockport") && /\bwater\b/i.test(text)) result.failures.push(`${route}: unexpected water paragraph`);
     }
     if (page.localKeywordCount > 3 || !page.ratingMatchesNaperville) result.failures.push(`${route}: keyword or rating validation`);
     if (release.deployedAt && page.dateModifiedValues.some(value => value !== release.deployedAt)) result.failures.push(`${route}: incorrect dateModified`);

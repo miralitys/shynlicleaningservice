@@ -541,6 +541,7 @@ const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ...require("./lib/site/naperville-pilot").napervilleLastmod(),
   ...require("./lib/site/city-editorial").cityEditorialLastmod(),
   ...require("./lib/site/city-batch-one").cityBatchOneLastmod(),
+  ...require("./lib/site/city-batch-two").cityBatchTwoLastmod(),
   ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, latestBlogArticleLastmod(BLOG_ARTICLES.filter((article) => article.categoryPath === page.path))]),
   ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.modifiedAt || article.publishedAt)]),
