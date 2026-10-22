@@ -103,9 +103,9 @@ test("rendered Naperville meets the pilot brief and every city comparison stays 
     assert.ok(facts.scripts.every(script => !JSON.stringify(JSON.parse(script.childNodes.map(node => node.value || "").join(""))).includes("aggregateRating")));
     const services = markup(html, node => hasClass(node, "sg-service-card"));
     assert.equal(services.length, 3);
-    assert.ok(services[0].includes('/services/deep-cleaning"'));
+    assert.ok(services[0].includes('/naperville/deep-cleaning"'));
     assert.ok(services[1].includes('/services/regular-cleaning"'));
-    assert.ok(services[2].includes('/services/move-in-move-out-cleaning"'));
+    assert.ok(services[2].includes('/naperville/move-out-cleaning"'));
     assert.equal(markup(html, node => Boolean(attribute(node, "data-naperville-review"))).length, 23);
     const renderedReviews = markup(html, node => Boolean(attribute(node, "data-naperville-review")));
     for (const [index, review] of reviews.reviews.filter(item => item.quote.trim()).entries()) {

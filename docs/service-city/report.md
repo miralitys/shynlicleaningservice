@@ -1,6 +1,6 @@
 # Service in City: Verification
 
-Version: service-city-075d5138. Checked: 2026-10-22T17:45:48.739Z. Local preview, not deployed.
+Version: service-city-b0d6aa0c. Checked: 2026-10-22T17:58:34.067Z. Local preview, not deployed.
 
 ## URLs and Word Counts
 
@@ -29,14 +29,14 @@ City and service names masked; 5-word shingle Jaccard; complete main text includ
 
 | Page | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | - | 29.89 | 30.45 | 30.75 | 31.5 | 29.72 | 30.09 | 30.41 | 23.01 | 2.86 | 22.53 | 23.31 | 22.54 | 2.93 |
-| 2 | 29.89 | - | 30.84 | 30.96 | 29.16 | 31.91 | 30.56 | 30.71 | 21.78 | 2.76 | 26.36 | 23.6 | 23.22 | 2.87 |
-| 3 | 30.45 | 30.84 | - | 31.03 | 29.79 | 30.5 | 31.52 | 31.35 | 22.03 | 2.76 | 23.02 | 24.06 | 23.28 | 2.87 |
-| 4 | 30.75 | 30.96 | 31.03 | - | 29.68 | 30.78 | 30.75 | 31.64 | 22.64 | 2.85 | 23.25 | 23.9 | 24.28 | 2.87 |
-| 5 | 31.5 | 29.16 | 29.79 | 29.68 | - | 29 | 29.53 | 30.56 | 22.73 | 2.81 | 22.02 | 22.33 | 22.53 | 2.98 |
-| 6 | 29.72 | 31.91 | 30.5 | 30.78 | 29 | - | 30.23 | 30.37 | 21.72 | 2.73 | 23.9 | 23.33 | 23.14 | 2.89 |
-| 7 | 30.09 | 30.56 | 31.52 | 30.75 | 29.53 | 30.23 | - | 30.98 | 22.02 | 2.73 | 22.69 | 23.77 | 22.95 | 2.84 |
-| 8 | 30.41 | 30.71 | 31.35 | 31.64 | 30.56 | 30.37 | 30.98 | - | 22.16 | 2.74 | 23.14 | 23.47 | 23.98 | 2.9 |
+| 1 | - | 29.89 | 30.45 | 30.75 | 31.5 | 29.72 | 30.09 | 30.41 | 23.09 | 2.86 | 22.61 | 23.4 | 22.62 | 2.93 |
+| 2 | 29.89 | - | 30.84 | 30.96 | 29.16 | 31.91 | 30.56 | 30.71 | 21.86 | 2.76 | 26.46 | 23.69 | 23.3 | 2.87 |
+| 3 | 30.45 | 30.84 | - | 31.03 | 29.79 | 30.5 | 31.52 | 31.35 | 22.11 | 2.76 | 23.1 | 24.15 | 23.37 | 2.87 |
+| 4 | 30.75 | 30.96 | 31.03 | - | 29.68 | 30.78 | 30.75 | 31.64 | 22.72 | 2.85 | 23.34 | 23.99 | 24.37 | 2.87 |
+| 5 | 31.5 | 29.16 | 29.79 | 29.68 | - | 29 | 29.53 | 30.56 | 22.82 | 2.81 | 22.1 | 22.41 | 22.61 | 2.98 |
+| 6 | 29.72 | 31.91 | 30.5 | 30.78 | 29 | - | 30.23 | 30.37 | 21.8 | 2.73 | 23.99 | 23.42 | 23.23 | 2.89 |
+| 7 | 30.09 | 30.56 | 31.52 | 30.75 | 29.53 | 30.23 | - | 30.98 | 22.1 | 2.73 | 22.77 | 23.86 | 23.03 | 2.84 |
+| 8 | 30.41 | 30.71 | 31.35 | 31.64 | 30.56 | 30.37 | 30.98 | - | 22.24 | 2.74 | 23.23 | 23.55 | 24.07 | 2.9 |
 
 ## Facts and Sources
 
@@ -133,7 +133,7 @@ City and service names masked; 5-word shingle Jaccard; complete main text includ
 
 ## Isolation and Checks
 
-Existing pages compared: 313. Unexpected changes: []. The six parent pages differ only by local-service links (two whole-card anchors become div wrappers to permit valid sibling links); all other HTML is byte-identical.
+Existing pages compared: 313. Unexpected changes: []. The six parent pages differ only by local-service links: two full-card anchors point to the city-specific services with a single Learn more label, and the service pages have a Popular areas line. All other HTML is byte-identical.
 
 Existing sitemap entries unchanged: true. Added URLs: /aurora/deep-cleaning, /aurora/move-out-cleaning, /bolingbrook/deep-cleaning, /bolingbrook/move-out-cleaning, /naperville/deep-cleaning, /naperville/move-out-cleaning, /plainfield/deep-cleaning, /plainfield/move-out-cleaning. Robots unchanged: true.
 

@@ -70,7 +70,9 @@ test("eight service-city pages preserve forms and reviews, are indexable and uni
       const localLinks = markup(parent, node => node.tagName === "a" && attr(node, "href") === route);
       assert.equal(localLinks.length, 1);
       const card = markup(parent, node => cls(node, "sg-service-card") && attr(node, "data-service-city-card") === page.serviceSlug)[0];
-      assert.equal(markup(card, node => node.tagName === "a").length, 2);
+      assert.equal(markup(card, node => node.tagName === "a").length, 1);
+      assert.match(card, /^<a\b/);
+      assert.equal(markup(card, node => cls(node, "sg-service-card__cta"))[0], '<span class="sg-service-card__cta">Learn more</span>');
       assert.equal(markup(card, node => node.tagName === "a" && node.parentNode.tagName === "a").length, 0);
     }
   } finally { await stopServer(app.child); }

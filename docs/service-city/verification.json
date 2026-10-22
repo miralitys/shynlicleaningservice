@@ -1,7 +1,7 @@
 {
-  "version": "service-city-075d5138",
-  "checkedAt": "2026-10-22T17:45:48.739Z",
-  "base": "http://127.0.0.1:61063",
+  "version": "service-city-b0d6aa0c",
+  "checkedAt": "2026-10-22T17:58:34.067Z",
+  "base": "http://127.0.0.1:61423",
   "deployed": false,
   "words": {
     "/naperville/deep-cleaning": 1022,
@@ -23,11 +23,11 @@
       "/aurora/move-out-cleaning": 29.72,
       "/plainfield/move-out-cleaning": 30.09,
       "/bolingbrook/move-out-cleaning": 30.41,
-      "/naperville": 23.01,
+      "/naperville": 23.09,
       "/services/deep-cleaning": 2.86,
-      "/aurora": 22.53,
-      "/plainfield": 23.31,
-      "/bolingbrook": 22.54,
+      "/aurora": 22.61,
+      "/plainfield": 23.4,
+      "/bolingbrook": 22.62,
       "/services/move-in-move-out-cleaning": 2.93
     },
     "/aurora/deep-cleaning": {
@@ -39,11 +39,11 @@
       "/aurora/move-out-cleaning": 31.91,
       "/plainfield/move-out-cleaning": 30.56,
       "/bolingbrook/move-out-cleaning": 30.71,
-      "/naperville": 21.78,
+      "/naperville": 21.86,
       "/services/deep-cleaning": 2.76,
-      "/aurora": 26.36,
-      "/plainfield": 23.6,
-      "/bolingbrook": 23.22,
+      "/aurora": 26.46,
+      "/plainfield": 23.69,
+      "/bolingbrook": 23.3,
       "/services/move-in-move-out-cleaning": 2.87
     },
     "/plainfield/deep-cleaning": {
@@ -55,11 +55,11 @@
       "/aurora/move-out-cleaning": 30.5,
       "/plainfield/move-out-cleaning": 31.52,
       "/bolingbrook/move-out-cleaning": 31.35,
-      "/naperville": 22.03,
+      "/naperville": 22.11,
       "/services/deep-cleaning": 2.76,
-      "/aurora": 23.02,
-      "/plainfield": 24.06,
-      "/bolingbrook": 23.28,
+      "/aurora": 23.1,
+      "/plainfield": 24.15,
+      "/bolingbrook": 23.37,
       "/services/move-in-move-out-cleaning": 2.87
     },
     "/bolingbrook/deep-cleaning": {
@@ -71,11 +71,11 @@
       "/aurora/move-out-cleaning": 30.78,
       "/plainfield/move-out-cleaning": 30.75,
       "/bolingbrook/move-out-cleaning": 31.64,
-      "/naperville": 22.64,
+      "/naperville": 22.72,
       "/services/deep-cleaning": 2.85,
-      "/aurora": 23.25,
-      "/plainfield": 23.9,
-      "/bolingbrook": 24.28,
+      "/aurora": 23.34,
+      "/plainfield": 23.99,
+      "/bolingbrook": 24.37,
       "/services/move-in-move-out-cleaning": 2.87
     },
     "/naperville/move-out-cleaning": {
@@ -87,11 +87,11 @@
       "/aurora/move-out-cleaning": 29,
       "/plainfield/move-out-cleaning": 29.53,
       "/bolingbrook/move-out-cleaning": 30.56,
-      "/naperville": 22.73,
+      "/naperville": 22.82,
       "/services/deep-cleaning": 2.81,
-      "/aurora": 22.02,
-      "/plainfield": 22.33,
-      "/bolingbrook": 22.53,
+      "/aurora": 22.1,
+      "/plainfield": 22.41,
+      "/bolingbrook": 22.61,
       "/services/move-in-move-out-cleaning": 2.98
     },
     "/aurora/move-out-cleaning": {
@@ -103,11 +103,11 @@
       "/aurora/move-out-cleaning": null,
       "/plainfield/move-out-cleaning": 30.23,
       "/bolingbrook/move-out-cleaning": 30.37,
-      "/naperville": 21.72,
+      "/naperville": 21.8,
       "/services/deep-cleaning": 2.73,
-      "/aurora": 23.9,
-      "/plainfield": 23.33,
-      "/bolingbrook": 23.14,
+      "/aurora": 23.99,
+      "/plainfield": 23.42,
+      "/bolingbrook": 23.23,
       "/services/move-in-move-out-cleaning": 2.89
     },
     "/plainfield/move-out-cleaning": {
@@ -119,11 +119,11 @@
       "/aurora/move-out-cleaning": 30.23,
       "/plainfield/move-out-cleaning": null,
       "/bolingbrook/move-out-cleaning": 30.98,
-      "/naperville": 22.02,
+      "/naperville": 22.1,
       "/services/deep-cleaning": 2.73,
-      "/aurora": 22.69,
-      "/plainfield": 23.77,
-      "/bolingbrook": 22.95,
+      "/aurora": 22.77,
+      "/plainfield": 23.86,
+      "/bolingbrook": 23.03,
       "/services/move-in-move-out-cleaning": 2.84
     },
     "/bolingbrook/move-out-cleaning": {
@@ -135,11 +135,11 @@
       "/aurora/move-out-cleaning": 30.37,
       "/plainfield/move-out-cleaning": 30.98,
       "/bolingbrook/move-out-cleaning": null,
-      "/naperville": 22.16,
+      "/naperville": 22.24,
       "/services/deep-cleaning": 2.74,
-      "/aurora": 23.14,
-      "/plainfield": 23.47,
-      "/bolingbrook": 23.98,
+      "/aurora": 23.23,
+      "/plainfield": 23.55,
+      "/bolingbrook": 24.07,
       "/services/move-in-move-out-cleaning": 2.9
     }
   },
