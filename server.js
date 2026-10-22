@@ -544,6 +544,7 @@ const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ...require("./lib/site/city-batch-two").cityBatchTwoLastmod(),
   ...require("./lib/site/city-batch-three").cityBatchThreeLastmod(),
   ...require("./lib/site/city-batch-four").cityBatchFourLastmod(),
+  ...require("./lib/site/service-city").serviceCityLastmod(),
   ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, latestBlogArticleLastmod(BLOG_ARTICLES.filter((article) => article.categoryPath === page.path))]),
   ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.modifiedAt || article.publishedAt)]),
@@ -1923,7 +1924,7 @@ async function main() {
   const routes = await loadSiteRoutes({
     ROUTES_PATH,
     fsp,
-    managedHtmlRoutes: MANAGED_BLOG_HTML_ROUTES,
+    managedHtmlRoutes: [...MANAGED_BLOG_HTML_ROUTES, ...require("./lib/site/service-city").serviceCityRoutes(require("./routes.json"))],
     normalizeRoute,
   });
   const runtimeIndex = await siteStaticHelpers.buildRuntimeIndex(routes);

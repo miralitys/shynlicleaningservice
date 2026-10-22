@@ -1,0 +1,586 @@
+{
+  "version": "service-city-075d5138",
+  "checkedAt": "2026-10-22T17:45:48.739Z",
+  "base": "http://127.0.0.1:61063",
+  "deployed": false,
+  "words": {
+    "/naperville/deep-cleaning": 1022,
+    "/aurora/deep-cleaning": 1064,
+    "/plainfield/deep-cleaning": 1071,
+    "/bolingbrook/deep-cleaning": 1071,
+    "/naperville/move-out-cleaning": 1061,
+    "/aurora/move-out-cleaning": 1096,
+    "/plainfield/move-out-cleaning": 1099,
+    "/bolingbrook/move-out-cleaning": 1084
+  },
+  "similarities": {
+    "/naperville/deep-cleaning": {
+      "/naperville/deep-cleaning": null,
+      "/aurora/deep-cleaning": 29.89,
+      "/plainfield/deep-cleaning": 30.45,
+      "/bolingbrook/deep-cleaning": 30.75,
+      "/naperville/move-out-cleaning": 31.5,
+      "/aurora/move-out-cleaning": 29.72,
+      "/plainfield/move-out-cleaning": 30.09,
+      "/bolingbrook/move-out-cleaning": 30.41,
+      "/naperville": 23.01,
+      "/services/deep-cleaning": 2.86,
+      "/aurora": 22.53,
+      "/plainfield": 23.31,
+      "/bolingbrook": 22.54,
+      "/services/move-in-move-out-cleaning": 2.93
+    },
+    "/aurora/deep-cleaning": {
+      "/naperville/deep-cleaning": 29.89,
+      "/aurora/deep-cleaning": null,
+      "/plainfield/deep-cleaning": 30.84,
+      "/bolingbrook/deep-cleaning": 30.96,
+      "/naperville/move-out-cleaning": 29.16,
+      "/aurora/move-out-cleaning": 31.91,
+      "/plainfield/move-out-cleaning": 30.56,
+      "/bolingbrook/move-out-cleaning": 30.71,
+      "/naperville": 21.78,
+      "/services/deep-cleaning": 2.76,
+      "/aurora": 26.36,
+      "/plainfield": 23.6,
+      "/bolingbrook": 23.22,
+      "/services/move-in-move-out-cleaning": 2.87
+    },
+    "/plainfield/deep-cleaning": {
+      "/naperville/deep-cleaning": 30.45,
+      "/aurora/deep-cleaning": 30.84,
+      "/plainfield/deep-cleaning": null,
+      "/bolingbrook/deep-cleaning": 31.03,
+      "/naperville/move-out-cleaning": 29.79,
+      "/aurora/move-out-cleaning": 30.5,
+      "/plainfield/move-out-cleaning": 31.52,
+      "/bolingbrook/move-out-cleaning": 31.35,
+      "/naperville": 22.03,
+      "/services/deep-cleaning": 2.76,
+      "/aurora": 23.02,
+      "/plainfield": 24.06,
+      "/bolingbrook": 23.28,
+      "/services/move-in-move-out-cleaning": 2.87
+    },
+    "/bolingbrook/deep-cleaning": {
+      "/naperville/deep-cleaning": 30.75,
+      "/aurora/deep-cleaning": 30.96,
+      "/plainfield/deep-cleaning": 31.03,
+      "/bolingbrook/deep-cleaning": null,
+      "/naperville/move-out-cleaning": 29.68,
+      "/aurora/move-out-cleaning": 30.78,
+      "/plainfield/move-out-cleaning": 30.75,
+      "/bolingbrook/move-out-cleaning": 31.64,
+      "/naperville": 22.64,
+      "/services/deep-cleaning": 2.85,
+      "/aurora": 23.25,
+      "/plainfield": 23.9,
+      "/bolingbrook": 24.28,
+      "/services/move-in-move-out-cleaning": 2.87
+    },
+    "/naperville/move-out-cleaning": {
+      "/naperville/deep-cleaning": 31.5,
+      "/aurora/deep-cleaning": 29.16,
+      "/plainfield/deep-cleaning": 29.79,
+      "/bolingbrook/deep-cleaning": 29.68,
+      "/naperville/move-out-cleaning": null,
+      "/aurora/move-out-cleaning": 29,
+      "/plainfield/move-out-cleaning": 29.53,
+      "/bolingbrook/move-out-cleaning": 30.56,
+      "/naperville": 22.73,
+      "/services/deep-cleaning": 2.81,
+      "/aurora": 22.02,
+      "/plainfield": 22.33,
+      "/bolingbrook": 22.53,
+      "/services/move-in-move-out-cleaning": 2.98
+    },
+    "/aurora/move-out-cleaning": {
+      "/naperville/deep-cleaning": 29.72,
+      "/aurora/deep-cleaning": 31.91,
+      "/plainfield/deep-cleaning": 30.5,
+      "/bolingbrook/deep-cleaning": 30.78,
+      "/naperville/move-out-cleaning": 29,
+      "/aurora/move-out-cleaning": null,
+      "/plainfield/move-out-cleaning": 30.23,
+      "/bolingbrook/move-out-cleaning": 30.37,
+      "/naperville": 21.72,
+      "/services/deep-cleaning": 2.73,
+      "/aurora": 23.9,
+      "/plainfield": 23.33,
+      "/bolingbrook": 23.14,
+      "/services/move-in-move-out-cleaning": 2.89
+    },
+    "/plainfield/move-out-cleaning": {
+      "/naperville/deep-cleaning": 30.09,
+      "/aurora/deep-cleaning": 30.56,
+      "/plainfield/deep-cleaning": 31.52,
+      "/bolingbrook/deep-cleaning": 30.75,
+      "/naperville/move-out-cleaning": 29.53,
+      "/aurora/move-out-cleaning": 30.23,
+      "/plainfield/move-out-cleaning": null,
+      "/bolingbrook/move-out-cleaning": 30.98,
+      "/naperville": 22.02,
+      "/services/deep-cleaning": 2.73,
+      "/aurora": 22.69,
+      "/plainfield": 23.77,
+      "/bolingbrook": 22.95,
+      "/services/move-in-move-out-cleaning": 2.84
+    },
+    "/bolingbrook/move-out-cleaning": {
+      "/naperville/deep-cleaning": 30.41,
+      "/aurora/deep-cleaning": 30.71,
+      "/plainfield/deep-cleaning": 31.35,
+      "/bolingbrook/deep-cleaning": 31.64,
+      "/naperville/move-out-cleaning": 30.56,
+      "/aurora/move-out-cleaning": 30.37,
+      "/plainfield/move-out-cleaning": 30.98,
+      "/bolingbrook/move-out-cleaning": null,
+      "/naperville": 22.16,
+      "/services/deep-cleaning": 2.74,
+      "/aurora": 23.14,
+      "/plainfield": 23.47,
+      "/bolingbrook": 23.98,
+      "/services/move-in-move-out-cleaning": 2.9
+    }
+  },
+  "facts": {
+    "/naperville/deep-cleaning": {
+      "localClaims": [
+        "DuPage and Will counties",
+        "ZIP 60540, 60563, 60564, 60565",
+        "Condos and apartments through five-bedroom houses",
+        "Deep cleaning booked more often than regular cleaning"
+      ],
+      "sources": [
+        {
+          "key": "N",
+          "source": "Brief, Naperville: DuPage and Will; 60540, 60563, 60564, 60565; deep more often than regular; condos, apartments and five-bedroom houses."
+        },
+        {
+          "key": "D",
+          "source": "/services/deep-cleaning: Is Deep Cleaning Right for You; What's Included; comparison with regular; optional add-ons."
+        },
+        {
+          "key": "V",
+          "source": "Current /naperville and /plainfield: clear surfaces, valuables and walkways; secure anxious pets; arrange access; ask about parking; deep guide 4 to 6 hours, confirmed for actual scope."
+        },
+        {
+          "key": "C",
+          "source": "/pricing: quote depends on size, bathrooms, condition, service and selected extras. Empty cabinet interiors are listed separately; no new prices published here."
+        },
+        {
+          "key": "R",
+          "source": "Existing city review component: same written excerpts and order, local clients first; omit stars-only reviews."
+        }
+      ]
+    },
+    "/aurora/deep-cleaning": {
+      "localClaims": [
+        "ZIP 60502, 60504, 60505, 60506",
+        "Apartments and townhomes are common among existing clients",
+        "Regular and deep booked about equally",
+        "Fox River plus wells, lime-softened, about 6 to 10 grains per gallon; extra attention to faucets, fixtures and shower glass"
+      ],
+      "sources": [
+        {
+          "key": "A",
+          "source": "Brief, Aurora: 60502, 60504, 60505, 60506; regular and deep about equally; apartments and townhomes; separate Google profile. Water only on Deep."
+        },
+        {
+          "key": "D",
+          "source": "/services/deep-cleaning: Is Deep Cleaning Right for You; What's Included; comparison with regular; optional add-ons."
+        },
+        {
+          "key": "V",
+          "source": "Current /naperville and /plainfield: clear surfaces, valuables and walkways; secure anxious pets; arrange access; ask about parking; deep guide 4 to 6 hours, confirmed for actual scope."
+        },
+        {
+          "key": "C",
+          "source": "/pricing: quote depends on size, bathrooms, condition, service and selected extras. Empty cabinet interiors are listed separately; no new prices published here."
+        },
+        {
+          "key": "R",
+          "source": "Existing city review component: same written excerpts and order, local clients first; omit stars-only reviews."
+        }
+      ]
+    },
+    "/plainfield/deep-cleaning": {
+      "localClaims": [
+        "Will and Kendall counties",
+        "ZIP 60544, 60585, 60586",
+        "Most existing clients book regular cleaning, mainly every two weeks",
+        "Deep booked less often; not assumed to be the first visit before recurring service"
+      ],
+      "sources": [
+        {
+          "key": "P",
+          "source": "Brief, Plainfield: Will and Kendall; 60544, 60585, 60586; regular mostly every two weeks, deep less often; do not claim clients start with deep."
+        },
+        {
+          "key": "D",
+          "source": "/services/deep-cleaning: Is Deep Cleaning Right for You; What's Included; comparison with regular; optional add-ons."
+        },
+        {
+          "key": "V",
+          "source": "Current /naperville and /plainfield: clear surfaces, valuables and walkways; secure anxious pets; arrange access; ask about parking; deep guide 4 to 6 hours, confirmed for actual scope."
+        },
+        {
+          "key": "C",
+          "source": "/pricing: quote depends on size, bathrooms, condition, service and selected extras. Empty cabinet interiors are listed separately; no new prices published here."
+        },
+        {
+          "key": "R",
+          "source": "Existing city review component: same written excerpts and order, local clients first; omit stars-only reviews."
+        }
+      ]
+    },
+    "/bolingbrook/deep-cleaning": {
+      "localClaims": [
+        "Will and DuPage counties",
+        "ZIP 60440, 60490",
+        "Regular cleaning booked most, followed by deep and moving services"
+      ],
+      "sources": [
+        {
+          "key": "B",
+          "source": "Brief, Bolingbrook: Will and DuPage; 60440, 60490; regular, then deep and move cleaning; no water claim."
+        },
+        {
+          "key": "D",
+          "source": "/services/deep-cleaning: Is Deep Cleaning Right for You; What's Included; comparison with regular; optional add-ons."
+        },
+        {
+          "key": "V",
+          "source": "Current /naperville and /plainfield: clear surfaces, valuables and walkways; secure anxious pets; arrange access; ask about parking; deep guide 4 to 6 hours, confirmed for actual scope."
+        },
+        {
+          "key": "C",
+          "source": "/pricing: quote depends on size, bathrooms, condition, service and selected extras. Empty cabinet interiors are listed separately; no new prices published here."
+        },
+        {
+          "key": "R",
+          "source": "Existing city review component: same written excerpts and order, local clients first; omit stars-only reviews."
+        }
+      ]
+    },
+    "/naperville/move-out-cleaning": {
+      "localClaims": [
+        "DuPage and Will counties",
+        "ZIP 60540, 60563, 60564, 60565",
+        "Condos and apartments through five-bedroom houses"
+      ],
+      "sources": [
+        {
+          "key": "N",
+          "source": "Brief, Naperville: DuPage and Will; 60540, 60563, 60564, 60565; deep more often than regular; condos, apartments and five-bedroom houses."
+        },
+        {
+          "key": "M",
+          "source": "/services/move-in-move-out-cleaning: empty-home scope by room; appliance interiors; cabinets/drawers if empty; preparation before moving and walkthrough."
+        },
+        {
+          "key": "V",
+          "source": "Current /naperville and /plainfield: clear surfaces, valuables and walkways; secure anxious pets; arrange access; ask about parking; deep guide 4 to 6 hours, confirmed for actual scope."
+        },
+        {
+          "key": "C",
+          "source": "/pricing: quote depends on size, bathrooms, condition, service and selected extras. Empty cabinet interiors are listed separately; no new prices published here."
+        },
+        {
+          "key": "R",
+          "source": "Existing city review component: same written excerpts and order, local clients first; omit stars-only reviews."
+        }
+      ]
+    },
+    "/aurora/move-out-cleaning": {
+      "localClaims": [
+        "ZIP 60502, 60504, 60505, 60506",
+        "Apartments and townhomes are common among existing clients",
+        "Moving service booked less often than regular and deep; no water claim"
+      ],
+      "sources": [
+        {
+          "key": "A",
+          "source": "Brief, Aurora: 60502, 60504, 60505, 60506; regular and deep about equally; apartments and townhomes; separate Google profile. Water only on Deep."
+        },
+        {
+          "key": "M",
+          "source": "/services/move-in-move-out-cleaning: empty-home scope by room; appliance interiors; cabinets/drawers if empty; preparation before moving and walkthrough."
+        },
+        {
+          "key": "V",
+          "source": "Current /naperville and /plainfield: clear surfaces, valuables and walkways; secure anxious pets; arrange access; ask about parking; deep guide 4 to 6 hours, confirmed for actual scope."
+        },
+        {
+          "key": "C",
+          "source": "/pricing: quote depends on size, bathrooms, condition, service and selected extras. Empty cabinet interiors are listed separately; no new prices published here."
+        },
+        {
+          "key": "R",
+          "source": "Existing city review component: same written excerpts and order, local clients first; omit stars-only reviews."
+        }
+      ]
+    },
+    "/plainfield/move-out-cleaning": {
+      "localClaims": [
+        "Will and Kendall counties",
+        "ZIP 60544, 60585, 60586",
+        "Most existing clients book regular cleaning, mainly every two weeks"
+      ],
+      "sources": [
+        {
+          "key": "P",
+          "source": "Brief, Plainfield: Will and Kendall; 60544, 60585, 60586; regular mostly every two weeks, deep less often; do not claim clients start with deep."
+        },
+        {
+          "key": "M",
+          "source": "/services/move-in-move-out-cleaning: empty-home scope by room; appliance interiors; cabinets/drawers if empty; preparation before moving and walkthrough."
+        },
+        {
+          "key": "V",
+          "source": "Current /naperville and /plainfield: clear surfaces, valuables and walkways; secure anxious pets; arrange access; ask about parking; deep guide 4 to 6 hours, confirmed for actual scope."
+        },
+        {
+          "key": "C",
+          "source": "/pricing: quote depends on size, bathrooms, condition, service and selected extras. Empty cabinet interiors are listed separately; no new prices published here."
+        },
+        {
+          "key": "R",
+          "source": "Existing city review component: same written excerpts and order, local clients first; omit stars-only reviews."
+        }
+      ]
+    },
+    "/bolingbrook/move-out-cleaning": {
+      "localClaims": [
+        "Will and DuPage counties",
+        "ZIP 60440, 60490",
+        "Regular cleaning booked most, followed by deep and moving services"
+      ],
+      "sources": [
+        {
+          "key": "B",
+          "source": "Brief, Bolingbrook: Will and DuPage; 60440, 60490; regular, then deep and move cleaning; no water claim."
+        },
+        {
+          "key": "M",
+          "source": "/services/move-in-move-out-cleaning: empty-home scope by room; appliance interiors; cabinets/drawers if empty; preparation before moving and walkthrough."
+        },
+        {
+          "key": "V",
+          "source": "Current /naperville and /plainfield: clear surfaces, valuables and walkways; secure anxious pets; arrange access; ask about parking; deep guide 4 to 6 hours, confirmed for actual scope."
+        },
+        {
+          "key": "C",
+          "source": "/pricing: quote depends on size, bathrooms, condition, service and selected extras. Empty cabinet interiors are listed separately; no new prices published here."
+        },
+        {
+          "key": "R",
+          "source": "Existing city review component: same written excerpts and order, local clients first; omit stars-only reviews."
+        }
+      ]
+    }
+  },
+  "checks": {
+    "/naperville/deep-cleaning": {
+      "canonical": true,
+      "indexable": true,
+      "jsonLdTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatches": true,
+      "breadcrumbs": [
+        "https://shynlicleaningservice.com/",
+        "https://shynlicleaningservice.com/naperville",
+        "https://shynlicleaningservice.com/naperville/deep-cleaning"
+      ],
+      "quoteFormIdentical": true,
+      "reviewsIdentical": true,
+      "zipsPresent": true,
+      "noInventedPrices": true,
+      "noWaterOnMove": true,
+      "exactServicePhraseCount": 1,
+      "headerIdentical": true,
+      "footerIdentical": true
+    },
+    "/aurora/deep-cleaning": {
+      "canonical": true,
+      "indexable": true,
+      "jsonLdTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatches": true,
+      "breadcrumbs": [
+        "https://shynlicleaningservice.com/",
+        "https://shynlicleaningservice.com/aurora",
+        "https://shynlicleaningservice.com/aurora/deep-cleaning"
+      ],
+      "quoteFormIdentical": true,
+      "reviewsIdentical": true,
+      "zipsPresent": true,
+      "noInventedPrices": true,
+      "noWaterOnMove": true,
+      "exactServicePhraseCount": 1,
+      "headerIdentical": true,
+      "footerIdentical": true
+    },
+    "/plainfield/deep-cleaning": {
+      "canonical": true,
+      "indexable": true,
+      "jsonLdTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatches": true,
+      "breadcrumbs": [
+        "https://shynlicleaningservice.com/",
+        "https://shynlicleaningservice.com/plainfield",
+        "https://shynlicleaningservice.com/plainfield/deep-cleaning"
+      ],
+      "quoteFormIdentical": true,
+      "reviewsIdentical": true,
+      "zipsPresent": true,
+      "noInventedPrices": true,
+      "noWaterOnMove": true,
+      "exactServicePhraseCount": 1,
+      "headerIdentical": true,
+      "footerIdentical": true
+    },
+    "/bolingbrook/deep-cleaning": {
+      "canonical": true,
+      "indexable": true,
+      "jsonLdTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatches": true,
+      "breadcrumbs": [
+        "https://shynlicleaningservice.com/",
+        "https://shynlicleaningservice.com/bolingbrook",
+        "https://shynlicleaningservice.com/bolingbrook/deep-cleaning"
+      ],
+      "quoteFormIdentical": true,
+      "reviewsIdentical": true,
+      "zipsPresent": true,
+      "noInventedPrices": true,
+      "noWaterOnMove": true,
+      "exactServicePhraseCount": 1,
+      "headerIdentical": true,
+      "footerIdentical": true
+    },
+    "/naperville/move-out-cleaning": {
+      "canonical": true,
+      "indexable": true,
+      "jsonLdTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatches": true,
+      "breadcrumbs": [
+        "https://shynlicleaningservice.com/",
+        "https://shynlicleaningservice.com/naperville",
+        "https://shynlicleaningservice.com/naperville/move-out-cleaning"
+      ],
+      "quoteFormIdentical": true,
+      "reviewsIdentical": true,
+      "zipsPresent": true,
+      "noInventedPrices": true,
+      "noWaterOnMove": true,
+      "exactServicePhraseCount": 1,
+      "headerIdentical": true,
+      "footerIdentical": true
+    },
+    "/aurora/move-out-cleaning": {
+      "canonical": true,
+      "indexable": true,
+      "jsonLdTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatches": true,
+      "breadcrumbs": [
+        "https://shynlicleaningservice.com/",
+        "https://shynlicleaningservice.com/aurora",
+        "https://shynlicleaningservice.com/aurora/move-out-cleaning"
+      ],
+      "quoteFormIdentical": true,
+      "reviewsIdentical": true,
+      "zipsPresent": true,
+      "noInventedPrices": true,
+      "noWaterOnMove": true,
+      "exactServicePhraseCount": 1,
+      "headerIdentical": true,
+      "footerIdentical": true
+    },
+    "/plainfield/move-out-cleaning": {
+      "canonical": true,
+      "indexable": true,
+      "jsonLdTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatches": true,
+      "breadcrumbs": [
+        "https://shynlicleaningservice.com/",
+        "https://shynlicleaningservice.com/plainfield",
+        "https://shynlicleaningservice.com/plainfield/move-out-cleaning"
+      ],
+      "quoteFormIdentical": true,
+      "reviewsIdentical": true,
+      "zipsPresent": true,
+      "noInventedPrices": true,
+      "noWaterOnMove": true,
+      "exactServicePhraseCount": 1,
+      "headerIdentical": true,
+      "footerIdentical": true
+    },
+    "/bolingbrook/move-out-cleaning": {
+      "canonical": true,
+      "indexable": true,
+      "jsonLdTypes": [
+        "Service",
+        "BreadcrumbList",
+        "FAQPage"
+      ],
+      "faqMatches": true,
+      "breadcrumbs": [
+        "https://shynlicleaningservice.com/",
+        "https://shynlicleaningservice.com/bolingbrook",
+        "https://shynlicleaningservice.com/bolingbrook/move-out-cleaning"
+      ],
+      "quoteFormIdentical": true,
+      "reviewsIdentical": true,
+      "zipsPresent": true,
+      "noInventedPrices": true,
+      "noWaterOnMove": true,
+      "exactServicePhraseCount": 1,
+      "headerIdentical": true,
+      "footerIdentical": true
+    }
+  },
+  "existingPagesChecked": 313,
+  "unexpectedChanges": [],
+  "failures": [],
+  "sitemapAdded": [
+    "/aurora/deep-cleaning",
+    "/aurora/move-out-cleaning",
+    "/bolingbrook/deep-cleaning",
+    "/bolingbrook/move-out-cleaning",
+    "/naperville/deep-cleaning",
+    "/naperville/move-out-cleaning",
+    "/plainfield/deep-cleaning",
+    "/plainfield/move-out-cleaning"
+  ],
+  "deploymentDate": "2026-10-22",
+  "newSitemapDatesCorrect": true,
+  "existingSitemapEntriesUnchanged": true,
+  "robotsUnchanged": true
+}

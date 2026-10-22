@@ -101,7 +101,7 @@ test("rendered Naperville meets the pilot brief and every city comparison stays 
     const faqSchema = facts.scripts.map(script => JSON.parse(script.childNodes.map(node => node.value || "").join(""))).find(item => item["@type"] === "FAQPage");
     assert.deepEqual(faqSchema.mainEntity, facts.faq);
     assert.ok(facts.scripts.every(script => !JSON.stringify(JSON.parse(script.childNodes.map(node => node.value || "").join(""))).includes("aggregateRating")));
-    const services = markup(html, node => node.tagName === "a" && hasClass(node, "sg-service-card"));
+    const services = markup(html, node => hasClass(node, "sg-service-card"));
     assert.equal(services.length, 3);
     assert.ok(services[0].includes('/services/deep-cleaning"'));
     assert.ok(services[1].includes('/services/regular-cleaning"'));

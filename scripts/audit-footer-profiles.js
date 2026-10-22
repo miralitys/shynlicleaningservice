@@ -28,7 +28,7 @@ const withoutProfiles = html => removeNodes(html, profileRow);
 const originalFooterStyles = html => markup(html, footerStyle).map(style => style.split("\n").filter(line => !line.startsWith(".shynli-site-footer__profiles")).join("\n"));
 const profileUrls = route => [
   ["Google", route === "/aurora" ? "https://www.google.com/maps?cid=5408416184318024401" : "https://www.google.com/maps?cid=9307087877612204108"],
-  ["Yelp", "https://www.yelp.com/biz/shiny-naperville-house-cleaning-service-naperville"],
+  ["Yelp", "https://www.yelp.com/biz/shynli-cleaning-naperville-2"],
   ["BBB", "https://www.bbb.org/us/il/naperville/profile/cleaning-services/shynli-cleaning-service-0654-1000144666"],
   ["Thumbtack", "https://www.thumbtack.com/il/naperville/house-cleaning/shynli-cleaning-service/service/572036872380112901"],
   ["Nextdoor", "https://nextdoor.com/pages/shynli-cleaning/"],

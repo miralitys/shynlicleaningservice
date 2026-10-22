@@ -43,7 +43,9 @@ test("seven city pages keep the Naperville structure, factual limits, FAQ schema
       assert.ok(html.includes('data-city-editorial="true"'));
       assert.equal(applyCityEditorial(html, `/${slug}`), html);
       assert.doesNotMatch(html, /300\+|300 plus|Fox Valley|same-day|less than 60 seconds/i);
-      const words = mainText(html).split(/\s+/).length;
+      const localLinks = markup(html, node => node.tagName === "a" && [`/${slug}/deep-cleaning`, `/${slug}/move-out-cleaning`].includes(attr(node, "href")));
+      const originalCopy = localLinks.reduce((source, link) => source.replace(` · ${link}`, ""), html);
+      const words = mainText(originalCopy).split(/\s+/).length;
       assert.ok(words >= 1300 && words <= 1400, `${slug}: ${words} words`);
       const withoutReviews = html.replace(markup(html, node => attr(node, "id") === "city-editorial-reviews")[0], "");
       assert.doesNotMatch(mainText(withoutReviews), /in this brief|our \w+ brief|look no further|nestled|top-notch|[\u2013\u2014]/i);
