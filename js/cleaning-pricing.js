@@ -46,6 +46,7 @@
       defaultSelectedServices: Object.freeze([
         "ovenCleaning",
         "refrigeratorCleaning",
+        "insideCabinets",
         "baseboardCleaning",
         "doorsCleaning",
       ]),

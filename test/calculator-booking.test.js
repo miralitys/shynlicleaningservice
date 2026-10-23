@@ -13,6 +13,29 @@ function bookingControls() {
   return window.ShynliCalculatorControls;
 }
 
+test("moving cabinets default on but remain removable in browser and server pricing", () => {
+  const browser = {};
+  vm.runInNewContext(fs.readFileSync(require.resolve("../js/cleaning-pricing"), "utf8"), browser);
+  const input = { serviceType: "moving", rooms: 3, bathrooms: 2, squareMeters: 1 };
+  const defaults = pricing.PRICING.moving.defaultSelectedServices;
+  assert.ok(defaults.includes("insideCabinets"));
+  assert.equal(pricing.PRICING.moving.includedServices.includes("insideCabinets"), false);
+  assert.deepEqual(pricing.PRICING.regular.defaultSelectedServices, []);
+  assert.deepEqual(pricing.PRICING.deep.defaultSelectedServices, ["baseboardCleaning", "doorsCleaning"]);
+  for (const [selection, expected] of [
+    [input, 509],
+    [{ ...input, services: defaults }, 509],
+    [{ ...input, services: defaults.filter(key => key !== "insideCabinets"), cabinetsCondition: "notEmptied" }, 464],
+    [{ ...input, cabinetsCondition: "notEmptied" }, 554],
+    [{ ...input, services: [] }, 329],
+  ]) {
+    const server = pricing.roundCustomerQuotePricing(pricing.calculateQuotePricing(selection));
+    const client = browser.ShynliPricing.roundCustomerQuotePricing(browser.ShynliPricing.calculateQuotePricing(selection));
+    assert.equal(server.totalPrice, expected);
+    assert.equal(JSON.stringify(client), JSON.stringify(server));
+  }
+});
+
 test("customer totals round up after calculation without changing rates or duration", () => {
   for (const [input, expected] of [
     [{ serviceType: "deep", rooms: 4, bathrooms: 3, squareMeters: 1 }, 397],
@@ -63,30 +86,27 @@ test("public submission returns and signs the rounded price", async () => {
   const server = await startServer({ env: { GHL_API_KEY: "test", GHL_LOCATION_ID: "test", GHL_ENABLE_NOTES: "0", GHL_CREATE_OPPORTUNITY: "0", SHYNLI_FETCH_STUB_ENTRY: stub.stubEntry } });
   try {
     const quote = { serviceType: "deep", rooms: 4, bathrooms: 3, squareMeters: 1, selectedDate: "2026-12-01", selectedTime: "09:00", fullAddress: "123 Test St, Naperville, IL 60540", zipCode: "60540", consent: true };
-    const response = await fetch(server.baseUrl + "/api/quote/submit", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contact: { fullName: "Test Calculator", phone: "2025550142" }, quote }) });
-    assert.equal(response.status, 201);
-    const result = await response.json();
-    assert.equal(result.pricing.totalPrice, 397);
-    assert.equal(result.pricing.totalPriceCents, 39700);
-    const token = require("../lib/quote-token").verifyQuoteToken(result.quoteToken, { env: { GHL_API_KEY: "test" } });
-    assert.equal(token.totalPriceCents, 39700);
+    for (const [selection, expected] of [
+      [quote, 397],
+      [{ ...quote, serviceType: "moving", rooms: 3, bathrooms: 2 }, 509],
+      [{ ...quote, serviceType: "moving", rooms: 3, bathrooms: 2, services: pricing.PRICING.moving.defaultSelectedServices.filter(key => key !== "insideCabinets") }, 464],
+    ]) {
+      const response = await fetch(server.baseUrl + "/api/quote/submit", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contact: { fullName: "Test Calculator", phone: "2025550142" }, quote: selection }) });
+      assert.equal(response.status, 201);
+      const result = await response.json();
+      assert.equal(result.pricing.totalPrice, expected);
+      assert.equal(result.pricing.totalPriceCents, expected * 100);
+      const token = require("../lib/quote-token").verifyQuoteToken(result.quoteToken, { env: { GHL_API_KEY: "test" } });
+      assert.equal(token.totalPriceCents, expected * 100);
+    }
   } finally {
     await stopServer(server.child);
     stub.cleanup();
   }
 });
 
-test("the order ledger receives every selected extra and the rounded total, not the submitted amount", async () => {
+async function assertLedgerQuote(quote, expectedTotal) {
   const { createApiHandlers } = require("../lib/api/handlers");
-  const quote = {
-    serviceType: "deep", rooms: 4, bathrooms: 3, squareMeters: 1,
-    services: ["doorsCleaning", "refrigeratorCleaning", "insideCabinets", "ovenCleaning", "rangeHood"],
-    refrigeratorCondition: "notEmptied", cabinetsCondition: "notEmptied",
-    additionalRooms: { office: 1, sunroom: 2, familyRoom: 1, loft: 1 },
-    quantityServices: Object.fromEntries(Object.keys(pricing.PRICING.quantityServices).map(key => [key, 2])),
-    hasPets: true, basementCleaning: true, totalPrice: 1,
-    selectedDate: "2026-12-01", selectedTime: "09:00", zipCode: "60540", fullAddress: "123 Test St, Naperville, IL 60540", consent: true,
-  };
   let recorded;
   let response;
   const handler = createApiHandlers({
@@ -105,9 +125,31 @@ test("the order ledger receives every selected extra and the rounded total, not 
   });
   assert.equal(response.status, 201);
   const expected = pricing.roundCustomerQuotePricing(pricing.calculateQuotePricing(quote));
+  if (expectedTotal !== undefined) assert.equal(expected.totalPrice, expectedTotal);
   assert.equal(recorded.totalPrice, expected.totalPrice);
   assert.equal(recorded.totalPriceCents, expected.totalPriceCents);
   const saved = recorded.payloadForRetry.calculatorData;
   for (const key of ["services", "additionalRooms", "quantityServices", "refrigeratorCondition", "cabinetsCondition", "rooms", "bathrooms", "squareMeters", "hasPets", "basementCleaning", "serviceDurationMinutes", "totalPrice"])
     assert.deepEqual(saved[key], expected[key], key);
+}
+
+test("the order ledger receives every selected extra and the rounded total, not the submitted amount", async () => {
+  await assertLedgerQuote({
+    serviceType: "deep", rooms: 4, bathrooms: 3, squareMeters: 1,
+    services: ["doorsCleaning", "refrigeratorCleaning", "insideCabinets", "ovenCleaning", "rangeHood"],
+    refrigeratorCondition: "notEmptied", cabinetsCondition: "notEmptied",
+    additionalRooms: { office: 1, sunroom: 2, familyRoom: 1, loft: 1 },
+    quantityServices: Object.fromEntries(Object.keys(pricing.PRICING.quantityServices).map(key => [key, 2])),
+    hasPets: true, basementCleaning: true, totalPrice: 1,
+    selectedDate: "2026-12-01", selectedTime: "09:00", zipCode: "60540", fullAddress: "123 Test St, Naperville, IL 60540", consent: true,
+  });
+});
+
+test("moving order records keep the selected cabinets and the matching $509 or $464 total", async () => {
+  const quote = {
+    serviceType: "moving", rooms: 3, bathrooms: 2, squareMeters: 1, hasPets: false, basementCleaning: false, totalPrice: 1,
+    selectedDate: "2026-12-01", selectedTime: "09:00", zipCode: "60540", fullAddress: "123 Test St, Naperville, IL 60540", consent: true,
+  };
+  await assertLedgerQuote(quote, 509);
+  await assertLedgerQuote({ ...quote, services: pricing.PRICING.moving.defaultSelectedServices.filter(key => key !== "insideCabinets") }, 464);
 });

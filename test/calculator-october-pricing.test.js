@@ -5,11 +5,11 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 const { calculateQuotePricing } = require("../lib/quote-pricing");
 
-test("Deep and Moving defaults increase only by the agreed $23", () => {
+test("Deep and Moving defaults include the agreed doors and moving cabinets", () => {
   assert.equal(calculateQuotePricing({ serviceType: "deep" }).totalPrice, 219);
   assert.equal(
     calculateQuotePricing({ serviceType: "moving" }).totalPrice,
-    354,
+    399,
   );
   assert.equal(
     calculateQuotePricing({ serviceType: "regular" }).totalPrice,
