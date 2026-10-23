@@ -82,7 +82,6 @@ const siteSeoHelpers = {
 };
 
 const runtimeScriptIds = new Set([
-  "shynli-callrail-loader",
   "shynli-tracking-bootstrap",
   "deep-cleaning-addons-rebuild",
   "full-card-click-handler",
@@ -109,10 +108,6 @@ const sanitizeHtml = createSiteSanitizer({
   siteSeoHelpers,
 }).sanitizeHtml;
 
-const CALLRAIL_SWAP_SCRIPT_PATTERN =
-  /<script id="shynli-callrail-loader">(?=[\s\S]*?\/js\/vendor\/callrail-swap\.20260523\.js[\s\S]*?<\/script>)(?=[\s\S]*?setTimeout\(idleLoad,45000\)[\s\S]*?<\/script>)[\s\S]*?<\/script>/;
-const CALLRAIL_SWAP_SCRIPT_URL_PATTERN =
-  /\/js\/vendor\/callrail-swap\.20260523\.js/g;
 const BENEFIT_HIDDEN_FEES_COPY_PATTERN =
   /What you see is what you pay\.(?:\s*<br\s*\/?>\s*|\s+)No hidden fees\./g;
 const BENEFIT_STANDARDS_COPY_PATTERN =
@@ -254,7 +249,7 @@ test("removes Google Fonts even when legacy blocks inject them outside the head"
   assert.doesNotMatch(sanitized, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
 });
 
-test("injects CallRail swap script before closing body on public site pages", () => {
+test("public pages retain own tracking and GTM without removed trackers", () => {
   const fixtures = [
     { route: "/", html: readFixture("page108488156.html") },
     { route: "/blog", html: readFixture("page108872586.html") },
@@ -264,14 +259,9 @@ test("injects CallRail swap script before closing body on public site pages", ()
   for (const fixture of fixtures) {
     const sanitized = sanitizeHtml(fixture.html, fixture.route);
 
-    assert.match(sanitized, CALLRAIL_SWAP_SCRIPT_PATTERN, fixture.route);
-    assert.match(sanitized, new RegExp(`${CALLRAIL_SWAP_SCRIPT_PATTERN.source}<\\/body>`, "i"), fixture.route);
-    assert.equal((sanitized.match(CALLRAIL_SWAP_SCRIPT_URL_PATTERN) || []).length, 1, fixture.route);
-    assert.doesNotMatch(
-      sanitized,
-      /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260523\.js" defer><\/script>/,
-      fixture.route
-    );
+    assert.doesNotMatch(sanitized, /callrail|calltrk|AW-18018853979|clarity\.ms|clarity\(/i, fixture.route);
+    assert.match(sanitized, /GTM-5P88N7LD/);
+    assert.match(sanitized, /shynli-tracking-bootstrap/);
   }
 });
 
@@ -670,7 +660,7 @@ test("keeps the home copy hand-coded without Tilda runtime", () => {
   assert.match(html, /<main>/);
   assert.match(html, /<section class="hero"/);
   assert.match(html, /House Cleaning[\s\S]*Services in Naperville[\s\S]*&amp; Chicago Suburbs/i);
-  assert.match(html, /href="\/css\/home-copy-clean\.css\?v=20260524-reviews2"/);
+  assert.match(html, /href="\/css\/home-copy-clean\.css\?v=20260524-reviews2&amp;mi=modern-images-20261022"/);
   assert.match(html, /src="\/js\/home-copy-clean\.js\?v=20260524-reviews2"/);
   assert.match(html, /src="\/images\/home-copy-team\.png"|srcset="\/images\/home-copy-team-480\.webp/);
   assert.match(html, /class="hero__team"[^>]*loading="eager"[^>]*decoding="sync"[^>]*fetchpriority="high"/);
@@ -698,7 +688,7 @@ test("serves Romeoville from the clean shared city template", () => {
   assert.doesNotMatch(html, /data-original=/);
   assert.match(html, /id="shynli-home-page-runtime"/);
   assert.match(html, /id="shynli-zero-runtime-stub"/);
-  assert.match(html, /src="\/images\/shynli-logo-primary\.png"/);
+  assert.match(html, /src="\/images\/optimized\/shynli-logo-primary-[a-f0-9]+-w\d+\.webp"/);
   assert.match(html, /href="\/images\/shynli-icon-32\.png"/);
   assert.match(html, /data-city-modal-open/);
   assertSharedNavigation(html);
@@ -766,7 +756,7 @@ test("replaces heavy zero runtimes across all city page pilots", () => {
     assertNoTildaRuntime(html, fixture.route);
     assert.match(html, /id="shynli-home-page-runtime"/, fixture.route);
     assert.match(html, /id="shynli-zero-runtime-stub"/, fixture.route);
-    assert.match(html, /src="\/images\/shynli-logo-primary\.png"/, fixture.route);
+    assert.match(html, /src="\/images\/optimized\/shynli-logo-primary-[a-f0-9]+-w\d+\.webp"/, fixture.route);
     assert.match(html, /data-city-modal-open/, fixture.route);
     assertSharedNavigation(html, fixture.route);
     assert.match(
@@ -1324,7 +1314,7 @@ test("keeps the move-in move-out main route hand-coded without Tilda runtime", (
   assert.match(html, /Cleaning for Moving In or Moving Out/i);
   assert.match(html, /<meta name="robots" content="index,follow"\s*\/?>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/move-in-move-out-cleaning"\s*\/?>/);
-  assert.match(html, /\/images\/shynli-move-cleaning-hero\.png/);
+  assert.match(html, /\/images\/optimized\/shynli-move-cleaning-hero-[a-f0-9]+-w\d+\.webp/);
   assert.match(html, /\/images\/shynli-icon-32\.png/);
   assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);
@@ -1444,7 +1434,7 @@ test("keeps the move-in move-out copy hand-coded without Tilda runtime", () => {
 
   assert.match(html, /class="[^"]*\bmove-page\b[^"]*"/);
   assert.match(html, /Cleaning for Moving In or Moving Out/i);
-  assert.match(html, /\/images\/shynli-move-cleaning-hero\.png/);
+  assert.match(html, /\/images\/optimized\/shynli-move-cleaning-hero-[a-f0-9]+-w\d+\.webp/);
   assert.match(html, /\/images\/shynli-icon-32\.png/);
   assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);

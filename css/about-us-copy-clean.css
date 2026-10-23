@@ -399,7 +399,7 @@ button {
   top: 405px;
   width: 169px;
   height: 53px;
-  background-image: url("/images/about-hero-badge-local.png");
+  background-image: url(/images/optimized/about-hero-badge-local-2a501c427e-w478.webp);
 }
 
 .hero__badge--safe {
@@ -407,7 +407,7 @@ button {
   top: 543px;
   width: 193px;
   height: 53px;
-  background-image: url("/images/about-hero-badge-safe.png");
+  background-image: url(/images/optimized/about-hero-badge-safe-c9faa74e1f-w544.webp);
 }
 
 .hero__badge--quality {
@@ -415,7 +415,7 @@ button {
   top: 273px;
   width: 175px;
   height: 52px;
-  background-image: url("/images/about-hero-badge-quality.png");
+  background-image: url(/images/optimized/about-hero-badge-quality-546f12f963-w505.webp);
 }
 
 .hero__badge i,

@@ -8,9 +8,6 @@ const { startServer, stopServer } = require("./server-test-helpers");
 let serverProcess = null;
 let BASE_URL = null;
 
-const CALLRAIL_SWAP_SCRIPT_PATTERN =
-  /<script id="shynli-callrail-loader">(?=[\s\S]*?\/js\/vendor\/callrail-swap\.20260523\.js[\s\S]*?<\/script>)(?=[\s\S]*?setTimeout\(idleLoad,45000\)[\s\S]*?<\/script>)[\s\S]*?<\/script>/;
-
 test.before(async () => {
   const started = await startServer();
   serverProcess = started.child;
@@ -54,12 +51,7 @@ test("serves GTM on public site routes", async () => {
     }
     assert.match(body, /<!-- Google Tag Manager \(noscript\) -->/, route);
     assert.match(body, /googletagmanager\.com\/ns\.html\?id=GTM-5P88N7LD/, route);
-    assert.match(body, CALLRAIL_SWAP_SCRIPT_PATTERN, route);
-    assert.doesNotMatch(
-      body,
-      /<script type="text\/javascript" src="\/js\/vendor\/callrail-swap\.20260523\.js" defer><\/script>/,
-      route
-    );
+    assert.doesNotMatch(body, /callrail|calltrk|AW-18018853979|clarity\.ms|clarity\(/i, route);
   }
 });
 
@@ -97,13 +89,9 @@ test("serves the shared tracking library asset", async () => {
   assert.match(body, /ATTRIBUTION_TTL_DAYS = 365/);
 });
 
-test("serves trimmed CallRail swap asset without external forms runtime", async () => {
-  const response = await fetch(`${BASE_URL}/js/vendor/callrail-swap.20260523.js`);
-  const body = await response.text();
-
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") || "", /(javascript|text\/plain|application\/octet-stream)/);
-  assert.match(body, /CallTrkSwap/);
-  assert.match(body, /swap_session/);
-  assert.doesNotMatch(body, /external_forms|external_forms\.js/);
+test("removed CallRail assets cannot be loaded", async () => {
+  for (const file of ["20260522", "20260523"]) {
+    const response = await fetch(`${BASE_URL}/js/vendor/callrail-swap.${file}.js`);
+    assert.equal(response.status, 404);
+  }
 });

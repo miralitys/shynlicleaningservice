@@ -1,0 +1,2859 @@
+[
+  {
+    "route": "/",
+    "elapsedMs": 37744,
+    "beforeClick": [
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-team-1680.webp",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/home-copy-clean.css",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/home-area-summary.css",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/home-copy-clean.js",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-regular-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-deep-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-move-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-airbnb-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-commercial-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-post-construction-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-spark.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3363-6335-4431-b031-653162653030__4e627c73-9482-477b-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-pricing-dollar.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3562-3161-4665-b132-366464626431__facf01ea-c95b-4bf7-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-pricing-calendar.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3737-3633-4133-b665-373563626332__9fdc8146-e898-48d5-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-pricing-vacuum.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3537-6564-4262-a134-316237323461__b340fb1f-07e8-41a9-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3931-3864-4362-b866-663138646336__6d15bd9f-5403-4c48-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-pricing-house.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6635-3361-4564-b133-376434346431__ab77289a-ad5f-4c65-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-map-star.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-area-map.svg",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "ad.doubleclick.net",
+        "path": "/ccm/s/collect",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-icon-32.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/favicon.ico",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      }
+    ],
+    "dom": {
+      "images": [
+        {
+          "aboveFold": true,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+          "height": 27.296875,
+          "src": "/images/shynli-logo-primary.png",
+          "width": 96
+        },
+        {
+          "aboveFold": true,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-team-1680.webp",
+          "height": 478,
+          "src": "/images/home-copy-team-960.webp",
+          "width": 1188
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-regular-640.webp",
+          "height": 207.375,
+          "src": "/images/home-copy-service-regular-640.webp",
+          "width": 280
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-deep-640.webp",
+          "height": 217,
+          "src": "/images/home-copy-service-deep-640.webp",
+          "width": 303
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-move-640.webp",
+          "height": 207.375,
+          "src": "/images/home-copy-service-move-640.webp",
+          "width": 280
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-airbnb-640.webp",
+          "height": 207.375,
+          "src": "/images/home-copy-service-airbnb-640.webp",
+          "width": 280
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-commercial-640.webp",
+          "height": 207.375,
+          "src": "/images/home-copy-service-commercial-640.webp",
+          "width": 280
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-post-construction-640.webp",
+          "height": 207.375,
+          "src": "/images/home-copy-service-post-construction-640.webp",
+          "width": 280
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "",
+          "height": 350.984375,
+          "src": "/images/home-copy-cta-house.w640.webp",
+          "width": 474
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "",
+          "height": 44.5859375,
+          "src": "/images/shynli-footer-logo-light.png",
+          "width": 158
+        }
+      ],
+      "phones": [
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077"
+      ],
+      "scripts": [
+        {
+          "id": "",
+          "src": "https://www.clarity.ms/tag/wr72bb7trz?ref=gtm"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=G-0MXV4JBP67&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=AW-18018853979&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtm.js?id=GTM-5P88N7LD"
+        },
+        {
+          "id": "",
+          "src": null
+        },
+        {
+          "id": "shynli-tracking-bootstrap",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": "/js/home-copy-clean.js?v=20260524-reviews2"
+        },
+        {
+          "id": "schema-home",
+          "src": null
+        },
+        {
+          "id": "schema-faq",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722239105&cv=11&fst=1792722239105&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be6al1v9250857230za20ozb9250856566zd9250856566xecxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2F&rcb=12&frm=0&tiba=House%20Cleaning%20Services%20in%20Naperville%20%26%20Chicago%20Suburbs%20%7C%20Shynli%20Cleaning&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&data=event%3Dgtag.config&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722239115&cv=11&fst=1792722239115&bg=ffffff&guid=ON&async=1&gtm=45be6al1v9250857230z89250856566za20gzb9250856566zd9250856566xeaxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2F&rcb=12&frm=0&tiba=House%20Cleaning%20Services%20in%20Naperville%20%26%20Chicago%20Suburbs%20%7C%20Shynli%20Cleaning&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&_tu=CA&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "shynli-tracking-script",
+          "src": "/js/shynli-tracking.js"
+        },
+        {
+          "id": "shynli-site-header-runtime",
+          "src": null
+        },
+        {
+          "id": "shynli-quote-start-widget-runtime",
+          "src": null
+        },
+        {
+          "id": "mobile-sticky-cta",
+          "src": null
+        },
+        {
+          "id": "shynli-callrail-loader",
+          "src": null
+        },
+        {
+          "id": "shynli-phone-snippet",
+          "src": null
+        }
+      ]
+    },
+    "afterClick": [
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-team-1680.webp",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/home-copy-clean.css",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/home-area-summary.css",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/home-copy-clean.js",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-regular-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-deep-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-move-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-airbnb-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-commercial-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-service-post-construction-640.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-spark.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3363-6335-4431-b031-653162653030__4e627c73-9482-477b-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-pricing-dollar.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3562-3161-4665-b132-366464626431__facf01ea-c95b-4bf7-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-pricing-calendar.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3737-3633-4133-b665-373563626332__9fdc8146-e898-48d5-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-pricing-vacuum.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3537-6564-4262-a134-316237323461__b340fb1f-07e8-41a9-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3931-3864-4362-b866-663138646336__6d15bd9f-5403-4c48-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-pricing-house.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6635-3361-4564-b133-376434346431__ab77289a-ad5f-4c65-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-map-star.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-area-map.svg",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "ad.doubleclick.net",
+        "path": "/ccm/s/collect",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-icon-32.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/favicon.ico",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/vendor/callrail-swap.20260523.js",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "js.callrail.com",
+        "path": "/group/0/7c306f50357be4c201eb/12/swap_session.json",
+        "query": ""
+      }
+    ],
+    "afterClickElapsedMs": 24849
+  },
+  {
+    "route": "/naperville",
+    "elapsedMs": 36705,
+    "beforeClick": [
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-logo-icon-white.svg",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-spark.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-sugargrove-cleaners.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-note-flower.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-area-star.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-sugargrove-area-map.svg",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      }
+    ],
+    "dom": {
+      "images": [
+        {
+          "aboveFold": true,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+          "height": 27.296875,
+          "src": "/images/shynli-logo-primary.png",
+          "width": 96
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+          "height": 42,
+          "src": "images/shynli-logo-icon-white.svg",
+          "width": 42
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "",
+          "height": 350.984375,
+          "src": "images/shynli-quote-house.png",
+          "width": 474
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "",
+          "height": 44.5859375,
+          "src": "/images/shynli-footer-logo-light.png",
+          "width": 158
+        }
+      ],
+      "phones": [
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077"
+      ],
+      "scripts": [
+        {
+          "id": "",
+          "src": "https://www.clarity.ms/tag/wr72bb7trz?ref=gtm"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=G-0MXV4JBP67&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=AW-18018853979&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtm.js?id=GTM-5P88N7LD"
+        },
+        {
+          "id": "",
+          "src": null
+        },
+        {
+          "id": "shynli-tracking-bootstrap",
+          "src": null
+        },
+        {
+          "id": "schema-breadcrumbs",
+          "src": null
+        },
+        {
+          "id": "schema-service",
+          "src": null
+        },
+        {
+          "id": "schema-faq",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722240612&cv=11&fst=1792722240612&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be6al1v9250857230za20ozb9250856566zd9250856566xecxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115616986~115938465~115938468~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2Fnaperville&rcb=9&frm=0&tiba=House%20Cleaning%20Services%20in%20Naperville%2C%20IL%20%7C%20Shynli%20Cleaning&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&data=event%3Dgtag.config&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722240619&cv=11&fst=1792722240619&bg=ffffff&guid=ON&async=1&gtm=45be6al1v9250857230z89250856566za20gzb9250856566zd9250856566xeaxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115616986~115938465~115938468~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2Fnaperville&rcb=9&frm=0&tiba=House%20Cleaning%20Services%20in%20Naperville%2C%20IL%20%7C%20Shynli%20Cleaning&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&_tu=CA&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "shynli-tracking-script",
+          "src": "/js/shynli-tracking.js"
+        },
+        {
+          "id": "shynli-site-header-runtime",
+          "src": null
+        },
+        {
+          "id": "shynli-menu-widgeticons-runtime-stub",
+          "src": null
+        },
+        {
+          "id": "shynli-home-page-runtime",
+          "src": null
+        },
+        {
+          "id": "shynli-zero-runtime-stub",
+          "src": null
+        },
+        {
+          "id": "full-card-click-handler",
+          "src": null
+        },
+        {
+          "id": "mobile-sticky-cta",
+          "src": null
+        },
+        {
+          "id": "safari-home-layout-fix",
+          "src": null
+        },
+        {
+          "id": "deep-cleaning-addons-rebuild",
+          "src": null
+        },
+        {
+          "id": "mobile-contact-details-fix",
+          "src": null
+        },
+        {
+          "id": "pricing-calculator-scroll",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": null
+        },
+        {
+          "id": "shynli-quote-start-widget-runtime",
+          "src": null
+        },
+        {
+          "id": "shynli-form-attribution-runtime",
+          "src": null
+        },
+        {
+          "id": "shynli-callrail-loader",
+          "src": null
+        },
+        {
+          "id": "shynli-phone-snippet",
+          "src": null
+        }
+      ]
+    },
+    "afterClick": [
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-logo-icon-white.svg",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-spark.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-sugargrove-cleaners.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-note-flower.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-area-star.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-sugargrove-area-map.svg",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/vendor/callrail-swap.20260523.js",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "js.callrail.com",
+        "path": "/group/0/7c306f50357be4c201eb/12/swap_session.json",
+        "query": ""
+      }
+    ],
+    "afterClickElapsedMs": 24494
+  },
+  {
+    "route": "/quote",
+    "elapsedMs": 36277,
+    "beforeClick": [
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/quote2.css",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/quote2-app.js",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/calculator-options.css",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/cleaning-pricing.js",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/calculator-controls.js",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/quote-simple.css",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/quote-simple-controls.js",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-footer-logo-light.png",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      }
+    ],
+    "dom": {
+      "images": [
+        {
+          "aboveFold": true,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+          "height": 27.296875,
+          "src": "/images/shynli-logo-primary.png",
+          "width": 96
+        },
+        {
+          "aboveFold": true,
+          "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+          "height": 44.5859375,
+          "src": "/images/shynli-footer-logo-light.png",
+          "width": 158
+        }
+      ],
+      "phones": [
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077"
+      ],
+      "scripts": [
+        {
+          "id": "",
+          "src": "https://www.clarity.ms/tag/wr72bb7trz?ref=gtm"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=G-0MXV4JBP67&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=AW-18018853979&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtm.js?id=GTM-5P88N7LD"
+        },
+        {
+          "id": "",
+          "src": null
+        },
+        {
+          "id": "shynli-tracking-bootstrap",
+          "src": null
+        },
+        {
+          "id": "runtime-config",
+          "src": null
+        },
+        {
+          "id": "shynli-menu-widgeticons-runtime-stub",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722241421&cv=11&fst=1792722241421&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be6al1v9250857230za20ozb9250856566zd9250856566xecxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115938466~115938468~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034~121328666&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2Fquote&rcb=16&frm=0&tiba=Get%20a%20Free%20Quote%20%7C%20Shynli%20Cleaning&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&data=event%3Dgtag.config&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722241428&cv=11&fst=1792722241428&bg=ffffff&guid=ON&async=1&gtm=45be6al1v9250857230z89250856566za20gzb9250856566zd9250856566xeaxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115938466~115938468~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034~121328666&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2Fquote&rcb=16&frm=0&tiba=Get%20a%20Free%20Quote%20%7C%20Shynli%20Cleaning&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&_tu=CA&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "shynli-tracking-script",
+          "src": "/js/shynli-tracking.js"
+        },
+        {
+          "id": "shynli-site-header-runtime",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": "/js/cleaning-pricing.js?v=20261013-doors45"
+        },
+        {
+          "id": "",
+          "src": "/js/calculator-controls.js?v=20261013-window-select"
+        },
+        {
+          "id": "",
+          "src": "/js/quote-simple-controls.js?v=20261013-layout"
+        },
+        {
+          "id": "",
+          "src": "/js/quote2-app.js?v=20261013-initial-metadata"
+        },
+        {
+          "id": "mobile-sticky-cta",
+          "src": null
+        },
+        {
+          "id": "shynli-form-attribution-runtime",
+          "src": null
+        },
+        {
+          "id": "full-card-click-handler",
+          "src": null
+        },
+        {
+          "id": "deep-cleaning-addons-rebuild",
+          "src": null
+        },
+        {
+          "id": "mobile-contact-details-fix",
+          "src": null
+        },
+        {
+          "id": "safari-home-layout-fix",
+          "src": null
+        },
+        {
+          "id": "shynli-callrail-loader",
+          "src": null
+        },
+        {
+          "id": "shynli-phone-snippet",
+          "src": null
+        }
+      ]
+    },
+    "afterClick": [
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/quote2.css",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/quote2-app.js",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/calculator-options.css",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/cleaning-pricing.js",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/calculator-controls.js",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/quote-simple.css",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/quote-simple-controls.js",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/shynli-footer-logo-light.png",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/vendor/callrail-swap.20260523.js",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "js.callrail.com",
+        "path": "/group/0/7c306f50357be4c201eb/12/swap_session.json",
+        "query": ""
+      }
+    ],
+    "afterClickElapsedMs": 24176
+  },
+  {
+    "route": "/services/deep-cleaning",
+    "elapsedMs": 35439,
+    "beforeClick": [
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3035-3031-4539-b965-373266666536__71ff47c9-393c-4a28-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      }
+    ],
+    "dom": {
+      "images": [
+        {
+          "aboveFold": true,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+          "height": 27.296875,
+          "src": "/images/shynli-logo-primary.png",
+          "width": 96
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+          "height": 0,
+          "src": "images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+          "width": 0
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+          "height": 130,
+          "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+          "width": 130
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+          "height": 130,
+          "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+          "width": 130
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+          "height": 130,
+          "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+          "width": 130
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+          "height": 130,
+          "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+          "width": 130
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+          "height": 206.9921875,
+          "src": "images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+          "width": 280
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+          "height": 215.1171875,
+          "src": "images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+          "width": 291
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+          "height": 206.9921875,
+          "src": "images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+          "width": 280
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+          "height": 206.9921875,
+          "src": "images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+          "width": 280
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "https://shynlicleaningservice.com/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+          "height": 351,
+          "src": "images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+          "width": 474
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "",
+          "height": 44.5859375,
+          "src": "/images/shynli-footer-logo-light.png",
+          "width": 158
+        }
+      ],
+      "phones": [
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077"
+      ],
+      "scripts": [
+        {
+          "id": "",
+          "src": "https://www.clarity.ms/tag/wr72bb7trz?ref=gtm"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=G-0MXV4JBP67&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=AW-18018853979&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtm.js?id=GTM-5P88N7LD"
+        },
+        {
+          "id": "",
+          "src": null
+        },
+        {
+          "id": "shynli-tracking-bootstrap",
+          "src": null
+        },
+        {
+          "id": "schema-breadcrumbs",
+          "src": null
+        },
+        {
+          "id": "shynli-menu-widgeticons-runtime-stub",
+          "src": null
+        },
+        {
+          "id": "shynli-home-page-runtime",
+          "src": null
+        },
+        {
+          "id": "shynli-zero-runtime-stub",
+          "src": null
+        },
+        {
+          "id": "schema-service",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722242622&cv=11&fst=1792722242622&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be6al1v9250857230za20ozb9250856566zd9250856566xecxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115616986~115938466~115938468~118897920~118897930~119860442~120213116~120385423~120469145~120469153~121246026~121246034&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2Fservices%2Fdeep-cleaning&rcb=12&frm=0&tiba=Deep%20Cleaning%20Services%20%7C%20Shynli%20Cleaning&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&data=event%3Dgtag.config&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722242629&cv=11&fst=1792722242629&bg=ffffff&guid=ON&async=1&gtm=45be6al1v9250857230z89250856566za20gzb9250856566zd9250856566xeaxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115616986~115938466~115938468~118897920~118897930~119860442~120213116~120385423~120469145~120469153~121246026~121246034&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2Fservices%2Fdeep-cleaning&rcb=12&frm=0&tiba=Deep%20Cleaning%20Services%20%7C%20Shynli%20Cleaning&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&_tu=CA&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "shynli-tracking-script",
+          "src": "/js/shynli-tracking.js"
+        },
+        {
+          "id": "shynli-site-header-runtime",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": null
+        },
+        {
+          "id": "mobile-sticky-cta",
+          "src": null
+        },
+        {
+          "id": "shynli-form-attribution-runtime",
+          "src": null
+        },
+        {
+          "id": "full-card-click-handler",
+          "src": null
+        },
+        {
+          "id": "deep-cleaning-addons-rebuild",
+          "src": null
+        },
+        {
+          "id": "mobile-contact-details-fix",
+          "src": null
+        },
+        {
+          "id": "safari-home-layout-fix",
+          "src": null
+        },
+        {
+          "id": "shynli-callrail-loader",
+          "src": null
+        },
+        {
+          "id": "shynli-phone-snippet",
+          "src": null
+        }
+      ]
+    },
+    "afterClick": [
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild3035-3031-4539-b965-373266666536__71ff47c9-393c-4a28-b.png",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/vendor/callrail-swap.20260523.js",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "js.callrail.com",
+        "path": "/group/0/7c306f50357be4c201eb/12/swap_session.json",
+        "query": ""
+      }
+    ],
+    "afterClickElapsedMs": 23792
+  },
+  {
+    "route": "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos",
+    "elapsedMs": 35228,
+    "beforeClick": [
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      }
+    ],
+    "dom": {
+      "images": [
+        {
+          "aboveFold": true,
+          "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+          "height": 27.296875,
+          "src": "/images/shynli-logo-primary.png",
+          "width": 96
+        },
+        {
+          "aboveFold": false,
+          "currentSrc": "",
+          "height": 44.5859375,
+          "src": "/images/shynli-footer-logo-light.png",
+          "width": 158
+        }
+      ],
+      "phones": [
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077",
+        "tel:+16308127077"
+      ],
+      "scripts": [
+        {
+          "id": "",
+          "src": "https://www.clarity.ms/tag/wr72bb7trz?ref=gtm"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=G-0MXV4JBP67&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtag/js?id=AW-18018853979&cx=c&gtm=4e6al1"
+        },
+        {
+          "id": "",
+          "src": "https://www.googletagmanager.com/gtm.js?id=GTM-5P88N7LD"
+        },
+        {
+          "id": "",
+          "src": null
+        },
+        {
+          "id": "shynli-tracking-bootstrap",
+          "src": null
+        },
+        {
+          "id": "schema-breadcrumbs",
+          "src": null
+        },
+        {
+          "id": "schema-blog-article",
+          "src": null
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722243230&cv=11&fst=1792722243230&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45be6al1v9250857230za20ozb9250856566zd9250856566xecxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115616985~115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2Fblog%2Fairbnb%2Fairbnb-turnover-cleaning-checklist-with-photos&rcb=2&frm=0&tiba=Airbnb%20Turnover%20Cleaning%20Checklist%20with%20Photos%20%7C%20SHYNLI%20Blog&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&data=event%3Dgtag.config&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "",
+          "src": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18018853979/?random=1792722243237&cv=11&fst=1792722243237&bg=ffffff&guid=ON&async=1&gtm=45be6al1v9250857230z89250856566za20gzb9250856566zd9250856566xeaxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115616985~115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&u_w=1440&u_h=900&url=https%3A%2F%2Fshynlicleaningservice.com%2Fblog%2Fairbnb%2Fairbnb-turnover-cleaning-checklist-with-photos&rcb=2&frm=0&tiba=Airbnb%20Turnover%20Cleaning%20Checklist%20with%20Photos%20%7C%20SHYNLI%20Blog&hn=www.googleadservices.com&npa=0&pscdl=noapi&auid=838248271.1786308955&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47%7CGoogle%2520Chrome%3B156.0.8078.47&uamb=0&uam=&uap=macOS&uapv=26.6.2&uaw=0&_tu=CA&ept=9&rfmt=3&fmt=4"
+        },
+        {
+          "id": "shynli-tracking-script",
+          "src": "/js/shynli-tracking.js"
+        },
+        {
+          "id": "shynli-site-header-runtime",
+          "src": null
+        },
+        {
+          "id": "shynli-blog-topic-hub-script",
+          "src": null
+        },
+        {
+          "id": "shynli-callrail-loader",
+          "src": null
+        },
+        {
+          "id": "shynli-phone-snippet",
+          "src": null
+        }
+      ]
+    },
+    "afterClick": [
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/playfair-display-latin-400-900.woff2",
+        "query": ""
+      },
+      {
+        "kind": "font",
+        "host": "shynlicleaningservice.com",
+        "path": "/fonts/montserrat-latin-300-800.woff2",
+        "query": ""
+      },
+      {
+        "kind": "stylesheet",
+        "host": "shynlicleaningservice.com",
+        "path": "/css/shynli-fonts.css",
+        "query": ""
+      },
+      {
+        "kind": "image",
+        "host": "shynlicleaningservice.com",
+        "path": "/images/home-copy-logo-320.webp",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtm.js",
+        "query": "id=GTM-5P88N7LD"
+      },
+      {
+        "kind": "other",
+        "host": "shynlicleaningservice.com",
+        "path": "/site.webmanifest",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=AW-18018853979"
+      },
+      {
+        "kind": "script",
+        "host": "www.googletagmanager.com",
+        "path": "/gtag/js",
+        "query": "id=G-0MXV4JBP67"
+      },
+      {
+        "kind": "script",
+        "host": "www.clarity.ms",
+        "path": "/tag/wr72bb7trz",
+        "query": "ref=gtm"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "script",
+        "host": "googleads.g.doubleclick.net",
+        "path": "/pagead/viewthroughconversion/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/rmkt/collect/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979&en=page_view"
+      },
+      {
+        "kind": "other",
+        "host": "www.google.com",
+        "path": "/ccm/collect",
+        "query": "tid=AW-18018853979&tids=AW-18018853979"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": "en=gtag.config"
+      },
+      {
+        "kind": "image",
+        "host": "www.google.com",
+        "path": "/pagead/1p-user-list/18018853979/",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "analytics.google.com",
+        "path": "/g/collect",
+        "query": "tid=G-0MXV4JBP67&en=page_view"
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/shynli-tracking.js",
+        "query": ""
+      },
+      {
+        "kind": "script",
+        "host": "shynlicleaningservice.com",
+        "path": "/js/vendor/callrail-swap.20260523.js",
+        "query": ""
+      },
+      {
+        "kind": "other",
+        "host": "js.callrail.com",
+        "path": "/group/0/7c306f50357be4c201eb/12/swap_session.json",
+        "query": ""
+      }
+    ],
+    "afterClickElapsedMs": 23447
+  }
+]

@@ -548,7 +548,7 @@ test("serves city landing pages from the clean shared city template", async () =
   assert.doesNotMatch(body, /js\/tilda-menusub-1\.0\.min\.js/);
   assert.match(body, /id="shynli-home-page-runtime"/);
   assert.match(body, /id="shynli-zero-runtime-stub"/);
-  assert.match(body, /src="\/images\/shynli-logo-primary\.png"/);
+  assert.match(body, /src="\/images\/optimized\/shynli-logo-primary-[a-f0-9]+-w\d+\.webp"/);
   assert.match(body, /href="\/images\/shynli-icon-32\.png"/);
   assert.doesNotMatch(body, /js\/tilda-events-1\.0\.min\.js/);
   assert.match(body, /href="\/quote"/);
@@ -1046,7 +1046,7 @@ test("serves the move-in move-out main route as the clean hand-coded page", asyn
     body,
     /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/move-in-move-out-cleaning"\s*\/?>/
   );
-  assert.match(body, /\/images\/shynli-move-cleaning-hero\.png/);
+  assert.match(body, /\/images\/optimized\/shynli-move-cleaning-hero-[a-f0-9]+-w\d+\.webp/);
   assert.match(body, /\/images\/shynli-icon-32\.png/);
   assertNoTildaRuntime(body);
   assert.doesNotMatch(body, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);

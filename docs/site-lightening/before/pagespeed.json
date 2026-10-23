@@ -1,0 +1,14 @@
+{
+  "home": {
+    "url": "https://pagespeed.web.dev/analysis/https-shynlicleaningservice-com/5rfrtuhsfk?form_factor=mobile",
+    "score": 60,
+    "lcpMs": 8223,
+    "totalKiB": 1396
+  },
+  "naperville": {
+    "url": "https://pagespeed.web.dev/analysis/https-shynlicleaningservice-com-naperville/g5e51g7n4u?form_factor=mobile",
+    "score": 74,
+    "lcpMs": 8364,
+    "totalWeightLine": "Предотвращение чрезмерной нагрузки на сеть Общий размер достиг 1 186 КиБ\nМетки и промежутки пользовательского времени\nВремя выполнения кода Ja"
+  }
+}

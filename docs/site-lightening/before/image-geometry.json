@@ -1,0 +1,5178 @@
+[
+  {
+    "route": "/",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 40,
+        "src": "https://shynlicleaningservice.com/images/home-copy-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/home-copy-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 227,
+        "src": "https://shynlicleaningservice.com/images/tild3363-6335-4431-b031-653162653030__4e627c73-9482-477b-8.png",
+        "width": 460
+      },
+      {
+        "height": 227,
+        "src": "https://shynlicleaningservice.com/images/shynli-pricing-dollar.svg",
+        "width": 460
+      },
+      {
+        "height": 229,
+        "src": "https://shynlicleaningservice.com/images/tild3562-3161-4665-b132-366464626431__facf01ea-c95b-4bf7-b.png",
+        "width": 680
+      },
+      {
+        "height": 229,
+        "src": "https://shynlicleaningservice.com/images/shynli-pricing-calendar.svg",
+        "width": 680
+      },
+      {
+        "height": 290,
+        "src": "https://shynlicleaningservice.com/images/tild3737-3633-4133-b665-373563626332__9fdc8146-e898-48d5-b.png",
+        "width": 560
+      },
+      {
+        "height": 290,
+        "src": "https://shynlicleaningservice.com/images/tild3537-6564-4262-a134-316237323461__b340fb1f-07e8-41a9-8.png",
+        "width": 560
+      },
+      {
+        "height": 148,
+        "src": "https://shynlicleaningservice.com/images/shynli-pricing-vacuum.svg",
+        "width": 154
+      },
+      {
+        "height": 189,
+        "src": "https://shynlicleaningservice.com/images/tild3931-3864-4362-b866-663138646336__6d15bd9f-5403-4c48-8.png",
+        "width": 578
+      },
+      {
+        "height": 189,
+        "src": "https://shynlicleaningservice.com/images/shynli-pricing-house.svg",
+        "width": 578
+      },
+      {
+        "height": 147,
+        "src": "https://shynlicleaningservice.com/images/tild6635-3361-4564-b133-376434346431__ab77289a-ad5f-4c65-a.png",
+        "width": 1160
+      },
+      {
+        "height": 164,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 360
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 380
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 380
+      },
+      {
+        "height": 183,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 380
+      },
+      {
+        "height": 211,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 360
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 380
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 380
+      },
+      {
+        "height": 192,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 380
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 1161
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 1161
+      },
+      {
+        "height": 950.984375,
+        "src": "https://shynlicleaningservice.com/images/home-copy-map-star.svg",
+        "width": 1160
+      },
+      {
+        "height": 950.984375,
+        "src": "https://shynlicleaningservice.com/images/home-copy-map-star.svg",
+        "width": 1160
+      },
+      {
+        "height": 704,
+        "src": "https://shynlicleaningservice.com/images/home-copy-area-map.svg",
+        "width": 1160
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-team-1280.webp",
+        "height": 478,
+        "src": "/images/home-copy-team-960.webp",
+        "width": 1188
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-regular-320.webp",
+        "height": 207.375,
+        "src": "/images/home-copy-service-regular-640.webp",
+        "width": 280
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-deep-320.webp",
+        "height": 217,
+        "src": "/images/home-copy-service-deep-640.webp",
+        "width": 303
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-move-320.webp",
+        "height": 207.375,
+        "src": "/images/home-copy-service-move-640.webp",
+        "width": 280
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-airbnb-320.webp",
+        "height": 207.375,
+        "src": "/images/home-copy-service-airbnb-640.webp",
+        "width": 280
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-commercial-320.webp",
+        "height": 207.375,
+        "src": "/images/home-copy-service-commercial-640.webp",
+        "width": 280
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-post-construction-320.webp",
+        "height": 207.375,
+        "src": "/images/home-copy-service-post-construction-640.webp",
+        "width": 280
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 350.984375,
+        "src": "/images/home-copy-cta-house.w640.webp",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/about-us",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 598,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-018.png",
+        "width": 1414
+      },
+      {
+        "height": 203,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-005.png",
+        "width": 592
+      },
+      {
+        "height": 223,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-011.png",
+        "width": 408
+      },
+      {
+        "height": 50,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-034.png",
+        "width": 116
+      },
+      {
+        "height": 84,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-022.png",
+        "width": 592
+      },
+      {
+        "height": 211,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-017.png",
+        "width": 360
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-008.png",
+        "width": 380
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-038.png",
+        "width": 1161
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-041.png",
+        "width": 380
+      },
+      {
+        "height": 192,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-020.png",
+        "width": 380
+      },
+      {
+        "height": 183,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-025.png",
+        "width": 380
+      },
+      {
+        "height": 164,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-027.png",
+        "width": 360
+      },
+      {
+        "height": 291,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-009.png",
+        "width": 345
+      },
+      {
+        "height": 337,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-006.png",
+        "width": 245
+      },
+      {
+        "height": 74,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-028.png",
+        "width": 287
+      },
+      {
+        "height": 291,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-042.png",
+        "width": 345
+      },
+      {
+        "height": 337,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-035.png",
+        "width": 320
+      },
+      {
+        "height": 74,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-033.png",
+        "width": 287
+      },
+      {
+        "height": 291,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-044.png",
+        "width": 345
+      },
+      {
+        "height": 337,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-023.png",
+        "width": 320
+      },
+      {
+        "height": 74,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-030.png",
+        "width": 287
+      },
+      {
+        "height": 291,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-026.png",
+        "width": 345
+      },
+      {
+        "height": 337,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-021.png",
+        "width": 320
+      },
+      {
+        "height": 74,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-040.png",
+        "width": 287
+      },
+      {
+        "height": 291,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-001.png",
+        "width": 345
+      },
+      {
+        "height": 337,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-003.png",
+        "width": 250
+      },
+      {
+        "height": 74,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-039.png",
+        "width": 287
+      },
+      {
+        "height": 291,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-016.png",
+        "width": 345
+      },
+      {
+        "height": 351,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-007.png",
+        "width": 320
+      },
+      {
+        "height": 74,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-036.png",
+        "width": 287
+      },
+      {
+        "height": 72,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-014.png",
+        "width": 1160
+      },
+      {
+        "height": 485,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-002.png",
+        "width": 1160
+      },
+      {
+        "height": 351,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-004.png",
+        "width": 474
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-clean-logo.png",
+        "height": 0,
+        "src": "/images/about-clean-logo.png",
+        "width": 0
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-010.png",
+        "height": 53.03125,
+        "src": "images/about-copy-asset-010.png",
+        "width": 169
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-013.png",
+        "height": 53.2109375,
+        "src": "images/about-copy-asset-013.png",
+        "width": 193
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-037.png",
+        "height": 51.9765625,
+        "src": "images/about-copy-asset-037.png",
+        "width": 175
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-031.svg",
+        "height": 23.09375,
+        "src": "images/about-copy-asset-031.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-012.svg",
+        "height": 22,
+        "src": "images/about-copy-asset-012.svg",
+        "width": 32
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-032.svg",
+        "height": 22.046875,
+        "src": "images/about-copy-asset-032.svg",
+        "width": 21
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-024.svg",
+        "height": 17.140625,
+        "src": "images/about-copy-asset-024.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-015.svg",
+        "height": 643.6640625,
+        "src": "images/about-copy-asset-015.svg",
+        "width": 916
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-043.svg",
+        "height": 301.9306640625,
+        "src": "images/about-copy-asset-043.svg",
+        "width": 302.6113586425781
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-043.svg",
+        "height": 87.9765625,
+        "src": "images/about-copy-asset-043.svg",
+        "width": 89
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-029.svg",
+        "height": 22,
+        "src": "images/about-copy-asset-029.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/addison",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 39,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 478,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-cleaners.png",
+        "width": 1188
+      },
+      {
+        "height": 155,
+        "src": "https://shynlicleaningservice.com/images/shynli-note-flower.svg",
+        "width": 1160
+      },
+      {
+        "height": 241.25,
+        "src": "https://shynlicleaningservice.com/images/shynli-note-flower.svg",
+        "width": 1160
+      },
+      {
+        "height": 1010.390625,
+        "src": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "width": 1920
+      },
+      {
+        "height": 1010.390625,
+        "src": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "width": 1920
+      },
+      {
+        "height": 600,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-area-map.svg",
+        "width": 714
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+        "height": 42,
+        "src": "images/shynli-logo-icon-white.svg",
+        "width": 42
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 350.984375,
+        "src": "images/shynli-quote-house.png",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/blog",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/contacts",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 485,
+        "src": "https://shynlicleaningservice.com/images/shynli-contact-panel-bg.png",
+        "width": 1160
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-phone-cream.svg",
+        "height": 22,
+        "src": "images/shynli-phone-cream.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-email-cream.svg",
+        "height": 20,
+        "src": "images/shynli-email-cream.svg",
+        "width": 25
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "",
+        "height": 351,
+        "src": "images/shynli-quote-house.png",
+        "width": 474
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/faq",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 162,
+        "src": "https://shynlicleaningservice.com/images/tild3934-3636-4236-a434-666134323265__6e523e70-5b53-460f-a.png",
+        "width": 1160
+      },
+      {
+        "height": 162,
+        "src": "https://shynlicleaningservice.com/images/tild3235-3136-4134-a438-343162663438__f7908f5f-f540-45cb-9.png",
+        "width": 1160
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3163-6235-4133-a564-316465373838__vector.svg",
+        "height": 24,
+        "src": "/images/tild3163-6235-4133-a564-316465373838__vector.svg",
+        "width": 24
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6537-3537-4163-b235-386463616661__solar_calendar-bold.svg",
+        "height": 24,
+        "src": "/images/tild6537-3537-4163-b235-386463616661__solar_calendar-bold.svg",
+        "width": 24
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3864-3437-4562-b938-313765633536__vector_1.svg",
+        "height": 18,
+        "src": "/images/tild3864-3437-4562-b938-313765633536__vector_1.svg",
+        "width": 24
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3964-3430-4138-b537-383733653464__fluent_people-team-1.svg",
+        "height": 26,
+        "src": "/images/tild3964-3430-4138-b537-383733653464__fluent_people-team-1.svg",
+        "width": 26
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/home-calculator",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "",
+        "height": 7.1175537109375,
+        "src": "images/tild3936-3764-4636-b239-626233383832__vector.svg",
+        "width": 17.616455078125
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "",
+        "height": 10.41815185546875,
+        "src": "images/tild3936-3764-4636-b239-626233383832__vector.svg",
+        "width": 30.256591796875
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild3438-6434-4266-b238-656432326438__vector.svg",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 5.55517578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 18.169677734375
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 5.55517578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 18.1697998046875
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg",
+        "width": 207
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 5.55517578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 18.1697998046875
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "height": 22.046875,
+        "src": "images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 21
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "height": 17.140625,
+        "src": "images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild3433-6338-4136-b136-623833636265__svg_1767801678298.svg",
+        "width": 916
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 122.462890625,
+        "src": "images/tild6566-6435-4131-a332-643333376335__vector.svg",
+        "width": 181.5592041015625
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild6566-6435-4131-a332-643333376335__vector.svg",
+        "width": 89
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/oauth/callback",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [],
+    "viewport": 1920
+  },
+  {
+    "route": "/pricing",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 724,
+        "src": "https://shynlicleaningservice.com/images/tild3365-6433-4564-a630-303638663238__20260114_1748____sim.png",
+        "width": 1414
+      },
+      {
+        "height": 229,
+        "src": "https://shynlicleaningservice.com/images/tild3562-3161-4665-b132-366464626431__facf01ea-c95b-4bf7-b.png",
+        "width": 680
+      },
+      {
+        "height": 290,
+        "src": "https://shynlicleaningservice.com/images/tild3737-3633-4133-b665-373563626332__9fdc8146-e898-48d5-b.png",
+        "width": 460
+      },
+      {
+        "height": 189,
+        "src": "https://shynlicleaningservice.com/images/tild3537-6564-4262-a134-316237323461__b340fb1f-07e8-41a9-8.png",
+        "width": 470
+      },
+      {
+        "height": 72,
+        "src": "https://shynlicleaningservice.com/images/tild3331-3538-4135-b766-366635626339__86f6e643-92cc-4c75-a.png",
+        "width": 1160
+      },
+      {
+        "height": 485,
+        "src": "https://shynlicleaningservice.com/images/tild3035-3031-4539-b965-373266666536__71ff47c9-393c-4a28-b.png",
+        "width": 1160
+      },
+      {
+        "height": 239,
+        "src": "https://shynlicleaningservice.com/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "width": 324
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3364-3839-4665-b832-356539643234__5.svg",
+        "height": 45,
+        "src": "images/tild3364-3839-4665-b832-356539643234__5.svg",
+        "width": 36
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.5009765625
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-6364-4734-b431-396533323234__1.svg",
+        "height": 40,
+        "src": "images/tild3437-6364-4734-b431-396533323234__1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg",
+        "height": 140,
+        "src": "images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg",
+        "width": 207
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.5009765625
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.5009765625
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3438-6434-4266-b238-656432326438__vector.svg",
+        "height": 101.328125,
+        "src": "images/tild3438-6434-4266-b238-656432326438__vector.svg",
+        "width": 100
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3261-6630-4232-a337-303332313661__4.svg",
+        "height": 42.8515625,
+        "src": "images/tild3261-6630-4232-a337-303332313661__4.svg",
+        "width": 30
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.5009765625
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3864-4539-b661-326231633861__vector.svg",
+        "height": 76.8828125,
+        "src": "images/tild3237-3864-4539-b661-326231633861__vector.svg",
+        "width": 80
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "height": 20,
+        "src": "images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+        "height": 21,
+        "src": "images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "height": 20,
+        "src": "images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+        "height": 21,
+        "src": "images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6563-3235-4932-b863-633539643661__rectangle_41.svg",
+        "height": 24,
+        "src": "images/tild6563-3235-4932-b863-633539643661__rectangle_41.svg",
+        "width": 24
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3638-6236-4262-b464-663130303432__vector.svg",
+        "height": 17.140625,
+        "src": "images/tild3638-6236-4262-b464-663130303432__vector.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+        "height": 30,
+        "src": "images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+        "width": 30
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+        "height": 30,
+        "src": "images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+        "width": 30
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/quote",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/service-areas",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-sugargrove-area-map.svg",
+        "height": 643.6640625,
+        "src": "/images/shynli-sugargrove-area-map.svg",
+        "width": 916
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "height": 216.4765625,
+        "src": "/images/shynli-area-star.svg",
+        "width": 219
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "height": 87.9765625,
+        "src": "/images/shynli-area-star.svg",
+        "width": 89
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-phone-cream.svg",
+        "height": 22,
+        "src": "/images/shynli-phone-cream.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-email-cream.svg",
+        "height": 20,
+        "src": "/images/shynli-email-cream.svg",
+        "width": 25
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 351,
+        "src": "/images/shynli-quote-house.png",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/airbnb-cleaning",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 164,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 360
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 380
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 380
+      },
+      {
+        "height": 183,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 380
+      },
+      {
+        "height": 211,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 360
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 380
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 380
+      },
+      {
+        "height": 192,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 380
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 1161
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 1161
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-airbnb-cleaning-hero.png",
+        "height": 724,
+        "src": "images/shynli-airbnb-cleaning-hero.png",
+        "width": 1414
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-living-room.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-living-room.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bedroom.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-bedroom.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bathroom.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-bathroom.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-kitchen.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-kitchen.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 351,
+        "src": "/images/home-copy-cta-house.w640.webp",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/commercial-cleaning",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 724,
+        "src": "https://shynlicleaningservice.com/images/tild3732-6338-4532-b031-326634383861__20260114_2143_image_.png",
+        "width": 1414
+      },
+      {
+        "height": 164,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 360
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 380
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 380
+      },
+      {
+        "height": 183,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 380
+      },
+      {
+        "height": 211,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 360
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 380
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 380
+      },
+      {
+        "height": 192,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 380
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 1161
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 1161
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 64,
+        "src": "/images/tild3238-6662-4337-a363-396238396235__shynli_cleaning_2_7.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 64,
+        "src": "/images/tild3639-3431-4737-b736-663238643665__shynli_cleaning_2_8.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 64,
+        "src": "/images/tild6164-3638-4561-a362-626530386230__shynli_cleaning_2_9.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 64,
+        "src": "/images/tild3131-6539-4639-b134-316165356365__shynli_cleaning_2_10.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 351,
+        "src": "/images/home-copy-cta-house.w640.webp",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/deep-cleaning",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 753,
+        "src": "https://shynlicleaningservice.com/images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+        "width": 1413
+      },
+      {
+        "height": 164,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 360
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 380
+      },
+      {
+        "height": 44,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 44
+      },
+      {
+        "height": 183,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 380
+      },
+      {
+        "height": 211,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 360
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 380
+      },
+      {
+        "height": 192,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 380
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 1161
+      },
+      {
+        "height": 44,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 47
+      },
+      {
+        "height": 485,
+        "src": "https://shynlicleaningservice.com/images/tild3035-3031-4539-b965-373266666536__71ff47c9-393c-4a28-b.png",
+        "width": 1160
+      },
+      {
+        "height": 22,
+        "src": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 582
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+        "height": 0,
+        "src": "images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+        "width": 0
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+        "height": 206.9921875,
+        "src": "images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+        "width": 280
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "height": 215.1171875,
+        "src": "images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "width": 291
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "height": 206.9921875,
+        "src": "images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "width": 280
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+        "height": 206.9921875,
+        "src": "images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+        "width": 280
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "height": 351,
+        "src": "images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/deep-cleaning/ads-lp",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 306,
+        "src": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "width": 1920
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 46.0625,
+        "src": "/images/home-copy-logo-320.webp",
+        "width": 162
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 753,
+        "src": "https://shynlicleaningservice.com/images/shynli-move-cleaning-hero.png",
+        "width": 1413
+      },
+      {
+        "height": 428,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-22.png",
+        "width": 530
+      },
+      {
+        "height": 207,
+        "src": "https://shynlicleaningservice.com/images/shynli-service-commercial-cleaning.png",
+        "width": 280
+      },
+      {
+        "height": 428,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-16.png",
+        "width": 530
+      },
+      {
+        "height": 207,
+        "src": "https://shynlicleaningservice.com/images/shynli-service-airbnb-cleaning.png",
+        "width": 280
+      },
+      {
+        "height": 526,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-16.png",
+        "width": 530
+      },
+      {
+        "height": 207,
+        "src": "https://shynlicleaningservice.com/images/shynli-service-regular-cleaning.png",
+        "width": 280
+      },
+      {
+        "height": 217,
+        "src": "https://shynlicleaningservice.com/images/shynli-service-deep-cleaning.png",
+        "width": 303
+      },
+      {
+        "height": 211,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-12.png",
+        "width": 360
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-08.png",
+        "width": 380
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-28.png",
+        "width": 1161
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-29.png",
+        "width": 380
+      },
+      {
+        "height": 192,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-14.png",
+        "width": 380
+      },
+      {
+        "height": 183,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-20.png",
+        "width": 380
+      },
+      {
+        "height": 164,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-21.png",
+        "width": 360
+      },
+      {
+        "height": 485,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-02.png",
+        "width": 1160
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/move-clean-original-07.png",
+        "height": 58.046875,
+        "src": "/images/move-clean-original-07.png",
+        "width": 185
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/move-clean-original-17.png",
+        "height": 58.1796875,
+        "src": "/images/move-clean-original-17.png",
+        "width": 211
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/move-clean-original-09.png",
+        "height": 59.1015625,
+        "src": "/images/move-clean-original-09.png",
+        "width": 199
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/move-clean-original-26.svg",
+        "height": 150.1796875,
+        "src": "/images/move-clean-original-26.svg",
+        "width": 307
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bedroom.png",
+        "height": 133.328125,
+        "src": "/images/shynli-move-area-bedroom.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bathroom.png",
+        "height": 133.328125,
+        "src": "/images/shynli-move-area-bathroom.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-kitchen.png",
+        "height": 123.0703125,
+        "src": "/images/shynli-move-area-kitchen.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-living-room.png",
+        "height": 122.03125,
+        "src": "/images/shynli-move-area-living-room.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-living-room.png",
+        "height": 130,
+        "src": "/images/shynli-move-area-living-room.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-kitchen.png",
+        "height": 130,
+        "src": "/images/shynli-move-area-kitchen.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bathroom.png",
+        "height": 130,
+        "src": "/images/shynli-move-area-bathroom.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bedroom.png",
+        "height": 130,
+        "src": "/images/shynli-move-area-bedroom.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-18.svg",
+        "width": 26
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-06.svg",
+        "width": 26
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-24.svg",
+        "width": 21
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-19.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-23.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 351,
+        "src": "/images/shynli-quote-house.png",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3137-6333-4338-b436-376536336436__btn-2.png",
+        "height": 58.046875,
+        "src": "images/tild3137-6333-4338-b436-376536336436__btn-2.png",
+        "width": 185
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3832-3037-4230-a366-343661636134__btn.png",
+        "height": 58.1796875,
+        "src": "images/tild3832-3037-4230-a366-343661636134__btn.png",
+        "width": 211
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3232-3663-4662-b161-383864656234__btn-1.png",
+        "height": 59.1015625,
+        "src": "images/tild3232-3663-4662-b161-383864656234__btn-1.png",
+        "width": 199
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6530-6437-4133-a364-393966623964__for.svg",
+        "height": 150.1796875,
+        "src": "images/tild6530-6437-4133-a364-393966623964__for.svg",
+        "width": 307
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 133.328125,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 133.328125,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 123.0703125,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 122.03125,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild3835-3731-4166-b638-303635633062__vector.svg",
+        "width": 26
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild3134-6531-4038-b733-323033643236__material-symbols_sea.svg",
+        "width": 26
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "height": 22.046875,
+        "src": "images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 21
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "height": 17.140625,
+        "src": "images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads-lp",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 306,
+        "src": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "width": 1920
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 46.0625,
+        "src": "/images/home-copy-logo-320.webp",
+        "width": 162
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/regular-cleaning",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 724,
+        "src": "https://shynlicleaningservice.com/images/tild6230-3835-4239-a234-306264643530__shynli_cleaning_1_2_.png",
+        "width": 1414
+      },
+      {
+        "height": 72,
+        "src": "https://shynlicleaningservice.com/images/tild6134-3337-4838-a138-663034646361__3c871ded-aa25-41cf-a.png",
+        "width": 1160
+      },
+      {
+        "height": 72,
+        "src": "https://shynlicleaningservice.com/images/tild3331-3538-4135-b766-366635626339__86f6e643-92cc-4c75-a.png",
+        "width": 1160
+      },
+      {
+        "height": 458,
+        "src": "https://shynlicleaningservice.com/images/tild6138-3733-4439-a133-333637653131__be295795-006d-458e-9.png",
+        "width": 530
+      },
+      {
+        "height": 207,
+        "src": "https://shynlicleaningservice.com/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+        "width": 280
+      },
+      {
+        "height": 458,
+        "src": "https://shynlicleaningservice.com/images/tild3733-3234-4337-b331-666430303066__4f88a57b-864d-4c12-a.png",
+        "width": 530
+      },
+      {
+        "height": 207,
+        "src": "https://shynlicleaningservice.com/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "width": 280
+      },
+      {
+        "height": 526,
+        "src": "https://shynlicleaningservice.com/images/tild6138-3733-4439-a133-333637653131__be295795-006d-458e-9.png",
+        "width": 530
+      },
+      {
+        "height": 217,
+        "src": "https://shynlicleaningservice.com/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "width": 291
+      },
+      {
+        "height": 526,
+        "src": "https://shynlicleaningservice.com/images/tild3733-3234-4337-b331-666430303066__4f88a57b-864d-4c12-a.png",
+        "width": 530
+      },
+      {
+        "height": 217,
+        "src": "https://shynlicleaningservice.com/images/tild3731-3932-4336-a537-383932366533__shynli_cleaning_2_5.png",
+        "width": 303
+      },
+      {
+        "height": 211,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 360
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 380
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 1161
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 380
+      },
+      {
+        "height": 192,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 380
+      },
+      {
+        "height": 183,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 380
+      },
+      {
+        "height": 164,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 360
+      },
+      {
+        "height": 485,
+        "src": "https://shynlicleaningservice.com/images/tild3035-3031-4539-b965-373266666536__71ff47c9-393c-4a28-b.png",
+        "width": 1160
+      },
+      {
+        "height": 351,
+        "src": "https://shynlicleaningservice.com/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "width": 474
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+        "height": 58.046875,
+        "src": "images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+        "width": 185
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3263-6564-4438-b964-663738303764__btn.png",
+        "height": 58.1796875,
+        "src": "images/tild3263-6564-4438-b964-663738303764__btn.png",
+        "width": 211
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+        "height": 59.1015625,
+        "src": "images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+        "width": 199
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 133.328125,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 133.328125,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 123.0703125,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 122.03125,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 130,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 130
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "height": 22.046875,
+        "src": "images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 21
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "height": 17.140625,
+        "src": "images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/regular-cleaning/ads",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+        "height": 58.046875,
+        "src": "images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+        "width": 185
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3263-6564-4438-b964-663738303764__btn.png",
+        "height": 58.1796875,
+        "src": "images/tild3263-6564-4438-b964-663738303764__btn.png",
+        "width": 211
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+        "height": 59.1015625,
+        "src": "images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+        "width": 199
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "height": 22.046875,
+        "src": "images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 21
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "height": 17.140625,
+        "src": "images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/regular-cleaning/ads-lp",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 306,
+        "src": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "width": 1920
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 46.0625,
+        "src": "/images/home-copy-logo-320.webp",
+        "width": 162
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/terms-of-service",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "height": 40,
+        "src": "images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "width": 40
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/privacy-policy",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "height": 40,
+        "src": "images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "width": 40
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/cancellation-policy",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "height": 40,
+        "src": "images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "width": 40
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/services/post-construction-cleaning",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 164,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 360
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 380
+      },
+      {
+        "height": 235,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 380
+      },
+      {
+        "height": 183,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 380
+      },
+      {
+        "height": 211,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 360
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 380
+      },
+      {
+        "height": 141,
+        "src": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 380
+      },
+      {
+        "height": 192,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 380
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 1161
+      },
+      {
+        "height": 85,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 1161
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-service-post-construction-cleaning.w750.webp",
+        "height": 400,
+        "src": "/images/shynli-service-post-construction-cleaning.png",
+        "width": 1920
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-living-room.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-living-room.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-kitchen.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-kitchen.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bathroom.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-bathroom.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bedroom.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-bedroom.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "height": 351,
+        "src": "/images/home-copy-cta-house.w640.webp",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/naperville",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 39,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 478,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-cleaners.png",
+        "width": 1188
+      },
+      {
+        "height": 155,
+        "src": "https://shynlicleaningservice.com/images/shynli-note-flower.svg",
+        "width": 1160
+      },
+      {
+        "height": 212.5,
+        "src": "https://shynlicleaningservice.com/images/shynli-note-flower.svg",
+        "width": 1160
+      },
+      {
+        "height": 1010.390625,
+        "src": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "width": 1920
+      },
+      {
+        "height": 1010.390625,
+        "src": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "width": 1920
+      },
+      {
+        "height": 600,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-area-map.svg",
+        "width": 714
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+        "height": 42,
+        "src": "images/shynli-logo-icon-white.svg",
+        "width": 42
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 350.984375,
+        "src": "images/shynli-quote-house.png",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/naperville/deep-cleaning",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 39,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 478,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-cleaners.png",
+        "width": 1188
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+        "height": 42,
+        "src": "images/shynli-logo-icon-white.svg",
+        "width": 42
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 350.984375,
+        "src": "images/shynli-quote-house.png",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/naperville/move-out-cleaning",
+    "width": 1920,
+    "backgrounds": [
+      {
+        "height": 39,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 478,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-cleaners.png",
+        "width": 1188
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+        "height": 42,
+        "src": "images/shynli-logo-icon-white.svg",
+        "width": 42
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 350.984375,
+        "src": "images/shynli-quote-house.png",
+        "width": 474
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos",
+    "width": 1920,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 27.296875,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 96
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 44.5859375,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 158
+      }
+    ],
+    "viewport": 1920
+  },
+  {
+    "route": "/",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 30,
+        "src": "https://shynlicleaningservice.com/images/home-copy-spark.svg",
+        "width": 30
+      },
+      {
+        "height": 20,
+        "src": "https://shynlicleaningservice.com/images/home-copy-spark.svg",
+        "width": 21
+      },
+      {
+        "height": 220,
+        "src": "https://shynlicleaningservice.com/images/tild3363-6335-4431-b031-653162653030__4e627c73-9482-477b-8.png",
+        "width": 362
+      },
+      {
+        "height": 220,
+        "src": "https://shynlicleaningservice.com/images/shynli-pricing-dollar.svg",
+        "width": 362
+      },
+      {
+        "height": 230.578125,
+        "src": "https://shynlicleaningservice.com/images/tild3562-3161-4665-b132-366464626431__facf01ea-c95b-4bf7-b.png",
+        "width": 362
+      },
+      {
+        "height": 230.578125,
+        "src": "https://shynlicleaningservice.com/images/shynli-pricing-calendar.svg",
+        "width": 362
+      },
+      {
+        "height": 236.984375,
+        "src": "https://shynlicleaningservice.com/images/tild3737-3633-4133-b665-373563626332__9fdc8146-e898-48d5-b.png",
+        "width": 362
+      },
+      {
+        "height": 236.984375,
+        "src": "https://shynlicleaningservice.com/images/tild3537-6564-4262-a134-316237323461__b340fb1f-07e8-41a9-8.png",
+        "width": 362
+      },
+      {
+        "height": 148,
+        "src": "https://shynlicleaningservice.com/images/shynli-pricing-vacuum.svg",
+        "width": 154
+      },
+      {
+        "height": 230.578125,
+        "src": "https://shynlicleaningservice.com/images/tild3931-3864-4362-b866-663138646336__6d15bd9f-5403-4c48-8.png",
+        "width": 362
+      },
+      {
+        "height": 230.578125,
+        "src": "https://shynlicleaningservice.com/images/shynli-pricing-house.svg",
+        "width": 362
+      },
+      {
+        "height": 169.25,
+        "src": "https://shynlicleaningservice.com/images/tild6635-3361-4564-b133-376434346431__ab77289a-ad5f-4c65-a.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 362
+      },
+      {
+        "height": 199.984375,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 362
+      },
+      {
+        "height": 199.984375,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 362
+      },
+      {
+        "height": 199.984375,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 362
+      },
+      {
+        "height": 199.984375,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 362
+      },
+      {
+        "height": 1186.796875,
+        "src": "https://shynlicleaningservice.com/images/home-copy-map-star.svg",
+        "width": 362
+      },
+      {
+        "height": 1186.796875,
+        "src": "https://shynlicleaningservice.com/images/home-copy-map-star.svg",
+        "width": 362
+      },
+      {
+        "height": 801.796875,
+        "src": "https://shynlicleaningservice.com/images/home-copy-area-map.svg",
+        "width": 362
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-team-480.webp",
+        "height": 182.7890625,
+        "src": "/images/home-copy-team-960.webp",
+        "width": 410
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-regular-480.webp",
+        "height": 194.3125,
+        "src": "/images/home-copy-service-regular-640.webp",
+        "width": 262
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-deep-480.webp",
+        "height": 188,
+        "src": "/images/home-copy-service-deep-640.webp",
+        "width": 262
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-service-move-480.webp",
+        "height": 194.3125,
+        "src": "/images/home-copy-service-move-640.webp",
+        "width": 262
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 193.875,
+        "src": "/images/home-copy-service-airbnb-640.webp",
+        "width": 262
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 193.875,
+        "src": "/images/home-copy-service-commercial-640.webp",
+        "width": 262
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 193.875,
+        "src": "/images/home-copy-service-post-construction-640.webp",
+        "width": 262
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "height": 237,
+        "src": "/images/home-copy-cta-house.w640.webp",
+        "width": 320
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/about-us",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 184,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-018.png",
+        "width": 442
+      },
+      {
+        "height": 188,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-005.png",
+        "width": 300
+      },
+      {
+        "height": 201,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-011.png",
+        "width": 300
+      },
+      {
+        "height": 74,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-034.png",
+        "width": 116
+      },
+      {
+        "height": 103,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-022.png",
+        "width": 300
+      },
+      {
+        "height": 136,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-017.png",
+        "width": 320
+      },
+      {
+        "height": 100,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-008.png",
+        "width": 320
+      },
+      {
+        "height": 121,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-038.png",
+        "width": 320
+      },
+      {
+        "height": 121,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-041.png",
+        "width": 320
+      },
+      {
+        "height": 106,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-020.png",
+        "width": 320
+      },
+      {
+        "height": 107,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-025.png",
+        "width": 320
+      },
+      {
+        "height": 114,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-027.png",
+        "width": 320
+      },
+      {
+        "height": 233,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-009.png",
+        "width": 300
+      },
+      {
+        "height": 269,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-006.png",
+        "width": 195
+      },
+      {
+        "height": 60,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-028.png",
+        "width": 229
+      },
+      {
+        "height": 233,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-042.png",
+        "width": 300
+      },
+      {
+        "height": 269,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-035.png",
+        "width": 256
+      },
+      {
+        "height": 60,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-033.png",
+        "width": 229
+      },
+      {
+        "height": 233,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-044.png",
+        "width": 300
+      },
+      {
+        "height": 269,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-023.png",
+        "width": 256
+      },
+      {
+        "height": 60,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-030.png",
+        "width": 229
+      },
+      {
+        "height": 233,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-026.png",
+        "width": 300
+      },
+      {
+        "height": 269,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-021.png",
+        "width": 256
+      },
+      {
+        "height": 60,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-040.png",
+        "width": 229
+      },
+      {
+        "height": 233,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-001.png",
+        "width": 300
+      },
+      {
+        "height": 269,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-003.png",
+        "width": 199
+      },
+      {
+        "height": 60,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-039.png",
+        "width": 229
+      },
+      {
+        "height": 233,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-016.png",
+        "width": 300
+      },
+      {
+        "height": 280,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-007.png",
+        "width": 256
+      },
+      {
+        "height": 60,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-036.png",
+        "width": 229
+      },
+      {
+        "height": 106,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-014.png",
+        "width": 300
+      },
+      {
+        "height": 906,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-002.png",
+        "width": 363
+      },
+      {
+        "height": 246,
+        "src": "https://shynlicleaningservice.com/images/about-copy-asset-004.png",
+        "width": 320
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-clean-logo.png",
+        "height": 40.3359375,
+        "src": "/images/about-clean-logo.png",
+        "width": 142
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-010.png",
+        "height": 16.625,
+        "src": "images/about-copy-asset-010.png",
+        "width": 53
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-013.png",
+        "height": 16.5390625,
+        "src": "images/about-copy-asset-013.png",
+        "width": 60
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-037.png",
+        "height": 16.3359375,
+        "src": "images/about-copy-asset-037.png",
+        "width": 55
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-031.svg",
+        "height": 23.09375,
+        "src": "images/about-copy-asset-031.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-012.svg",
+        "height": 22,
+        "src": "images/about-copy-asset-012.svg",
+        "width": 32
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-032.svg",
+        "height": 19.9453125,
+        "src": "images/about-copy-asset-032.svg",
+        "width": 19
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-024.svg",
+        "height": 17.140625,
+        "src": "images/about-copy-asset-024.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-015.svg",
+        "height": 452.53125,
+        "src": "images/about-copy-asset-015.svg",
+        "width": 644
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-043.svg",
+        "height": 246.783203125,
+        "src": "images/about-copy-asset-043.svg",
+        "width": 247.33990478515625
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-043.svg",
+        "height": 87.9765625,
+        "src": "images/about-copy-asset-043.svg",
+        "width": 89
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/about-copy-asset-029.svg",
+        "height": 22,
+        "src": "images/about-copy-asset-029.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/addison",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 39,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 145.6484375,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-cleaners.png",
+        "width": 362
+      },
+      {
+        "height": 369,
+        "src": "https://shynlicleaningservice.com/images/shynli-note-flower.svg",
+        "width": 320
+      },
+      {
+        "height": 569,
+        "src": "https://shynlicleaningservice.com/images/shynli-note-flower.svg",
+        "width": 320
+      },
+      {
+        "height": 1002.8359375,
+        "src": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "width": 390
+      },
+      {
+        "height": 1002.8359375,
+        "src": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "width": 390
+      },
+      {
+        "height": 700,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-area-map.svg",
+        "width": 362
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+        "height": 42,
+        "src": "images/shynli-logo-icon-white.svg",
+        "width": 42
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 287.3046875,
+        "src": "images/shynli-quote-house.png",
+        "width": 388
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/blog",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/contacts",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 906,
+        "src": "https://shynlicleaningservice.com/images/shynli-contact-panel-bg.png",
+        "width": 363
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-phone-cream.svg",
+        "height": 0,
+        "src": "images/shynli-phone-cream.svg",
+        "width": 0
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-email-cream.svg",
+        "height": 0,
+        "src": "images/shynli-email-cream.svg",
+        "width": 0
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 208,
+        "src": "images/shynli-quote-house.png",
+        "width": 271
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/faq",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3163-6235-4133-a564-316465373838__vector.svg",
+        "height": 24,
+        "src": "/images/tild3163-6235-4133-a564-316465373838__vector.svg",
+        "width": 24
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6537-3537-4163-b235-386463616661__solar_calendar-bold.svg",
+        "height": 24,
+        "src": "/images/tild6537-3537-4163-b235-386463616661__solar_calendar-bold.svg",
+        "width": 24
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3864-3437-4562-b938-313765633536__vector_1.svg",
+        "height": 18,
+        "src": "/images/tild3864-3437-4562-b938-313765633536__vector_1.svg",
+        "width": 24
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3964-3430-4138-b537-383733653464__fluent_people-team-1.svg",
+        "height": 26,
+        "src": "/images/tild3964-3430-4138-b537-383733653464__fluent_people-team-1.svg",
+        "width": 26
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/home-calculator",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3936-3764-4636-b239-626233383832__vector.svg",
+        "height": 20.23468017578125,
+        "src": "images/tild3936-3764-4636-b239-626233383832__vector.svg",
+        "width": 20.58868408203125
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3936-3764-4636-b239-626233383832__vector.svg",
+        "height": 29.59747314453125,
+        "src": "images/tild3936-3764-4636-b239-626233383832__vector.svg",
+        "width": 30.19323348999023
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3438-6434-4266-b238-656432326438__vector.svg",
+        "height": 61.8125,
+        "src": "images/tild3438-6434-4266-b238-656432326438__vector.svg",
+        "width": 61
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.5009765625
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.9931640625,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.500991821289062
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg",
+        "height": 106.859375,
+        "src": "images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg",
+        "width": 158
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.501007080078125
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "height": 19.9453125,
+        "src": "images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 19
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "height": 17.140625,
+        "src": "images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild3433-6338-4136-b136-623833636265__svg_1767801678298.svg",
+        "width": 644
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 100.095703125,
+        "src": "images/tild6566-6435-4131-a332-643333376335__vector.svg",
+        "width": 148.39773559570312
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild6566-6435-4131-a332-643333376335__vector.svg",
+        "width": 89
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/oauth/callback",
+    "width": 390,
+    "backgrounds": [],
+    "images": [],
+    "viewport": 390
+  },
+  {
+    "route": "/pricing",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 226,
+        "src": "https://shynlicleaningservice.com/images/tild3365-6433-4564-a630-303638663238__20260114_1748____sim.png",
+        "width": 442
+      },
+      {
+        "height": 212,
+        "src": "https://shynlicleaningservice.com/images/tild3562-3161-4665-b132-366464626431__facf01ea-c95b-4bf7-b.png",
+        "width": 320
+      },
+      {
+        "height": 168,
+        "src": "https://shynlicleaningservice.com/images/tild3737-3633-4133-b665-373563626332__9fdc8146-e898-48d5-b.png",
+        "width": 380
+      },
+      {
+        "height": 212,
+        "src": "https://shynlicleaningservice.com/images/tild3537-6564-4262-a134-316237323461__b340fb1f-07e8-41a9-8.png",
+        "width": 320
+      },
+      {
+        "height": 122,
+        "src": "https://shynlicleaningservice.com/images/tild3331-3538-4135-b766-366635626339__86f6e643-92cc-4c75-a.png",
+        "width": 300
+      },
+      {
+        "height": 936,
+        "src": "https://shynlicleaningservice.com/images/tild3035-3031-4539-b965-373266666536__71ff47c9-393c-4a28-b.png",
+        "width": 363
+      },
+      {
+        "height": 166,
+        "src": "https://shynlicleaningservice.com/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "width": 218
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3364-3839-4665-b832-356539643234__5.svg",
+        "height": 42.5,
+        "src": "images/tild3364-3839-4665-b832-356539643234__5.svg",
+        "width": 34
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.501007080078125
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-6364-4734-b431-396533323234__1.svg",
+        "height": 48,
+        "src": "images/tild3437-6364-4734-b431-396533323234__1.svg",
+        "width": 24
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg",
+        "height": 106.859375,
+        "src": "images/tild6336-6137-4162-b733-393430313536__svg_1767788368196.svg",
+        "width": 158
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.5009765625
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.500991821289062
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3438-6434-4266-b238-656432326438__vector.svg",
+        "height": 61.8125,
+        "src": "images/tild3438-6434-4266-b238-656432326438__vector.svg",
+        "width": 61
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3261-6630-4232-a337-303332313661__4.svg",
+        "height": 45.7109375,
+        "src": "images/tild3261-6630-4232-a337-303332313661__4.svg",
+        "width": 32
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "height": 22.99267578125,
+        "src": "images/tild3331-3232-4634-b761-323734383862__vector.svg",
+        "width": 23.501007080078125
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3864-4539-b661-326231633861__vector.svg",
+        "height": 72.0703125,
+        "src": "images/tild3237-3864-4539-b661-326231633861__vector.svg",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "height": 20,
+        "src": "images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+        "height": 21,
+        "src": "images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "height": 20,
+        "src": "images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+        "height": 21,
+        "src": "images/tild3532-3931-4138-b732-323361346535__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6563-3235-4932-b863-633539643661__rectangle_41.svg",
+        "height": 20,
+        "src": "images/tild6563-3235-4932-b863-633539643661__rectangle_41.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3638-6236-4262-b464-663130303432__vector.svg",
+        "height": 17.140625,
+        "src": "images/tild3638-6236-4262-b464-663130303432__vector.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+        "height": 30,
+        "src": "images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+        "width": 30
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+        "height": 30,
+        "src": "images/tild3333-6362-4632-a263-343663373631__material-symbols_che.svg",
+        "width": 30
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/quote",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/service-areas",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-sugargrove-area-map.svg",
+        "height": 452.53125,
+        "src": "/images/shynli-sugargrove-area-map.svg",
+        "width": 644
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "height": 216.4765625,
+        "src": "/images/shynli-area-star.svg",
+        "width": 219
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "height": 87.9765625,
+        "src": "/images/shynli-area-star.svg",
+        "width": 89
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-phone-cream.svg",
+        "height": 22,
+        "src": "/images/shynli-phone-cream.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-email-cream.svg",
+        "height": 20,
+        "src": "/images/shynli-email-cream.svg",
+        "width": 25
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 246,
+        "src": "/images/shynli-quote-house.png",
+        "width": 320
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/airbnb-cleaning",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 362
+      },
+      {
+        "height": 183.1875,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 362
+      },
+      {
+        "height": 160,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 362
+      },
+      {
+        "height": 166.390625,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 362
+      },
+      {
+        "height": 166.390625,
+        "src": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 362
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "",
+        "height": 194,
+        "src": "images/shynli-airbnb-cleaning-hero.png",
+        "width": 436.796875
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-living-room.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-living-room.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bedroom.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-bedroom.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bathroom.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-bathroom.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-kitchen.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-kitchen.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "height": 246,
+        "src": "/images/home-copy-cta-house.w640.webp",
+        "width": 320
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/commercial-cleaning",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 226,
+        "src": "https://shynlicleaningservice.com/images/tild3732-6338-4532-b031-326634383861__20260114_2143_image_.png",
+        "width": 442
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 362
+      },
+      {
+        "height": 183.1875,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 362
+      },
+      {
+        "height": 160,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 362
+      },
+      {
+        "height": 166.390625,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 362
+      },
+      {
+        "height": 166.390625,
+        "src": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 362
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3238-6662-4337-a363-396238396235__shynli_cleaning_2_7.png",
+        "height": 64,
+        "src": "/images/tild3238-6662-4337-a363-396238396235__shynli_cleaning_2_7.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3639-3431-4737-b736-663238643665__shynli_cleaning_2_8.png",
+        "height": 64,
+        "src": "/images/tild3639-3431-4737-b736-663238643665__shynli_cleaning_2_8.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 64,
+        "src": "/images/tild6164-3638-4561-a362-626530386230__shynli_cleaning_2_9.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 64,
+        "src": "/images/tild3131-6539-4639-b134-316165356365__shynli_cleaning_2_10.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "height": 246,
+        "src": "/images/home-copy-cta-house.w640.webp",
+        "width": 320
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/deep-cleaning",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 226,
+        "src": "https://shynlicleaningservice.com/images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+        "width": 442
+      },
+      {
+        "height": 16.625,
+        "src": "https://shynlicleaningservice.com/images/tild3062-3462-4961-b765-303031633239__btn.png",
+        "width": 53
+      },
+      {
+        "height": 16.328125,
+        "src": "https://shynlicleaningservice.com/images/tild3437-3664-4266-b162-636339343130__btn.png",
+        "width": 55
+      },
+      {
+        "height": 16.5234375,
+        "src": "https://shynlicleaningservice.com/images/tild6430-3262-4632-b537-386630343534__btn.png",
+        "width": 60
+      },
+      {
+        "height": 114,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 320
+      },
+      {
+        "height": 121,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 320
+      },
+      {
+        "height": 36,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 36
+      },
+      {
+        "height": 107,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 320
+      },
+      {
+        "height": 107,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 320
+      },
+      {
+        "height": 100,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 320
+      },
+      {
+        "height": 106,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 320
+      },
+      {
+        "height": 121,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 320
+      },
+      {
+        "height": 36,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 47
+      },
+      {
+        "height": 906,
+        "src": "https://shynlicleaningservice.com/images/tild3035-3031-4539-b965-373266666536__71ff47c9-393c-4a28-b.png",
+        "width": 363
+      },
+      {
+        "height": 22,
+        "src": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 276
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+        "height": 0,
+        "src": "images/tild3237-3730-4638-a162-393866363766__group_195_1.png",
+        "width": 0
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+        "height": 175.15625,
+        "src": "images/tild3666-6336-4430-a366-653932316138__shynli_cleaning_2_6.png",
+        "width": 237
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "height": 175.15625,
+        "src": "images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "width": 237
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "height": 175.15625,
+        "src": "images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "width": 237
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+        "height": 175.15625,
+        "src": "images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+        "width": 237
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "height": 237,
+        "src": "images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "width": 320
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/deep-cleaning/ads-lp",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 454.546875,
+        "src": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "width": 390
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 37.53125,
+        "src": "/images/home-copy-logo-320.webp",
+        "width": 132
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 226,
+        "src": "https://shynlicleaningservice.com/images/shynli-move-cleaning-hero.png",
+        "width": 442
+      },
+      {
+        "height": 427,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-22.png",
+        "width": 320
+      },
+      {
+        "height": 175,
+        "src": "https://shynlicleaningservice.com/images/shynli-service-commercial-cleaning.png",
+        "width": 237
+      },
+      {
+        "height": 459,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-16.png",
+        "width": 320
+      },
+      {
+        "height": 175,
+        "src": "https://shynlicleaningservice.com/images/shynli-service-airbnb-cleaning.png",
+        "width": 237
+      },
+      {
+        "height": 439,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-16.png",
+        "width": 320
+      },
+      {
+        "height": 175,
+        "src": "https://shynlicleaningservice.com/images/shynli-service-regular-cleaning.png",
+        "width": 237
+      },
+      {
+        "height": 184,
+        "src": "https://shynlicleaningservice.com/images/shynli-service-deep-cleaning.png",
+        "width": 257
+      },
+      {
+        "height": 107,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-12.png",
+        "width": 320
+      },
+      {
+        "height": 100,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-08.png",
+        "width": 320
+      },
+      {
+        "height": 121,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-28.png",
+        "width": 320
+      },
+      {
+        "height": 121,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-29.png",
+        "width": 320
+      },
+      {
+        "height": 106,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-14.png",
+        "width": 320
+      },
+      {
+        "height": 107,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-20.png",
+        "width": 320
+      },
+      {
+        "height": 114,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-21.png",
+        "width": 320
+      },
+      {
+        "height": 906,
+        "src": "https://shynlicleaningservice.com/images/move-clean-original-02.png",
+        "width": 363
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/move-clean-original-07.png",
+        "height": 16.625,
+        "src": "/images/move-clean-original-07.png",
+        "width": 53
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/move-clean-original-17.png",
+        "height": 16.5390625,
+        "src": "/images/move-clean-original-17.png",
+        "width": 60
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/move-clean-original-09.png",
+        "height": 16.3359375,
+        "src": "/images/move-clean-original-09.png",
+        "width": 55
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/move-clean-original-26.svg",
+        "height": 90.0078125,
+        "src": "/images/move-clean-original-26.svg",
+        "width": 184
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bedroom.png",
+        "height": 133.328125,
+        "src": "/images/shynli-move-area-bedroom.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bathroom.png",
+        "height": 133.328125,
+        "src": "/images/shynli-move-area-bathroom.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-kitchen.png",
+        "height": 123.0703125,
+        "src": "/images/shynli-move-area-kitchen.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-living-room.png",
+        "height": 122.03125,
+        "src": "/images/shynli-move-area-living-room.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-living-room.png",
+        "height": 75,
+        "src": "/images/shynli-move-area-living-room.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-kitchen.png",
+        "height": 75,
+        "src": "/images/shynli-move-area-kitchen.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bathroom.png",
+        "height": 75,
+        "src": "/images/shynli-move-area-bathroom.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bedroom.png",
+        "height": 75,
+        "src": "/images/shynli-move-area-bedroom.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-18.svg",
+        "width": 26
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-06.svg",
+        "width": 26
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-24.svg",
+        "width": 19
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-19.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "/images/move-clean-original-23.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 246,
+        "src": "/images/shynli-quote-house.png",
+        "width": 320
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3137-6333-4338-b436-376536336436__btn-2.png",
+        "height": 16.625,
+        "src": "images/tild3137-6333-4338-b436-376536336436__btn-2.png",
+        "width": 53
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3832-3037-4230-a366-343661636134__btn.png",
+        "height": 16.5390625,
+        "src": "images/tild3832-3037-4230-a366-343661636134__btn.png",
+        "width": 60
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3232-3663-4662-b161-383864656234__btn-1.png",
+        "height": 16.3359375,
+        "src": "images/tild3232-3663-4662-b161-383864656234__btn-1.png",
+        "width": 55
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6530-6437-4133-a364-393966623964__for.svg",
+        "height": 90.0078125,
+        "src": "images/tild6530-6437-4133-a364-393966623964__for.svg",
+        "width": 184
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 133.328125,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 133.328125,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 123.0703125,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 122.03125,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild3835-3731-4166-b638-303635633062__vector.svg",
+        "width": 0
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "",
+        "height": 0,
+        "src": "images/tild3134-6531-4038-b733-323033643236__material-symbols_sea.svg",
+        "width": 0
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "height": 19.9453125,
+        "src": "images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 19
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "height": 17.140625,
+        "src": "images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/move-in-move-out-cleaning/ads-lp",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 454.546875,
+        "src": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "width": 390
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 37.53125,
+        "src": "/images/home-copy-logo-320.webp",
+        "width": 132
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/regular-cleaning",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 226,
+        "src": "https://shynlicleaningservice.com/images/tild6230-3835-4239-a234-306264643530__shynli_cleaning_1_2_.png",
+        "width": 442
+      },
+      {
+        "height": 90,
+        "src": "https://shynlicleaningservice.com/images/tild6134-3337-4838-a138-663034646361__3c871ded-aa25-41cf-a.png",
+        "width": 320
+      },
+      {
+        "height": 122,
+        "src": "https://shynlicleaningservice.com/images/tild3331-3538-4135-b766-366635626339__86f6e643-92cc-4c75-a.png",
+        "width": 300
+      },
+      {
+        "height": 427,
+        "src": "https://shynlicleaningservice.com/images/tild6138-3733-4439-a133-333637653131__be295795-006d-458e-9.png",
+        "width": 320
+      },
+      {
+        "height": 175,
+        "src": "https://shynlicleaningservice.com/images/tild3033-3264-4563-b138-303833303565__shynli_cleaning_2_1.png",
+        "width": 237
+      },
+      {
+        "height": 459,
+        "src": "https://shynlicleaningservice.com/images/tild3733-3234-4337-b331-666430303066__4f88a57b-864d-4c12-a.png",
+        "width": 320
+      },
+      {
+        "height": 175,
+        "src": "https://shynlicleaningservice.com/images/tild6534-6236-4866-a139-303331666239__shynli_cleaning_2_2.png",
+        "width": 237
+      },
+      {
+        "height": 458,
+        "src": "https://shynlicleaningservice.com/images/tild6138-3733-4439-a133-333637653131__be295795-006d-458e-9.png",
+        "width": 320
+      },
+      {
+        "height": 175,
+        "src": "https://shynlicleaningservice.com/images/tild6564-6130-4433-b762-666632643839__shynli_cleaning_2_4.png",
+        "width": 237
+      },
+      {
+        "height": 508,
+        "src": "https://shynlicleaningservice.com/images/tild3733-3234-4337-b331-666430303066__4f88a57b-864d-4c12-a.png",
+        "width": 320
+      },
+      {
+        "height": 184,
+        "src": "https://shynlicleaningservice.com/images/tild3731-3932-4336-a537-383932366533__shynli_cleaning_2_5.png",
+        "width": 257
+      },
+      {
+        "height": 107,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 320
+      },
+      {
+        "height": 100,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 320
+      },
+      {
+        "height": 121,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 320
+      },
+      {
+        "height": 121,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 320
+      },
+      {
+        "height": 106,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 320
+      },
+      {
+        "height": 107,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 320
+      },
+      {
+        "height": 114,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 320
+      },
+      {
+        "height": 906,
+        "src": "https://shynlicleaningservice.com/images/tild3035-3031-4539-b965-373266666536__71ff47c9-393c-4a28-b.png",
+        "width": 363
+      },
+      {
+        "height": 246,
+        "src": "https://shynlicleaningservice.com/images/tild3062-3735-4531-b066-343636303162__7bebd70c-9bfd-48ca-a.png",
+        "width": 320
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+        "height": 16.625,
+        "src": "images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+        "width": 53
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3263-6564-4438-b964-663738303764__btn.png",
+        "height": 16.5390625,
+        "src": "images/tild3263-6564-4438-b964-663738303764__btn.png",
+        "width": 60
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+        "height": 16.3359375,
+        "src": "images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+        "width": 55
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 133.328125,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 133.328125,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 123.0703125,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 122.03125,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 200
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "height": 75,
+        "src": "images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+        "width": 75
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "height": 19.9453125,
+        "src": "images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 19
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "height": 17.140625,
+        "src": "images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/regular-cleaning/ads",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+        "height": 16.625,
+        "src": "images/tild3232-3034-4639-b536-663862613932__btn-2.png",
+        "width": 53
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3263-6564-4438-b964-663738303764__btn.png",
+        "height": 16.5390625,
+        "src": "images/tild3263-6564-4438-b964-663738303764__btn.png",
+        "width": 60
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+        "height": 16.3359375,
+        "src": "images/tild3237-3162-4266-a465-323339306362__btn-1.png",
+        "width": 55
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "height": 19.9453125,
+        "src": "images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 19
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "height": 17.140625,
+        "src": "images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 20
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "height": 22,
+        "src": "images/tild6233-6137-4533-b435-366133663338__vector.svg",
+        "width": 22
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/regular-cleaning/ads-lp",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 454.546875,
+        "src": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "width": 390
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 37.53125,
+        "src": "/images/home-copy-logo-320.webp",
+        "width": 132
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/terms-of-service",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "height": 40,
+        "src": "images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "width": 40
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/privacy-policy",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "height": 40,
+        "src": "images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "width": 40
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/cancellation-policy",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "height": 40,
+        "src": "images/tild3666-3333-4430-b664-383666616530__-__resize__20x__logo_2.png",
+        "width": 40
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/services/post-construction-cleaning",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3938-6135-4336-b034-303238366333__01fd964d-3846-40ce-b.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6561-3536-4563-b939-653265653330__39250b6d-1eae-47b4-8.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3863-6630-4164-a665-313534383764__vector1.svg",
+        "width": 362
+      },
+      {
+        "height": 183.1875,
+        "src": "https://shynlicleaningservice.com/images/tild3935-3961-4866-a533-303936303337__c5e7e2a9-637b-4d28-9.png",
+        "width": 362
+      },
+      {
+        "height": 160,
+        "src": "https://shynlicleaningservice.com/images/tild3465-6637-4034-a161-333364393666__2a8645b5-3295-4830-8.png",
+        "width": 362
+      },
+      {
+        "height": 166.390625,
+        "src": "https://shynlicleaningservice.com/images/tild3230-3561-4334-b463-393831366361__017af1b3-8303-4e2f-8.png",
+        "width": 362
+      },
+      {
+        "height": 166.390625,
+        "src": "https://shynlicleaningservice.com/images/tild6266-3439-4838-b233-326632353564__vector.svg",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild3730-6262-4764-a434-666638326466__62220d95-7c60-468f-a.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6535-3132-4537-a636-666436363832__c0c85727-c2fa-4413-a.png",
+        "width": 362
+      },
+      {
+        "height": 174.7890625,
+        "src": "https://shynlicleaningservice.com/images/tild6330-3932-4338-b530-313931356431__vector.svg",
+        "width": 362
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-service-post-construction-cleaning.w750.webp",
+        "height": 194,
+        "src": "/images/shynli-service-post-construction-cleaning.png",
+        "width": 390
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-living-room.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-living-room.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-kitchen.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-kitchen.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bathroom.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-bathroom.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-move-area-bedroom.png",
+        "height": 64,
+        "src": "/images/shynli-move-area-bedroom.png",
+        "width": 64
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-cta-house.w1280.webp",
+        "height": 246,
+        "src": "/images/home-copy-cta-house.w640.webp",
+        "width": 320
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/naperville",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 39,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 145.6484375,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-cleaners.png",
+        "width": 362
+      },
+      {
+        "height": 319,
+        "src": "https://shynlicleaningservice.com/images/shynli-note-flower.svg",
+        "width": 320
+      },
+      {
+        "height": 469,
+        "src": "https://shynlicleaningservice.com/images/shynli-note-flower.svg",
+        "width": 320
+      },
+      {
+        "height": 1002.8359375,
+        "src": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "width": 390
+      },
+      {
+        "height": 1002.8359375,
+        "src": "https://shynlicleaningservice.com/images/shynli-area-star.svg",
+        "width": 390
+      },
+      {
+        "height": 700,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-area-map.svg",
+        "width": 362
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+        "height": 42,
+        "src": "images/shynli-logo-icon-white.svg",
+        "width": 42
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 287.3046875,
+        "src": "images/shynli-quote-house.png",
+        "width": 388
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/naperville/deep-cleaning",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 39,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 145.6484375,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-cleaners.png",
+        "width": 362
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+        "height": 42,
+        "src": "images/shynli-logo-icon-white.svg",
+        "width": 42
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 287.3046875,
+        "src": "images/shynli-quote-house.png",
+        "width": 388
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/naperville/move-out-cleaning",
+    "width": 390,
+    "backgrounds": [
+      {
+        "height": 39,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 40
+      },
+      {
+        "height": 24,
+        "src": "https://shynlicleaningservice.com/images/shynli-spark.svg",
+        "width": 24
+      },
+      {
+        "height": 145.6484375,
+        "src": "https://shynlicleaningservice.com/images/shynli-sugargrove-cleaners.png",
+        "width": 362
+      }
+    ],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-logo-icon-white.svg",
+        "height": 42,
+        "src": "images/shynli-logo-icon-white.svg",
+        "width": 42
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-quote-house.w648.webp",
+        "height": 287.3046875,
+        "src": "images/shynli-quote-house.png",
+        "width": 388
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "route": "/blog/airbnb/airbnb-turnover-cleaning-checklist-with-photos",
+    "width": 390,
+    "backgrounds": [],
+    "images": [
+      {
+        "aboveFold": true,
+        "currentSrc": "https://shynlicleaningservice.com/images/home-copy-logo-320.webp",
+        "height": 35.2578125,
+        "src": "/images/shynli-logo-primary.png",
+        "width": 124
+      },
+      {
+        "aboveFold": false,
+        "currentSrc": "https://shynlicleaningservice.com/images/shynli-footer-logo-light.png",
+        "height": 41.765625,
+        "src": "/images/shynli-footer-logo-light.png",
+        "width": 148
+      }
+    ],
+    "viewport": 390
+  }
+]
