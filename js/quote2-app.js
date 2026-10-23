@@ -28,6 +28,9 @@
   const SERVICE_AREA_ZIP_VALIDATION_ENABLED = SERVICE_AREA_ZIP_CODES.size > 0;
 
   const PRICING = window.ShynliPricing.PRICING;
+  const pricingSelection = normalizedPath === "/quote"
+    ? window.ShynliCalculatorControls.readBookingSelection(window.location.search)
+    : null;
   window.ShynliCalculatorControls.mountQuote();
   window.mountSimpleQuote();
 
@@ -557,7 +560,7 @@
   }
 
   function calculateCurrentPricing() {
-    const result = window.ShynliPricing.calculateQuotePricing({
+    const result = window.ShynliPricing.roundCustomerQuotePricing(window.ShynliPricing.calculateQuotePricing({
       serviceType: getSelectedServiceType(), frequency: getSelectedFrequency(),
       rooms: elements.rooms.value, bathrooms: elements.bathrooms.value,
       squareMeters: elements.squareFeet.value, basementCleaning: elements.basementCleaning.value,
@@ -565,14 +568,17 @@
       additionalRooms: Object.fromEntries(Object.entries(elements.additionalRooms).map(([key,input]) => [key, Number(input.value || 0)])),
       refrigeratorCondition: elements.refrigeratorCondition.value, cabinetsCondition: elements.cabinetsCondition.value,
       services: getSelectedServices(), quantityServices: getQuantityServices()
-    });
+    }));
     document.getElementById("quote2FrequencyNotice").hidden = true;
     elements.refrigeratorCondition.disabled = !result.services.includes("refrigeratorCleaning");
     elements.cabinetsCondition.disabled = !result.services.includes("insideCabinets");
+    for (const select of [elements.refrigeratorCondition, elements.cabinetsCondition]) {
+      select.closest("label").hidden = select.disabled;
+    }
     Object.values(elements.additionalRooms).forEach(input => {
       input.closest(".quote2-quantity-item").querySelector("small").textContent = "+$" + PRICING[result.serviceType].roomPrice + " each";
     });
-    document.querySelector("[data-deep-only]").hidden = true;
+    document.querySelector("[data-deep-only]").hidden = !pricingSelection || !result.services.includes("topKitchenCabinets");
     return { ...result, squareFeet: result.squareMeters, selectedServices: result.services,
       durationLabel: result.durationLabel };
   }
@@ -933,7 +939,8 @@
   function initServiceButtons() {
     elements.serviceButtons.forEach(function (button) {
       button.addEventListener("click", function () {
-        setServiceType(button.getAttribute("data-service"));
+        const serviceType = button.getAttribute("data-service");
+        if (serviceType !== getSelectedServiceType()) setServiceType(serviceType);
       });
     });
   }
@@ -990,6 +997,32 @@
     if (queryZip && !elements.zipCode.value.trim()) {
       elements.zipCode.value = queryZip;
     }
+  }
+
+  function applyPricingSelection() {
+    if (!pricingSelection) return;
+    setServiceType(pricingSelection.serviceType);
+    elements.frequency.value = pricingSelection.frequency;
+    elements.rooms.value = pricingSelection.rooms;
+    elements.bathrooms.value = pricingSelection.bathrooms;
+    elements.squareFeet.value = pricingSelection.squareMeters;
+    elements.basementCleaning.value = pricingSelection.basementCleaning ? "yes" : "no";
+    elements.hasPets.value = pricingSelection.hasPets ? "yes" : "no";
+    elements.refrigeratorCondition.value = pricingSelection.refrigeratorCondition;
+    elements.cabinetsCondition.value = pricingSelection.cabinetsCondition;
+    for (const [key, input] of Object.entries(elements.additionalRooms)) {
+      input.value = pricingSelection.additionalRooms[key];
+      if (Number(input.value)) input.closest(".quote2-quantity-grid").hidden = false;
+    }
+    for (const [key, input] of Object.entries(elements.quantities)) {
+      input.value = pricingSelection.quantityServices[key];
+      if (Number(input.value)) input.closest(".quote2-quantity-item").hidden = false;
+    }
+    elements.services.forEach(input => {
+      input.checked = pricingSelection.services.includes(input.value) || input.disabled;
+      if (input.checked) input.closest("label").hidden = false;
+    });
+    syncIncludedServiceStates(pricingSelection.serviceType);
   }
 
   function initPhoneInput() {
@@ -1843,6 +1876,7 @@
     initAutocomplete();
     applyPrefilledContactData();
     setServiceType("regular");
+    applyPricingSelection();
     updateEstimateTargets();
     updateProgressIndicator();
     refreshStepVisibility({ skipScroll: true });

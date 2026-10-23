@@ -75,6 +75,19 @@
   font-size: 13px;
   line-height: 1.5;
 }
+.calculator-condition-group {
+  min-width: 0;
+}
+.calculator-condition-group > .quote2-addon-item {
+  height: auto;
+}
+.calculator-condition {
+  min-width: 0;
+  margin: 8px 0 12px;
+}
+#cleaningCalculator .calculator-condition {
+  width: 100%;
+}
 [hidden] {
   display: none !important;
 }

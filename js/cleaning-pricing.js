@@ -372,6 +372,16 @@
     };
   }
 
+  function roundCustomerQuotePricing(pricing) {
+    const totalPrice = Math.ceil(pricing.totalPriceCents / 100);
+    return {
+      ...pricing,
+      totalPrice,
+      fullPriceBeforeDiscount: totalPrice,
+      totalPriceCents: totalPrice * 100,
+    };
+  }
+
   function calculateCleaningDuration(fullPrice, cleanerCount = 2) {
     const count = Number(cleanerCount);
     const cleaners = Number.isInteger(count) && count > 0 ? count : 2;
@@ -402,6 +412,7 @@
     PRICING,
     SERVICE_TYPE_NAMES,
     calculateQuotePricing,
+    roundCustomerQuotePricing,
     calculateCleaningDuration,
     getServicePrice,
     calculateBathroomPrice,

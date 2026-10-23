@@ -65,7 +65,9 @@
     const withTracks = value("pricingWindowType") === "with";
     inputs.quantityServices.interiorWindowsCleaning = withTracks ? 0 : windows;
     inputs.quantityServices.interiorWindowsWithTracks = withTracks ? windows : 0;
-    const result = engine.calculateQuotePricing(inputs);
+    const result = engine.roundCustomerQuotePricing(engine.calculateQuotePricing(inputs));
+    const bookingLink = form.querySelector('a[href^="/quote"]');
+    if (bookingLink) bookingLink.href = "/quote?calculator=" + encodeURIComponent(JSON.stringify(controls.bookingSelection(inputs)));
     let duration = document.getElementById("pricingDurationEstimate");
     if (!duration) {
       duration = document.createElement("p");
@@ -80,8 +82,15 @@
         result.totalPrice.toLocaleString("en-US", { maximumFractionDigits: 2 })
       : "$0";
     document.getElementById("pricingFrequencyNotice").hidden = true;
-    document.getElementById("refrigeratorCondition").disabled = false;
-    document.getElementById("cabinetsCondition").disabled = false;
+    for (const [id, addon] of [["refrigeratorCondition", "fridge"], ["cabinetsCondition", "cabinets"]]) {
+      const select = document.getElementById(id);
+      const checkbox = document.getElementById(type + "-" + addon);
+      const enabled = Boolean(checkbox && checkbox.checked);
+      select.disabled = !enabled;
+      const field = select.closest("label");
+      field.hidden = !enabled;
+      if (checkbox) checkbox.closest(".addon-item").after(field);
+    }
     for (const [key, label] of Object.entries(controls.roomLabels)) {
       document
         .getElementById(key + "-qty")

@@ -25,9 +25,6 @@
       if (!allowed.includes(input.value)) input.closest("label").hidden = true;
     });
     addons.insertAdjacentHTML("beforeend", '<label class="quote2-addon-item"><input type="checkbox" name="services" value="dishwasherCleaning"><span class="quote2-addon-copy"><strong>Dishwasher Cleaning</strong><small data-service-price="dishwasherCleaning">+$30</small></span></label>');
-    const fridge = document.getElementById("quote2RefrigeratorCondition");
-    fridge.closest(".quote2-field-grid").hidden = true;
-    fridge.closest(".quote2-field-grid").nextElementSibling.hidden = true;
     for (const key of ["SlidingDoorInterior", "SlidingDoorBothSides", "ChandelierCleaning"]) {
       document.getElementById("quote2" + key).closest(".quote2-quantity-item").hidden = true;
     }

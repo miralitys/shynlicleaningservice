@@ -40,6 +40,44 @@
   function conditionSelect(id, label, quote) {
     return `<label class="${quote ? "quote2-field" : "form-group half"}"><span>${label}*</span><select id="${id}" class="${quote ? "quote2-input" : "form-select"}"><option value="emptied">Emptied ($45)</option><option value="notEmptied">Not emptied ($90)</option></select></label>`;
   }
+  function bookingSelection(input) {
+    const quote = window.ShynliPricing.normalizeQuotePricingInput(input);
+    return Object.fromEntries([
+      "serviceType", "frequency", "rooms", "bathrooms", "squareMeters",
+      "basementCleaning", "hasPets", "additionalRooms", "services",
+      "quantityServices", "refrigeratorCondition", "cabinetsCondition",
+    ].map(key => [key, quote[key]]));
+  }
+  function readBookingSelection(search) {
+    try {
+      const value = new URLSearchParams(search).get("calculator");
+      if (!value || value.length > 8000) return null;
+      const input = JSON.parse(value);
+      if (!input || !["regular", "deep", "moving"].includes(input.serviceType)) return null;
+      return bookingSelection(input);
+    } catch (_) {
+      return null;
+    }
+  }
+  function placeConditionControls(quote) {
+    for (const [key, suffix, service] of [
+      ["refrigeratorCondition", "RefrigeratorCondition", "refrigeratorCleaning"],
+      ["cabinetsCondition", "CabinetsCondition", "insideCabinets"],
+    ]) {
+      const select = document.getElementById(quote ? "quote2" + suffix : key);
+      const field = select.closest("label");
+      field.classList.add("calculator-condition");
+      field.hidden = true;
+      if (quote) {
+        const item = document.querySelector(`input[name="services"][value="${service}"]`).closest("label");
+        item.classList.add("calculator-condition-addon");
+        const wrapper = document.createElement("div");
+        wrapper.className = "calculator-condition-group";
+        item.before(wrapper);
+        wrapper.append(item, field);
+      }
+    }
+  }
   function mountQuote() {
     const profile = document.querySelector('[data-step-card="profile"]');
     if (!profile) return;
@@ -114,6 +152,7 @@
       .querySelector("span").textContent = "Pets in the home (+$25)";
     document.getElementById("quote2HasPets").add(new Option("Yes / other pets", "yes"));
     combineWindows(true);
+    placeConditionControls(true);
   }
   function mountPricing() {
     const form = document.getElementById("cleaningCalculator");
@@ -191,11 +230,14 @@
         );
     }
     combineWindows(false);
+    placeConditionControls(false);
   }
   window.ShynliCalculatorControls = {
     mountQuote,
     mountPricing,
     roomLabels,
     quantityLabels,
+    bookingSelection,
+    readBookingSelection,
   };
 })();
