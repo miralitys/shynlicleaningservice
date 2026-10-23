@@ -2169,7 +2169,16 @@
       "displayWidth": 42,
       "desktop": 42,
       "mobile": 42,
-      "bytes": 62291
+      "bytes": 62291,
+      "modern": "/images/optimized/shynli-logo-icon-white-4ff98841cb.svg",
+      "variants": [
+        {
+          "url": "/images/optimized/shynli-logo-icon-white-4ff98841cb.svg",
+          "width": 32,
+          "height": 22,
+          "bytes": 18481
+        }
+      ]
     },
     "/images/shynli-logo-primary.png": {
       "width": 2355,
@@ -2603,16 +2612,34 @@
           "bytes": 15262
         },
         {
+          "url": "/images/optimized/shynli-sugargrove-cleaners-773cee0eb2-w384.webp",
+          "width": 384,
+          "height": 171,
+          "bytes": 19730
+        },
+        {
           "url": "/images/optimized/shynli-sugargrove-cleaners-773cee0eb2-w640.webp",
           "width": 640,
           "height": 285,
           "bytes": 40658
         },
         {
+          "url": "/images/optimized/shynli-sugargrove-cleaners-773cee0eb2-w768.webp",
+          "width": 768,
+          "height": 341,
+          "bytes": 51818
+        },
+        {
           "url": "/images/optimized/shynli-sugargrove-cleaners-773cee0eb2-w960.webp",
           "width": 960,
           "height": 427,
           "bytes": 75296
+        },
+        {
+          "url": "/images/optimized/shynli-sugargrove-cleaners-773cee0eb2-w1152.webp",
+          "width": 1152,
+          "height": 512,
+          "bytes": 99696
         },
         {
           "url": "/images/optimized/shynli-sugargrove-cleaners-773cee0eb2-w1680.webp",

@@ -258,6 +258,11 @@
     "alt": "Street map of communities in the western Chicago suburbs",
     "description": "Line map of western Chicago suburbs"
   },
+  "/images/optimized/shynli-area-map-56be8cf260.svg": {
+    "kind": "decorative",
+    "alt": "",
+    "description": "Existing decorative city map behind the service area markers"
+  },
   "/images/shynli-area-star.svg": {
     "kind": "decorative",
     "alt": "",

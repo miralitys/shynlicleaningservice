@@ -689,7 +689,7 @@ test("serves Romeoville from the clean shared city template", () => {
   assert.match(html, /id="shynli-home-page-runtime"/);
   assert.match(html, /id="shynli-zero-runtime-stub"/);
   assert.match(html, /src="\/images\/optimized\/shynli-logo-primary-[a-f0-9]+-w\d+\.webp"/);
-  assert.match(html, /href="\/images\/shynli-icon-32\.png"/);
+  assert.match(html, /href="\/images\/optimized\/shynli-icon-32-[a-f0-9]+\.png"/);
   assert.match(html, /data-city-modal-open/);
   assertSharedNavigation(html);
   assert.match(html, /House Cleaning Services in <span class="sg-accent">Romeoville<\/span>, IL/);
@@ -1315,7 +1315,7 @@ test("keeps the move-in move-out main route hand-coded without Tilda runtime", (
   assert.match(html, /<meta name="robots" content="index,follow"\s*\/?>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/shynlicleaningservice\.com\/services\/move-in-move-out-cleaning"\s*\/?>/);
   assert.match(html, /\/images\/optimized\/shynli-move-cleaning-hero-[a-f0-9]+-w\d+\.webp/);
-  assert.match(html, /\/images\/shynli-icon-32\.png/);
+  assert.match(html, /\/images\/optimized\/shynli-icon-32-[a-f0-9]+\.png/);
   assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);
   assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
@@ -1435,7 +1435,7 @@ test("keeps the move-in move-out copy hand-coded without Tilda runtime", () => {
   assert.match(html, /class="[^"]*\bmove-page\b[^"]*"/);
   assert.match(html, /Cleaning for Moving In or Moving Out/i);
   assert.match(html, /\/images\/optimized\/shynli-move-cleaning-hero-[a-f0-9]+-w\d+\.webp/);
-  assert.match(html, /\/images\/shynli-icon-32\.png/);
+  assert.match(html, /\/images\/optimized\/shynli-icon-32-[a-f0-9]+\.png/);
   assertNoTildaRuntime(html);
   assert.doesNotMatch(html, /callrail|calltrk|swap\.js|shynli-tracking|googletagmanager|Google Tag Manager/i);
   assert.doesNotMatch(html, /id="shynli-home-page-runtime"/);
