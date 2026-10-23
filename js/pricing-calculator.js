@@ -89,7 +89,17 @@
       select.disabled = !enabled;
       const field = select.closest("label");
       field.hidden = !enabled;
-      if (checkbox) checkbox.closest(".addon-item").after(field);
+      if (checkbox) {
+        const item = checkbox.closest(".addon-item");
+        let group = item.parentElement;
+        if (!group.classList.contains("calculator-condition-group")) {
+          group = document.createElement("div");
+          group.className = "calculator-condition-group";
+          item.before(group);
+          group.append(item);
+        }
+        group.append(field);
+      }
     }
     for (const [key, label] of Object.entries(controls.roomLabels)) {
       document

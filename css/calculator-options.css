@@ -88,6 +88,9 @@
 #cleaningCalculator .calculator-condition {
   width: 100%;
 }
+#cleaningCalculator .addons-grid {
+  align-items: start;
+}
 [hidden] {
   display: none !important;
 }
