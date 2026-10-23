@@ -12,6 +12,7 @@ const baseline = process.argv[2];
 if (!baseline) throw new Error("Pass a directory containing the captured production manifest.json");
 const attr = (n, k) => n.attrs?.find(a => a.name === k)?.value;
 const refs = new Set(), cssFiles = new Set();
+const responsiveGroups = [];
 const previousPath = path.join(root, "lib/site/modern-images-manifest.json");
 const previous = fs.existsSync(previousPath) ? JSON.parse(fs.readFileSync(previousPath, "utf8")) : { images: {} };
 const originalByModern = new Map(Object.entries(previous.images).flatMap(([original, image]) => (image.variants || []).map(v => [v.url, original])));
@@ -43,6 +44,18 @@ for (const row of geometry) {
   }
 }
 function visit(n) {
+  if (n.tagName === "picture" || n.tagName === "img" && attr(n, "srcset")) {
+    const group = new Set();
+    function collect(current) {
+      if (["img", "source"].includes(current.tagName)) {
+        for (const name of ["src", "data-original"]) if (attr(current, name)) group.add(imagePath(attr(current, name)));
+        for (const name of ["srcset", "data-srcset"]) for (const part of (attr(current, name) || "").split(",")) group.add(imagePath(part.trim().split(/\s+/)[0]));
+      }
+      for (const child of current.childNodes || []) collect(child);
+    }
+    collect(n);
+    responsiveGroups.push([...group].filter(Boolean));
+  }
   if (n.tagName === "img" || n.tagName === "source" || n.tagName === "image") {
     for (const name of ["src", "data-original", "href", "xlink:href"]) if (attr(n, name)) add(attr(n, name));
     for (const name of ["srcset", "data-srcset"]) for (const part of (attr(n, name) || "").split(",")) add(part.trim().split(/\s+/)[0]);
@@ -63,6 +76,14 @@ for (const entry of JSON.parse(fs.readFileSync(path.join(baseline, "manifest.jso
   visit(parse(fs.readFileSync(path.join(baseline, entry.file), "utf8")));
 }
 for (const file of cssFiles) if (fs.existsSync(path.join(root, file))) collectCss(fs.readFileSync(path.join(root, file), "utf8"));
+// Every candidate in a picture occupies the same box, including candidates not
+// selected on the measured device. Cap high-DPR fallback variants as well.
+for (const group of responsiveGroups) {
+  const measured = group.map(p => measurements.get(originalByModern.get(p) || p)).filter(Boolean);
+  if (!measured.length) continue;
+  const desktop = Math.max(...measured.map(m => m.desktop)), mobile = Math.max(...measured.map(m => m.mobile));
+  for (const p of group) measurements.set(originalByModern.get(p) || p, { desktop, mobile });
+}
 const exempt = p => /(?:favicon|(?:^|[-_])icon[-_.]|og-photo)/i.test(path.basename(p));
 const manifest = { version: "modern-images-20261022", images: {}, eager: {}, cssFiles: [...cssFiles].sort(), modifiedCss: previous.modifiedCss || [] };
 for (const row of geometry) {

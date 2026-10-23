@@ -40,11 +40,17 @@ oldFile,oldKB,newFile,newKB,format,originalWidth,newWidth,maxObservedDisplayWidt
 "/images/about-hero-badge-quality.png",59.29,"/images/optimized/about-hero-badge-quality-546f12f963-w505.webp",9.29,"WebP",505,505,"unmeasured; conservative 1920px cap"
 "/images/about-hero-badge-safe.png",76.36,"/images/optimized/about-hero-badge-safe-c9faa74e1f-w544.webp",10.37,"WebP",544,544,"unmeasured; conservative 1920px cap"
 "/images/home-copy-service-airbnb-640.webp",41.55,"/images/optimized/home-copy-service-airbnb-640-d78dca1b13-w560.webp",29.96,"WebP",640,560,280
+"/images/home-copy-service-airbnb-750.webp",59.08,"/images/optimized/home-copy-service-airbnb-750-27e85c279b-w560.webp",32.69,"WebP",750,560,280
 "/images/home-copy-service-commercial-640.webp",74.54,"/images/optimized/home-copy-service-commercial-640-dadfcd6f74-w560.webp",52.67,"WebP",640,560,280
+"/images/home-copy-service-commercial-750.webp",105.78,"/images/optimized/home-copy-service-commercial-750-0d3237fefd-w560.webp",54.06,"WebP",750,560,280
 "/images/home-copy-service-deep-640.webp",50.38,"/images/optimized/home-copy-service-deep-640-f5ebc05d95-w606.webp",39.93,"WebP",640,606,303
+"/images/home-copy-service-deep-750.webp",71.48,"/images/optimized/home-copy-service-deep-750-8f1ff4f119-w606.webp",44.67,"WebP",750,606,303
 "/images/home-copy-service-move-640.webp",39.59,"/images/optimized/home-copy-service-move-640-179f7fb99c-w560.webp",28.96,"WebP",640,560,280
+"/images/home-copy-service-move-750.webp",53.67,"/images/optimized/home-copy-service-move-750-6e1336e7af-w560.webp",31.03,"WebP",750,560,280
 "/images/home-copy-service-post-construction-640.webp",41.6,"/images/optimized/home-copy-service-post-construction-640-322d5ed572-w560.webp",29.7,"WebP",640,560,280
+"/images/home-copy-service-post-construction-750.webp",58.97,"/images/optimized/home-copy-service-post-construction-750-de27a9f3bb-w560.webp",31.78,"WebP",750,560,280
 "/images/home-copy-service-regular-640.webp",51.09,"/images/optimized/home-copy-service-regular-640-cb17de7b60-w560.webp",37.03,"WebP",640,560,280
+"/images/home-copy-service-regular-750.webp",70.25,"/images/optimized/home-copy-service-regular-750-14264640dc-w560.webp",39.76,"WebP",750,560,280
 "/images/move-clean-original-02.png",3.34,"/images/optimized/move-clean-original-02-40ead58370-w1680.webp",2.76,"WebP",1680,1680,1160
 "/images/move-clean-original-07.png",58.88,"/images/optimized/move-clean-original-07-56fed1ba00-w370.webp",9.64,"WebP",478,370,185
 "/images/move-clean-original-08.png",3.22,"/images/optimized/move-clean-original-08-10d8fd9929-w760.webp",2.21,"WebP",1384,760,380
@@ -61,13 +67,14 @@ oldFile,oldKB,newFile,newKB,format,originalWidth,newWidth,maxObservedDisplayWidt
 "/images/shynli-airbnb-cleaning-hero.png",545.59,"/images/optimized/shynli-airbnb-cleaning-hero-48451e0b78-w1536.webp",156.37,"WebP",1536,1536,1414
 "/images/shynli-contact-panel-bg.png",3.34,"/images/optimized/shynli-contact-panel-bg-40ead58370-w1680.webp",2.76,"WebP",1680,1680,1160
 "/images/shynli-footer-logo-light.png",7.72,"/images/optimized/shynli-footer-logo-light-7f105702b4-w316.webp",17.01,"WebP",489,316,158
-"/images/shynli-logo-primary.png",88.99,"/images/optimized/shynli-logo-primary-ab05dbeb09-w248.webp",11.68,"WebP",2355,248,124
+"/images/shynli-logo-primary.png",88.99,"/images/optimized/shynli-logo-primary-720945b1ec-w324.webp",15.98,"WebP",2355,324,162
 "/images/shynli-move-area-bathroom.png",71.85,"/images/optimized/shynli-move-area-bathroom-92e7107297-w324.webp",16.18,"WebP",324,324,200
 "/images/shynli-move-area-bedroom.png",73.89,"/images/optimized/shynli-move-area-bedroom-80e83217f7-w324.webp",17.21,"WebP",324,324,200
 "/images/shynli-move-area-kitchen.png",66.57,"/images/optimized/shynli-move-area-kitchen-15c34598e8-w351.webp",15.77,"WebP",351,351,200
 "/images/shynli-move-area-living-room.png",73.99,"/images/optimized/shynli-move-area-living-room-830139b648-w354.webp",16.99,"WebP",354,354,200
 "/images/shynli-move-cleaning-hero.png",324.31,"/images/optimized/shynli-move-cleaning-hero-7c367fcce2-w1680.webp",83.39,"WebP",1680,1680,1413
 "/images/shynli-quote-house.png",1600.88,"/images/optimized/shynli-quote-house-0a880d18cb-w948.webp",105.5,"WebP",1680,948,474
+"/images/shynli-quote-house.w1296.webp",82.4,"/images/optimized/shynli-quote-house.w1296-73c849f3fe-w948.webp",62.45,"WebP",1296,948,474
 "/images/shynli-service-airbnb-cleaning.png",471.45,"/images/optimized/shynli-service-airbnb-cleaning-2cd4efbbf3-w560.webp",38.07,"WebP",750,560,280
 "/images/shynli-service-commercial-cleaning.png",519.86,"/images/optimized/shynli-service-commercial-cleaning-a35325cc9f-w560.webp",63.37,"WebP",750,560,280
 "/images/shynli-service-deep-cleaning.png",516,"/images/optimized/shynli-service-deep-cleaning-98049cfe1e-w606.webp",52.75,"WebP",750,606,303

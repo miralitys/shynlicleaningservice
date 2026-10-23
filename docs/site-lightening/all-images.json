@@ -490,10 +490,10 @@
   {
     "oldFile": "/images/home-copy-service-airbnb-750.webp",
     "oldKB": 59.08,
-    "newFile": "/images/home-copy-service-airbnb-750.webp",
-    "newKB": 59.08,
-    "format": "WEBP",
-    "changed": false
+    "newFile": "/images/optimized/home-copy-service-airbnb-750-27e85c279b-w560.webp",
+    "newKB": 32.69,
+    "format": "WebP",
+    "changed": true
   },
   {
     "oldFile": "/images/home-copy-service-commercial-320.webp",
@@ -522,10 +522,10 @@
   {
     "oldFile": "/images/home-copy-service-commercial-750.webp",
     "oldKB": 105.78,
-    "newFile": "/images/home-copy-service-commercial-750.webp",
-    "newKB": 105.78,
-    "format": "WEBP",
-    "changed": false
+    "newFile": "/images/optimized/home-copy-service-commercial-750-0d3237fefd-w560.webp",
+    "newKB": 54.06,
+    "format": "WebP",
+    "changed": true
   },
   {
     "oldFile": "/images/home-copy-service-deep-320.webp",
@@ -554,10 +554,10 @@
   {
     "oldFile": "/images/home-copy-service-deep-750.webp",
     "oldKB": 71.48,
-    "newFile": "/images/home-copy-service-deep-750.webp",
-    "newKB": 71.48,
-    "format": "WEBP",
-    "changed": false
+    "newFile": "/images/optimized/home-copy-service-deep-750-8f1ff4f119-w606.webp",
+    "newKB": 44.67,
+    "format": "WebP",
+    "changed": true
   },
   {
     "oldFile": "/images/home-copy-service-move-320.webp",
@@ -586,10 +586,10 @@
   {
     "oldFile": "/images/home-copy-service-move-750.webp",
     "oldKB": 53.67,
-    "newFile": "/images/home-copy-service-move-750.webp",
-    "newKB": 53.67,
-    "format": "WEBP",
-    "changed": false
+    "newFile": "/images/optimized/home-copy-service-move-750-6e1336e7af-w560.webp",
+    "newKB": 31.03,
+    "format": "WebP",
+    "changed": true
   },
   {
     "oldFile": "/images/home-copy-service-post-construction-320.webp",
@@ -618,10 +618,10 @@
   {
     "oldFile": "/images/home-copy-service-post-construction-750.webp",
     "oldKB": 58.97,
-    "newFile": "/images/home-copy-service-post-construction-750.webp",
-    "newKB": 58.97,
-    "format": "WEBP",
-    "changed": false
+    "newFile": "/images/optimized/home-copy-service-post-construction-750-de27a9f3bb-w560.webp",
+    "newKB": 31.78,
+    "format": "WebP",
+    "changed": true
   },
   {
     "oldFile": "/images/home-copy-service-regular-320.webp",
@@ -650,10 +650,10 @@
   {
     "oldFile": "/images/home-copy-service-regular-750.webp",
     "oldKB": 70.25,
-    "newFile": "/images/home-copy-service-regular-750.webp",
-    "newKB": 70.25,
-    "format": "WEBP",
-    "changed": false
+    "newFile": "/images/optimized/home-copy-service-regular-750-14264640dc-w560.webp",
+    "newKB": 39.76,
+    "format": "WebP",
+    "changed": true
   },
   {
     "oldFile": "/images/home-copy-spark.svg",
@@ -906,8 +906,8 @@
   {
     "oldFile": "/images/shynli-logo-primary.png",
     "oldKB": 88.99,
-    "newFile": "/images/optimized/shynli-logo-primary-ab05dbeb09-w248.webp",
-    "newKB": 11.68,
+    "newFile": "/images/optimized/shynli-logo-primary-720945b1ec-w324.webp",
+    "newKB": 15.98,
     "format": "WebP",
     "changed": true
   },
@@ -1018,10 +1018,10 @@
   {
     "oldFile": "/images/shynli-quote-house.w1296.webp",
     "oldKB": 82.4,
-    "newFile": "/images/shynli-quote-house.w1296.webp",
-    "newKB": 82.4,
-    "format": "WEBP",
-    "changed": false
+    "newFile": "/images/optimized/shynli-quote-house.w1296-73c849f3fe-w948.webp",
+    "newKB": 62.45,
+    "format": "WebP",
+    "changed": true
   },
   {
     "oldFile": "/images/shynli-quote-house.w648.webp",

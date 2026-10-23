@@ -52,3 +52,16 @@ test("preserves fixed display dimensions and updates picture sources without PNG
   assert.doesNotMatch(result, /\.png/);
   assert.equal(applyModernImages(result, "/"), result);
 });
+
+test("caps unselected high-DPR picture variants and keeps srcset descriptors unique", () => {
+  const base = "/images/home-copy-service-commercial-";
+  const image = manifest.images[base + "750.webp"];
+  assert.ok(image.modern);
+  assert.ok(image.variants.at(-1).width <= image.displayWidth * 2);
+  const html = `<picture><source srcset="${base}320.webp 320w, ${base}480.webp 480w, ${base}640.webp 640w, ${base}750.webp 750w"><img src="${base}640.webp"></picture>`;
+  const result = applyModernImages(html, "/");
+  const source = inspectHtml(result).nodes.find(n => n.tagName === "source");
+  const descriptors = attr(source, "srcset").split(",").map(s => s.trim().split(/\s+/)[1]);
+  assert.equal(descriptors.length, new Set(descriptors).size);
+  assert.doesNotMatch(attr(source, "srcset"), /750w|640w/);
+});
