@@ -44,6 +44,30 @@ test("favicon and Apple touch icon are separate correctly sized assets", () => {
   assert.doesNotMatch(output, /href="\/images\/shynli-icon-32\.png"/);
 });
 
+test("only city pages get a smaller desktop hero with the existing Retina and mobile variants", () => {
+  const input = '<html><head></head><body><div class="sg-hero__people" role="img" aria-label="Team"></div></body></html>';
+  const output = applyCityImagePerformance(input, "/naperville");
+  assert.match(output, /id="city-desktop-hero-images">.*@media\(min-width:480px\)/);
+  assert.match(output, /\.shynli-site-header__logo img\{aspect-ratio:320\/91\}/);
+  assert.match(output, /w1280\.webp"\) 1x,url\("[^\"]*w1680\.webp"\) 2x/);
+  assert.match(output, /w384\.webp.*1x.*w768\.webp.*2x.*w1152\.webp.*3x/);
+  assert.equal(applyCityImagePerformance(output, "/naperville"), output);
+  for (const route of ["/", "/pricing", "/quote", "/naperville/deep-cleaning"]) {
+    assert.doesNotMatch(applyCityImagePerformance(input, route), /city-desktop-hero-images/);
+  }
+});
+
+test("city header picture sizes match the CSS without changing its images or dimensions", () => {
+  const logo = '<a class="shynli-site-header__logo" href="/"><picture><source srcset="/images/home-copy-logo-160.webp 160w, /images/home-copy-logo-320.webp 320w" type="image/webp"><img src="/images/logo.png" alt="Shynli Cleaning" width="2355" height="669"></picture></a>';
+  const input = `<html><head></head><body><div class="sg-hero__people"></div>${logo}</body></html>`;
+  const output = applyCityImagePerformance(input, "/plainfield");
+  const sizes = ' sizes="(max-width:639px) 124px, (max-width:1080px) 110px, 96px"';
+  assert.equal(output.split(sizes).length - 1, 2);
+  assert.ok(output.replaceAll(sizes, "").includes(logo));
+  assert.equal(applyCityImagePerformance(output, "/plainfield"), output);
+  assert.ok(applyCityImagePerformance(input, "/pricing").includes(logo));
+});
+
 test("small white SVG stays vector with unchanged alt and original mapping", () => {
   const output = applyModernImages('<img src="/images/shynli-logo-icon-white.svg" alt="" aria-hidden="true">', "/naperville");
   const url = output.match(/src="([^"]+)"/)[1];
