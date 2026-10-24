@@ -1015,9 +1015,9 @@ test("keeps the mobile month calendar list collapsed until a day is selected", (
   });
   const monthMobileCalendar = getMobileCalendarSection(monthHtml);
   assert.match(monthMobileCalendar, /account-mobile-calendar-month-nav/);
-  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-05-01"/);
-  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-07-01"/);
-  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-06-02&amp;showDay=1"/);
+  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-05-01&amp;calendarCompact=1"/);
+  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-07-01&amp;calendarCompact=1"/);
+  assert.match(monthMobileCalendar, /href="\/account\?section=calendar&amp;view=month&amp;date=2099-06-02&amp;showDay=1&amp;calendarCompact=1"/);
   assert.doesNotMatch(monthMobileCalendar, /account-mobile-calendar-order-card/);
   assert.doesNotMatch(monthMobileCalendar, /Cheryl Whitten/);
 

@@ -70,7 +70,11 @@ test("account HTTP lists and lazy details keep all history accessible, enforce a
   const app = await startServer({ env: appEnv });
   const token = createUserSessionToken(loadUserAuthConfig(appEnv), { userId: "user-a", staffId: "a", email: "a@example.test" });
   const cookie = `shynli_user_session=${token}`;
-  const get = (query, authenticated = true) => fetch(app.baseUrl + "/account" + query, { redirect: "manual", headers: authenticated ? { cookie } : {} });
+  let authenticatedRequests = 0;
+  const get = (query, authenticated = true) => {
+    if (authenticated) authenticatedRequests++;
+    return fetch(app.baseUrl + "/account" + query, { redirect: "manual", headers: authenticated ? { cookie } : {} });
+  };
   try {
     const ids = new Set();
     let firstHtml;
@@ -97,9 +101,32 @@ test("account HTTP lists and lazy details keep all history accessible, enforce a
     assert.match(payrollHtml, /Test Client 106</);
     assert.match(payrollHtml, /\$91\.06/);
     assert.doesNotMatch(payrollHtml, /Other cleaner only/);
+    const monthQuery = "?section=calendar&view=month&date=2099-01-01";
+    const compact = await get(monthQuery + "&calendarCompact=1");
+    assert.equal(compact.status, 200);
+    const compactHtml = await compact.text();
+    assert.doesNotMatch(compactHtml, /Test Client|<table\b/);
+    assert.match(compactHtml, /data-account-calendar-orders-source/);
+    assert.match(compactHtml, /calendarFull=1/);
+    const desktop = await get(monthQuery + "&fragment=calendar-orders");
+    assert.equal(desktop.status, 200);
+    assert.match(desktop.headers.get("cache-control"), /no-store/);
+    const desktopHtml = await desktop.text();
+    assert.match(desktopHtml, /data-account-calendar-orders-content/);
+    assert.match(desktopHtml, /Test Client 0</);
+    assert.match(desktopHtml, /Test Client 30</);
+    assert.doesNotMatch(desktopHtml, /Test Client 31<|Other cleaner only|<html/);
+    const fullCalendar = await (await get(monthQuery + "&calendarFull=1")).text();
+    assert.match(fullCalendar, /Test Client 0</);
+    assert.doesNotMatch(fullCalendar, /data-account-calendar-orders-source/);
+    const defaultCalendar = await (await get(monthQuery)).text();
+    assert.equal(defaultCalendar, fullCalendar, "desktop receives the complete table in its initial response");
+    assert.equal(await (await get(monthQuery + "&calendarCompact=1&calendarFull=1")).text(), fullCalendar);
+    assert.equal((await get(monthQuery + "&fragment=calendar-orders", false)).status, 303);
+    assert.equal((await get("?fragment=calendar-orders")).status, 400);
     const lastDate = createFixture().rows[1106].selected_date;
     for (const date of ["2099-01-01", lastDate, "2050-01-01"]) {
-      const calendar = await get(`?section=calendar&view=month&date=${date}&showDay=1&tab=1`);
+      const calendar = await get(`?section=calendar&view=month&date=${date}&showDay=1&calendarCompact=1&tab=1`);
       assert.equal(calendar.status, 200);
       const calendarHtml = await calendar.text();
       assert.doesNotMatch(calendarHtml, /Other cleaner only/);
@@ -123,14 +150,17 @@ test("account HTTP lists and lazy details keep all history accessible, enforce a
     assert.equal((await get("?fragment=order-detail&order=order-01106", false)).status, 303);
     await fs.writeFile(control, JSON.stringify({ reassigned: "order-01106" }));
     assert.equal((await get("?fragment=order-detail&order=order-01106")).status, 404, "fresh assignment check revokes cached access");
+    const freshMonth = await (await get(`?section=calendar&view=month&date=${lastDate}&fragment=calendar-orders&tab=1`)).text();
+    assert.doesNotMatch(freshMonth, /Test Client 1106</);
     await fs.writeFile(control, JSON.stringify({ failDetail: true }));
     assert.equal((await get("?fragment=order-detail&order=order-00001")).status, 503, "no stale full-record fallback");
     await fs.writeFile(control, JSON.stringify({ failOrders: true }));
     const failure = await get("");
     assert.equal(failure.status, 503);
     assert.doesNotMatch(await failure.text(), /Test Client/);
+    assert.equal((await get(monthQuery + "&fragment=calendar-orders&tab=1")).status, 503);
     const calls = (await fs.readFile(capture, "utf8")).trim().split("\n").filter(Boolean).map(JSON.parse);
     assert.ok(calls.every(call => call.method === "GET"));
-    assert.ok(calls.filter(call => call.table === "admin_users").length < 35, "one users snapshot per request, not two");
+    assert.ok(calls.filter(call => call.table === "admin_users").length <= authenticatedRequests + 1, "one users snapshot per request, plus startup");
   } finally { await stopServer(app.child); await fs.rm(root, { recursive: true, force: true }); }
 });
