@@ -31,7 +31,7 @@ const renderers = createAccountRenderers({
   },
 });
 
-async function createHarness() {
+async function createHarness({ calendarProjection = false } = {}) {
   const fixture = createFixture();
   // Assignment dates, not order dates, determine the calendar period.
   fixture.assignments[0].schedule_date = "2103-01-01";
@@ -48,10 +48,10 @@ async function createHarness() {
   const staff = await createSupabaseAdminStaffClient({ env: {
     SUPABASE_URL: "https://account-benchmark.invalid", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_fake",
   }, fetch: createReadFetch(fixture) }).fetchAccountSnapshot("a");
-  const metrics = { planning: [], settingsReads: 0, calendarMetaReads: 0, ledgerReads: [] };
+  const metrics = { planning: [], settingsReads: 0, calendarMetaReads: 0, ledgerReads: [], calendarReads: [] };
   const user = { id: "user-a", staffId: "a", email: "a@example.test", role: "cleaner", status: "active" };
   const settings = { templates: [{ serviceType: "deep", items: [{ id: "clean", label: "Clean room", completed: false }] }] };
-  const control = { failSettings: false, failOrders: false };
+  const control = { failSettings: false, failOrders: false, failCalendar: false };
   const settingsStore = { async getSnapshot() {
     metrics.settingsReads++;
     if (control.failSettings) throw new Error("Settings unavailable");
@@ -65,7 +65,12 @@ async function createHarness() {
     },
     async getEntry(id) { return entries.find(entry => entry.id === id) || null; },
   };
-  const staffStore = { async getAccountSnapshot() { return staff; } };
+  if (calendarProjection) ledger.listAccountCalendarEntriesByIds = async ids => {
+    metrics.calendarReads.push(ids.slice());
+    if (control.failCalendar) throw new Error("Calendar unavailable");
+    return entries.filter(entry => ids.includes(entry.id)).map(require("../lib/account/calendar-list").projectAccountCalendarEntry);
+  };
+  const staffStore = { async getAccountSnapshot() { return structuredClone(staff); } };
   const usersStore = { async getAccountContext() { return { user, usersSnapshot: { users: [user] } }; } };
   const handler = createAccountRequestHandler({
     ACCOUNT_ROOT_PATH: "/account", USER_SESSION_COOKIE: "session", normalizeString,
@@ -80,9 +85,9 @@ async function createHarness() {
       .map(name => [`render${name}`, (context, options) => ({ context, options, page: name })])),
     writeHtmlWithTiming(res, status, body) { res.status = status; res.body = body; },
   });
-  const get = async query => {
+  const get = async (query, headers = {}) => {
     const res = {};
-    await handler({ method: "GET", url: "/account" + query, headers: {} }, res, 0, { route: "/account" }, null,
+    await handler({ method: "GET", url: "/account" + query, headers }, res, 0, { route: "/account" }, null,
       { settingsStore, googleCalendarIntegration: { buildCalendarMeta() { metrics.calendarMetaReads++; return {}; } } },
       ledger, staffStore, usersStore);
     return res;
@@ -121,6 +126,90 @@ test("calendar prepares only the selected month with identical HTML, counts, tea
       renderers.renderCalendarPage(baseline, response.body.options));
   }
   assert.equal(h.snapshot(), before, "read preparation never mutates orders, assignments or payroll");
+});
+
+test("narrow month reads keep identical dates, cancellations, availability and counts across all historical months", async () => {
+  const h = await createHarness({ calendarProjection: true });
+  const before = h.snapshot();
+  const baseline = (await h.get("")).body.context;
+  const visible = baseline.assignedOrders.filter(isAccountCalendarOrderVisible);
+  const months = [...new Set(visible.map(getAccountCalendarOrderDate).filter(Boolean).map(date => date.slice(0, 7)))];
+  const ordinaryReads = h.metrics.ledgerReads.length;
+  for (const month of [...months, "2050-01"]) {
+    const response = await h.get(`?section=calendar&view=month&date=${month}-01&calendarCompact=1`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.body.context.assignedOrders, []);
+    assert.equal(sectionHtml(renderers.renderCalendarPage(response.body.context, response.body.options), "data-account-mobile-calendar"),
+      sectionHtml(renderers.renderCalendarPage(baseline, response.body.options), "data-account-mobile-calendar"));
+  }
+  assert.equal(h.metrics.ledgerReads.length, ordinaryReads);
+  assert.equal(h.metrics.calendarReads.length, months.length + 1);
+  assert.ok(h.metrics.calendarReads.every(ids => ids.includes("order-01106")));
+  assert.equal(h.snapshot(), before);
+});
+
+test("grid cache cannot satisfy full cards, history, day, desktop or earnings and can reuse a complete snapshot safely", async () => {
+  const h = await createHarness({ calendarProjection: true });
+  const before = h.snapshot();
+  const grid = "?section=calendar&view=month&date=2099-01-10&calendarCompact=1";
+  await h.get(grid);
+  await h.get(grid + "&tab=1");
+  assert.equal(h.metrics.calendarReads.length, 1);
+  assert.equal(h.metrics.ledgerReads.length, 0);
+  const payroll = (await h.get("?section=payroll&tab=1")).body.context;
+  assert.equal(h.metrics.ledgerReads.length, 1, "grid-only rows must not stand in for financial data");
+  assert.equal(payroll.payrollSummary.rows.length, 104);
+  await h.get(grid + "&tab=1");
+  assert.equal(h.metrics.calendarReads.length, 1, "a complete snapshot may satisfy a grid read");
+  const day = await h.get(grid + "&showDay=1&tab=1");
+  assert.ok(day.body.context.assignedOrders.length);
+  assert.ok(day.body.context.assignedOrders.every(item => item.completion.checklistItems[0]?.label === "Clean room"));
+  const history = await h.get("?history=all&tab=1");
+  assert.equal(history.body.context.assignedOrders.length, 1106);
+  assert.ok(history.body.context.assignedOrders.some(item => item.entry.id === "order-01106"));
+  const full = await h.get("?fragment=order-detail&order=order-01106");
+  assert.equal(full.status, 200);
+  assert.equal(full.body.context.assignedOrders[0].entry.totalPrice, h.entries.find(row => row.id === "order-01106").totalPrice);
+  assert.equal((await h.get("?fragment=order-detail&order=other-order")).status, 404);
+  for (const suffix of ["&calendarFull=1", "&fragment=calendar-orders", "&order=order-00009"]) {
+    const response = await h.get(grid + suffix);
+    assert.equal(response.status, 200);
+    assert.equal(response.body.context.calendarSummary, undefined);
+    assert.ok(response.body.context.assignedOrders.length);
+  }
+  assert.deepEqual((await h.get("?section=payroll&tab=1")).body.context.payrollSummary, payroll.payrollSummary);
+  assert.equal(h.snapshot(), before);
+});
+
+test("failed narrow reads expose a retryable error, not a stale month or partial calendar", async () => {
+  const h = await createHarness({ calendarProjection: true });
+  const query = "?section=calendar&view=month&date=2099-01-10&calendarCompact=1";
+  assert.equal((await h.get(query)).status, 200);
+  h.control.failCalendar = true;
+  assert.equal((await h.get(query)).status, 503);
+  assert.equal((await h.get(query + "&tab=1")).status, 503);
+  h.control.failCalendar = false;
+  assert.equal((await h.get(query)).status, 200);
+});
+
+test("fresh grid and full snapshots supersede each other without resurrecting an old rescheduled date", async () => {
+  const h = await createHarness({ calendarProjection: true });
+  const entriesBefore = JSON.stringify(h.entries);
+  await h.get("?history=all&tab=1");
+  h.staff.assignments.find(row => row.entryId === "order-00009").scheduleDate = "2110-07-15";
+  const query = "?section=calendar&view=month&date=2110-07-15&calendarCompact=1";
+  const fresh = (await h.get(query)).body.context;
+  assert.equal(fresh.calendarSummary.orderCountByDate["2110-07-15"], 1);
+  const cached = (await h.get(query + "&tab=1")).body.context;
+  assert.deepEqual(cached.calendarSummary, fresh.calendarSummary, "an older full cache cannot override a fresh grid");
+  const complete = (await h.get("?history=all&tab=1")).body.context;
+  assert.equal(complete.assignedOrders.find(item => item.entry.id === "order-00009").scheduleDate, "2110-07-15");
+  h.staff.assignments.find(row => row.entryId === "order-00009").scheduleDate = "2111-08-16";
+  await h.get("?section=calendar&view=month&date=2111-08-16&calendarFull=1");
+  const latest = (await h.get("?section=calendar&view=month&date=2111-08-16&calendarCompact=1&tab=1")).body.context;
+  assert.equal(latest.calendarSummary.orderCountByDate["2111-08-16"], 1);
+  assert.equal(latest.calendarSummary.orderCountByDate["2110-07-15"], undefined);
+  assert.equal(JSON.stringify(h.entries), entriesBefore, "only synthetic assignment dates changed, never entry amounts or payroll");
 });
 
 function sectionHtml(html, attribute) {

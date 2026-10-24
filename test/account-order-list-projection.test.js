@@ -12,6 +12,9 @@ const { projectAccountListEntry, ACCOUNT_LIST_VIEW } = require("../lib/account/o
 const { hydrateOrderListRow } = require("../lib/quote-ops/order-list");
 const { getEntryOrderState, hasEntryOrderState } = require("../lib/admin-order-state");
 const { collectPayrollRecords, calculateStaffPayrollItem } = require("../lib/payroll");
+const { selectAccountCalendarEntries } = require("../lib/account/calendar-data");
+const { projectAccountCalendarEntry, ACCOUNT_CALENDAR_VIEW } = require("../lib/account/calendar-list");
+const { createAdminDomainHelpers } = require("../lib/admin/domain");
 
 const env = { SUPABASE_URL: "https://account-benchmark.invalid", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_fake" };
 const summary = row => projectAccountListEntry(mapRowToEntry(hydrateOrderListRow({ ...row,
@@ -86,6 +89,9 @@ test("PostgreSQL: lean account view preserves every summary, payroll and state r
     { payrollOverrides: { a: "0", b: "500" }, status: "completed", assignedStaff: "Cleaner A, Cleaner B" },
     { payroll: { items: [{ staffId: "a", amountCents: 50000, status: "paid", paidAt: "2026-10-24" }] } },
     { status: "cancelled", payrollOverrides: { a: "125.50" } },
+    { isCreated: true }, { isCreated: false }, { createdAt: "legacy" }, { status: "unknown" },
+    { selectedDate: "2099-01-03" }, { selectedTime: "09:00" }, { assignedStaff: "Cleaner A" }, { assignee: "Cleaner A" },
+    { frequency: "monthly" }, { paymentMethod: "Cash" }, { completion: { cleanerComment: "\u00a0" } },
   ];
   for (const orderState of variants) for (const adminOrder of variants) {
     const row = structuredClone(fixture.rows[0]);
@@ -113,9 +119,12 @@ test("PostgreSQL: lean account view preserves every summary, payroll and state r
   const before = ledgerHash();
   migration("account_order_list.sql");
   migration("account_order_list.sql");
+  migration("account_calendar.sql");
+  migration("account_calendar.sql");
   assert.equal(ledgerHash(), before, "installing/reinstalling the view does not change rows");
   fixture.rows = JSON.parse(sql("select jsonb_agg(to_jsonb(q) order by id) from public.quote_ops_entries q;"));
   fixture.accountRows = JSON.parse(sql("set role service_role; select jsonb_agg(to_jsonb(q) order by id) from public.account_order_list_entries q;"));
+  fixture.calendarRows = JSON.parse(sql("set role service_role; select jsonb_agg(to_jsonb(q) order by id) from public.account_calendar_entries q;"));
   assert.equal(fixture.rows.length, fixture.accountRows.length);
   for (let i = 0; i < fixture.rows.length; i++) {
     const expected = summary(fixture.rows[i]);
@@ -131,6 +140,25 @@ test("PostgreSQL: lean account view preserves every summary, payroll and state r
     }
   }
   assert.doesNotMatch(JSON.stringify(fixture.accountRows), /private-signature|private-photo/);
+  const domain = createAdminDomainHelpers({ normalizeString: (value, max = 500) => String(value || "").trim().slice(0, max) });
+  const summaries = fixture.rows.map(summary);
+  const assignments = summaries.map((row, index) => ({ entryId: row.id, status: index % 17 ? "confirmed" : "cancelled",
+    scheduleDate: index % 19 ? "" : "2105-03-07", staffIds: ["a", "b"] }));
+  for (const noCount of [false, true]) {
+    const calls = [];
+    const client = createSupabaseQuoteOpsClient({ env, fetch: createReadFetch(fixture, calls, () => ({ cap: 23, noCount })) });
+    const calendar = await client.fetchAccountCalendarEntriesByIds(fixture.rows.map(row => row.id));
+    assert.deepEqual(calendar, summaries.map(projectAccountCalendarEntry), "real SQL view matches established order recognition for every legacy root pair");
+    assert.doesNotMatch(JSON.stringify(calendar), /payroll|totalPrice|customerPhone|private-signature|private-photo|cleanerComment|checklist/);
+    for (const date of ["2099-01-01", "2099-02-01", "2099-09-01", "2105-03-07", "2050-01-01"]) {
+      const select = entries => selectAccountCalendarEntries({ entries, assignments, calendarDate: date, detailMode: "none",
+        getOrderSelectedDate: domain.getOrderSelectedDate, isOrderCreatedEntry: domain.isOrderCreatedEntry });
+      assert.deepEqual(select(calendar), select(summaries), `Exact date/count/cancellation parity for ${date}`);
+    }
+    assert.ok(calls.every(call => call.method === "GET" && call.table === ACCOUNT_CALENDAR_VIEW));
+    assert.deepEqual(await client.fetchAccountEntriesByIds(fixture.rows.map(row => row.id)), summaries,
+      "calendar reads cannot replace complete order/payroll summaries");
+  }
   for (const noCount of [false, true]) {
     const calls = [];
     const entries = await createSupabaseQuoteOpsClient({ env, fetch: createReadFetch(fixture, calls, () => ({ cap: 23, noCount })) })
@@ -149,6 +177,10 @@ test("PostgreSQL: lean account view preserves every summary, payroll and state r
   t.diagnostic(JSON.stringify({ rows: ids.length, beforeBytes: bytes(oldCalls), afterBytes: bytes(newCalls),
     reductionPercent: +(100 * (1 - bytes(newCalls) / bytes(oldCalls))).toFixed(1), exactSummaryParity: true }));
   for (const role of ["anon", "authenticated"]) assert.throws(() => sql(`set role ${role}; select * from public.account_order_list_entries;`), /permission denied/);
+  for (const role of ["anon", "authenticated"]) assert.throws(() => sql(`set role ${role}; select * from public.account_calendar_entries;`), /permission denied/);
+  assert.equal(sql("select has_table_privilege('service_role', 'public.account_calendar_entries', 'INSERT,UPDATE,DELETE');"), "f");
+  assert.equal(sql("select has_function_privilege('anon', 'public.account_calendar_state(jsonb)', 'EXECUTE');"), "f");
+  assert.equal(sql("select reloptions::text from pg_class where oid='public.account_calendar_entries'::regclass;"), "{security_invoker=true,security_barrier=true}");
   assert.equal(sql("select has_table_privilege('service_role', 'public.account_order_list_entries', 'INSERT,UPDATE,DELETE');"), "f");
   assert.equal(sql("select has_function_privilege('anon', 'public.account_order_list_state(jsonb)', 'EXECUTE');"), "f");
   assert.equal(sql("select reloptions::text from pg_class where oid='public.account_order_list_entries'::regclass;"), "{security_invoker=true,security_barrier=true}");

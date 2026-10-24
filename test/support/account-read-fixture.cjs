@@ -52,18 +52,26 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     }
     if (method !== "GET") throw new Error(`Account benchmark forbids writes: ${method} ${table}`);
     const accountView = table === "account_order_list_entries";
+    const calendarView = table === "account_calendar_entries";
     if (accountView && state.missingAccountView) {
       return { ok: false, status: 404, text: async () => JSON.stringify({ code: "PGRST205", message: "Missing account list view" }) };
     }
     if (accountView && state.accountViewError) {
       return { ok: false, status: 403, text: async () => JSON.stringify({ code: "42501", message: "View access denied" }) };
     }
-    if ((state.failOrders && (table === "quote_ops_entries" || accountView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
+    if (calendarView && state.missingCalendarView) {
+      return { ok: false, status: 404, text: async () => JSON.stringify({ code: "PGRST205", message: "Missing calendar view" }) };
+    }
+    if (calendarView && state.calendarViewError) {
+      return { ok: false, status: 403, text: async () => JSON.stringify({ code: "42501", message: "Calendar view access denied" }) };
+    }
+    if ((state.failOrders && (table === "quote_ops_entries" || accountView || calendarView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
       return { ok: false, status: 503, text: async () => JSON.stringify({ message: "Simulated read failure" }) };
     }
-    let rows = table === "quote_ops_entries" || accountView ? fixture.rows : table === "admin_staff" ? fixture.staff
+    let rows = table === "quote_ops_entries" || accountView || calendarView ? fixture.rows : table === "admin_staff" ? fixture.staff
       : table === "admin_users" ? fixture.users : table === "admin_staff_assignments" ? fixture.assignments : [];
-    if (accountView && fixture.accountRows) rows = fixture.accountRows;
+    if ((accountView || calendarView) && fixture.accountRows) rows = fixture.accountRows;
+    if (calendarView && fixture.calendarRows) rows = fixture.calendarRows;
     if (state.reassigned && table === "admin_staff_assignments") rows = rows.filter(row => row.entry_id !== state.reassigned);
     for (const [key, value] of u.searchParams) {
       if (key === "or") {
@@ -89,8 +97,25 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     const total = rows.length;
     const limit = Math.min(Number(u.searchParams.get("limit") || 1000), state.cap || 1000);
     rows = rows.slice(Number(u.searchParams.get("offset") || 0), Number(u.searchParams.get("offset") || 0) + limit);
-    if (accountView && !fixture.accountRows) rows = rows.map(row => ({ ...row, payload_for_retry: require("../../lib/account/order-list")
+    if ((accountView || calendarView) && !fixture.accountRows && !(calendarView && fixture.calendarRows)) rows = rows.map(row => ({ ...row, payload_for_retry: require("../../lib/account/order-list")
       .projectAccountListEntry({ payloadForRetry: row.payload_for_retry }).payloadForRetry }));
+    if (calendarView && !fixture.calendarRows) {
+      // Independently model the SQL view, including the completion-comment field
+      // needed by the shared legacy order recognizer. Do not use its JS DTO mapper.
+      const pick = (value, fields) => value && typeof value === "object" && !Array.isArray(value)
+        ? Object.fromEntries(fields.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]])) : value;
+      const state = value => {
+        const result = pick(value, ["isCreated", "createdAt", "status", "assignedStaff", "assignee", "selectedDate", "selectedTime", "frequency", "paymentMethod", "listHasOrderState"]);
+        if (value && typeof value === "object" && !Array.isArray(value) && value.completion &&
+          typeof value.completion === "object" && !Array.isArray(value.completion)) result.completion = pick(value.completion, ["cleanerComment"]);
+        if (value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length && !Object.keys(result).length) result.listHasOrderState = true;
+        return result;
+      };
+      rows = rows.map(row => ({ id: row.id, selected_date: row.selected_date, payload_for_retry: {
+        orderState: state(row.payload_for_retry?.orderState ?? null), adminOrder: state(row.payload_for_retry?.adminOrder ?? null),
+        calculatorData: pick(row.payload_for_retry?.calculatorData ?? null, ["selectedDate"]),
+      } }));
+    }
     const select = u.searchParams.get("select");
     if (select && select !== "*") rows = rows.map(row => Object.fromEntries(select.split(",").map(field => {
       const [alias, expression] = field.includes(":") ? field.split(":") : [field, field];
