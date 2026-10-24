@@ -2,6 +2,9 @@
 
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const vm = require("node:vm");
+const { createRequire } = require("node:module");
 const { createAccountRenderers } = require("../lib/account/render");
 
 function escapeHtml(value) {
@@ -12,8 +15,8 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
-function createRenderers() {
-  return createAccountRenderers({
+function createRenderers(factory = createAccountRenderers) {
+  return factory({
     ACCOUNT_CONTRACT_DOWNLOAD_PATH: "/account/contract",
     ACCOUNT_W9_DOWNLOAD_PATH: "/account/w9",
     ACCOUNT_GOOGLE_CALENDAR_CONNECT_PATH: "/account/calendar/connect",
@@ -44,6 +47,43 @@ function createRenderers() {
         `<dl>${rows.map((row) => `<dt>${escapeHtml(row.label)}</dt><dd>${escapeHtml(row.value)}</dd>`).join("")}</dl>`,
     },
   });
+}
+
+function createCountingRenderers(clock, calls, { onConfirmation, failLayout } = {}) {
+  const filename = require.resolve("../lib/account/render");
+  const realRequire = createRequire(filename);
+  class RenderDate extends Date {
+    constructor(...args) { super(...(args.length ? args : [clock.now])); }
+    static now() { return clock.now; }
+  }
+  const module = { exports: {} };
+  vm.runInNewContext(fs.readFileSync(filename, "utf8"), {
+    module, exports: module.exports, Date: RenderDate, URL, URLSearchParams,
+    require(name) {
+      const api = realRequire(name);
+      if (name !== "../cleaner-confirmation") return api;
+      return { ...api, getStaffCleanerConfirmationState(entry, assignment, staffId, options) {
+        calls.push({ entry, staffId, now: options?.now?.getTime() });
+        onConfirmation?.();
+        return api.getStaffCleanerConfirmationState(entry, assignment, staffId, options);
+      } };
+    },
+  }, { filename });
+  return createRenderers(deps => module.exports.createAccountRenderers({
+    ...deps,
+    shared: { ...deps.shared, renderAdminLayout(...args) {
+      if (failLayout?.()) throw new Error("Synthetic render failure");
+      return deps.shared.renderAdminLayout(...args);
+    } },
+  }));
+}
+
+function memoizationContext(assignedOrders) {
+  return {
+    user: { id: "user-1", staffId: "staff-1", role: "cleaner", email: "cleaner@example.test" },
+    staffRecord: { id: "staff-1", name: "Ariana Cleaner", status: "active" },
+    assignedOrders, calendarMeta: { configured: false, connected: false }, managerContact: null,
+  };
 }
 
 function buildCleanerConfirmation(date, time, address, serviceName, status = "confirmed") {
@@ -1099,4 +1139,88 @@ test("renders cleaner calendar details only for orders in the visible period", (
   assert.doesNotMatch(dayHtml, /Offscreen Calendar Client/);
   assert.match(monthHtml, /Visible Calendar Client/);
   assert.doesNotMatch(monthHtml, /Offscreen Calendar Client/);
+});
+
+test("calculates each order UI state once per render and leaves orders and earnings untouched", () => {
+  const clock = { now: Date.parse("2026-10-24T12:00:00Z") };
+  const calls = [];
+  const renderers = createCountingRenderers(clock, calls, { onConfirmation: () => { clock.now += 1; } });
+  const orders = Array.from({ length: 120 }, (_, index) => ({
+    ...buildOrder({ id: `memo-${index}`, customerName: `Memo Client ${index}`,
+      status: index < 60 ? "completed" : "scheduled", scheduleDate: "2099-02-10",
+      updatedAt: `2026-10-${String(index % 20 + 1).padStart(2, "0")}T12:00:00Z` }),
+    staffEarning: { amountCents: index % 2 ? 50000 : 12550, compensationType: "fixed" },
+  }));
+  const context = memoizationContext(orders);
+  const before = JSON.stringify(context);
+  for (const options of [{}, { activePage: 2 }, { showAllHistory: true }]) {
+    calls.length = 0;
+    const now = clock.now;
+    const html = renderers.renderDashboardPage(context, options);
+    assert(calls.length > 0 && calls.length <= orders.length);
+    assert.equal(new Set(calls.map(call => call.entry)).size, calls.length);
+    assert(calls.every(call => call.now === now), "one request-time reference even when the clock advances");
+    assert.equal(JSON.stringify(context), before);
+    if (options.showAllHistory) {
+      orders.slice(0, 60).forEach(item => assert(html.includes(item.entry.customerName)));
+    }
+  }
+});
+
+test("refreshes confirmation and en-route state on each render of the same order objects", () => {
+  const clock = { now: Date.parse("2026-10-29T13:59:59.999Z") };
+  const calls = [];
+  const renderers = createCountingRenderers(clock, calls);
+  const order = buildOrder({ id: "boundary", customerName: "Boundary Client", scheduleDate: "2026-10-30",
+    scheduleTime: "09:00", updatedAt: "2026-10-24T12:00:00Z" });
+  const context = memoizationContext([order]);
+  const render = () => {
+    calls.length = 0;
+    const html = renderers.renderDashboardPage(context);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].now, clock.now);
+    return html;
+  };
+  assert.match(render(), /name="action" value="confirm-assignment"/);
+  clock.now += 1;
+  assert.doesNotMatch(render(), /name="action" value="confirm-assignment"/);
+  clock.now = Date.parse("2026-10-30T11:59:59.999Z");
+  assert.match(render(), /<button[^>]*disabled[^>]*>Я в пути<\/button>/);
+  clock.now += 1;
+  const enabled = render();
+  assert.match(enabled, /name="action" value="mark-assignment-en-route"/);
+  assert.doesNotMatch(enabled, /<button[^>]*disabled[^>]*>Я в пути<\/button>/);
+
+  order.entry.payloadForRetry.adminOrder.cleanerConfirmation = buildCleanerConfirmation(
+    "2026-10-30", "09:00", order.entry.fullAddress, order.entry.serviceName, "declined");
+  assert.match(render(), /Не подтвердил/);
+  order.assignment.staffIds = [];
+  assert.doesNotMatch(render(), /name="action" value="(?:confirm-assignment|decline-assignment|mark-assignment-en-route)"/);
+});
+
+test("does not share state between detail and calendar renders or after a failed render", () => {
+  const clock = { now: Date.parse("2026-10-24T12:00:00Z") };
+  const calls = [];
+  let fail = true;
+  const renderers = createCountingRenderers(clock, calls, { failLayout: () => fail });
+  const item = buildOrder({ id: "fresh-detail", customerName: "Fresh Detail", scheduleDate: "2026-10-30",
+    scheduleTime: "09:00", updatedAt: "2026-10-24T12:00:00Z" });
+  const context = memoizationContext([item]);
+  assert.throws(() => renderers.renderDashboardPage(context), /Synthetic render failure/);
+  fail = false;
+  for (const render of [
+    () => renderers.renderDashboardPage(context),
+    () => renderers.renderCalendarPage(context, { calendarDate: "2026-10-30" }),
+    () => renderers.renderOrderDetailFragment(context),
+  ]) {
+    clock.now += 1000;
+    calls.length = 0;
+    assert.match(render(), /Fresh Detail/);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].now, clock.now);
+  }
+  const secondStaff = { ...context, user: { ...context.user, staffId: "staff-2" } };
+  const html = renderers.renderOrderDetailFragment(secondStaff);
+  assert.doesNotMatch(html, /name="action" value="confirm-assignment"/);
+  assert.equal(calls.at(-1).staffId, "staff-2");
 });
