@@ -153,7 +153,7 @@ function getMobileOrdersSection(html) {
   const startIndex = html.indexOf('id="account-mobile-orders"');
   assert.notEqual(startIndex, -1, "Expected mobile orders section");
   const completedIndex = html.indexOf("<h3>Выполненные заказы</h3>", startIndex);
-  const detailIndex = html.indexOf(`class="account-mobile-detail-view"`, startIndex);
+  const detailIndex = html.indexOf('<div data-account-detail-slot', startIndex);
   const candidates = [completedIndex, detailIndex].filter((index) => index > startIndex);
   const endIndex = candidates.length ? Math.min(...candidates) : html.length;
   return html.slice(startIndex, endIndex);
@@ -621,7 +621,7 @@ test("keeps cleaner en-route action disabled until two hours before the appointm
 
 test("keeps confirmed mobile order detail actions from overlapping content", () => {
   const renderers = createRenderers();
-  const html = renderers.renderDashboardPage({
+  const html = renderers.renderOrderDetailFragment({
     user: {
       id: "user-1",
       email: "ariana.cleaner@example.com",
@@ -663,7 +663,7 @@ test("keeps confirmed mobile order detail actions from overlapping content", () 
 
 test("renders client quote options and comments in the mobile order detail", () => {
   const renderers = createRenderers();
-  const html = renderers.renderDashboardPage({
+  const html = renderers.renderOrderDetailFragment({
     user: {
       id: "user-1",
       email: "ariana.cleaner@example.com",
@@ -738,8 +738,8 @@ test("renders client quote options and comments in the mobile order detail", () 
 });
 
 test("renders mobile order details from the saved client address when calculator data is sparse", () => {
-  const { renderDashboardPage } = createRenderers();
-  const html = renderDashboardPage({
+  const { renderOrderDetailFragment } = createRenderers();
+  const html = renderOrderDetailFragment({
     user: {
       id: "user-1",
       email: "ariana.cleaner@example.com",
@@ -803,12 +803,12 @@ test("renders mobile order details from the saved client address when calculator
 });
 
 test("cleaner never sees another home's parameters and keeps visit-specific room, bath and area values", () => {
-  const { renderDashboardPage } = createRenderers();
+  const { renderOrderDetailFragment } = createRenderers();
   for (const [id, quoteData, address] of [
     ["unmatched", {}, "Different Address"],
     ["explicit", { bedrooms: "4", bathroomCount: "3", squareFeet: "2200 sq ft" }, "Profile Client Address"],
   ]) {
-    const html = renderDashboardPage({
+    const html = renderOrderDetailFragment({
       user: { id: "cleaner", name: "Cleaner", email: "cleaner@example.com", staffId: "staff-1", role: "cleaner" },
       staffRecord: { id: "staff-1", name: "Cleaner", status: "active" },
       assignedOrders: [buildOrder({ id, customerName: "Profile Client", scheduleDate: "2099-01-05",
@@ -828,8 +828,8 @@ test("cleaner never sees another home's parameters and keeps visit-specific room
 });
 
 test("repairs legacy mobile bathroom data stored in the square footage slot", () => {
-  const { renderDashboardPage } = createRenderers();
-  const html = renderDashboardPage({
+  const { renderOrderDetailFragment } = createRenderers();
+  const html = renderOrderDetailFragment({
     user: {
       id: "user-1",
       email: "ariana.cleaner@example.com",

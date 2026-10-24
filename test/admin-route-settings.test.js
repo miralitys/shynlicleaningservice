@@ -425,9 +425,13 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.doesNotMatch(accountDashboardBody, /Дорога: считаем маршрут/i);
     assert.match(accountDashboardBody, /data-account-mobile-order-card/i);
     assert.match(accountDashboardBody, /data-account-mobile-detail-open="account-mobile-order-detail-/i);
-    assert.match(accountDashboardBody, /data-account-mobile-detail-view/i);
+    assert.doesNotMatch(accountDashboardBody, /<section\b[^>]*data-account-mobile-detail-view/i);
     assert.doesNotMatch(accountDashboardBody, /Этапы заказа/i);
-    assert.match(accountDashboardBody, /Позвонить менеджеру/i);
+    const detailResponse = await fetch(`${started.baseUrl}/account?fragment=order-detail&order=${assignedEntryId}`, {
+      headers: { cookie: `shynli_user_session=${userSessionCookieValue}` },
+    });
+    assert.equal(detailResponse.status, 200);
+    assert.match(await detailResponse.text(), /Позвонить менеджеру/i);
     assert.doesNotMatch(accountDashboardBody, /account-mobile-order-dialog/i);
     assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
     assert.match(accountDashboardBody, /<details class="admin-details" data-account-profile-details>/i);
@@ -457,7 +461,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountCalendarBody, /data-account-mobile-calendar/i);
     assert.match(accountCalendarBody, /Maria Assigned/);
     const mobileCalendarStart = accountCalendarBody.indexOf('class="account-mobile-calendar"');
-    const mobileCalendarDetail = accountCalendarBody.indexOf("data-account-mobile-detail-view", mobileCalendarStart);
+    const mobileCalendarDetail = accountCalendarBody.indexOf("data-account-detail-slot", mobileCalendarStart);
     const desktopStatsStart = accountCalendarBody.indexOf('<div class="account-desktop-stats">', mobileCalendarStart);
     assert.ok(mobileCalendarStart >= 0);
     assert.ok(mobileCalendarDetail > mobileCalendarStart);

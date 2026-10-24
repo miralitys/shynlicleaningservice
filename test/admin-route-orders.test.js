@@ -4163,7 +4163,12 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.doesNotMatch(accountDashboardBody, /Инструкции не добавлены\./);
     assert.match(accountDashboardBody, /name="action" value="confirm-assignment"/);
     assert.match(accountDashboardBody, /name="action" value="decline-assignment"/);
-    assert.match(accountDashboardBody, /name="action" value="save-assignment-note"/);
+    assert.doesNotMatch(accountDashboardBody, /<section\b[^>]*data-account-mobile-detail-view/);
+    const lazyDetailResponse = await fetch(`${started.baseUrl}/account?fragment=order-detail&order=${entryId}`, {
+      headers: { cookie: `shynli_user_session=${userSessionCookieValue}` },
+    });
+    assert.equal(lazyDetailResponse.status, 200);
+    assert.match(await lazyDetailResponse.text(), /name="action" value="save-assignment-note"/);
     assert.doesNotMatch(accountDashboardBody, /name="action" value="mark-assignment-en-route"/);
     assert.match(accountDashboardBody, /form\.getAttribute\("action"\)/);
 
@@ -4194,8 +4199,14 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     const noteDashboardBody = await noteDashboardResponse.text();
     assert.equal(noteDashboardResponse.status, 200);
     assert.match(noteDashboardBody, /Заметка сохранена/);
-    assert.match(noteDashboardBody, /Cleaner note before confirmation\./);
-    assert.match(noteDashboardBody, /name="action" value="save-assignment-note"/);
+    const noteDetailResponse = await fetch(
+      `${started.baseUrl}/account?fragment=order-detail&order=${encodeURIComponent(entryId)}`,
+      { headers: { cookie: `shynli_user_session=${userSessionCookieValue}` } }
+    );
+    assert.equal(noteDetailResponse.status, 200);
+    const noteDetailBody = await noteDetailResponse.text();
+    assert.match(noteDetailBody, /Cleaner note before confirmation\./);
+    assert.match(noteDetailBody, /name="action" value="save-assignment-note"/);
 
     const secondNoteResponse = await fetch(`${started.baseUrl}/account`, {
       method: "POST",
@@ -4225,10 +4236,16 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
         },
       }
     );
-    const secondNoteDashboardBody = await secondNoteDashboardResponse.text();
+    await secondNoteDashboardResponse.text();
     assert.equal(secondNoteDashboardResponse.status, 200);
-    assert.match(secondNoteDashboardBody, /Cleaner note before confirmation\./);
-    assert.match(secondNoteDashboardBody, /Second cleaner note is appended\./);
+    const secondNoteDetailResponse = await fetch(
+      `${started.baseUrl}/account?fragment=order-detail&order=${encodeURIComponent(entryId)}`,
+      { headers: { cookie: `shynli_user_session=${userSessionCookieValue}` } }
+    );
+    assert.equal(secondNoteDetailResponse.status, 200);
+    const secondNoteDetailBody = await secondNoteDetailResponse.text();
+    assert.match(secondNoteDetailBody, /Cleaner note before confirmation\./);
+    assert.match(secondNoteDetailBody, /Second cleaner note is appended\./);
 
     const noteClientResponse = await fetch(
       `${started.baseUrl}/admin/clients?client=3125551188&addressKey=${encodeURIComponent("215 north elm street, naperville, il 60563")}`,
