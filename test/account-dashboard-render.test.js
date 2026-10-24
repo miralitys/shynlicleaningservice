@@ -1224,3 +1224,26 @@ test("does not share state between detail and calendar renders or after a failed
   assert.doesNotMatch(html, /name="action" value="confirm-assignment"/);
   assert.equal(calls.at(-1).staffId, "staff-2");
 });
+
+test("mobile detail grids and textareas shrink without clipping or changing order content", () => {
+  const item = buildOrder({ id: "narrow-detail", customerName: "LongName".repeat(24),
+    scheduleDate: "2099-10-30", updatedAt: "2026-10-24T12:00:00Z" });
+  item.entry.fullAddress = "LongAddressWithoutSpaces".repeat(12);
+  item.staffEarning = { amountCents: 50000, status: "owed", source: "payroll" };
+  const context = memoizationContext([item]);
+  const before = JSON.stringify(context);
+  const html = createRenderers().renderDashboardPage(context, { focusedOrderId: item.entry.id });
+  const detailRule = html.match(/\.account-mobile-detail-view\s*\{([^}]+)\}/)?.[1] || "";
+  assert.match(detailRule, /min-width:\s*0/);
+  assert.match(detailRule, /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.match(detailRule, /overflow-wrap:\s*anywhere/);
+  assert.doesNotMatch(detailRule, /overflow(?:-x)?:\s*(?:hidden|clip)/);
+  assert.match(html, /\.account-mobile-detail-view\s*>\s*\*\s*\{\s*min-width:\s*0/);
+  assert.match(html, /\.account-mobile-detail-card\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.match(html, /\.account-mobile-detail-textarea\s*\{[^}]*box-sizing:\s*border-box;[^}]*min-width:\s*0;[^}]*width:\s*100%;[^}]*max-width:\s*100%/);
+  assert.match(html, /\.account-mobile-detail-notes-form\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.ok(html.includes(item.entry.customerName));
+  assert.ok(html.includes(item.entry.fullAddress));
+  assert.ok(html.includes("$500.00"));
+  assert.equal(JSON.stringify(context), before);
+});
