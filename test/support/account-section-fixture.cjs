@@ -8,8 +8,19 @@ function createSectionFixture(count = 254, completed = 163) {
   const { mapRowToStaffRecord, mapRowToAssignmentRecord,
     mapStaffRecordToQuoteOpsRow, mapAssignmentRecordToQuoteOpsRow } = require("../../lib/supabase-admin-staff");
   const fixture = createFixture(count, completed);
+  const { mapRowToUserRecord, mapUserRecordToQuoteOpsRow } = require("../../lib/supabase-admin-users");
   fixture.rows.push(...fixture.staff.map(row => mapStaffRecordToQuoteOpsRow(mapRowToStaffRecord(row))),
-    ...fixture.assignments.map(row => mapAssignmentRecordToQuoteOpsRow(mapRowToAssignmentRecord(row))));
+    ...fixture.assignments.map(row => mapAssignmentRecordToQuoteOpsRow(mapRowToAssignmentRecord(row))),
+    ...fixture.users.map(row => mapUserRecordToQuoteOpsRow(mapRowToUserRecord(row))));
+  if (process.env.ACCOUNT_SECTION_HEAVY_STAFF === "1") {
+    for (const row of fixture.rows.filter(row => row.kind === "admin_staff_member")) {
+      row.payload_for_retry.staff.smsHistory = Array.from({ length: 50 }, (_, i) => ({
+        id: `sms-${i}`, message: "synthetic message ".repeat(60), sentAt: "2026-10-01T12:00:00.000Z",
+      }));
+    }
+    for (let i = 0; i < 300; i++) fixture.rows.push(mapAssignmentRecordToQuoteOpsRow({ entryId: `foreign-${i}`, staffIds: ["b"] }));
+    for (let i = 0; i < 118; i++) fixture.rows.push(mapAssignmentRecordToQuoteOpsRow({ entryId: `retained-${i}`, staffIds: ["a", "b"] }));
+  }
   return fixture;
 }
 
@@ -31,7 +42,10 @@ function createSectionFetch(fixture, calls = [], control = () => ({})) {
     const start = performance.now();
     if (state.delayMs) await new Promise(resolve => setTimeout(resolve, state.delayMs));
     let response;
-    if (state.primaryError && table === "admin_staff_assignments") {
+    if (state.usersPrimaryError && table === "admin_users") {
+      response = { ok: false, status: state.usersPrimaryError.status,
+        text: async () => JSON.stringify(state.usersPrimaryError.body) };
+    } else if (state.primaryError && table === "admin_staff_assignments") {
       response = { ok: false, status: state.primaryError.status,
         text: async () => JSON.stringify(state.primaryError.body) };
     } else if (state.fallbackError && table === "quote_ops_entries" && u.searchParams.has("kind")) {
@@ -40,8 +54,9 @@ function createSectionFetch(fixture, calls = [], control = () => ({})) {
       response = await read(url, options);
     }
     const kind = u.searchParams.get("kind") || "";
-    const phase = table === "admin_users" ? "auth" : table.startsWith("admin_staff") || kind ? "staff" : "orders";
-    const record = { type: "read", table, method, phase, status: response.status, start, end: performance.now() };
+    const phase = table === "admin_users" || kind === "eq.admin_user_account" ? "auth" : table.startsWith("admin_staff") || kind ? "staff" : "orders";
+    const record = { type: "read", table, method, phase, status: response.status,
+      bytes: Buffer.byteLength(await response.text()), start, end: performance.now() };
     calls.push(record);
     capture(record);
     return response;

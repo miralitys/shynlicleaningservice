@@ -6,7 +6,7 @@ const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const root = path.resolve(__dirname, "../..");
 const files = new Set(["lib/account/handlers.js", "lib/account/render.js", "lib/account/calendar-data.js", "lib/admin-staff-store.js",
-  "lib/admin-users-store.js", "lib/quote-ops/store.js", "lib/supabase-admin-staff.js", "lib/supabase-quote-ops.js"]);
+  "lib/admin-users-store.js", "lib/quote-ops/store.js", "lib/supabase-admin-staff.js", "lib/supabase-admin-users.js", "lib/supabase-quote-ops.js"]);
 const previous = Module._extensions[".js"];
 Module._extensions[".js"] = function load(module, filename) {
   const relative = path.relative(root, filename);

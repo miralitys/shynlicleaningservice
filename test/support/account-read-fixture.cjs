@@ -66,6 +66,18 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     if (accountView && fixture.accountRows) rows = fixture.accountRows;
     if (state.reassigned && table === "admin_staff_assignments") rows = rows.filter(row => row.entry_id !== state.reassigned);
     for (const [key, value] of u.searchParams) {
+      if (key === "or") {
+        const field = "payload_for_retry->assignment->>staffIds";
+        const match = value.match(/^\(payload_for_retry->assignment->>staffIds\.like\.\*([A-Za-z0-9-]+)\*,/);
+        if (!match || value !== `(${field}.like.*${match[1]}*,${field}.is.null,${field}.in.("",false,0))`) {
+          throw new Error("Unsupported fixture OR filter");
+        }
+        rows = rows.filter(row => {
+          const ids = row.payload_for_retry?.assignment?.staffIds;
+          const text = ids == null ? null : typeof ids === "string" ? ids : JSON.stringify(ids);
+          return text === null || ["", "false", "0"].includes(text) || text.includes(match[1]);
+        });
+      }
       if (value.startsWith("eq.")) rows = rows.filter(row => String(row[key]) === value.slice(3));
       if (value.startsWith("gt.")) rows = rows.filter(row => row[key] > value.slice(3));
       if (value.startsWith("cs.")) rows = rows.filter(row => JSON.parse(value.slice(3)).every(id => row[key]?.includes(id)));

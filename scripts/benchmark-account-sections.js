@@ -45,6 +45,8 @@ async function run() {
     for (const delayMs of [0, 80]) for (const label of labels) {
       await fs.writeFile(capture, "");
       await fs.writeFile(control, JSON.stringify({ delayMs,
+        usersPrimaryError: process.env.ACCOUNT_SECTION_USERS_FALLBACK === "1"
+          ? { status: 404, body: { code: "PGRST205", message: "Could not find the table admin_users" } } : null,
         primaryError: missingTables ? { status: 404, body: { code: "PGRST205", message: "Could not find the table admin_staff_assignments" } } : null }));
       const app = await startServer({ env: { ...baseEnv, ACCOUNT_BASELINE_REF: label === "before" ? baseline : afterRef },
         nodeArgs: ["--require", path.resolve(__dirname, "../test/support/account-baseline-loader.cjs"),
@@ -94,6 +96,7 @@ async function run() {
           };
           return { screen, cache, headersMs: round(headersMs), appMs: Number(response.headers.get("server-timing").match(/app;dur=([\d.]+)/)[1]),
             htmlBytes: Buffer.byteLength(html), htmlHash: hash(html), comparisonHash: digest, reads: reads.length,
+            readBytes: reads.reduce((sum, row) => sum + row.bytes, 0),
             missingTableReads: reads.filter(row => row.status === 404).length,
             authMs: phase("auth"), staffMs: phase("staff"), ordersMs: phase("orders"),
             planningMs: phase("planning"), renderMs: phase("render") };
@@ -111,7 +114,7 @@ async function run() {
         const summary = {};
         for (const screen of Object.keys(queries)) {
           const selected = rows.filter(row => row.screen === screen);
-          summary[screen] = Object.fromEntries(["appMs", "headersMs", "authMs", "staffMs", "ordersMs", "planningMs", "renderMs", "reads", "missingTableReads"]
+          summary[screen] = Object.fromEntries(["appMs", "headersMs", "authMs", "staffMs", "ordersMs", "planningMs", "renderMs", "reads", "readBytes", "missingTableReads"]
             .map(key => [key, round(median(selected.map(row => row[key])))]));
         }
         results.push({ label, simulatedRoundTripMs: delayMs, first, summary, rows, tabs });
