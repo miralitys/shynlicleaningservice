@@ -51,11 +51,19 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
       return { ok: true, status: 200, text: async () => JSON.stringify([row]) };
     }
     if (method !== "GET") throw new Error(`Account benchmark forbids writes: ${method} ${table}`);
-    if ((state.failOrders && table === "quote_ops_entries") || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
+    const accountView = table === "account_order_list_entries";
+    if (accountView && state.missingAccountView) {
+      return { ok: false, status: 404, text: async () => JSON.stringify({ code: "PGRST205", message: "Missing account list view" }) };
+    }
+    if (accountView && state.accountViewError) {
+      return { ok: false, status: 403, text: async () => JSON.stringify({ code: "42501", message: "View access denied" }) };
+    }
+    if ((state.failOrders && (table === "quote_ops_entries" || accountView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
       return { ok: false, status: 503, text: async () => JSON.stringify({ message: "Simulated read failure" }) };
     }
-    let rows = table === "quote_ops_entries" ? fixture.rows : table === "admin_staff" ? fixture.staff
+    let rows = table === "quote_ops_entries" || accountView ? fixture.rows : table === "admin_staff" ? fixture.staff
       : table === "admin_users" ? fixture.users : table === "admin_staff_assignments" ? fixture.assignments : [];
+    if (accountView && fixture.accountRows) rows = fixture.accountRows;
     if (state.reassigned && table === "admin_staff_assignments") rows = rows.filter(row => row.entry_id !== state.reassigned);
     for (const [key, value] of u.searchParams) {
       if (value.startsWith("eq.")) rows = rows.filter(row => String(row[key]) === value.slice(3));
@@ -69,6 +77,8 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     const total = rows.length;
     const limit = Math.min(Number(u.searchParams.get("limit") || 1000), state.cap || 1000);
     rows = rows.slice(Number(u.searchParams.get("offset") || 0), Number(u.searchParams.get("offset") || 0) + limit);
+    if (accountView && !fixture.accountRows) rows = rows.map(row => ({ ...row, payload_for_retry: require("../../lib/account/order-list")
+      .projectAccountListEntry({ payloadForRetry: row.payload_for_retry }).payloadForRetry }));
     const select = u.searchParams.get("select");
     if (select && select !== "*") rows = rows.map(row => Object.fromEntries(select.split(",").map(field => {
       const [alias, expression] = field.includes(":") ? field.split(":") : [field, field];
