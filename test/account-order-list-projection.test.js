@@ -80,6 +80,7 @@ test("PostgreSQL: lean account view preserves every summary, payroll and state r
   const fixture = createFixture(254, 163);
   const variants = [undefined, null, {}, [], false, "legacy", { unrelated: "still an order" },
     { notifications: ["message".repeat(500)] }, { updatedAt: null }, { updatedAt: "2026-10-24T12:00:00Z" },
+    { listHasOrderState: false }, { listHasOrderState: true },
     { policyAcceptance: { signatureDataUrl: "private-signature", policyAccepted: true, signedAt: "2026-10-24" } },
     { completion: { beforePhotos: [{ path: "private-photo" }] } },
     { isCreated: false, completion: { afterPhotos: ["private-photo"], checklistItems: [] } },
@@ -121,10 +122,23 @@ test("PostgreSQL: lean account view preserves every summary, payroll and state r
   migration("account_order_list.sql");
   migration("account_calendar.sql");
   migration("account_calendar.sql");
+  migration("account_calendar_batch.sql");
+  migration("account_calendar_batch.sql");
   assert.equal(ledgerHash(), before, "installing/reinstalling the view does not change rows");
   fixture.rows = JSON.parse(sql("select jsonb_agg(to_jsonb(q) order by id) from public.quote_ops_entries q;"));
   fixture.accountRows = JSON.parse(sql("set role service_role; select jsonb_agg(to_jsonb(q) order by id) from public.account_order_list_entries q;"));
   fixture.calendarRows = JSON.parse(sql("set role service_role; select jsonb_agg(to_jsonb(q) order by id) from public.account_calendar_entries q;"));
+  const requestedIds = fixture.rows.map(row => row.id);
+  const missingId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+  const batch = JSON.parse(sql(`set role service_role; select public.read_account_calendar_entries(array[${requestedIds
+    .concat(requestedIds[0], missingId).map(id => `'${id}'::uuid`).join(",")}]);`));
+  assert.equal(batch.version, 1);
+  assert.equal(batch.requested_count, requestedIds.length + 1);
+  assert.equal(batch.matched_count, fixture.rows.length);
+  assert.deepEqual(batch.missing_ids, [missingId]);
+  assert.deepEqual(batch.rows, fixture.calendarRows, "scalar batch includes every SQL row beyond REST's 1000-row cap");
+  assert.deepEqual(JSON.parse(sql("set role service_role; select public.read_account_calendar_entries('{}'::uuid[]);")),
+    { version: 1, requested_count: 0, matched_count: 0, missing_ids: [], rows: [] });
   assert.equal(fixture.rows.length, fixture.accountRows.length);
   for (let i = 0; i < fixture.rows.length; i++) {
     const expected = summary(fixture.rows[i]);
@@ -140,6 +154,16 @@ test("PostgreSQL: lean account view preserves every summary, payroll and state r
     }
   }
   assert.doesNotMatch(JSON.stringify(fixture.accountRows), /private-signature|private-photo/);
+  const rpcCalls = [];
+  const rpcClient = createSupabaseQuoteOpsClient({ env, fetch: async (url, options) => {
+    assert.equal(new URL(url).pathname, "/rest/v1/rpc/read_account_calendar_entries");
+    assert.equal(options.method, "POST");
+    rpcCalls.push(url);
+    return { ok: true, status: 200, text: async () => JSON.stringify(batch) };
+  } });
+  const batchCalendar = await rpcClient.fetchAccountCalendarEntriesByIds(requestedIds.concat(missingId));
+  assert.deepEqual(batchCalendar, fixture.calendarRows.map(mapRowToEntry).map(projectAccountCalendarEntry));
+  assert.equal(rpcCalls.length, 1);
   const domain = createAdminDomainHelpers({ normalizeString: (value, max = 500) => String(value || "").trim().slice(0, max) });
   const summaries = fixture.rows.map(summary);
   const assignments = summaries.map((row, index) => ({ entryId: row.id, status: index % 17 ? "confirmed" : "cancelled",
@@ -178,6 +202,8 @@ test("PostgreSQL: lean account view preserves every summary, payroll and state r
     reductionPercent: +(100 * (1 - bytes(newCalls) / bytes(oldCalls))).toFixed(1), exactSummaryParity: true }));
   for (const role of ["anon", "authenticated"]) assert.throws(() => sql(`set role ${role}; select * from public.account_order_list_entries;`), /permission denied/);
   for (const role of ["anon", "authenticated"]) assert.throws(() => sql(`set role ${role}; select * from public.account_calendar_entries;`), /permission denied/);
+  for (const role of ["anon", "authenticated"]) assert.throws(() => sql(`set role ${role}; select public.read_account_calendar_entries('{}'::uuid[]);`), /permission denied/);
+  assert.equal(sql("select provolatile::text || ':' || prosecdef::text from pg_proc where oid='public.read_account_calendar_entries(uuid[])'::regprocedure;"), "s:false");
   assert.equal(sql("select has_table_privilege('service_role', 'public.account_calendar_entries', 'INSERT,UPDATE,DELETE');"), "f");
   assert.equal(sql("select has_function_privilege('anon', 'public.account_calendar_state(jsonb)', 'EXECUTE');"), "f");
   assert.equal(sql("select reloptions::text from pg_class where oid='public.account_calendar_entries'::regclass;"), "{security_invoker=true,security_barrier=true}");

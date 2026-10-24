@@ -50,6 +50,26 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
       fixture.users[index] = row;
       return { ok: true, status: 200, text: async () => JSON.stringify([row]) };
     }
+    if (method === "POST" && table === "read_account_calendar_entries") {
+      if (!state.calendarBatch) return { ok: false, status: 404, text: async () => JSON.stringify({
+        code: "PGRST202", message: "Missing calendar batch function" }) };
+      if (state.calendarBatchError || state.failOrders) return { ok: false, status: state.failOrders ? 503 : 403,
+        text: async () => JSON.stringify({ code: "42501", message: "Calendar batch denied or failure" }) };
+      const ids = [...new Set(JSON.parse(options.body).p_entry_ids)];
+      // Model the SQL scalar envelope, not PostgREST's top-level row pagination.
+      const query = new URLSearchParams({ select: "*", id: `in.(${ids.join(",")})`, limit: String(Number.MAX_SAFE_INTEGER) });
+      const response = await createReadFetch(fixture, [], () => ({ ...state, cap: Infinity }))(
+        `${u.origin}/rest/v1/account_calendar_entries?${query}`);
+      if (!response.ok) return response;
+      const rows = JSON.parse(await response.text());
+      const found = new Set(rows.map(row => row.id));
+      const text = JSON.stringify({ version: 1, requested_count: ids.length, matched_count: rows.length,
+        rows, missing_ids: ids.filter(id => !found.has(id)) });
+      const call = { table, query: u.search, method, bytes: Buffer.byteLength(text), rows: rows.length };
+      calls.push(call);
+      if (process.env.ACCOUNT_BENCH_CAPTURE) fs.appendFileSync(process.env.ACCOUNT_BENCH_CAPTURE, JSON.stringify(call) + "\n");
+      return { ok: true, status: 200, text: async () => text };
+    }
     if (method !== "GET") throw new Error(`Account benchmark forbids writes: ${method} ${table}`);
     const accountView = table === "account_order_list_entries";
     const calendarView = table === "account_calendar_entries";

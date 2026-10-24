@@ -5,7 +5,7 @@ const assert = require("node:assert/strict");
 const { parse, serializeOuter } = require("parse5");
 const vm = require("node:vm");
 const { createFixture, createReadFetch } = require("./support/account-read-fixture.cjs");
-const { mapRowToEntry } = require("../lib/supabase-quote-ops");
+const { mapRowToEntry, createSupabaseQuoteOpsClient } = require("../lib/supabase-quote-ops");
 const { createSupabaseAdminStaffClient } = require("../lib/supabase-admin-staff");
 const { createAdminDomainHelpers } = require("../lib/admin/domain");
 const { createAccountRequestHandler } = require("../lib/account/handlers");
@@ -31,7 +31,7 @@ const renderers = createAccountRenderers({
   },
 });
 
-async function createHarness({ calendarProjection = false } = {}) {
+async function createHarness({ calendarProjection = false, calendarBatch = false } = {}) {
   const fixture = createFixture();
   // Assignment dates, not order dates, determine the calendar period.
   fixture.assignments[0].schedule_date = "2103-01-01";
@@ -48,7 +48,7 @@ async function createHarness({ calendarProjection = false } = {}) {
   const staff = await createSupabaseAdminStaffClient({ env: {
     SUPABASE_URL: "https://account-benchmark.invalid", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_fake",
   }, fetch: createReadFetch(fixture) }).fetchAccountSnapshot("a");
-  const metrics = { planning: [], settingsReads: 0, calendarMetaReads: 0, ledgerReads: [], calendarReads: [] };
+  const metrics = { planning: [], settingsReads: 0, calendarMetaReads: 0, ledgerReads: [], calendarReads: [], rpcCalls: [] };
   const user = { id: "user-a", staffId: "a", email: "a@example.test", role: "cleaner", status: "active" };
   const settings = { templates: [{ serviceType: "deep", items: [{ id: "clean", label: "Clean room", completed: false }] }] };
   const control = { failSettings: false, failOrders: false, failCalendar: false };
@@ -65,10 +65,14 @@ async function createHarness({ calendarProjection = false } = {}) {
     },
     async getEntry(id) { return entries.find(entry => entry.id === id) || null; },
   };
-  if (calendarProjection) ledger.listAccountCalendarEntriesByIds = async ids => {
+  const batchClient = calendarBatch ? createSupabaseQuoteOpsClient({ env: {
+    SUPABASE_URL: "https://account-benchmark.invalid", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_fake",
+  }, fetch: createReadFetch(fixture, metrics.rpcCalls, () => ({ calendarBatch: true })) }) : null;
+  if (calendarProjection || calendarBatch) ledger.listAccountCalendarEntriesByIds = async ids => {
     metrics.calendarReads.push(ids.slice());
     if (control.failCalendar) throw new Error("Calendar unavailable");
-    return entries.filter(entry => ids.includes(entry.id)).map(require("../lib/account/calendar-list").projectAccountCalendarEntry);
+    return batchClient ? batchClient.fetchAccountCalendarEntriesByIds(ids)
+      : entries.filter(entry => ids.includes(entry.id)).map(require("../lib/account/calendar-list").projectAccountCalendarEntry);
   };
   const staffStore = { async getAccountSnapshot() { return structuredClone(staff); } };
   const usersStore = { async getAccountContext() { return { user, usersSnapshot: { users: [user] } }; } };
@@ -190,6 +194,32 @@ test("failed narrow reads expose a retryable error, not a stale month or partial
   assert.equal((await h.get(query + "&tab=1")).status, 503);
   h.control.failCalendar = false;
   assert.equal((await h.get(query)).status, 200);
+});
+
+test("single-RPC grids retain all history and cannot substitute for complete cards, selected days, teams or earnings", async () => {
+  const old = await createHarness();
+  const batch = await createHarness({ calendarBatch: true });
+  const before = batch.snapshot();
+  for (const date of ["2099-01-10", "2103-01-01", "2050-01-01"]) {
+    const query = `?section=calendar&view=month&date=${date}&calendarCompact=1`;
+    const responses = await Promise.all([old.get(query), batch.get(query)]);
+    assert.ok(responses.every(r => r.status === 200));
+    assert.deepEqual(responses[1].body.context.calendarSummary, responses[0].body.context.calendarSummary);
+  }
+  assert.equal(batch.metrics.rpcCalls.length, 3);
+  assert.ok(batch.metrics.rpcCalls.every(r => r.method === "POST" && r.table === "read_account_calendar_entries"));
+  const getEntries = context => context.assignedOrders.map(item => item.entry);
+  for (const query of ["?history=all&tab=1", "?section=calendar&view=month&date=2099-01-10&showDay=1&calendarCompact=1&tab=1",
+    "?section=calendar&view=month&date=2099-01-10&calendarFull=1", "?fragment=order-detail&order=order-01106"]) {
+    const responses = await Promise.all([old.get(query), batch.get(query)]);
+    assert.ok(responses.every(r => r.status === 200));
+    assert.deepEqual(getEntries(responses[1].body.context), getEntries(responses[0].body.context));
+    if (query.includes("history")) assert.equal(responses[1].body.context.assignedOrders.length, 1106);
+  }
+  const payroll = await Promise.all([old.get("?section=payroll&tab=1"), batch.get("?section=payroll&tab=1")]);
+  assert.deepEqual(payroll[1].body.context.payrollSummary, payroll[0].body.context.payrollSummary);
+  assert.equal((await batch.get("?fragment=order-detail&order=other-order")).status, 404);
+  assert.equal(batch.snapshot(), before);
 });
 
 test("fresh grid and full snapshots supersede each other without resurrecting an old rescheduled date", async () => {

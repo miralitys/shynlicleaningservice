@@ -44,7 +44,7 @@ async function run() {
   try {
     for (const delayMs of [0, 80]) for (const label of labels) {
       await fs.writeFile(capture, "");
-      await fs.writeFile(control, JSON.stringify({ delayMs,
+      await fs.writeFile(control, JSON.stringify({ delayMs, calendarBatch: process.env.ACCOUNT_SECTION_CALENDAR_BATCH === "1",
         usersPrimaryError: process.env.ACCOUNT_SECTION_USERS_FALLBACK === "1"
           ? { status: 404, body: { code: "PGRST205", message: "Could not find the table admin_users" } } : null,
         primaryError: missingTables ? { status: 404, body: { code: "PGRST205", message: "Could not find the table admin_staff_assignments" } } : null }));
@@ -62,7 +62,8 @@ async function run() {
           assert.equal(response.status, 200, html.slice(0, 200));
           const records = (await fs.readFile(capture, "utf8")).trim().split("\n").filter(Boolean).map(JSON.parse);
           const reads = records.filter(row => row.type === "read");
-          assert.ok(reads.every(row => row.method === "GET"));
+          assert.ok(reads.every(row => row.method === "GET" ||
+            (row.method === "POST" && row.table === "read_account_calendar_entries")));
           // Relative links and current time do not vary for these fixed-date fixtures.
           let comparable = html;
           if (compactComparison) {
@@ -122,7 +123,7 @@ async function run() {
     }
     console.log(JSON.stringify({ fixture: "254 synthetic orders, 163 completed, both team members, fixed overrides and saved payouts",
       baseline, after: afterRef || "working tree", missingTables, compactComparison, samplesPerScreen: samples, noProductionAccess: true,
-      notes: "Local HTTP server, no browser paint or mobile network measurement. 80 ms is an injected delay per fake database request, not observed Supabase latency. All requests GET. Compact mode normalizes only the new calendarCompact parameter in account links and compares the monthly mobile section, otherwise full HTML. Raw HTML hashes and bytes are retained.", results }, null, 2));
+      notes: "Local HTTP server, no browser paint or mobile network measurement. 80 ms is an injected delay per fake database request, not observed Supabase latency. Only GET and the SELECT-only calendar RPC POST are allowed. Compact mode normalizes only the new calendarCompact parameter in account links and compares the monthly mobile section, otherwise full HTML. Raw HTML hashes and bytes are retained.", results }, null, 2));
   } finally { await fs.rm(root, { recursive: true, force: true }); }
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

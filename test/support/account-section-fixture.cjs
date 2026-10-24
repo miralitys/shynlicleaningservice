@@ -36,7 +36,9 @@ function createSectionFetch(fixture, calls = [], control = () => ({})) {
     const u = new URL(url);
     if (u.origin !== "https://account-benchmark.invalid") throw new Error("External network forbidden");
     const method = options.method || "GET";
-    if (method !== "GET") throw new Error("Section fixture forbids writes");
+    if (method !== "GET" && !(method === "POST" && u.pathname === "/rest/v1/rpc/read_account_calendar_entries")) {
+      throw new Error("Section fixture forbids writes");
+    }
     const state = control();
     const table = u.pathname.split("/").pop();
     const start = performance.now();
