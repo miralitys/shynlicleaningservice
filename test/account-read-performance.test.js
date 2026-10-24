@@ -89,6 +89,24 @@ test("account HTTP lists and lazy details keep all history accessible, enforce a
     assert.ok(ids.has("order-01106"), "the tail beyond the former 1000-ID cap is accessible");
     const history = await (await get("?history=all")).text();
     for (let i = 0; i < 107; i++) assert.ok(history.includes(`data-account-entry-id="order-${String(i).padStart(5, "0")}"`));
+    const payroll = await get("?section=payroll&tab=1");
+    assert.equal(payroll.status, 200);
+    const payrollHtml = await payroll.text();
+    assert.equal((payrollHtml.match(/class="account-payroll-order-cell"/g) || []).length, 107);
+    assert.match(payrollHtml, /Test Client 0</);
+    assert.match(payrollHtml, /Test Client 106</);
+    assert.match(payrollHtml, /\$91\.06/);
+    assert.doesNotMatch(payrollHtml, /Other cleaner only/);
+    const lastDate = createFixture().rows[1106].selected_date;
+    for (const date of ["2099-01-01", lastDate, "2050-01-01"]) {
+      const calendar = await get(`?section=calendar&view=month&date=${date}&showDay=1&tab=1`);
+      assert.equal(calendar.status, 200);
+      const calendarHtml = await calendar.text();
+      assert.doesNotMatch(calendarHtml, /Other cleaner only/);
+      if (date === lastDate) assert.match(calendarHtml, /data-account-entry-id="order-01106"/);
+      if (date === "2099-01-01") assert.match(calendarHtml, /data-account-entry-id="order-00000"/);
+      if (date === "2050-01-01") assert.doesNotMatch(calendarHtml, /data-account-entry-id=/);
+    }
     const detail = await get("?fragment=order-detail&order=order-01106");
     assert.equal(detail.status, 200);
     const detailHtml = await detail.text();
@@ -113,6 +131,6 @@ test("account HTTP lists and lazy details keep all history accessible, enforce a
     assert.doesNotMatch(await failure.text(), /Test Client/);
     const calls = (await fs.readFile(capture, "utf8")).trim().split("\n").filter(Boolean).map(JSON.parse);
     assert.ok(calls.every(call => call.method === "GET"));
-    assert.ok(calls.filter(call => call.table === "admin_users").length < 30, "one users snapshot per request, not two");
+    assert.ok(calls.filter(call => call.table === "admin_users").length < 35, "one users snapshot per request, not two");
   } finally { await stopServer(app.child); await fs.rm(root, { recursive: true, force: true }); }
 });
