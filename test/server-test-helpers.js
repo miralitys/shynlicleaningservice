@@ -338,6 +338,10 @@ module.exports = async function fetchStub(url, options = {}) {
     if (routeMethod && routeMethod !== method) return false;
     return String(url).includes(route.match);
   });
+  if (new URL(url).pathname.endsWith("/admin_order_list_entries") &&
+      !candidateRoutes.some(route => route.match.includes("admin_order_list_entries"))) {
+    return createResponse(404, { code: "PGRST205", message: "Missing admin_order_list_entries migration" });
+  }
   const match =
     candidateRoutes.find((route) => String(url).endsWith(route.match)) ||
     candidateRoutes.find(Boolean);

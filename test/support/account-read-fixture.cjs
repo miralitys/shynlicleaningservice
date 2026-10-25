@@ -2,6 +2,32 @@
 
 const fs = require("node:fs");
 
+// Independent model of the admin SQL projection; real PostgreSQL parity is tested separately.
+function adminOrderViewPayload(payload = {}) {
+  const object = value => value !== null && typeof value === "object" && !Array.isArray(value);
+  const pick = (value, keys) => object(value)
+    ? Object.fromEntries(keys.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]])) : value ?? null;
+  const state = value => {
+    if (!object(value)) return value ?? null;
+    const result = pick(value, ["isCreated", "createdAt", "status", "assignedStaff", "assignee", "selectedDate", "selectedTime",
+      "frequency", "paymentStatus", "paymentMethod", "serviceDurationMinutes", "recurringNextEntryId", "recurringGeneratedAt",
+      "recurringSeriesId", "recurringAnchorDate", "recurringSourceEntryId", "cleanerConfirmation"]);
+    if (object(value.policyAcceptance)) result.policyAcceptance = pick(value.policyAcceptance,
+      ["policyAccepted", "sentAt", "firstViewedAt", "lastViewedAt", "signedAt"]);
+    if (object(value.completion)) {
+      result.completion = pick(value.completion, ["cleanerComment"]);
+      if ([value.completion.beforePhotos, value.completion.afterPhotos].some(photos => Array.isArray(photos) && photos.length)) result.isCreated = true;
+    }
+    if (Object.keys(value).length && !Object.keys(result).length) result.listHasOrderState = true;
+    return result;
+  };
+  const client = payload?.adminClient;
+  return { orderState: state(payload?.orderState), adminOrder: state(payload?.adminOrder),
+    paymentState: pick(payload?.paymentState, ["status", "method"]), payment: pick(payload?.payment, ["status", "method"]),
+    calculatorData: payload?.calculatorData ?? null, adminLead: payload?.adminLead ?? null,
+    adminClient: object(client) ? Object.fromEntries(Object.entries(client).filter(([key]) => key !== "photos")) : client ?? null };
+}
+
 function createFixture(count = 1107, completedCount = 107) {
   const stamp = "2026-10-01T12:00:00.000Z";
   const staff = ["a", "b"].map(id => ({ id, name: `Cleaner ${id.toUpperCase()}`, role: "cleaner", status: "active",
@@ -73,6 +99,13 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     if (method !== "GET") throw new Error(`Account benchmark forbids writes: ${method} ${table}`);
     const accountView = table === "account_order_list_entries";
     const calendarView = table === "account_calendar_entries";
+    const adminOrderView = table === "admin_order_list_entries";
+    if (adminOrderView && state.missingAdminOrderView) {
+      return { ok: false, status: 404, text: async () => JSON.stringify({ code: "PGRST205", message: "Missing admin order list view" }) };
+    }
+    if (adminOrderView && state.adminOrderViewError) {
+      return { ok: false, status: 403, text: async () => JSON.stringify({ code: "42501", message: "Admin order view denied" }) };
+    }
     if (accountView && state.missingAccountView) {
       return { ok: false, status: 404, text: async () => JSON.stringify({ code: "PGRST205", message: "Missing account list view" }) };
     }
@@ -85,13 +118,14 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     if (calendarView && state.calendarViewError) {
       return { ok: false, status: 403, text: async () => JSON.stringify({ code: "42501", message: "Calendar view access denied" }) };
     }
-    if ((state.failOrders && (table === "quote_ops_entries" || accountView || calendarView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
+    if ((state.failOrders && (table === "quote_ops_entries" || accountView || calendarView || adminOrderView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
       return { ok: false, status: 503, text: async () => JSON.stringify({ message: "Simulated read failure" }) };
     }
-    let rows = table === "quote_ops_entries" || accountView || calendarView ? fixture.rows : table === "admin_staff" ? fixture.staff
+    let rows = table === "quote_ops_entries" || accountView || calendarView || adminOrderView ? fixture.rows : table === "admin_staff" ? fixture.staff
       : table === "admin_users" ? fixture.users : table === "admin_staff_assignments" ? fixture.assignments : [];
     if ((accountView || calendarView) && fixture.accountRows) rows = fixture.accountRows;
     if (calendarView && fixture.calendarRows) rows = fixture.calendarRows;
+    if (adminOrderView && fixture.adminOrderRows) rows = fixture.adminOrderRows;
     if (state.reassigned && table === "admin_staff_assignments") rows = rows.filter(row => row.entry_id !== state.reassigned);
     for (const [key, value] of u.searchParams) {
       if (key === "or") {
@@ -117,6 +151,7 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     const total = rows.length;
     const limit = Math.min(Number(u.searchParams.get("limit") || 1000), state.cap || 1000);
     rows = rows.slice(Number(u.searchParams.get("offset") || 0), Number(u.searchParams.get("offset") || 0) + limit);
+    if (adminOrderView && !fixture.adminOrderRows) rows = rows.map(row => ({ ...row, payload_for_retry: adminOrderViewPayload(row.payload_for_retry) }));
     if ((accountView || calendarView) && !fixture.accountRows && !(calendarView && fixture.calendarRows)) rows = rows.map(row => ({ ...row, payload_for_retry: require("../../lib/account/order-list")
       .projectAccountListEntry({ payloadForRetry: row.payload_for_retry }).payloadForRetry }));
     if (calendarView && !fixture.calendarRows) {
