@@ -5,6 +5,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 const { createRequire } = require("node:module");
+const { parseFragment } = require("parse5");
 const { createAccountRenderers } = require("../lib/account/render");
 
 function escapeHtml(value) {
@@ -776,6 +777,58 @@ test("renders client quote options and comments in the mobile order detail", () 
   assert.match(detailView, /Basement Cleaning/);
   assert.match(detailView, /Комментарий клиента/);
   assert.match(detailView, /Gate code 1942\.<br>Please focus the kitchen first\./);
+});
+
+test("full order address shows each address part once and keeps complete map and copy targets", () => {
+  const { renderOrderDetailFragment } = createRenderers();
+  for (const [fullAddress, title, locality] of [
+    ["123 Example Ln apt 12, Aurora, IL 60502, USA", "123 Example Ln apt 12", "Aurora, IL 60502, USA"],
+    ["123 Example Ln, Apt 12, Aurora, IL 60502, USA", "123 Example Ln", "Apt 12, Aurora, IL 60502, USA"],
+    ["123 Example Ln apt 12 Aurora IL 60502", "123 Example Ln apt 12 Aurora IL 60502", ""],
+    ["", "Адрес уточняется", ""],
+  ]) {
+    const order = buildOrder({ id: "address-once", customerName: "Address Check", status: "scheduled",
+      scheduleDate: "2099-01-05", updatedAt: "2099-01-03T12:00:00.000Z", quoteData: { city: "Another Home City" } });
+    order.entry.fullAddress = fullAddress;
+    const context = memoizationContext([order]);
+    const snapshot = JSON.stringify(context);
+    const html = renderOrderDetailFragment(context);
+    const detail = getMobileDetailView(html, "account-mobile-order-detail-address-once");
+    const address = detail.match(/<section class="account-mobile-detail-card account-mobile-detail-address">([\s\S]*?)<\/section>/)[1];
+    const nodes = [];
+    const walk = node => { nodes.push(node); (node.childNodes || []).forEach(walk); };
+    walk(parseFragment(address));
+    const text = node => node.nodeName === "#text" ? node.value : (node.childNodes || []).map(text).join("");
+    assert.deepEqual(nodes.filter(node => ["h3", "p"].includes(node.tagName)).map(text), [title, ...(locality ? [locality] : [])]);
+    assert.doesNotMatch(address, /Another Home City/);
+    if (fullAddress) {
+      const links = nodes.filter(node => node.tagName === "a");
+      assert.equal(links.length, 2);
+      for (const link of links) {
+        const url = new URL(link.attrs.find(attr => attr.name === "href").value);
+        assert.equal(url.searchParams.get(url.hostname.includes("google") ? "query" : "q"), fullAddress);
+      }
+      assert.equal(nodes.find(node => node.attrs?.some(attr => attr.name === "data-account-copy-text"))
+        .attrs.find(attr => attr.name === "data-account-copy-text").value, fullAddress);
+    }
+    assert.equal(JSON.stringify(context), snapshot);
+  }
+});
+
+test("full order address hides unavailable travel messages but keeps a real travel estimate", () => {
+  const { renderOrderDetailFragment } = createRenderers();
+  for (const travelEstimate of [null, { status: "unavailable" }, { status: "not-configured" }, { status: "ok", label: "25 мин" }]) {
+    const order = buildOrder({ id: "quiet-address", customerName: "Travel Check", scheduleDate: "2099-01-05",
+      updatedAt: "2099-01-03T12:00:00.000Z" });
+    order.travelLegs = [{ staffId: "staff-1", status: "missing-origin", travelEstimate }];
+    const context = memoizationContext([order]);
+    const snapshot = JSON.stringify(context);
+    const html = renderOrderDetailFragment(context);
+    const detail = getMobileDetailView(html, "account-mobile-order-detail-quiet-address");
+    if (travelEstimate?.status === "ok") assert.match(detail, /Дорога: 25 мин/);
+    else assert.doesNotMatch(detail, /Дорога:|маршрут недоступен|карты не подключены/);
+    assert.equal(JSON.stringify(context), snapshot);
+  }
 });
 
 test("renders mobile order details from the saved client address when calculator data is sparse", () => {
