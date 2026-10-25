@@ -1263,7 +1263,7 @@ test("loads inbound SMS replies into the client dialog history", async () => {
   }
 });
 
-test("keeps quote ops diagnostics hidden on the clients page when Supabase reads fail", async () => {
+test("shows an explicit retry instead of an empty client list when Supabase reads fail", async () => {
   const fetchStub = createFetchStub([
     {
       method: "GET",
@@ -1293,8 +1293,12 @@ test("keeps quote ops diagnostics hidden on the clients page when Supabase reads
     });
     const body = await response.text();
 
-    assert.equal(response.status, 200);
-    assert.match(body, /<h1 class="admin-title">Клиенты<\/h1>/);
+    assert.equal(response.status, 503);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("retry-after"), "30");
+    assert.match(body, /Клиенты временно недоступны/);
+    assert.match(body, /Повторить загрузку/);
+    assert.doesNotMatch(body, /Пока клиентов нет/);
     assert.doesNotMatch(body, /База клиентов/i);
     assert.doesNotMatch(body, /Supabase/i);
     assert.doesNotMatch(body, /Чтение: fallback в память/i);
