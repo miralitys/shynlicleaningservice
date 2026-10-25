@@ -33,6 +33,12 @@ const {
   createOrderFromQuoteRequest,
   getQuoteOpsEntryId,
 } = require("./admin-route-helpers");
+
+async function loadManualOrderForm(baseUrl, cookie) {
+  const response = await fetch(`${baseUrl}/admin/orders?fragment=create-order-dialog`, { headers: { cookie } });
+  assert.equal(response.status, 200);
+  return response.text();
+}
 const { createStripeStub } = require("./server-test-helpers");
 
 const DIRECT_REVIEW_URL_PATTERN =
@@ -111,7 +117,7 @@ test("allows admins to add a manual order from the orders page", async () => {
   try {
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
 
-    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders?createOrder=1`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
@@ -174,7 +180,7 @@ test("allows admins to add a manual order from the orders page", async () => {
         return id === "admin-manual-order-create-dialog" ? estimateDialog : null;
       },
     };
-    new Function("document", estimateDefaultsScriptMatch[1])(estimateDocument);
+    new Function("document", "window", estimateDefaultsScriptMatch[1])(estimateDocument, {});
     assert.equal(typeof serviceTypeChangeHandler, "function");
     estimateFormFields.get('[name="serviceType"]').value = "free-in-home-estimate";
     serviceTypeChangeHandler();
@@ -249,12 +255,13 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.match(createdOrderBody, /Bi-weekly/);
     assert.match(createdOrderBody, /2 ч 30 мин/);
     assert.match(createdOrderBody, /215 North Elm Street, Naperville, IL 60563/);
-    assert.match(createdOrderBody, /data-admin-manual-client-search/);
-    assert.match(createdOrderBody, /data-admin-manual-client-suggestions/);
-    assert.match(createdOrderBody, /name="selectedClientContactId"/);
-    assert.match(createdOrderBody, /name="selectedClientAutomaticNotificationsEnabled"/);
-    assert.match(createdOrderBody, /name="selectedClientAddressPropertyType"/);
-    const clientLookupDataMatch = createdOrderBody.match(
+    const createdFormBody = await loadManualOrderForm(started.baseUrl, `shynli_admin_session=${sessionCookieValue}`);
+    assert.match(createdFormBody, /data-admin-manual-client-search/);
+    assert.match(createdFormBody, /data-admin-manual-client-suggestions/);
+    assert.match(createdFormBody, /name="selectedClientContactId"/);
+    assert.match(createdFormBody, /name="selectedClientAutomaticNotificationsEnabled"/);
+    assert.match(createdFormBody, /name="selectedClientAddressPropertyType"/);
+    const clientLookupDataMatch = createdFormBody.match(
       /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
     );
     assert.ok(clientLookupDataMatch);
@@ -405,7 +412,7 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.ok(homeFields.indexOf("Санузлы") < homeFields.indexOf("Office"));
     assert.match(detailsOrderBody, /Размер дома[\s\S]*1500 sq ft/);
     assert.match(detailsOrderBody, /Питомцы[\s\S]*Собака/);
-    const detailsLookupDataMatch = detailsOrderBody.match(
+    const detailsLookupDataMatch = (await loadManualOrderForm(started.baseUrl, `shynli_admin_session=${sessionCookieValue}`)).match(
       /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
     );
     assert.ok(detailsLookupDataMatch);
@@ -519,7 +526,7 @@ test("allows admins to add a manual order from the orders page", async () => {
     assert.doesNotMatch(profileDialogFragmentBody, /admin-orders-workspace/);
     assert.match(profileDialogFragmentBody, /Открыть клиента/);
     assert.match(profileDialogFragmentBody, /href="\/admin\/clients\?client=/);
-    const profileClientLookupDataMatch = profileOrdersBody.match(
+    const profileClientLookupDataMatch = (await loadManualOrderForm(started.baseUrl, `shynli_admin_session=${sessionCookieValue}`)).match(
       /<script type="application\/json" data-admin-manual-client-data>([\s\S]*?)<\/script>/
     );
     assert.ok(profileClientLookupDataMatch);
@@ -3401,8 +3408,9 @@ test("allows managers to create manual orders from the orders page", async () =>
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
     assert.match(ordersBody, /Добавить заказ/);
-    assert.match(ordersBody, /Добавить заказ вручную/);
-    assert.match(ordersBody, /create-manual-order/);
+    const managerForm = await loadManualOrderForm(started.baseUrl, `shynli_user_session=${userSessionCookieValue}`);
+    assert.match(managerForm, /Добавить заказ вручную/);
+    assert.match(managerForm, /create-manual-order/);
 
     const createOrderResponse = await fetch(`${started.baseUrl}/admin/orders`, {
       method: "POST",

@@ -103,7 +103,7 @@ test("profitability is private by account, has narrow audited writes, and does n
     assert.doesNotMatch(repeat.headers.get("location") || "", /source-required|failed|invalid/);
     const repeatId = new URL(repeat.headers.get("location"), app.baseUrl).searchParams.get("order");
     assert.ok(repeatId);
-    const repeatPage = await (await get("/admin/orders", owner)).text();
+    const repeatPage = await (await get("/admin/orders?fragment=create-order-dialog", owner)).text();
     assert.match(repeatPage, /"acquisitionSource":"thumbtack"/);
   } finally { await stopServer(app.child); await fs.rm(root, { recursive: true, force: true }); }
 });

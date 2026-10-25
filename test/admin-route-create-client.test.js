@@ -44,7 +44,7 @@ test("creates a client without a request/order, and reuses it later in manual or
     assert.equal(event.route, "/admin/clients");
     assert.ok(event.actor.id);
     assert.ok(event.entry_id);
-    const lookup = await get("/admin/orders", admin);
+    const lookup = await get("/admin/orders?fragment=create-order-dialog", admin);
     assert.match(lookup, /Notebook Contact QA/);
     assert.match(lookup, /1800/);
     assert.match(lookup, /2\.5/);

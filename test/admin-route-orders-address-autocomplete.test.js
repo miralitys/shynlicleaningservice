@@ -19,7 +19,7 @@ test("loads Google Places autocomplete in the manual order dialog on admin order
 
   try {
     const sessionCookieValue = await createAdminSession(started.baseUrl, config);
-    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders`, {
+    const ordersResponse = await fetch(`${started.baseUrl}/admin/orders?createOrder=1`, {
       headers: {
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
