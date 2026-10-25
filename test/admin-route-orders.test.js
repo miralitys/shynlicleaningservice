@@ -1258,7 +1258,7 @@ test("sorts the orders table newest first and scheduled funnel by visit date", a
     const ordersBody = await ordersResponse.text();
     assert.equal(ordersResponse.status, 200);
 
-    const ordersTableStart = ordersBody.indexOf("<tbody>");
+    const ordersTableStart = ordersBody.indexOf('<tbody data-admin-list-rows="true">');
     const ordersTableEnd = ordersBody.indexOf("</tbody>", ordersTableStart);
     assert.ok(ordersTableStart !== -1);
     assert.ok(ordersTableEnd !== -1);

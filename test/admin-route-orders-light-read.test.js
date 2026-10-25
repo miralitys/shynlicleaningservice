@@ -42,12 +42,27 @@ test("orders GET reads all pages without maintaining series or writes, and detai
       return response.text();
     };
     const html = await get("");
-    const cards = html.match(/<article\b[^>]*data-order-funnel-card="true"[^>]*>/g) || [];
+    assert.equal((html.match(/<article\b[^>]*data-order-funnel-card="true"[^>]*>/g) || []).length, 50);
+    assert.match(html, /data-admin-list-total="1003"/);
+    let chunk = html;
+    let complete = html;
+    let pageCount = 1;
+    while (chunk.match(/data-admin-list-next="true" href="([^"]+)"/)) {
+      const next = new URL(chunk.match(/data-admin-list-next="true" href="([^"]+)"/)[1].replace(/&amp;/g, "&"), started.baseUrl);
+      assert.equal(next.searchParams.get("list"), "orders-scheduled");
+      next.searchParams.set("fragment", "list");
+      chunk = await get(next.search);
+      assert.match(chunk, /data-admin-list-response="orders-scheduled"/);
+      assert.doesNotMatch(chunk, /data-admin-list-error/);
+      complete += chunk;
+      assert.ok(++pageCount < 30);
+    }
+    const cards = complete.match(/<article\b[^>]*data-order-funnel-card="true"[^>]*>/g) || [];
     assert.equal(cards.length, rows.length);
     assert.equal(new Set(cards.map(card => card.match(/data-order-entry-id="([^"]+)"/)[1])).size, rows.length);
     assert.doesNotMatch(html, /FULL_DETAIL_ONLY/);
     for (const index of [0, 499, 500, 999, 1002]) {
-      const card = html.match(new RegExp(`<article\\b[^>]*data-order-entry-id="${rows[index].id}"[\\s\\S]*?</article>`))?.[0];
+      const card = complete.match(new RegExp(`<article\\b[^>]*data-order-entry-id="${rows[index].id}"[\\s\\S]*?</article>`))?.[0];
       assert.ok(card);
       assert.ok(card.includes(`Cleaner ${index % 2}`));
       assert.ok(card.includes(`$${(250 + index).toLocaleString("en-US", { minimumFractionDigits: 2 })}`));
