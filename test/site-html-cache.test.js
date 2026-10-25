@@ -149,3 +149,80 @@ test("html cache evicts entries that would exceed the byte budget", async (t) =>
   assert.ok(cachedKeys.some((key) => key.endsWith("beta.html::/beta")));
   assert.ok(cachedKeys.every((key) => !key.endsWith("alpha.html::/alpha")));
 });
+
+test("async HTML preparation coalesces misses, preserves headers and only retains mapped public routes", async t => {
+  const siteDir = await createFixtureSite({ "404.html": "missing", "shared.html": "public source" });
+  t.after(() => fsp.rm(siteDir, { recursive: true, force: true }));
+  const calls = [];
+  const prepared = new Map();
+  const helpers = createSiteStaticHelpers({
+    CONTENT_TYPES: { ".html": "text/html; charset=utf-8" }, HTML_CACHE_WARM_MODE: "off",
+    HTML_CACHE_MAX_ENTRIES: 1, IMAGE_EXTENSIONS: new Set(), NOINDEX_ROUTES: new Set(["/two"]),
+    NOT_FOUND_PAGE: "404.html", SITE_DIR: siteDir, fs, fsp, path, writeHeadWithTiming,
+    sanitizeHtml: () => { throw new Error("Synchronous sanitizer must not run"); },
+    async prepareHtml(raw, route, options) {
+      calls.push({ route, ...options });
+      await new Promise(resolve => setImmediate(resolve));
+      const cacheHit = prepared.has(route);
+      const html = `<html><head></head><body>${route}: ${raw}</body></html>`;
+      if (options.cacheable) prepared.set(route, html);
+      return { html, cacheHit };
+    },
+  });
+  const runtime = await helpers.buildRuntimeIndex({ "/one": "shared.html", "/two": "shared.html" });
+  const { htmlCache } = await helpers.warmHtmlCache(runtime);
+  const get = async (route, headers = {}, status = 200) => {
+    const res = createMockResponse();
+    const context = { route, cacheHit: false };
+    await helpers.sendFile({ headers }, res, runtime.routeFileByPath.get(route) || runtime.notFoundAbsolutePath,
+      htmlCache, runtime, context, 0n, status);
+    return { res, context };
+  };
+  const concurrent = await Promise.all(Array.from({ length: 12 }, () => get("/one")));
+  assert.equal(calls.length, 1);
+  assert.ok(concurrent.every(x => x.res.body === concurrent[0].res.body && x.res.statusCode === 200));
+  const first = concurrent[0].res;
+  const second = await get("/two");
+  assert.notEqual(second.res.body, first.body);
+  assert.equal(second.res.headers["X-Robots-Tag"], "noindex, nofollow");
+  const restored = await get("/one");
+  assert.equal(restored.context.cacheHit, true);
+  assert.equal(restored.res.body, first.body);
+  assert.deepEqual(restored.res.headers, first.headers);
+  const notModified = await get("/one", { "if-none-match": first.headers.ETag });
+  assert.equal(notModified.res.statusCode, 304);
+  assert.equal(notModified.res.body, "");
+  await get("/missing", {}, 404);
+  assert.deepEqual(calls.map(x => x.cacheable), [true, true, true, false]);
+  assert.equal(htmlCache.preparing.size, 0);
+});
+
+test("HTML worker failures return non-cacheable 503, never raw source, and can be retried", async t => {
+  const siteDir = await createFixtureSite({ "404.html": "missing", "one.html": "RAW SOURCE NOT FOR SERVING" });
+  t.after(() => fsp.rm(siteDir, { recursive: true, force: true }));
+  let fail = true;
+  const helpers = createSiteStaticHelpers({
+    CONTENT_TYPES: { ".html": "text/html; charset=utf-8" }, HTML_CACHE_WARM_MODE: "off",
+    IMAGE_EXTENSIONS: new Set(), NOINDEX_ROUTES: new Set(), NOT_FOUND_PAGE: "404.html",
+    SITE_DIR: siteDir, fs, fsp, path, writeHeadWithTiming,
+    async prepareHtml() {
+      if (fail) throw Object.assign(new Error("Worker unavailable"), { code: "PUBLIC_HTML_UNAVAILABLE" });
+      return { html: "prepared", cacheHit: false };
+    },
+  });
+  const runtime = await helpers.buildRuntimeIndex({ "/one": "one.html" });
+  const { htmlCache } = await helpers.warmHtmlCache(runtime);
+  const get = async () => {
+    const res = createMockResponse();
+    await helpers.sendFile({ headers: {} }, res, runtime.routeFileByPath.get("/one"), htmlCache, runtime,
+      { route: "/one" }, 0n);
+    return res;
+  };
+  const denied = await get();
+  assert.equal(denied.statusCode, 503);
+  assert.equal(denied.headers["Cache-Control"], "no-store");
+  assert.equal(denied.body, "Temporarily unavailable");
+  assert.equal(htmlCache.preparing.size, 0);
+  fail = false;
+  assert.equal((await get()).body, "prepared");
+});

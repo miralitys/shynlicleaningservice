@@ -43,8 +43,7 @@ const { BLOG_ARTICLES } = require("./lib/site/blog-articles");
 const { pages: SERVICE_EDITORIAL_PAGES } = require("./lib/site/service-editorial-data");
 const { DEFAULT_GOOGLE_TAG_MANAGER_CONTAINER_ID } = require("./lib/site/google-tag-manager");
 const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request-handler");
-const { createSiteSanitizer } = require("./lib/site/sanitize");
-const { createSiteSeoHelpers } = require("./lib/site/seo");
+const { createPublicHtmlPreparer } = require("./lib/site/html-preparation");
 const { SERVICE_AREA_ZIP_MAP } = require("./lib/service-area-zips");
 const {
   PAYMENT_SHORT_LINK_PATH_PREFIX,
@@ -1811,20 +1810,9 @@ function escapeHtmlAttribute(value) {
     .replace(/>/g, "&gt;");
 }
 
-const siteSeoHelpers = createSiteSeoHelpers({
-  BREADCRUMB_LABELS,
-  NOINDEX_ROUTES,
-  ROUTE_META_OVERRIDES,
-  SITE_ORIGIN,
-  escapeHtmlAttribute,
-  normalizeRoute,
-});
-
-const { sanitizeHtml } = createSiteSanitizer({
-  GOOGLE_TAG_MANAGER_CONTAINER_ID,
-  GOOGLE_PLACES_API_KEY,
-  normalizeRoute,
-  siteSeoHelpers,
+const publicHtmlPreparer = createPublicHtmlPreparer({
+  seoOptions: { BREADCRUMB_LABELS, NOINDEX_ROUTES, ROUTE_META_OVERRIDES, SITE_ORIGIN },
+  sanitizerOptions: { GOOGLE_TAG_MANAGER_CONTAINER_ID, GOOGLE_PLACES_API_KEY },
 });
 
 const siteStaticHelpers = createSiteStaticHelpers({
@@ -1839,7 +1827,7 @@ const siteStaticHelpers = createSiteStaticHelpers({
   fs,
   fsp,
   path,
-  sanitizeHtml,
+  prepareHtml: publicHtmlPreparer.prepare,
   writeHeadWithTiming,
 });
 
@@ -2308,7 +2296,8 @@ async function main() {
       signal,
     });
 
-    server.close(() => {
+    server.close(async () => {
+      await publicHtmlPreparer.close();
       requestLogger.close();
       process.exit(0);
     });
