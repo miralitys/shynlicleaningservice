@@ -8,6 +8,10 @@ function createSectionFixture(count = 254, completed = 163) {
   const { mapRowToStaffRecord, mapRowToAssignmentRecord,
     mapStaffRecordToQuoteOpsRow, mapAssignmentRecordToQuoteOpsRow } = require("../../lib/supabase-admin-staff");
   const fixture = createFixture(count, completed);
+  const paddingBytes = Math.min(100000, Math.max(0, Number(process.env.ACCOUNT_SECTION_ORDER_PADDING_BYTES) || 0));
+  if (paddingBytes) for (const row of fixture.rows) {
+    row.payload_for_retry.adminSms.history.push({ message: "Synthetic history ".repeat(Math.ceil(paddingBytes / 18)).slice(0, paddingBytes) });
+  }
   const { mapRowToUserRecord, mapUserRecordToQuoteOpsRow } = require("../../lib/supabase-admin-users");
   fixture.rows.push(...fixture.staff.map(row => mapStaffRecordToQuoteOpsRow(mapRowToStaffRecord(row))),
     ...fixture.assignments.map(row => mapAssignmentRecordToQuoteOpsRow(mapRowToAssignmentRecord(row))),

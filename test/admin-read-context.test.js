@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
-const { runAdminReadContext, memoAdminRead, measureAdminRead, getAdminReadHeaders,
+const { runAdminReadContext, memoAdminRead, memoAdminJsonRead, measureAdminRead, getAdminReadHeaders,
   setAdminLedgerReadLimit, invalidateAdminReads } = require("../lib/admin/read-context");
 const { createSupabaseQuoteOpsClient } = require("../lib/supabase-quote-ops");
 const { createSupabaseAdminStaffClient } = require("../lib/supabase-admin-staff");
@@ -127,6 +127,74 @@ test("staff and users reuse one fresh snapshot per request, with no changes outs
   await context(async () => assert.equal((await users.fetchSnapshot()).users[0].role, "manager"));
   fixture.users[0].role = "cleaner";
   assert.equal(JSON.stringify(fixture), before);
+});
+
+test("ledger readers hydrate independent JSON objects without a deep clone", async () => {
+  const fixture = createFixture(2, 1);
+  const text = JSON.stringify(fixture.rows);
+  let reads = 0;
+  const client = createSupabaseQuoteOpsClient({ env, fetch: async () => {
+    reads++;
+    return { ok: true, status: 200, text: async () => text };
+  } });
+  const clone = global.structuredClone;
+  global.structuredClone = () => assert.fail("Ledger response must not be deep-cloned");
+  try {
+    await context(async () => {
+      setAdminLedgerReadLimit(1000);
+      const [a, b] = await Promise.all([client.fetchEntries(1), client.fetchEntries(1000)]);
+      assert.equal(reads, 1);
+      assert.equal(a.length, 1);
+      assert.equal(b.length, fixture.rows.length);
+      a[0].totalPrice = 1;
+      a[0].payloadForRetry.orderState.payrollOverrides.a = "1";
+      a[0].payloadForRetry.orderState.payroll.items[0].amountCents = 1;
+      a[0].payloadForRetry.adminSms.history.push("Changed locally");
+      assert.deepEqual(b, fixture.rows.map(require("../lib/supabase-quote-ops").mapRowToEntry));
+      assert.deepEqual(await client.fetchEntries(1000), b);
+    });
+    await context(() => client.fetchEntries());
+    assert.equal(reads, 2);
+    await client.fetchEntries(); await client.fetchEntries();
+    assert.equal(reads, 4, "No ledger response text survives the request");
+  } finally { global.structuredClone = clone; }
+  assert.equal(JSON.stringify(fixture.rows), text);
+});
+
+test("malformed JSON and database failures are retried, never cached as empty history", async () => {
+  let reads = 0;
+  const client = createSupabaseQuoteOpsClient({ env, fetch: async () => {
+    reads++;
+    if (reads === 1) return { ok: false, status: 503, text: async () => '{"message":"Database unavailable"}' };
+    return { ok: true, status: 200, text: async () => reads === 2 ? "[{" : '[{"id":"retained-order","total_price":534}]' };
+  } });
+  await context(async () => {
+    await assert.rejects(client.fetchEntries(), /Database unavailable/);
+    await assert.rejects(client.fetchEntries(), SyntaxError);
+    assert.equal((await client.fetchEntries())[0].totalPrice, 534);
+    assert.equal((await client.fetchEntries())[0].id, "retained-order");
+    assert.equal(reads, 3);
+    invalidateAdminReads();
+    await client.fetchEntries(); await client.fetchEntries();
+    assert.equal(reads, 5);
+  });
+});
+
+test("JSON response caching preserves nulls, arrays, keys and numeric values", async () => {
+  const res = {};
+  const owner = {};
+  const text = '{"__proto__":{"keep":true},"empty":null,"items":[false,0,-1,534,466.5,"\u041f\u0440\u0438\u043c\u0435\u0447\u0430\u043d\u0438\u0435"]}';
+  await runAdminReadContext({ res, route: "/admin/clients" }, async () => {
+    const first = await memoAdminJsonRead(owner, "ledger", "rows", async () => text);
+    assert.deepEqual(first, JSON.parse(text));
+    first.items[3] = 1;
+    const second = await memoAdminJsonRead(owner, "ledger", "rows", () => assert.fail("Duplicate JSON read"));
+    assert.equal(second.items[3], 534);
+    assert.equal(Object.getPrototypeOf(second), Object.prototype);
+    assert.equal(Object.hasOwn(second, "__proto__"), true);
+  });
+  assert.match(getAdminReadHeaders(res)["Server-Timing"], /admin_decode;dur=/);
+  assert.doesNotMatch(getAdminReadHeaders(res)["Server-Timing"], /admin_clone;/);
 });
 
 test("admin timing contains only allowlisted phases, counts and a random correlation ID", async () => {

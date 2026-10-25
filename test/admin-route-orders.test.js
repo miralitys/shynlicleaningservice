@@ -4676,8 +4676,11 @@ test("tracks cleaner confirmation for scheduled orders through the staff account
     assert.equal(checklistResponse.status, 303);
     assert.match(checklistResponse.headers.get("location") || "", /notice=assignment-checklist-complete/);
 
+    // A visit one hour ahead can fall tomorrow near midnight; inspect its explicit card.
+    const checklistCompleteUrl = new URL(checklistResponse.headers.get("location") || "/account", started.baseUrl);
+    checklistCompleteUrl.searchParams.set("order", entryId);
     const checklistCompleteDashboardResponse = await fetch(
-      `${started.baseUrl}${checklistResponse.headers.get("location") || "/account"}`,
+      checklistCompleteUrl,
       {
         headers: {
           cookie: `shynli_user_session=${userSessionCookieValue}`,
