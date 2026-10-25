@@ -78,8 +78,11 @@ test("account HTTP lists and lazy details keep all history accessible, enforce a
   try {
     const ids = new Set();
     let firstHtml;
+    const initial = await (await get("")).text();
+    assert.doesNotMatch(initial, /<article\b[^>]*data-account-mobile-order-card/);
+    assert.match(initial, /Все заказы и история/);
     for (let page = 1; page <= 20; page++) {
-      const response = await get(`?page=${page}`);
+      const response = await get(`?history=all&page=${page}`);
       assert.equal(response.status, 200);
       const html = await response.text();
       if (page === 1) firstHtml = html;

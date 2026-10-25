@@ -400,7 +400,14 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(cleanerAdminResponse.status, 303);
     assert.equal(cleanerAdminResponse.headers.get("location"), "/account");
 
-    const accountDashboardResponse = await fetch(`${started.baseUrl}/account`, {
+    const weeklyDashboardResponse = await fetch(`${started.baseUrl}/account`, {
+      headers: { cookie: `shynli_user_session=${userSessionCookieValue}` },
+    });
+    assert.equal(weeklyDashboardResponse.status, 200);
+    const weeklyDashboardBody = await weeklyDashboardResponse.text();
+    assert.doesNotMatch(weeklyDashboardBody, /Maria Assigned|Nina Hidden/);
+    assert.match(weeklyDashboardBody, /Все заказы и история/);
+    const accountDashboardResponse = await fetch(`${started.baseUrl}/account?history=all`, {
       headers: {
         cookie: `shynli_user_session=${userSessionCookieValue}`,
       },
@@ -415,7 +422,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.match(accountDashboardBody, /admin-orders-metrics/i);
     assert.match(accountDashboardBody, /data-account-mobile-dashboard/i);
     assert.match(accountDashboardBody, /Cleaning app/i);
-    assert.match(accountDashboardBody, /Назначенные на вас заказы\./i);
+    assert.match(accountDashboardBody, /Все назначенные заказы и история\./i);
     assert.match(accountDashboardBody, /account-mobile-logout-button/i);
     assert.match(accountDashboardBody, /aria-label="Выйти"/i);
     assert.match(accountDashboardBody, /Следующий заказ/i);

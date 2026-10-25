@@ -236,7 +236,7 @@ function getMobileDetailView(html, detailId) {
   return html.slice(startIndex, cursor);
 }
 
-test("renders active cleaner orders first and moves completed orders into history", () => {
+test("all-orders view keeps active cleaner orders first and completed orders in history", () => {
   const renderers = createRenderers();
   const html = renderers.renderDashboardPage({
     user: {
@@ -283,7 +283,7 @@ test("renders active cleaner orders first and moves completed orders into histor
     managerContact: null,
     calendarMeta: { configured: false, connected: false },
     payrollSummary: { records: [], totals: {} },
-  });
+  }, { showAllHistory: true });
 
   const activeCard = getDesktopCard(html, "Мои заявки");
   const completedCard = getDesktopCard(html, "Выполненные заказы");
@@ -292,7 +292,7 @@ test("renders active cleaner orders first and moves completed orders into histor
   assert.match(completedCard, /Completed Client/);
 });
 
-test("limits completed order history until the cleaner asks to expand it", () => {
+test("orders outside the seven-day window stay accessible in history and direct links", () => {
   const renderers = createRenderers();
   const context = {
     user: {
@@ -331,10 +331,10 @@ test("limits completed order history until the cleaner asks to expand it", () =>
     focusedOrderId: "completed-history-0",
   });
 
-  assert.match(compactHtml, /Показать всю историю/);
+  assert.match(compactHtml, /Все заказы и история/);
   assert.doesNotMatch(compactHtml, /Completed History Client 0/);
   assert.match(expandedHtml, /Completed History Client 0/);
-  assert.match(expandedHtml, /Свернуть историю/);
+  assert.match(expandedHtml, /К ближайшим 7 дням/);
   assert.match(focusedHtml, /Completed History Client 0/);
 });
 
@@ -385,14 +385,15 @@ test("prioritizes the cleaner order opened from an SMS link", () => {
   );
 
   const activeCard = getDesktopCard(html, "Мои заявки");
-  assert.ok(activeCard.indexOf("SMS Focused Client") < activeCard.indexOf("Newer Pending Client"));
+  assert.match(activeCard, /SMS Focused Client/);
+  assert.doesNotMatch(activeCard, /Newer Pending Client/);
   assert.match(html, /data-account-focused-detail-id="account-mobile-order-detail-sms-focused-order"/);
   assert.match(html, /Заказ из SMS/);
   assert.match(html, /Открыто из SMS\. Подтвердите или отклоните именно этот заказ\./);
 });
 
 test("shows the nearest scheduled order in the mobile next order card", () => {
-  const renderers = createRenderers();
+  const renderers = createCountingRenderers({ now: Date.parse("2099-06-10T12:00:00Z") }, []);
   const html = renderers.renderDashboardPage({
     user: {
       id: "user-1",
@@ -497,7 +498,7 @@ test("renders clickable mobile dashboard filters with a clear scheduled label", 
 });
 
 test("filters the mobile order list from dashboard metric links", () => {
-  const renderers = createRenderers();
+  const renderers = createCountingRenderers({ now: Date.parse("2099-06-10T12:00:00Z") }, []);
   const html = renderers.renderDashboardPage(
     {
       user: {
@@ -600,7 +601,7 @@ test("renders cleaner checklist completion without a photo upload step", () => {
     managerContact: null,
     calendarMeta: { configured: false, connected: false },
     payrollSummary: { records: [], totals: {} },
-  });
+  }, { showAllHistory: true });
 
   const activeCard = getDesktopCard(html, "Мои заявки");
   const completedCard = getDesktopCard(html, "Выполненные заказы");
@@ -619,7 +620,7 @@ test("renders cleaner checklist completion without a photo upload step", () => {
 });
 
 test("keeps cleaner en-route action disabled until two hours before the appointment", () => {
-  const renderers = createRenderers();
+  const renderers = createCountingRenderers({ now: Date.parse("2099-01-04T12:00:00Z") }, []);
   const html = renderers.renderDashboardPage({
     user: {
       id: "user-1",
@@ -1246,4 +1247,56 @@ test("mobile detail grids and textareas shrink without clipping or changing orde
   assert.ok(html.includes(item.entry.fullAddress));
   assert.ok(html.includes("$500.00"));
   assert.equal(JSON.stringify(context), before);
+});
+
+test("Orders alone shows seven Chicago calendar days on both sides, without changing calendar, earnings or data", () => {
+  const clock = { now: Date.parse("2026-11-01T04:59:59Z") }; // October 31 in Chicago, before the DST change.
+  const renderers = createCountingRenderers(clock, []);
+  const make = (id, date, status = "scheduled") => ({
+    ...buildOrder({ id, customerName: id, scheduleDate: date, status, updatedAt: "2026-10-01T12:00:00Z" }),
+    staffEarning: { amountCents: 50000, compensationType: "fixed" },
+  });
+  const orders = [make("today-active", "2026-10-31"), make("day-seven", "2026-11-06"),
+    make("day-eight", "2026-11-07"), make("past-active", "2026-10-30"), make("no-date", ""),
+    make("done-today", "2026-10-31", "completed"), make("done-day-seven", "2026-10-25", "completed"),
+    make("done-day-eight", "2026-10-24", "completed"), make("done-future", "2026-11-01", "completed")];
+  const context = memoizationContext(orders);
+  context.payrollSummary = { rows: [], totals: {} };
+  const before = JSON.stringify(context);
+  const calendarBefore = renderers.renderCalendarPage(context, { calendarDate: "2026-11-01", calendarView: "month" });
+  const earningsBefore = renderers.renderPayrollPage(context);
+  for (const filter of ["active", "scheduled", "pending"]) {
+    const html = renderers.renderDashboardPage(context, { dashboardFilter: filter });
+    for (const id of ["today-active", "day-seven", "done-today", "done-day-seven"]) assert.ok(html.includes(id), id);
+    for (const id of ["day-eight", "past-active", "no-date", "done-day-eight", "done-future"]) {
+      assert.ok(!html.includes(id), `Outside window: ${id}`);
+    }
+    assert.match(html, /history=all/);
+  }
+  const all = renderers.renderDashboardPage(context, { showAllHistory: true });
+  orders.forEach(item => assert.ok(all.includes(item.entry.customerName)));
+  const focused = renderers.renderDashboardPage(context, { focusedOrderId: "day-eight" });
+  assert.match(focused, /data-account-focused-detail-id="account-mobile-order-detail-day-eight"/);
+  assert.equal(renderers.renderCalendarPage(context, { calendarDate: "2026-11-01", calendarView: "month" }), calendarBefore);
+  assert.equal(renderers.renderPayrollPage(context), earningsBefore);
+  assert.match(calendarBefore, /day-eight/);
+  assert.equal(JSON.stringify(context), before);
+  clock.now = Date.parse("2026-11-01T05:00:00Z"); // Chicago midnight moves the window, not the stored dates.
+  const nextDay = renderers.renderDashboardPage(context);
+  assert.match(nextDay, /day-eight/);
+  assert.doesNotMatch(getMobileOrdersSection(nextDay), /today-active/);
+});
+
+test("a busy recent week is not capped at twenty completed jobs, and empty weeks keep the archive link", () => {
+  const renderers = createCountingRenderers({ now: Date.parse("2026-10-24T17:00:00Z") }, []);
+  const recent = Array.from({ length: 25 }, (_, i) => buildOrder({ id: `recent-${i}`, customerName: `Recent ${i}`,
+    scheduleDate: "2026-10-23", status: "completed", updatedAt: "2026-10-01T12:00:00Z" }));
+  const context = memoizationContext(recent);
+  const html = renderers.renderDashboardPage(context);
+  recent.forEach(item => assert.ok(html.includes(`data-account-entry-id="${item.entry.id}"`)));
+  context.assignedOrders = [buildOrder({ id: "outside-week", customerName: "Outside week", scheduleDate: "2026-12-01", updatedAt: "2026-10-01T12:00:00Z" })];
+  const empty = renderers.renderDashboardPage(context);
+  assert.doesNotMatch(empty, /data-account-entry-id="outside-week"/);
+  assert.match(empty, /Все заказы и история/);
+  assert.match(empty, /В ближайшие 7 дней заказов нет/);
 });
