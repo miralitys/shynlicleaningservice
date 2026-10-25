@@ -427,7 +427,7 @@ test("desktop loader keeps the ordinary full-calendar link on failures or redire
   }
 });
 
-test("payroll skips planning, checklists, settings and calendar metadata without losing any saved payout", async () => {
+test("payroll skips planning, checklists and settings reads, retaining saved payouts and local calendar connection metadata", async () => {
   const h = await createHarness();
   const before = h.snapshot();
   h.control.failSettings = true;
@@ -435,7 +435,7 @@ test("payroll skips planning, checklists, settings and calendar metadata without
   assert.equal(response.status, 200);
   const { context, options } = response.body;
   assert.equal(h.metrics.settingsReads, 0);
-  assert.equal(h.metrics.calendarMetaReads, 0);
+  assert.equal(h.metrics.calendarMetaReads, 1);
   assert.deepEqual(h.metrics.planning, []);
   const assigned = new Set(h.staff.assignments.map(assignment => assignment.entryId));
   const expected = collectPayrollRecords({ entries: h.entries.filter(entry => assigned.has(entry.id)), staffId: "a" });

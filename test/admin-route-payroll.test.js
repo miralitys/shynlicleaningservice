@@ -576,7 +576,7 @@ test("shows employee-only payroll history inside the account workspace", async (
     assert.match(accountPayrollBody, /\$60\.00/);
     assert.match(accountPayrollBody, /К выплате/i);
     assert.match(accountPayrollBody, /Моя зарплата/i);
-    assert.ok(accountPayrollBody.indexOf("Моя зарплата") < accountPayrollBody.indexOf("Профиль сотрудника"));
+    assert.ok(accountPayrollBody.indexOf("Моя зарплата") < accountPayrollBody.indexOf("<div data-account-settings-root>"));
 
     const accountCalendarResponse = await fetch(`${started.baseUrl}/account?section=calendar&date=2026-05-03`, {
       headers: {

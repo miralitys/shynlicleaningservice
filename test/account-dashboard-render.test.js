@@ -831,6 +831,41 @@ test("full order address hides unavailable travel messages but keeps a real trav
   }
 });
 
+test("employee settings exist only below Earnings history, never in Orders, calendar or full cards", () => {
+  const renderers = createRenderers();
+  const context = memoizationContext([buildOrder({ id: "settings-scope", customerName: "Settings Scope",
+    scheduleDate: "2099-01-05", updatedAt: "2099-01-03T12:00:00.000Z" })]);
+  context.calendarMeta = { configured: true, connected: true, accountEmail: "calendar@example.test" };
+  context.payrollSummary = { rows: [{ entryId: "settings-scope", customerName: "Paid History", amountCents: 50000, status: "paid" }], totals: { paidCents: 50000 } };
+  const snapshot = JSON.stringify(context);
+  for (const html of [renderers.renderDashboardPage(context), renderers.renderDashboardPage(context, { showAllHistory: true }),
+    renderers.renderDashboardPage(context, { focusedOrderId: "settings-scope" }),
+    renderers.renderCalendarPage(context, { calendarDate: "2099-01-05" }),
+    renderers.renderCalendarPage(context, { calendarDate: "2099-01-05", calendarView: "month" }),
+    renderers.renderOrderDetailFragment(context)]) {
+    assert.doesNotMatch(html, /data-account-settings-root|data-account-w9-form|data-account-profile-details|data-account-password-details/);
+    assert.doesNotMatch(html, /Заполните документы сотрудника|Подключить Google Calendar|calendar@example\.test/);
+  }
+  const payroll = renderers.renderPayrollPage(context);
+  assert.ok(payroll.indexOf("data-account-settings-root") > payroll.indexOf("account-payroll-table"));
+  for (const marker of ["data-account-w9-form", "data-account-profile-details", "data-account-password-details"]) {
+    assert.ok(payroll.includes(marker));
+  }
+  assert.match(payroll, /Заполните документы сотрудника/);
+  assert.match(payroll, /Переподключить Google Calendar/);
+  assert.match(payroll, /calendar@example\.test/);
+  assert.match(payroll, /data-account-signature-pad/);
+  assert.match(payroll, /\$500\.00/);
+  assert.match(payroll, /data-admin-logout-form/);
+  for (const action of ["save-profile", "change-password", "save-w9"]) {
+    assert.match(payroll, new RegExp(`action="/account\\?section=payroll"[^>]*>[\\s]*<input type="hidden" name="action" value="${action}"`));
+  }
+  assert.match(renderers.renderPayrollPage(context, { notice: "profile-error" }), /data-account-profile-details open/);
+  assert.match(renderers.renderPayrollPage(context, { notice: "password-error" }), /data-account-password-details open/);
+  assert.match(renderers.renderPayrollPage(context, { focusSection: "w9" }), /data-account-w9-details open/);
+  assert.equal(JSON.stringify(context), snapshot);
+});
+
 test("renders mobile order details from the saved client address when calculator data is sparse", () => {
   const { renderOrderDetailFragment } = createRenderers();
   const html = renderOrderDetailFragment({

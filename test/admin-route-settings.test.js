@@ -440,22 +440,40 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(detailResponse.status, 200);
     assert.match(await detailResponse.text(), /Позвонить менеджеру/i);
     assert.doesNotMatch(accountDashboardBody, /account-mobile-order-dialog/i);
-    assert.match(accountDashboardBody, /alina\.staff@example\.com/i);
-    assert.match(accountDashboardBody, /<details class="admin-details" data-account-profile-details>/i);
-    assert.match(accountDashboardBody, /<summary>Изменить контакты<\/summary>/i);
-    assert.doesNotMatch(accountDashboardBody, /<details class="admin-details" data-account-profile-details" open>/i);
-    assert.match(accountDashboardBody, /<details class="admin-details" data-account-password-details>/i);
-    assert.match(accountDashboardBody, /<summary>Обновить пароль<\/summary>/i);
-    assert.doesNotMatch(accountDashboardBody, /<details class="admin-details" data-account-password-details" open>/i);
-    assert.match(accountDashboardBody, /Заполните документы сотрудника/i);
-    assert.match(accountDashboardBody, /data-account-w9-details/i);
-    assert.match(accountDashboardBody, /<summary>Открыть форму документов<\/summary>/i);
-    assert.doesNotMatch(accountDashboardBody, /data-account-w9-details[^>]* open/i);
-    assert.match(accountDashboardBody, /Подпишите форму мышкой, пальцем или стилусом/i);
-    assert.match(accountDashboardBody, /data-account-w9-form/i);
-    assert.match(accountDashboardBody, /data-account-w9-submit[^>]*disabled/i);
-    assert.match(accountDashboardBody, /data-account-w9-field="legalName"/i);
-    assert.match(accountDashboardBody, /data-account-w9-field="signature"/i);
+    assert.doesNotMatch(accountDashboardBody, /data-account-settings-root|data-account-profile-details|data-account-password-details|data-account-w9-details/);
+    for (const query of ["?focus=w9", "?notice=profile-error", "?notice=password-error", "?notice=calendar-connected", "?section=calendar&notice=calendar-connect-denied"]) {
+      const legacySettings = await fetch(`${started.baseUrl}/account${query}`, {
+        redirect: "manual", headers: { cookie: `shynli_user_session=${userSessionCookieValue}` },
+      });
+      assert.equal(legacySettings.status, 303);
+      const destination = new URL(legacySettings.headers.get("location"), started.baseUrl);
+      assert.equal(destination.searchParams.get("section"), "payroll");
+      if (query.includes("focus=w9")) {
+        assert.equal(destination.searchParams.get("focus"), "w9");
+        assert.equal(destination.hash, "#account-w9");
+      }
+    }
+    const accountSettingsResponse = await fetch(`${started.baseUrl}/account?section=payroll`, {
+      headers: { cookie: `shynli_user_session=${userSessionCookieValue}` },
+    });
+    assert.equal(accountSettingsResponse.status, 200);
+    const accountSettingsBody = await accountSettingsResponse.text();
+    assert.match(accountSettingsBody, /alina\.staff@example\.com/i);
+    assert.match(accountSettingsBody, /<details class="admin-details" data-account-profile-details>/i);
+    assert.match(accountSettingsBody, /<summary>Изменить контакты<\/summary>/i);
+    assert.doesNotMatch(accountSettingsBody, /<details class="admin-details" data-account-profile-details open>/i);
+    assert.match(accountSettingsBody, /<details class="admin-details" data-account-password-details>/i);
+    assert.match(accountSettingsBody, /<summary>Обновить пароль<\/summary>/i);
+    assert.doesNotMatch(accountSettingsBody, /<details class="admin-details" data-account-password-details open>/i);
+    assert.match(accountSettingsBody, /Заполните документы сотрудника/i);
+    assert.match(accountSettingsBody, /data-account-w9-details/i);
+    assert.match(accountSettingsBody, /<summary>Открыть форму документов<\/summary>/i);
+    assert.doesNotMatch(accountSettingsBody, /data-account-w9-details[^>]* open/i);
+    assert.match(accountSettingsBody, /Подпишите форму мышкой, пальцем или стилусом/i);
+    assert.match(accountSettingsBody, /data-account-w9-form/i);
+    assert.match(accountSettingsBody, /data-account-w9-submit[^>]*disabled/i);
+    assert.match(accountSettingsBody, /data-account-w9-field="legalName"/i);
+    assert.match(accountSettingsBody, /data-account-w9-field="signature"/i);
 
     const accountCalendarResponse = await fetch(`${started.baseUrl}/account?section=calendar&date=2026-03-27`, {
       headers: {
@@ -675,6 +693,8 @@ test("creates employee users in settings and serves a personal cabinet with assi
     assert.equal(invalidSaveW9Response.status, 422);
     assert.match(invalidSaveW9Body, /Не удалось собрать документы сотрудника/i);
     assert.match(invalidSaveW9Body, /<details class="admin-details" data-account-w9-details[^>]* open>/i);
+    assert.match(invalidSaveW9Body, /<div data-account-payroll-root>/);
+    assert.doesNotMatch(invalidSaveW9Body, /<div data-account-dashboard-root>/);
     assert.match(invalidSaveW9Body, /name="w9LegalName"[^>]*value="Alina Draft"/i);
     assert.match(invalidSaveW9Body, /name="w9BusinessName"[^>]*value="Alina Draft LLC"/i);
     assert.match(invalidSaveW9Body, /name="w9AddressLine1"[^>]*value="987 Draft Street"/i);
@@ -713,6 +733,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     assert.equal(saveW9Response.status, 303);
     assert.match(saveW9Response.headers.get("location") || "", /notice=w9-saved/);
+    assert.match(saveW9Response.headers.get("location") || "", /section=payroll/);
 
     const staffAfterW9Save = JSON.parse(await fs.readFile(staffStorePath, "utf8"));
     assert.equal(staffAfterW9Save.staff[0].contract.contractorName, "Alina Carter");
@@ -836,6 +857,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     assert.equal(saveProfileResponse.status, 303);
     assert.match(saveProfileResponse.headers.get("location") || "", /notice=profile-saved/);
+    assert.match(saveProfileResponse.headers.get("location") || "", /section=payroll/);
 
     const profilePageResponse = await fetch(`${started.baseUrl}${(saveProfileResponse.headers.get("location") || "").replace(/#.*$/, "")}`, {
       headers: {
@@ -876,6 +898,7 @@ test("creates employee users in settings and serves a personal cabinet with assi
     });
     assert.equal(changePasswordResponse.status, 303);
     assert.match(changePasswordResponse.headers.get("location") || "", /notice=password-saved/);
+    assert.match(changePasswordResponse.headers.get("location") || "", /section=payroll/);
 
     const passwordPageResponse = await fetch(
       `${started.baseUrl}${(changePasswordResponse.headers.get("location") || "").replace(/#.*$/, "")}`,
