@@ -342,6 +342,11 @@ module.exports = async function fetchStub(url, options = {}) {
       !candidateRoutes.some(route => route.match.includes("admin_order_list_entries"))) {
     return createResponse(404, { code: "PGRST205", message: "Missing admin_order_list_entries migration" });
   }
+  for (const view of ["admin_menu_entries", "admin_workspace_list_entries"]) {
+    if (new URL(url).pathname.endsWith("/" + view) && !candidateRoutes.some(route => route.match.includes(view))) {
+      return createResponse(404, { code: "PGRST205", message: "Missing " + view + " migration" });
+    }
+  }
   const match =
     candidateRoutes.find((route) => String(url).endsWith(route.match)) ||
     candidateRoutes.find(Boolean);

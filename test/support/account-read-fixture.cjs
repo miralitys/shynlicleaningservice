@@ -100,6 +100,18 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     const accountView = table === "account_order_list_entries";
     const calendarView = table === "account_calendar_entries";
     const adminOrderView = table === "admin_order_list_entries";
+    const adminMenuView = table === "admin_menu_entries";
+    const workspaceView = table === "admin_workspace_list_entries";
+    if (workspaceView && state.missingWorkspaceView) return { ok: false, status: 404,
+      text: async () => JSON.stringify({ code: "PGRST205", message: "Missing workspace view" }) };
+    if (workspaceView && state.workspaceViewError) return { ok: false, status: 403,
+      text: async () => JSON.stringify({ code: "42501", message: "Workspace denied" }) };
+    if (adminMenuView && state.missingAdminMenuView) {
+      return { ok: false, status: 404, text: async () => JSON.stringify({ code: "PGRST205", message: "Missing menu migration" }) };
+    }
+    if (adminMenuView && state.adminMenuError) {
+      return { ok: false, status: 403, text: async () => JSON.stringify({ code: "42501", message: "Menu denied" }) };
+    }
     if (adminOrderView && state.missingAdminOrderView) {
       return { ok: false, status: 404, text: async () => JSON.stringify({ code: "PGRST205", message: "Missing admin order list view" }) };
     }
@@ -118,14 +130,16 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     if (calendarView && state.calendarViewError) {
       return { ok: false, status: 403, text: async () => JSON.stringify({ code: "42501", message: "Calendar view access denied" }) };
     }
-    if ((state.failOrders && (table === "quote_ops_entries" || accountView || calendarView || adminOrderView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
+    if ((state.failOrders && (table === "quote_ops_entries" || accountView || calendarView || adminOrderView || adminMenuView || workspaceView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
       return { ok: false, status: 503, text: async () => JSON.stringify({ message: "Simulated read failure" }) };
     }
-    let rows = table === "quote_ops_entries" || accountView || calendarView || adminOrderView ? fixture.rows : table === "admin_staff" ? fixture.staff
+    let rows = table === "quote_ops_entries" || accountView || calendarView || adminOrderView || adminMenuView || workspaceView ? fixture.rows : table === "admin_staff" ? fixture.staff
       : table === "admin_users" ? fixture.users : table === "admin_staff_assignments" ? fixture.assignments : [];
     if ((accountView || calendarView) && fixture.accountRows) rows = fixture.accountRows;
     if (calendarView && fixture.calendarRows) rows = fixture.calendarRows;
     if (adminOrderView && fixture.adminOrderRows) rows = fixture.adminOrderRows;
+    if (adminMenuView && fixture.adminMenuRows) rows = fixture.adminMenuRows;
+    if (workspaceView && fixture.workspaceRows) rows = fixture.workspaceRows;
     if (state.reassigned && table === "admin_staff_assignments") rows = rows.filter(row => row.entry_id !== state.reassigned);
     for (const [key, value] of u.searchParams) {
       if (key === "or") {
@@ -152,6 +166,18 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     const limit = Math.min(Number(u.searchParams.get("limit") || 1000), state.cap || 1000);
     rows = rows.slice(Number(u.searchParams.get("offset") || 0), Number(u.searchParams.get("offset") || 0) + limit);
     if (adminOrderView && !fixture.adminOrderRows) rows = rows.map(row => ({ ...row, payload_for_retry: adminOrderViewPayload(row.payload_for_retry) }));
+    if (workspaceView && !fixture.workspaceRows) rows = rows.map(row => ({ ...row,
+      payload_for_retry: require("./admin-workspace-view-model.cjs").projectWorkspaceViewPayload(row.payload_for_retry) }));
+    if (adminMenuView && !fixture.adminMenuRows) rows = rows.map(row => {
+      const p = adminOrderViewPayload(row.payload_for_retry);
+      const lead = row.payload_for_retry?.adminLead;
+      return { ...row, payload_for_retry: { orderState: p.orderState, adminOrder: p.adminOrder,
+        adminLead: lead && typeof lead === "object" && !Array.isArray(lead) ? {
+          status: lead.status ?? null,
+          tasks: Array.isArray(lead.tasks) ? lead.tasks.map(task => task && typeof task === "object" && !Array.isArray(task)
+            ? Object.fromEntries(["id", "status"].filter(k => Object.hasOwn(task,k)).map(k => [k,task[k]])) : task) : lead.tasks ?? null,
+        } : lead ?? null } };
+    });
     if ((accountView || calendarView) && !fixture.accountRows && !(calendarView && fixture.calendarRows)) rows = rows.map(row => ({ ...row, payload_for_retry: require("../../lib/account/order-list")
       .projectAccountListEntry({ payloadForRetry: row.payload_for_retry }).payloadForRetry }));
     if (calendarView && !fixture.calendarRows) {
