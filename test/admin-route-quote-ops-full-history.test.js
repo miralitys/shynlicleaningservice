@@ -3,7 +3,7 @@
 const { test, assert, fs, createFetchStub, startServer, stopServer, createAdminSession, loadAdminConfig } = require("./admin-route-helpers");
 
 test("quote list, stage filter, search, funnel, counts and tasks cover old leads past 1000 ledger rows without writes", async () => {
-  const hidden = Array.from({ length: 1000 }, (_, i) => ({ id: `hidden-${i}`, kind: "admin_staff_member", status: "success",
+  const hidden = Array.from({ length: 1000 }, (_, i) => ({ id: `hidden-${String(i).padStart(4, "0")}`, kind: "admin_staff_member", status: "success",
     created_at: "2026-10-20T12:00:00Z", updated_at: "2026-10-20T12:00:00Z", customer_name: "Internal Staff Record" }));
   const leads = ["no-response", "discussion", "new", "declined"].map((status, i) => ({
     id: `old-lead-${i}`, kind: "quote_submission", status: "success", request_id: `archived-request-${i}`,
@@ -27,9 +27,9 @@ test("quote list, stage filter, search, funnel, counts and tasks cover old leads
       payload_for_retry: { calculatorData: {}, orderState: { status: "scheduled" } } },
   );
   const stub = createFetchStub([
-    { method: "GET", match: "order=id.asc&limit=500&offset=0", body: hidden.slice(0, 500) },
-    { method: "GET", match: "order=id.asc&limit=500&offset=500", body: hidden.slice(500) },
-    { method: "GET", match: "order=id.asc&limit=500&offset=1000", body: leads },
+    { method: "GET", match: "id=gt.hidden-0999", body: leads.slice().sort((a, b) => a.id.localeCompare(b.id)), headers: { "content-range": "0-6/7" } },
+    { method: "GET", match: "id=gt.hidden-0499", body: hidden.slice(500), headers: { "content-range": "0-499/507" } },
+    { method: "GET", match: "order=id.asc&limit=500", body: hidden.slice(0, 500), headers: { "content-range": "0-499/1007" } },
     { method: "GET", match: "/rest/v1/quote_ops_entries", body: hidden.slice(0, 180) },
     { method: "GET", match: "/rest/v1/", body: [] },
   ]);

@@ -4,6 +4,7 @@ const {
   fs, os, path, test, assert, loadAdminConfig, createFetchStub, startServer, stopServer,
   createAdminSession, getSetCookies, getCookieValue, submitQuote, getQuoteOpsEntryId,
 } = require("./admin-route-helpers");
+const { loadTaskDialogs, taskDialogs } = require("./support/quote-ops-task-dialogs.cjs");
 
 test("viewer reads all quote tasks and details but every quote mutation is forbidden", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-viewer-quotes-"));
@@ -35,7 +36,11 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
   });
   const get = async (route, cookie) => {
     const response = await fetch(`${started.baseUrl}${route}`, { redirect: "manual", headers: { cookie } });
-    return { status: response.status, html: await response.text() };
+    let html = await response.text();
+    if (response.status === 200 && /section=tasks/.test(route) && !new URL(route, started.baseUrl).searchParams.has("task")) {
+      html = await loadTaskDialogs(started.baseUrl, html, cookie);
+    }
+    return { status: response.status, html };
   };
   const assertReadOnly = (html) => {
     assert.doesNotMatch(html, /<form\b[^>]*method="post"[^>]*action="\/admin\/quote-ops(?:\/retry)?"/i);
@@ -109,9 +114,9 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     const managerTasks = await get("/admin/quote-ops?section=tasks", managerCookie);
     assert.match(managerTasks.html, /Закрыть таск/);
     assert.match(managerTasks.html, /Отменить таск/);
-    const taskDialogs = Array.from(managerTasks.html.matchAll(/<dialog\b[^>]*id="admin-quote-task-result-dialog-([^"]+)"[^>]*>[\s\S]*?<\/dialog>/g));
-    const futureId = taskDialogs.find((match) => match[0].includes("Future manual task"))[1];
-    const closedId = taskDialogs.find((match) => match[0].includes("Closed manual task"))[1];
+    const managerDialogs = taskDialogs(managerTasks.html);
+    const futureId = managerDialogs.find((match) => match[0].includes("Future manual task"))[1];
+    const closedId = managerDialogs.find((match) => match[0].includes("Closed manual task"))[1];
     assert.equal((await post("/admin/quote-ops", managerCookie, {
       action: "complete-lead-task", entryId, taskId: closedId, taskAction: "complete",
     })).status, 303);
@@ -312,7 +317,7 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     const evaClosed = await get(`/admin/quote-ops?section=tasks&task=${futureId}`, evaCookie);
     assert.match(evaClosed.html, /Eva closing &lt;safe&gt;/);
     assert.doesNotMatch(evaClosed.html, /Do not write lead notes/);
-    const closedDialog = evaClosed.html.match(new RegExp(`<dialog[^>]*id="admin-quote-task-result-dialog-${futureId}"[^>]*>[\\s\\S]*?<\\/dialog>`))[0];
+    const closedDialog = taskDialogs(evaClosed.html)[0][0];
     assert.doesNotMatch(closedDialog, /name="action" value="update-task-status"/);
     assert.doesNotMatch(closedDialog, /name="action" value="update-task-deadline"/);
     assert.equal((await post("/admin/quote-ops", evaCookie, {
@@ -321,7 +326,7 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     await post("/admin/quote-ops", managerCookie, { action: "create-lead-task", entryId,
       taskTitle: "Eva cancellation test", taskDueAt: "2099-11-20T12:30", assigneeId: managerId });
     const beforeCancel = await get("/admin/quote-ops?section=tasks", managerCookie);
-    const cancelDialog = [...beforeCancel.html.matchAll(/<dialog\b[^>]*id="admin-quote-task-result-dialog-([^"]+)"[^>]*>[\s\S]*?<\/dialog>/g)]
+    const cancelDialog = taskDialogs(beforeCancel.html)
       .find(match => match[0].includes("Eva cancellation test"));
     assert.ok(cancelDialog);
     const canceledResponse = await post("/admin/quote-ops", evaCookie, {
@@ -350,7 +355,7 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     assert.match(createdTask.headers.get("location"), /notice=task-created/);
     assert.equal((await post("/admin/quote-ops", evaCookie, createValues)).status, 303);
     const openCallbacks = await get("/admin/quote-ops?section=tasks&taskStatus=open&dueFrom=2099-11-25&dueTo=2099-11-25", evaCookie);
-    const callbackDialogs = [...openCallbacks.html.matchAll(/<dialog\b[^>]*id="admin-quote-task-result-dialog-([^"]+)"[^>]*>[\s\S]*?<\/dialog>/g)]
+    const callbackDialogs = taskDialogs(openCallbacks.html)
       .filter(match => match[0].includes("Eva new callback &lt;safe&gt;"));
     assert.equal(callbackDialogs.length, 1);
     assert.match(callbackDialogs[0][0], /Связаться с клиентом в назначенное время/);

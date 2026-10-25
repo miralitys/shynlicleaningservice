@@ -82,6 +82,10 @@ function getStaffAssignmentEntryIdByCustomerName(html, customerName) {
 }
 
 function getLeadTaskIdByEntryId(html, entryId) {
+  for (const match of html.matchAll(/data-admin-dialog-url="([^"]*taskDialog=1[^"]*)"/g)) {
+    const url = new URL(match[1].replace(/&amp;/g, "&"), "http://test.invalid");
+    if (url.searchParams.get("entry") === entryId) return url.searchParams.get("task");
+  }
   const match = String(html || "").match(
     new RegExp(
       `name="entryId" value="${escapeRegex(entryId)}"[\\s\\S]*?name="taskId" value="([^"]+)"`,

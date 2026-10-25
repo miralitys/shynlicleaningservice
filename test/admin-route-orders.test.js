@@ -1,4 +1,5 @@
 "use strict";
+const { loadTaskDialogs } = require("./support/quote-ops-task-dialogs.cjs");
 
 const {
   crypto,
@@ -2178,7 +2179,7 @@ test("creates follow-ups only without future orders and records the next cleanin
         },
       }
     );
-    const agreedTasksBody = await agreedTasksResponse.text();
+    const agreedTasksBody = await loadTaskDialogs(started.baseUrl, await agreedTasksResponse.text(), `shynli_admin_session=${sessionCookieValue}`);
     assert.equal(agreedTasksResponse.status, 200);
     assert.match(agreedTasksBody, /Договориться о следующей уборке/);
     assert.match(agreedTasksBody, /Договорились/);

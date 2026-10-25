@@ -7,6 +7,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { generateTotpCode, loadAdminConfig } = require("../lib/admin-auth");
 const { createFetchStub, startServer, stopServer } = require("./server-test-helpers");
+const { loadTaskDialogs } = require("./support/quote-ops-task-dialogs.cjs");
+const { taskListDialogId } = require("../lib/admin/pages/quote-ops-task-list");
 
 function getSetCookies(response) {
   const header = response.headers.get("set-cookie") || "";
@@ -27,6 +29,10 @@ function escapeRegex(value) {
 }
 
 function getLeadTaskIdByEntryId(html, entryId) {
+  for (const match of html.matchAll(/data-admin-dialog-url="([^"]*taskDialog=1[^"]*)"/g)) {
+    const url = new URL(match[1].replace(/&amp;/g, "&"), "http://test.invalid");
+    if (url.searchParams.get("entry") === entryId) return url.searchParams.get("task");
+  }
   const match = String(html || "").match(
     new RegExp(
       `name="entryId" value="${escapeRegex(entryId)}"[\\s\\S]*?name="taskId" value="([^"]+)"`,
@@ -545,7 +551,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
     assert.match(notedListBody, /Позвонить после 5 PM и уточнить код домофона\./);
     assert.match(
       notedListBody,
-      /window\.__adminBindQuoteOpsDialogContent = bindQuoteOpsEntryNotesForms;[\s\S]*if \(activeSection !== "funnel"\) return;/
+      /window\.__adminBindQuoteOpsDialogContent = scope =>[\s\S]*bindQuoteOpsTaskControls\(scope\);[\s\S]*if \(activeSection !== "funnel"\) return;/
     );
 
     const discussionAt = "2026-04-17T09:15";
@@ -596,7 +602,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
         },
       }
     );
-    const tasksBody = await tasksResponse.text();
+    const tasksBody = await loadTaskDialogs(started.baseUrl, await tasksResponse.text(), `shynli_admin_session=${sessionCookieValue}`);
     assert.equal(tasksResponse.status, 200);
     assert.match(tasksBody, /<title>Таски/);
     assert.doesNotMatch(tasksBody, /Весь поток заявок с сайта\./);
@@ -670,7 +676,7 @@ test("renders quote ops funnel and tasks with manager ownership and creates an o
         },
       }
     );
-    const manualTasksBody = await manualTasksResponse.text();
+    const manualTasksBody = await loadTaskDialogs(started.baseUrl, await manualTasksResponse.text(), `shynli_admin_session=${sessionCookieValue}`);
     assert.equal(manualTasksResponse.status, 200);
     assert.match(manualTasksBody, /Проверить ручную заметку менеджера/);
     assert.match(manualTasksBody, /Zoe Admin/);
@@ -1101,7 +1107,7 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
     });
-    const tasksBody = await tasksResponse.text();
+    const tasksBody = await loadTaskDialogs(started.baseUrl, await tasksResponse.text(), `shynli_admin_session=${sessionCookieValue}`);
     assert.equal(tasksResponse.status, 200);
     assert.match(tasksBody, /admin-quote-task-table/);
     assert.match(tasksBody, /Связаться с клиентом/);
@@ -1141,7 +1147,7 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     assert.equal(directTaskResponse.status, 200);
     assert.match(
       directTaskBody,
-      new RegExp(`id="admin-quote-task-result-dialog-${escapeRegex(taskId)}"[^>]*data-admin-dialog-autopen="true"`)
+      new RegExp(`id="${taskListDialogId({ id: taskId, entry: { id: entryId } })}"[^>]*data-admin-dialog-autopen="true"`)
     );
     assert.match(directTaskBody, /data-admin-dialog-return-url="\/admin\/quote-ops\?section=tasks"/);
     assert.match(directTaskBody, /name="action" value="delete-lead-task"/);
@@ -1160,7 +1166,7 @@ test("advances no-response lead tasks from same-day retry to next-morning and th
     assertTextBefore(
       directTaskBody,
       'aria-label="Удалить таск"',
-      `data-admin-dialog-close="admin-quote-task-result-dialog-${taskId}"`,
+      `data-admin-dialog-close="${taskListDialogId({ id: taskId, entry: { id: entryId } })}"`,
       "Task dialog header actions"
     );
 
