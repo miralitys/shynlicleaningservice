@@ -2,6 +2,12 @@
 const assert = require("node:assert/strict");
 
 async function loadTaskDialogs(baseUrl, html, cookie) {
+  const createUrl = html.match(/data-admin-dialog-url="([^"]*fragment=create-task-dialog[^"]*)"/);
+  if (createUrl) {
+    const response = await fetch(baseUrl + createUrl[1].replace(/&amp;/g, "&"), { headers: { cookie }, redirect: "manual" });
+    assert.equal(response.status, 200);
+    html += await response.text();
+  }
   const urls = [...html.matchAll(/data-admin-dialog-url="([^"]*taskDialog=1[^"]*)"/g)]
     .map(match => match[1].replace(/&amp;/g, "&"));
   assert.doesNotMatch(html, /<dialog\b[^>]*id="admin-quote-task-result-dialog-/);

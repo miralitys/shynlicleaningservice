@@ -271,8 +271,12 @@ test("viewer reads all quote tasks and details but every quote mutation is forbi
     assert.match(finalTasks.html, /Future manual task/);
     assert.doesNotMatch(finalTasks.html, /Do not create|Forbidden change/);
     const evaTasks = await get(`/admin/quote-ops?section=tasks&task=${futureId}`, evaCookie);
-    assert.match(evaTasks.html, /data-admin-dialog-open="admin-quote-create-task-dialog">Создать таск/);
-    const evaCreateDialog = evaTasks.html.match(/<dialog[^>]*id="admin-quote-create-task-dialog"[^>]*>[\s\S]*?<\/dialog>/)[0];
+    assert.match(evaTasks.html, /data-admin-dialog-open="admin-quote-create-task-dialog"/);
+    assert.doesNotMatch(evaTasks.html, /<dialog[^>]*id="admin-quote-create-task-dialog"/);
+    const evaForm = await get("/admin/quote-ops?section=tasks&fragment=create-task-dialog", evaCookie);
+    assert.equal(evaForm.status, 200);
+    const evaCreateDialog = evaForm.html.match(/<dialog[^>]*id="admin-quote-create-task-dialog"[^>]*>[\s\S]*?<\/dialog>/)[0];
+    assert.equal((await get("/admin/quote-ops?section=tasks&fragment=create-task-dialog", viewerCookie)).status, 403);
     assert.match(evaCreateDialog, /name="action" value="create-observer-task"/);
     assert.match(evaCreateDialog, /id="admin-observer-task-search"/);
     assert.match(evaCreateDialog, new RegExp(`<option value="${entryId}">`));

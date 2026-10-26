@@ -1038,10 +1038,16 @@ test("quote search and manual task picker include clients outside the former led
         cookie: `shynli_admin_session=${sessionCookieValue}`,
       },
     });
-    const tasksBody = await tasksResponse.text();
+    const tasksListBody = await tasksResponse.text();
     assert.equal(tasksResponse.status, 200);
+    assert.doesNotMatch(tasksListBody, /data-client-name="Suganya Swamy"/);
+    const createResponse = await fetch(`${started.baseUrl}/admin/quote-ops?section=tasks&fragment=create-task-dialog`, {
+      headers: { cookie: `shynli_admin_session=${sessionCookieValue}` },
+    });
+    assert.equal(createResponse.status, 200);
+    const tasksBody = await createResponse.text();
     assert.match(tasksBody, /data-client-name="Suganya Swamy"/);
-    assert.match(tasksBody, /manual-suganya-swamy-e8n84g/);
+    assert.match(tasksListBody, /manual-suganya-swamy-e8n84g/);
     assert.match(tasksBody, /data-client-phone="\+1\(513\)490-8202"/);
   } finally {
     await stopServer(started.child);

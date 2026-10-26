@@ -131,6 +131,16 @@ test("tasks and archive traverse the full history, with lazy cards and unchanged
     }
     assert.deepEqual(funnelRows.map(row => attr(row, "data-admin-list-key")).sort(), legacy.map(e => e.id).sort());
     const initial = await read("/admin/quote-ops?section=tasks");
+    assert.doesNotMatch(initial, /<dialog\b[^>]*id="admin-quote-create-task-dialog"/);
+    const createUrl = attr(find(parse(initial), "data-admin-dialog-open", "admin-quote-create-task-dialog"), "data-admin-dialog-url");
+    assert.ok(createUrl);
+    const create = await read(createUrl);
+    assert.match(create, /name="action" value="create-lead-task"/);
+    assert.match(create, /data-entry-id="order-01106"/);
+    assert.doesNotMatch(create, /<html|data-admin-list-id=/);
+    const fallback = await read("/admin/quote-ops?section=tasks&createTask=1");
+    assert.match(fallback, /<dialog open data-admin-dialog-server-open="true" data-admin-dialog-autopen="true"/);
+    assert.match(fallback, /data-admin-dialog-return-url="\/admin\/quote-ops\?section=tasks"/);
     assert.doesNotMatch(initial, /<dialog\b[^>]*id="admin-quote-task-result-dialog-/);
     const taskRows = await walk(parse(initial), "quote-tasks");
     assert.deepEqual(taskRows.map(row => attr(row, "data-admin-list-key")).sort(), open.map(taskListKey).sort());
@@ -172,7 +182,7 @@ test("tasks and archive traverse the full history, with lazy cards and unchanged
     assert.ok(find(parse(await read(next.pathname + next.search)), "data-admin-list-error"));
     for (const [user, allowed] of [["manager", true], ["eva", true], ["user-a", false], ["anonymous", false]]) {
       for (const route of [fragment, "/admin/quote-ops?section=archive&fragment=list&list=quote-archive-new",
-        "/admin/quote-ops?section=tasks&fragment=list&list=quote-tasks"]) {
+        "/admin/quote-ops?section=tasks&fragment=list&list=quote-tasks", "/admin/quote-ops?section=tasks&fragment=create-task-dialog"]) {
         const response = await fetch(app.baseUrl + route, { headers: { cookie: cookies[user] || "" }, redirect: "manual" });
         assert.equal(response.status === 200, allowed, user + route);
         if (user === "eva") assert.doesNotMatch(await response.text(), /name="action" value="(?:update-lead-status|delete-lead-task|delete-entry)"|draggable="true"/);
