@@ -143,6 +143,12 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     if (state.reassigned && table === "admin_staff_assignments") rows = rows.filter(row => row.entry_id !== state.reassigned);
     for (const [key, value] of u.searchParams) {
       if (key === "or") {
+        const kinds = value.match(/^\(kind\.is\.null,kind\.not\.in\.\(([a-z_,]+)\)\)$/);
+        if (kinds) {
+          const excluded = kinds[1].split(",");
+          rows = rows.filter(row => row.kind == null || !excluded.includes(row.kind));
+          continue;
+        }
         const field = "payload_for_retry->assignment->>staffIds";
         const match = value.match(/^\(payload_for_retry->assignment->>staffIds\.like\.\*([A-Za-z0-9-]+)\*,/);
         if (!match || value !== `(${field}.like.*${match[1]}*,${field}.is.null,${field}.in.("",false,0))`) {
