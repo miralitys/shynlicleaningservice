@@ -3,6 +3,8 @@
 const { test, assert, fs, createFetchStub, startServer, stopServer, createAdminSession, loadAdminConfig,
   getChicagoDateValue } = require("./admin-route-helpers");
 const { createOrdersUiPrimitives } = require("../lib/admin/pages/orders-ui-primitives");
+const os = require("node:os");
+const path = require("node:path");
 
 const { decorateOrderForPlanning } = createOrdersUiPrimitives({
   normalizeString: (value, max) => String(value || "").trim().slice(0, max),
@@ -92,5 +94,33 @@ test("dashboard shows actual new orders and excludes calendar-assigned orders fr
   } finally {
     await stopServer(started.child);
     stub.cleanup();
+  }
+});
+
+for (const mode of ["once", "persistent"]) test(`dashboard retries a ${mode} read conflict only once with fresh data and menu`, async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "dashboard-conflict-"));
+  const capture = path.join(root, "reads.ndjson");
+  const env = { ADMIN_MASTER_SECRET: "dashboard_conflict_test", SUPABASE_URL: "https://account-benchmark.invalid",
+    SUPABASE_SERVICE_ROLE_KEY: "sb_secret_fake", DASHBOARD_CONFLICT_MODE: mode, DASHBOARD_CONFLICT_CAPTURE: capture,
+    SHYNLI_FETCH_STUB_ENTRY: path.join(__dirname, "support/dashboard-conflict-fetch.cjs") };
+  const started = await startServer({ env });
+  try {
+    const cookie = `shynli_admin_session=${await createAdminSession(started.baseUrl, loadAdminConfig(env))}`;
+    const response = await fetch(`${started.baseUrl}/admin`, { headers: { cookie } });
+    const html = await response.text();
+    assert.equal(response.status, mode === "once" ? 200 : 500);
+    if (mode === "once") {
+      assert.match(html, /\$534\.00/);
+      assert.doesNotMatch(html, /\$250\.25/);
+      assert.match(html, /1 задача/, "Menu must use the retried snapshot, not the original context");
+      assert.match(html, /500\.00/);
+    }
+    const calls = (await fs.readFile(capture, "utf8")).trim().split("\n").map(JSON.parse);
+    assert.equal(calls.filter(x => x.url.includes("/admin_order_list_entries?")).length, 2);
+    assert.equal(calls.filter(x => x.url.includes("/quote_ops_entries?") && new URL(x.url).searchParams.has("id")).length, 2);
+    assert.ok(calls.every(x => x.method === "GET"));
+  } finally {
+    await stopServer(started.child);
+    await fs.rm(root, { recursive: true, force: true });
   }
 });
