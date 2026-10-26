@@ -66,7 +66,7 @@ test("tasks and archive traverse the full history, with lazy cards and unchanged
     CLIENT_REMINDER_BOOTSTRAP_DELAY_MS: "99999999", ACCOUNT_SECTION_CONTROL: path.join(root, "control.json"),
     ACCOUNT_SECTION_CAPTURE: path.join(root, "reads.ndjson"),
     SHYNLI_FETCH_STUB_ENTRY: path.resolve(__dirname, "support/quote-ops-list-fixture.cjs") };
-  await fs.writeFile(env.ACCOUNT_SECTION_CONTROL, "{}");
+  await fs.writeFile(env.ACCOUNT_SECTION_CONTROL, '{"workspacePage":true}');
   const fixture = createQuoteOpsListFixture();
   const untouched = JSON.stringify(fixture);
   const entries = fixture.rows.map(mapRowToEntry);
@@ -176,7 +176,7 @@ test("tasks and archive traverse the full history, with lazy cards and unchanged
     await fs.writeFile(env.ACCOUNT_SECTION_CONTROL, '{"failWorkspace":true}');
     const failure = await fetch(app.baseUrl + next.pathname + next.search, { headers: { cookie: owner } });
     assert.ok(failure.status >= 500);
-    await fs.writeFile(env.ACCOUNT_SECTION_CONTROL, "{}");
+    await fs.writeFile(env.ACCOUNT_SECTION_CONTROL, '{"workspacePage":true}');
     assert.equal(attr(find(parse(await read(next.pathname + next.search)), "data-admin-list-response"), "data-admin-list-start"), "50");
     next.searchParams.set("q", "manual-1106");
     assert.ok(find(parse(await read(next.pathname + next.search)), "data-admin-list-error"));
@@ -189,7 +189,7 @@ test("tasks and archive traverse the full history, with lazy cards and unchanged
       }
     }
     const reads = (await fs.readFile(env.ACCOUNT_SECTION_CAPTURE, "utf8")).trim().split("\n").map(JSON.parse);
-    assert.ok(reads.every(row => row.method === "GET"));
+    assert.ok(reads.every(row => row.method === "GET" || (row.method === "POST" && row.table === "read_admin_workspace_page")));
     assert.equal(JSON.stringify(fixture), untouched);
   } finally { await stopServer(app.child); await fs.rm(root, { recursive: true, force: true }); }
 });

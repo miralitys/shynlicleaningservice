@@ -8,7 +8,7 @@ const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const { createFixture, createReadFetch } = require("./support/account-read-fixture.cjs");
 const { createSupabaseQuoteOpsClient, mapRowToEntry, mapEntryToRow } = require("../lib/supabase-quote-ops");
-const { projectWorkspaceListEntry } = require("../lib/quote-ops/workspace-list");
+const { projectWorkspaceListEntry, hydrateWorkspaceListRow, WORKSPACE_LIST_SELECT, WORKSPACE_PAYLOAD_KEYS } = require("../lib/quote-ops/workspace-list");
 const { createQuoteOpsStore, filterQuoteOpsEntries } = require("../lib/quote-ops/store");
 const { hasEntryOrderState } = require("../lib/admin-order-state");
 const { createAdminDomainHelpers } = require("../lib/admin/domain");
@@ -82,11 +82,12 @@ test("missing migration falls back once to a complete read, never on denial or a
     const normal = createReadFetch(fixture, [], () => ({ cap: 5 }));
     const broken = createSupabaseQuoteOpsClient({ env, fetch: (url, options) => {
       calls.push(new URL(url).pathname);
+      if (new URL(url).pathname.endsWith("read_admin_workspace_page")) return normal(url, options);
       return ++count === 2 ? Promise.resolve({ ok: false, status: 503, text: async () => JSON.stringify({ code, message: "Later page failed" }) }) : normal(url, options);
     } });
     const store = createQuoteOpsStore({ normalizeString, QUOTE_OPS_LEDGER_LIMIT: 250, createSupabaseQuoteOpsClient: () => broken });
     await assert.rejects(store.listWorkspaceListEntries(), /Later page failed/);
-    assert(calls.every(p => p.endsWith("admin_workspace_list_entries")));
+    assert(calls.every(p => p.endsWith("admin_workspace_list_entries") || p.endsWith("read_admin_workspace_page")));
   }
 });
 
@@ -146,7 +147,7 @@ test("PostgreSQL workspace view preserves legacy recognition, series/archive mem
   const literal = value => `'${JSON.stringify(value).replaceAll("'", "''")}'::jsonb`;
   sql("create role anon; create role authenticated; create role service_role bypassrls;");
   migration("quote_ops_schema.sql"); sql("grant select on public.quote_ops_entries to service_role;");
-  const fixture = createFixture(60, 20);
+  const fixture = createFixture(1107, 157);
   const states = [undefined, null, {}, [], false, "legacy", { unknown: true }, { policyAcceptance: {} },
     { payrollOverrides: { a: "0" } }, { status: "scheduled" }, { managerConfirmationRequired: true, recurringSeriesId: "modern" },
     { managerConfirmationRequired: false, recurringSourceEntryId: "source" }, { isCreated: false, completion: { beforePhotos: [false] } },
@@ -175,12 +176,30 @@ test("PostgreSQL workspace view preserves legacy recognition, series/archive mem
   const checksum = () => sql("select md5(jsonb_agg(to_jsonb(q) order by id)::text) from public.quote_ops_entries q;");
   const before = checksum();
   migration("admin_order_list.sql"); migration("admin_workspace_list.sql"); migration("admin_workspace_list.sql"); migration("admin_menu.sql");
+  migration("admin_workspace_page.sql"); migration("admin_workspace_page.sql");
   assert.equal(checksum(), before);
   fixture.rows = JSON.parse(sql("select jsonb_agg(to_jsonb(q) order by id) from public.quote_ops_entries q;"));
   fixture.workspaceRows = JSON.parse(sql("set role service_role; select jsonb_agg(to_jsonb(q) order by id) from public.admin_workspace_list_entries q;"));
   fixture.adminMenuRows = JSON.parse(sql("set role service_role; select jsonb_agg(to_jsonb(q) order by id) from public.admin_menu_entries q;"));
   const full = ascending(fixture.rows.map(mapRowToEntry));
   const expected = full.map(projectWorkspaceListEntry);
+  const rpcRows = [];
+  let after = null;
+  for (;;) {
+    const page = JSON.parse(sql(`set role service_role; select public.read_admin_workspace_page(${after ? `'${after}'::uuid` : "null"}, 500);`));
+    assert.equal(page.after, after);
+    assert.equal(page.version, 1);
+    assert.equal(page.rows.length, Math.min(500, page.total));
+    rpcRows.push(...page.rows);
+    if (page.rows.length === page.total) break;
+    after = page.rows.at(-1).id;
+  }
+  fixture.workspacePageRows = rpcRows;
+  const rpcClient = createSupabaseQuoteOpsClient({ env, fetch: createReadFetch(fixture, [], () => ({ workspacePage: true })) });
+  assert.deepEqual(semantics(await rpcClient.fetchWorkspaceListEntries()), semantics(full));
+  assert.equal(rpcRows.length, fixture.workspaceRows.length);
+  rpcRows.forEach((row, i) => assert.deepEqual(projectWorkspaceListEntry(mapRowToEntry(hydrateWorkspaceListRow(row))),
+    projectWorkspaceListEntry(mapRowToEntry(fixture.workspaceRows[i])), `Workspace RPC row ${i}`));
   for (const noCount of [false, true]) {
     const calls = [];
     const actual = await createSupabaseQuoteOpsClient({ env, fetch: createReadFetch(fixture, calls, () => ({ cap: 37, noCount })) }).fetchWorkspaceListEntries();
@@ -202,9 +221,46 @@ test("PostgreSQL workspace view preserves legacy recognition, series/archive mem
     assert.equal(count(menu), count(full), "Menu counts must use the complete original task semantics");
   }
   for (const role of ["anon", "authenticated"]) assert.throws(() => sql(`set role ${role}; select * from public.admin_workspace_list_entries;`), /permission denied/);
+  for (const role of ["anon", "authenticated"]) assert.throws(() => sql(`set role ${role}; select public.read_admin_workspace_page();`), /permission denied/);
+  assert.throws(() => sql("set role service_role; select public.read_admin_workspace_page(null, 501);"), /Workspace page limit/);
+  assert.equal(sql("select provolatile::text || ':' || prosecdef::text from pg_proc where oid = 'public.read_admin_workspace_page(uuid,integer)'::regprocedure;"), "s:false");
   assert.equal(sql("select has_table_privilege('service_role', 'public.admin_workspace_list_entries', 'INSERT,UPDATE,DELETE');"), "f");
   assert.equal(sql("select has_function_privilege('anon', 'public.admin_workspace_state(jsonb)', 'EXECUTE');"), "f");
   assert.equal(checksum(), before, "No order, address, history, team or payout changes");
+  if (process.env.WORKSPACE_SQL_BENCHMARK === "1") {
+    const selected = WORKSPACE_LIST_SELECT.split(",").filter(column => !column.includes(":")).concat(
+      WORKSPACE_PAYLOAD_KEYS.map(key => `payload_for_retry->'${key}' as "workspace_${key}"`)).join(",");
+    const cursors = [null];
+    for (let i = 499; i < fixture.rows.length - 1; i += 500) cursors.push(fixture.rows[i].id);
+    const oldQuery = cursor => {
+      const where = cursor ? `where id > '${cursor}'::uuid` : "";
+      return `with pgrst_source as (select ${selected} from public.admin_workspace_list_entries ${where} order by id limit 500),
+        pgrst_source_count as (select 1 from public.admin_workspace_list_entries ${where})
+        select (select count(*) from pgrst_source_count), count(r), coalesce(json_agg(r),'[]') from pgrst_source r`;
+    };
+    const newQuery = cursor => `select public.read_admin_workspace_page(${cursor ? `'${cursor}'::uuid` : "null"},500)::text`;
+    const explain = query => JSON.parse(sql(`set role service_role; explain (analyze,buffers,format json) ${query};`))[0];
+    const samples = [];
+    for (let round = 0; round < 10; round++) {
+      const sample = { round: round + 1, old: [], current: [] };
+      for (const [key, query] of (round % 2 ? [["current",newQuery],["old",oldQuery]] : [["old",oldQuery],["current",newQuery]])) {
+        for (const cursor of cursors) sample[key].push(explain(query(cursor))["Execution Time"]);
+      }
+      samples.push(sample);
+    }
+    const migrationText = fs.readFileSync(path.join(__dirname, "../supabase/admin_workspace_page.sql"), "utf8");
+    const pageQuery = migrationText.slice(migrationText.indexOf("with raw_page"), migrationText.indexOf("  return jsonb_build_object"))
+      .replace(" into result_rows", "").replaceAll("p_limit", "500").replaceAll("p_after", "null::uuid").trim().replace(/;$/, "");
+    const pagePlan = explain(pageQuery);
+    const nodes = [];
+    const walk = node => { nodes.push({ type: node["Node Type"], cte: node["CTE Name"], name: node["Subplan Name"], rows: node["Actual Rows"] });
+      (node.Plans || []).forEach(walk); };
+    walk(pagePlan.Plan);
+    assert.equal(nodes.find(n => n.name === "CTE projected").rows, 500);
+    assert.equal(nodes.find(n => n.name === "CTE raw_page").rows, 500);
+    assert.equal(checksum(), before);
+    t.diagnostic(JSON.stringify({ workspaceSqlBenchmark: { rows: full.length, pages: cursors.length, samples, nodes } }));
+  }
   t.diagnostic(JSON.stringify({ rows: full.length, beforeBytes: Buffer.byteLength(JSON.stringify(fixture.rows)),
     afterBytes: Buffer.byteLength(JSON.stringify(fixture.workspaceRows)), unchanged: true }));
 });

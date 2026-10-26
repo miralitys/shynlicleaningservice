@@ -96,6 +96,32 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
       if (process.env.ACCOUNT_BENCH_CAPTURE) fs.appendFileSync(process.env.ACCOUNT_BENCH_CAPTURE, JSON.stringify(call) + "\n");
       return { ok: true, status: 200, text: async () => text };
     }
+    if (method === "POST" && table === "read_admin_workspace_page") {
+      if (!state.workspacePage) return { ok: false, status: 404, text: async () => JSON.stringify({
+        code: "PGRST202", message: "Missing function read_admin_workspace_page" }) };
+      if (state.workspacePageError || state.failOrders) return { ok: false, status: state.failOrders ? 503 : 403,
+        text: async () => JSON.stringify({ code: "42501", message: "Workspace page denied or failure" }) };
+      const args = JSON.parse(options.body);
+      let rows, total;
+      if (fixture.workspacePageRows) {
+        const remaining = fixture.workspacePageRows.filter(row => !args.p_after || row.id > args.p_after)
+          .slice().sort((a, b) => a.id.localeCompare(b.id));
+        total = remaining.length;
+        rows = remaining.slice(0, args.p_limit);
+      } else {
+        const query = new URLSearchParams({ select: require("../../lib/quote-ops/workspace-list").WORKSPACE_LIST_SELECT,
+          order: "id.asc", limit: String(args.p_limit) });
+        if (args.p_after) query.set("id", `gt.${args.p_after}`);
+        const response = await createReadFetch(fixture, [], () => ({ ...state, cap: Infinity, noCount: false,
+          missingWorkspaceView: false, workspaceViewError: false }))(
+          `${u.origin}/rest/v1/admin_workspace_list_entries?${query}`);
+        rows = JSON.parse(await response.text());
+        total = Number(response.headers.get("content-range").split("/")[1]);
+      }
+      const text = JSON.stringify({ version: 1, after: args.p_after, total, rows });
+      calls.push({ table, method, query: u.search, body: args, bytes: Buffer.byteLength(text), rows: rows.length });
+      return { ok: true, status: 200, text: async () => text };
+    }
     if (method !== "GET") throw new Error(`Account benchmark forbids writes: ${method} ${table}`);
     const accountView = table === "account_order_list_entries";
     const calendarView = table === "account_calendar_entries";
