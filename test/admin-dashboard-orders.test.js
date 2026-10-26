@@ -40,7 +40,17 @@ test("dashboard shows actual new orders and excludes calendar-assigned orders fr
     row("really-unassigned", "scheduled"), row("archived-lead", ""),
     row("completed-unassigned", "completed"), row("canceled-unassigned", "canceled"),
   ];
+  newRows[0].payload_for_retry.adminLead = { status: "new", tasks: [
+    { id: "future-followup", status: "open", title: "Future followup", dueAt: "2099-01-01T12:00:00Z" },
+  ] };
+  rows.push({ ...row("standalone-future", ""), kind: "admin_standalone_task", payload_for_retry: {
+    adminLead: { status: "new", tasks: [
+      { id: "future-followup", status: "open", title: "Standalone future followup", dueAt: "2099-01-01T12:00:00Z" },
+    ] },
+  } });
   const stub = createFetchStub([
+    { method: "GET", match: "/rest/v1/admin_order_list_entries", body: rows.slice().sort((a, b) => a.id.localeCompare(b.id)) },
+    { method: "GET", match: "/rest/v1/quote_ops_entries?select=*&id=in.", body: rows.filter(row => row.payload_for_retry.orderState) },
     { method: "GET", match: "/rest/v1/quote_ops_entries", body: rows },
     { method: "GET", match: "/rest/v1/admin_staff_assignments", body: [{ entry_id: "calendar-assigned", staff_ids: ["cleaner"], schedule_date: today, schedule_time: "10:00" }] },
     { method: "GET", match: "/rest/v1/admin_staff", body: [{ id: "cleaner", name: "Calendar Cleaner", role: "cleaner", status: "active" }] },
@@ -54,6 +64,8 @@ test("dashboard shows actual new orders and excludes calendar-assigned orders fr
     const response = await fetch(`${started.baseUrl}/admin`, { headers: { cookie } });
     assert.equal(response.status, 200);
     const html = await response.text();
+    assert.match(html, /2 задачи/, "Menu includes future tasks, including standalone tasks, not just today's table");
+    assert.doesNotMatch(html, /data-admin-dashboard-tasks="true"[^>]*>[\s\S]*?Future followup/);
     const section = (name) => html.match(new RegExp(`data-admin-dashboard-${name}="true"[\\s\\S]*?</table>`))?.[0] || "";
     const newOrders = section("new-orders");
     assert.ok(newOrders);
@@ -73,7 +85,10 @@ test("dashboard shows actual new orders and excludes calendar-assigned orders fr
     assert.doesNotMatch(assignedRow, /Команда не назначена/);
     const calls = (await fs.readFile(stub.captureFile, "utf8")).trim().split("\n").filter(Boolean).map(JSON.parse);
     assert.equal(calls.filter(call => call.method !== "GET" && /quote_ops_entries|admin_staff/.test(call.url)).length, 0);
-    assert.ok(calls.some(call => call.method === "GET" && /quote_ops_entries/.test(call.url) && new URL(call.url).searchParams.get("limit") === "1000"));
+    assert.ok(calls.some(call => /admin_order_list_entries/.test(call.url)));
+    assert.ok(!calls.some(call => /admin_menu_entries/.test(call.url)), "Menu reuses the complete dashboard data");
+    assert.ok(calls.filter(call => /quote_ops_entries/.test(call.url)).every(call => new URL(call.url).searchParams.has("id")),
+      "Only displayed full cards read full ledger rows");
   } finally {
     await stopServer(started.child);
     stub.cleanup();
