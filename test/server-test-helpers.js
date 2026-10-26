@@ -168,7 +168,7 @@ async function cleanupTempDataRoot(child) {
   await fsp.rm(tempDataRoot, { recursive: true, force: true });
 }
 
-async function startServer({ env = {}, nodePathEntries = [], nodeArgs = [] } = {}) {
+async function startServer({ env = {}, nodePathEntries = [], nodeArgs = [], ipc = false } = {}) {
   const port = await getFreePort();
   const isolated = buildIsolatedServerEnv(env);
   const child = spawn("node", ["--require", BOOTSTRAP_PATH, ...nodeArgs, "server.js"], {
@@ -185,7 +185,7 @@ async function startServer({ env = {}, nodePathEntries = [], nodeArgs = [] } = {
       ...(nodePathEntries.length > 0 ? { NODE_PATH: buildNodePath(nodePathEntries) } : {}),
       ...isolated.env,
     },
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["ignore", "pipe", "pipe", ...(ipc ? ["ipc"] : [])],
   });
 
   childTempDataRoots.set(child, isolated.tempDataRoot);
