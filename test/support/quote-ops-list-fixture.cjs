@@ -40,7 +40,7 @@ module.exports = async (url, options) => {
     return { ...state, cap: state.cap || 123 };
   });
   const state = JSON.parse(fs.readFileSync(process.env.ACCOUNT_SECTION_CONTROL, "utf8"));
-  if (state.failWorkspace && ["quote_ops_entries", "admin_workspace_list_entries", "read_admin_workspace_page"].some(table => new URL(url).pathname.endsWith("/" + table))) {
+  if (state.failWorkspace && ["quote_ops_entries", "admin_workspace_list_entries"].some(table => new URL(url).pathname.endsWith("/" + table))) {
     return { ok: false, status: 503, text: async () => JSON.stringify({ message: "Workspace unavailable" }) };
   }
   return read(url, options);

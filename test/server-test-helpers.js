@@ -347,10 +347,6 @@ module.exports = async function fetchStub(url, options = {}) {
       return createResponse(404, { code: "PGRST205", message: "Missing " + view + " migration" });
     }
   }
-  if (new URL(url).pathname.endsWith("/rpc/read_admin_workspace_page") &&
-      !candidateRoutes.some(route => route.match.includes("read_admin_workspace_page"))) {
-    return createResponse(404, { code: "PGRST202", message: "Missing read_admin_workspace_page migration" });
-  }
   const match =
     candidateRoutes.find((route) => String(url).endsWith(route.match)) ||
     candidateRoutes.find(Boolean);
