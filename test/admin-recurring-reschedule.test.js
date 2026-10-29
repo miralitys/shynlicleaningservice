@@ -49,6 +49,7 @@ for (const scenario of [
     await update(id, { orderStatus: "cleaning-complete" });
     const after = await read();
     assert.equal(after.size, scenario.expectedCount, "only the requested cadence remains, without both schedules");
+    if (scenario.frequency === "weekly") assert.deepEqual([...after.keys()].sort(), [...before.keys()].sort(), "a date-only move keeps every existing order ID");
     assert.equal(after.get(historyId), before.get(historyId));
     for (const [entryId, card] of after) if (entryId !== historyId) {
       assert.match(card, /\$280\.00/);

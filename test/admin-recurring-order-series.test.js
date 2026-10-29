@@ -177,6 +177,51 @@ function createStaffStore(status = "planned") {
   };
 }
 
+test("a historical root extends the moved cadence, not its old dates, without duplicating existing visits", async () => {
+  const domain = createDomain();
+  const root = createEntry({ id: "isolated-history-root", date: "2026-10-18", status: "completed", seriesId: "isolated-cadence" });
+  const ledger = createLedger(domain, [root]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root, horizonMonths: 2 });
+  const existing = await ledger.listEntries();
+  const source = existing.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 1);
+  assert.ok(source);
+  for (const entry of existing) {
+    const index = getEntryOrderState(entry).recurringOccurrenceIndex;
+    if (!index) continue;
+    await ledger.updateOrderEntry(entry.id, {
+      selectedDate: index === 1 ? "2026-11-08" : domain.addRecurringScheduleDate("2026-11-08", "biweekly", index - 1), selectedTime: "10:00",
+    });
+  }
+  for (const key of ["orderState", "adminOrder"]) source.payloadForRetry[key].recurringSchedule = {
+    index: 1, date: "2026-11-08", time: "10:00", frequency: "biweekly", version: 1,
+  };
+  const before = structuredClone(existing);
+  const created = await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root, horizonMonths: 6 });
+  assert.ok(created.length > 0);
+  const withoutMaintenanceMetadata = entry => {
+    const result = structuredClone(entry);
+    delete result.updatedAt;
+    for (const key of ["orderState", "adminOrder"]) {
+      delete result.payloadForRetry[key].updatedAt;
+      delete result.payloadForRetry[key].recurringNextEntryId;
+      delete result.payloadForRetry[key].recurringGeneratedAt;
+    }
+    return result;
+  };
+  for (const entry of before) assert.deepEqual(withoutMaintenanceMetadata(await ledger.getEntry(entry.id)), withoutMaintenanceMetadata(entry));
+  for (const entry of created) {
+    const index = getEntryOrderState(entry).recurringOccurrenceIndex;
+    assert.equal(entry.selectedDate, domain.addRecurringScheduleDate("2026-11-08", "biweekly", index - 1));
+    assert.equal(entry.selectedTime, "10:00");
+    assert.deepEqual(entry.recurringSourceGuard.schedule, [{ entryId: source.id, schedule: getEntryOrderState(source).recurringSchedule }]);
+  }
+  const all = await ledger.listEntries();
+  assert.equal(new Set(all.map(entry => `${entry.selectedDate}T${entry.selectedTime}`)).size, all.length,
+    JSON.stringify(all.map(entry => ({ id: entry.id, date: entry.selectedDate, index: getEntryOrderState(entry).recurringOccurrenceIndex }))));
+  assert.deepEqual(await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root, horizonMonths: 6 }), []);
+});
+
 test("website recurring orders wait for manager confirmation, including after policy signing", async () => {
   for (const frequency of ["weekly", "biweekly", "monthly"]) {
     for (const status of ["new", "scheduled"]) {

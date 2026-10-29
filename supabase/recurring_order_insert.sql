@@ -95,6 +95,15 @@ drop trigger if exists quote_ops_recurring_slot_guard on public.quote_ops_entrie
 create trigger quote_ops_recurring_slot_guard before insert or update or delete on public.quote_ops_entries
   for each row execute function public.guard_recurring_quote_slot();
 
+create or replace function public.quote_ops_recurring_schedule_guard(p_series text)
+returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
+  select coalesce(jsonb_agg(jsonb_build_object('entryId', q.id, 'schedule', s->'recurringSchedule') order by q.id), '[]'::jsonb)
+  from public.quote_ops_entries q
+  cross join lateral (select public.quote_ops_order_state(q.payload_for_retry) s) v
+  where public.quote_ops_recurring_series_id(q) = p_series and s ? 'recurringSchedule';
+$$;
+revoke all on function public.quote_ops_recurring_schedule_guard(text) from public, anon, authenticated;
+
 create or replace function public.insert_recurring_quote_order(p_entry jsonb, p_source_guard jsonb)
 returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
 declare
@@ -119,6 +128,9 @@ begin
 
   -- Serialize all writers of the same raw series identity, including other app instances.
   perform pg_advisory_xact_lock(hashtextextended('shynli:recurring-order:' || series_id, 0));
+  if public.quote_ops_recurring_schedule_guard(series_id) is distinct from coalesce(p_source_guard->'schedule', '[]'::jsonb) then
+    raise exception 'Recurring schedule changed' using errcode = '40001';
+  end if;
   select * into source_entry from public.quote_ops_entries
     where id = (p_source_guard->>'entryId')::uuid;
   source_order := public.quote_ops_order_state(source_entry.payload_for_retry);

@@ -120,7 +120,7 @@ test("PostgreSQL: admin view preserves all legacy roots, displayed fields, filte
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "shynli-admin-order-view-pg-"));
   const dir = path.join(root, "db");
   const run = (bin, args, extra = {}) => execFileSync(path.join(pgBin, bin), args,
-    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024, stdio: ["pipe", "pipe", "pipe"], ...extra });
+    { encoding: "utf8", timeout: 30000, maxBuffer: 64 * 1024 * 1024, stdio: ["pipe", "pipe", "pipe"], ...extra });
   let started = false;
   t.after(() => {
     if (started) run("pg_ctl", ["-D", dir, "-m", "immediate", "stop"]);
@@ -129,8 +129,13 @@ test("PostgreSQL: admin view preserves all legacy roots, displayed fields, filte
   run("initdb", ["-D", dir, "-A", "trust", "-U", "orders_qa", "--no-locale"]);
   run("pg_ctl", ["-D", dir, "-l", path.join(root, "postgres.log"), "-o", `-k ${root} -h '' -p 55447`, "start"]);
   started = true;
-  const sql = input => run("psql", ["-X", "-h", root, "-p", "55447", "-U", "orders_qa", "-d", "postgres",
-    "-v", "ON_ERROR_STOP=1", "-Atq"], { input }).trim();
+  const sql = input => {
+    // Avoid blocking macOS synchronous stdin pipes on large synthetic SQL fixtures.
+    const file = path.join(root, "query.sql");
+    fs.writeFileSync(file, input);
+    return run("psql", ["-X", "-h", root, "-p", "55447", "-U", "orders_qa", "-d", "postgres",
+      "-v", "ON_ERROR_STOP=1", "-Atq", "-f", file]).trim();
+  };
   const literal = value => `'${JSON.stringify(value).replaceAll("'", "''")}'::jsonb`;
   const migration = file => sql(fs.readFileSync(path.join(__dirname, "../supabase", file), "utf8"));
   sql("create role anon; create role authenticated; create role service_role bypassrls;");
