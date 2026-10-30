@@ -1081,7 +1081,7 @@ test("keeps quote requests local when optional CRM side effects are disabled", a
     assert.equal(payload.noteCreated, false);
     assert.equal(payload.opportunityCreated, false);
     assert.equal(payload.opportunitySyncReason, "quote_opportunity_local_only");
-    assert.deepEqual(payload.warnings, []);
+    assert.deepEqual(payload.warnings, ["attribution_custom_fields_missing", "note_failed"]);
 
     const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
     const calls = captureRaw
@@ -1089,7 +1089,9 @@ test("keeps quote requests local when optional CRM side effects are disabled", a
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    assert.equal(calls.some((call) => call.url.endsWith("/notes")), false);
+    const notes = calls.filter(call => call.url.endsWith("/notes"));
+    assert.equal(notes.length, 1);
+    assert.match(JSON.parse(notes[0].body).body, /^Attribution:/);
     assert.equal(calls.some((call) => call.url.includes("/opportunities")), false);
     assert.equal(calls.some((call) => call.method === "PUT" && call.url.includes("/contacts/")), false);
   } finally {
@@ -1178,8 +1180,8 @@ test("does not create Go High Level opportunities for quote requests", async () 
     assert.equal(payload.success, true);
     assert.equal(payload.opportunityCreated, false);
     assert.equal(payload.opportunitySyncReason, "quote_opportunity_local_only");
-    assert.equal(payload.warningMessage, "");
-    assert.deepEqual(payload.warnings, []);
+    assert.match(payload.warningMessage, /GHL/);
+    assert.deepEqual(payload.warnings, ["attribution_custom_fields_missing"]);
 
     const captureRaw = await fs.readFile(fetchStub.captureFile, "utf8");
     const calls = captureRaw
@@ -1279,7 +1281,10 @@ test("returns canonical repriced values while keeping quote history local", asyn
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    assert.equal(calls.some((call) => call.url.endsWith("/notes")), false);
+    const attributionNotes = calls.filter((call) => call.url.endsWith("/notes"));
+    assert.equal(attributionNotes.length, 1);
+    assert.match(JSON.parse(attributionNotes[0].body).body, /^Attribution:/);
+    assert.doesNotMatch(JSON.parse(attributionNotes[0].body).body, /Total price|Services:|Rooms:/);
     assert.equal(calls.some((call) => call.url.includes("/opportunities")), false);
     assert.equal(calls.some((call) => call.method === "PUT" && call.url.includes("/contacts/")), false);
   } finally {

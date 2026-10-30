@@ -210,6 +210,19 @@
   }
 
   function getQuoteAttributionPayload() {
+    if (window.shynliTracking && typeof window.shynliTracking.getSubmissionAttribution === "function") {
+      const type = state.contactIntent === "call" ? "callback" : new URLSearchParams(window.location.search).has("calculator") ? "calculator" : "booking";
+      const fields = window.shynliTracking.getSubmissionAttribution(type);
+      if (elements.form) {
+        elements.form.setAttribute("data-shynli-lead-form-type", type);
+        Object.keys(fields).filter(key => key !== "attribution").forEach(key => {
+          let input = elements.form.querySelector('input[name="' + key + '"]');
+          if (!input) { input = document.createElement("input"); input.type = "hidden"; input.name = key; elements.form.appendChild(input); }
+          input.value = fields[key];
+        });
+      }
+      return fields;
+    }
     const attribution =
       window.shynliTracking && typeof window.shynliTracking.getAttribution === "function"
         ? window.shynliTracking.getAttribution() || {}

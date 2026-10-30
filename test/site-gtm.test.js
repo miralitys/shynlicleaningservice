@@ -36,8 +36,8 @@ test("serves GTM on public site routes", async () => {
       /<!-- Google Tag Manager -->[\s\S]*?(requestIdleCallback|setTimeout\(idleLoad,45000\)|addEventListener\('load')[\s\S]*?<!-- End Google Tag Manager -->/,
       route
     );
-    assert.match(body, /setTimeout\(idleLoad,8000\)/, route);
-    assert.match(body, /\['click','submit','focusin'\]/, route);
+    assert.match(body, /setTimeout\(idleLoad, delays\.idle\)/, route);
+    assert.match(body, /\["click", "submit", "focusin"\]/, route);
     assert.doesNotMatch(body, /visibilitychange/, route);
     assert.doesNotMatch(body, /googletagmanager\.com\/gtag\/js\?id=/, route);
     if (route === "/") {

@@ -190,8 +190,9 @@ test("injects Google Tag Manager at the top of public page head and body", () =>
       sanitized,
       /<!-- Google Tag Manager -->[\s\S]*?(requestIdleCallback|setTimeout\(idleLoad,45000\)|addEventListener\('load')[\s\S]*?<!-- End Google Tag Manager -->/
     );
-    assert.match(sanitized, /setTimeout\(idleLoad,8000\)/);
-    assert.match(sanitized, /\['click','submit','focusin'\]/);
+    assert.match(sanitized, /setTimeout\(idleLoad, delays\.idle\)/);
+    assert.match(sanitized, /"idle":8000,"timeout":5000,"interaction":800/);
+    assert.match(sanitized, /\["click", "submit", "focusin"\]/);
     assert.doesNotMatch(sanitized, /visibilitychange/);
     assert.doesNotMatch(sanitized, /googletagmanager\.com\/gtag\/js\?id=/);
     assert.match(sanitized, /<body[^>]*><!-- Google Tag Manager \(noscript\) -->/);

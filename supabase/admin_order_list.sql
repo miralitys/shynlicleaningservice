@@ -62,6 +62,7 @@ select id, kind, status, created_at, updated_at, request_id, source_route, sourc
     'payment', public.admin_order_list_pick(payload_for_retry->'payment', array['status', 'method']),
     'calculatorData', payload_for_retry->'calculatorData',
     'adminLead', payload_for_retry->'adminLead',
+    'leadAttribution', public.admin_order_list_pick(payload_for_retry->'leadAttribution', array['lead_source_channel', 'form_type', 'referrer', 'utm_source']),
     'adminClient', case when jsonb_typeof(payload_for_retry->'adminClient') = 'object'
       then (payload_for_retry->'adminClient') - 'photos' else payload_for_retry->'adminClient' end
   ) as payload_for_retry

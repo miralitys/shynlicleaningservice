@@ -32,6 +32,7 @@ const {
   createOrderFromQuoteRequest,
   getQuoteOpsEntryId,
 } = require("./admin-route-helpers");
+const { FIELD_NAMES, fieldKey } = require("../lib/lead-attribution-fields");
 
 test("shows recent quote submissions in admin quote ops and retries CRM sync", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "shynli-order-media-admin-"));
@@ -936,6 +937,12 @@ test("keeps quote requests visible when Go High Level opportunity sync is disabl
   const staffStorePath = path.join(tempDir, "admin-staff-store.json");
   const fetchStub = createFetchStub([
     {
+      method: "GET",
+      match: "/contacts/contact-warning-123",
+      status: 200,
+      body: { contact: { id: "contact-warning-123", customFields: [] } },
+    },
+    {
       method: "POST",
       match: "/contacts/",
       status: 200,
@@ -986,6 +993,7 @@ test("keeps quote requests visible when Go High Level opportunity sync is disabl
     GHL_LOCATION_ID: "location-123",
     GHL_CUSTOM_FIELDS_JSON: JSON.stringify({
       fullAddress: "cf_full_address",
+      ...Object.fromEntries(FIELD_NAMES.map(name => [fieldKey(name), `cf_shynli_${name}`])),
     }),
     GHL_ENABLE_NOTES: "0",
     GHL_CREATE_OPPORTUNITY: "1",

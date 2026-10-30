@@ -80,6 +80,7 @@
   }
 
   function captureAttribution() {
+    if (ns.attributionRuntime) return ns.attributionRuntime.capture();
     var captured = getAttribution();
     var found = false;
     for (var i = 0; i < ATTRIBUTION_KEYS.length; i++) {
@@ -105,6 +106,7 @@
   }
 
   function getAttribution() {
+    if (ns.attributionRuntime) return ns.attributionRuntime.getFirst();
     try {
       var raw = getCookie(ATTRIBUTION_COOKIE);
       if (raw) {
@@ -276,6 +278,10 @@
     }
     var landingPage = getCookie(LANDING_PAGE_COOKIE);
     if (landingPage) p.landing_page = landingPage;
+    if (ns.attributionRuntime) {
+      var fields = ns.attributionRuntime.fields(p.form_type);
+      Object.keys(fields).forEach(function(key) { if (!(key in p)) p[key] = fields[key]; });
+    }
     return p;
   }
 
