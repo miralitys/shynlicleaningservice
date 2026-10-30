@@ -83,7 +83,7 @@ test("serves ad-only v3 landing pages", async () => {
     assert.match(body, new RegExp(`class="[^"]*\\b${landing.bodyClass}\\b`), landing.route);
     assert.match(body, landing.content, landing.route);
     assert.match(body, /\/css\/ads-lp-v3\.css\?v=20260603-14/, landing.route);
-    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20260603-9/, landing.route);
+    assert.match(body, /\/js\/ads-lp-v3\.js\?v=20261030-attribution/, landing.route);
     assert.match(body, /data-adlp-quote-form/, landing.route);
     assert.match(body, new RegExp(`value="${landing.service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`), landing.route);
     assert.doesNotMatch(body, /<a\b[^>]*class="[^"]*\badlp-logo\b/i, landing.route);
@@ -132,7 +132,7 @@ test("excludes ad-only v3 landing pages from sitemap", async () => {
 });
 
 test("submits ad-only landing forms directly without quote-page redirects", async () => {
-  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20260603-9`);
+  const response = await fetch(`${BASE_URL}/js/ads-lp-v3.js?v=20261030-attribution`);
   const body = await response.text();
 
   assert.equal(response.status, 200);

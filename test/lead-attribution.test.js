@@ -117,6 +117,7 @@ test("server uses immutable cookie over conflicting hidden values and recomputes
   assert.equal(attr.gclid, undefined);
   assert.equal(extractLeadAttribution({form_type:"quote",requestType:"call_me"}).form_type, "quote");
   assert.equal(extractLeadAttribution({requestType:"call_me"}).form_type, "callback");
+  assert.equal(extractLeadAttribution({pagePath:"/ads?private=removed"}).submission_page, "https://shynlicleaningservice.com/ads");
   assert.doesNotMatch(attr.submission_page, /private/);
   assert.match(attributionText(attr), /Lead Source: booking/);
   const escaped = renderLeadAttribution({payloadForRetry:{leadAttribution:{...attr,submission_page:'<img onerror=alert(1)>'}}}, value => String(value).replace(/</g,"&lt;"));

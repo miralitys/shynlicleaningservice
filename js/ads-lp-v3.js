@@ -51,6 +51,9 @@
   }
 
   function collectAttribution() {
+    if (window.shynliTracking && typeof window.shynliTracking.getSubmissionAttribution === "function") {
+      return window.shynliTracking.getSubmissionAttribution("callback");
+    }
     var search = readSearchParams();
     var attribution = {};
     ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "gbraid", "wbraid"].forEach(

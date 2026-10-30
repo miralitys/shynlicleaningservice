@@ -349,8 +349,8 @@ test("native and legacy quick quote forms track once, preserve contact prefill a
     timers[0]();
     const target = new URL(window.location.href, "http://localhost");
     assert.equal(target.pathname, "/quote");
-    assert.equal(target.searchParams.get("name"), fields.name.value);
-    assert.equal(target.searchParams.get("phone"), "+1 (630) 555-0184");
+    assert.equal(target.search, "", "contact details must not travel in URLs");
+    assert.equal(storage.get("homeWidgetName"), fields.name.value);
     assert.equal(storage.get("homeWidgetPhone"), "+1 (630) 555-0184");
     fields.phone.value = "123";
     submit();
