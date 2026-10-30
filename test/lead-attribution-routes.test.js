@@ -38,6 +38,14 @@ test("every form type persists attribution in new orders, card, complete filtere
       assert.equal(rows.length,1); const id=attr(rows[0],"data-admin-list-key");
       const card=await (await fetch(app.baseUrl+`/admin/orders?order=${id}`,{headers:{cookie}})).text();
       assert.match(card,/data-lead-attribution="true"/); assert.ok(card.includes(item.channel));assert.match(card,new RegExp(`<dd[^>]*>${item.form}</dd>`));assert.doesNotMatch(card,/private=removed/);
+      const sourcePanels=nodes(parse(card),n=>attr(n,"data-lead-attribution")==="true");
+      assert.equal(sourcePanels.length,1);
+      const sourcePanel=sourcePanels[0];
+      const dialogPanel=sourcePanel.parentNode;
+      assert.ok(attr(dialogPanel,"class").split(/\s+/).includes("admin-order-dialog-panel"));
+      const panelChildren=dialogPanel.childNodes.filter(n=>n.tagName);
+      assert.equal(panelChildren.at(-1),sourcePanel,"source follows the complete order layout on desktop and mobile");
+      assert.ok(attr(panelChildren.at(-2),"class").split(/\s+/).includes("admin-order-dialog-layout"));
     }
     const calls=(await fs.readFile(mock.captureFile,"utf8")).trim().split("\n").map(line=>JSON.parse(line));
     const writes=calls.filter(call=>call.method==="PUT");assert.equal(writes.length,4);
