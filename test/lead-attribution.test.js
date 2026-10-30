@@ -22,6 +22,8 @@ test("source classification covers paid, AI, organic/GBP, other search, social a
     [{ utm_source: "copilot" }, "ИИ-поиск (Copilot)"],
     [{ referrer: "www.google.com" }, "Google (органика или карты/GBP)"],
     [{ referrer: "google.co.uk" }, "Google (органика или карты/GBP)"],
+    [{ referrer: "translate.google.com" }, "Google (органика или карты/GBP)"],
+    [{ referrer: "maps.google.com" }, "Google (органика или карты/GBP)"],
     [{ utm_source: "gbp", referrer: "google.com" }, "Google Business Profile"],
     [{ utm_source: "google_business" }, "Google Business Profile"],
     [{ referrer: "bing.com" }, "Другой поиск"], [{ utm_source: "duckduckgo" }, "Другой поиск"],
@@ -113,10 +115,15 @@ test("server uses immutable cookie over conflicting hidden values and recomputes
   assert.equal(attr.lead_source_channel, "ИИ-поиск (ChatGPT)");
   assert.equal(attr.last.lead_source_channel, "Google Ads");
   assert.equal(attr.gclid, undefined);
+  assert.equal(extractLeadAttribution({form_type:"quote",requestType:"call_me"}).form_type, "quote");
+  assert.equal(extractLeadAttribution({requestType:"call_me"}).form_type, "callback");
   assert.doesNotMatch(attr.submission_page, /private/);
   assert.match(attributionText(attr), /Lead Source: booking/);
   const escaped = renderLeadAttribution({payloadForRetry:{leadAttribution:{...attr,submission_page:'<img onerror=alert(1)>'}}}, value => String(value).replace(/</g,"&lt;"));
   assert.doesNotMatch(escaped, /<img/);
+  const paid = renderLeadAttribution({payloadForRetry:{leadAttribution:extractLeadAttribution({gclid:"test"})}}, String);
+  assert.match(paid, /gclid: test/);
+  assert.doesNotMatch(paid, /Прямой заход/);
 });
 
 function response(body, status=200) { return {ok:status<300,status,headers:{get:()=>"application/json"},json:async()=>body}; }
