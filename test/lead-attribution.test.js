@@ -141,3 +141,21 @@ test("GHL attribution sync writes only dedicated fields, preserves contact first
   assert.match(notes[0].body,/Attribution:/);
   assert.equal(result.opportunityCreated,false);
 });
+
+test("GHL retries field discovery after missing attribution fields without restarting the server", async () => {
+  let ready = false;
+  const client = createLeadConnectorClient({env:{GHL_API_KEY:"test",GHL_LOCATION_ID:"shynli-test",GHL_ENABLE_NOTES:"0",GHL_CREATE_OPPORTUNITY:"0"},fetch:async(url,opts)=>{
+    if(String(url).includes("customFields")) return response({customFields:ready ? FIELD_NAMES.map(name=>({id:'id-'+name,name:fieldKey(name),objectType:"contact"})) : []});
+    if(opts.method === "GET") return response({contact:{id:"test-contact",customFields:[]}});
+    return response({contact:{id:"test-contact"}});
+  }});
+  const input={contactData:{fullName:"TEST",phone:"2025550142"},calculatorData:{serviceType:"deep",totalPrice:397},leadAttribution:extractLeadAttribution({utm_source:"chatgpt.com"})};
+  const first=await client.submitQuoteSubmission(input);
+  assert.equal(first.ok,true);
+  assert.equal(first.attributionFieldsUpdated,false);
+  assert.ok(first.warnings.includes("attribution_custom_fields_missing"));
+  ready=true;
+  const retry=await client.submitQuoteSubmission(input);
+  assert.equal(retry.attributionFieldsUpdated,true);
+  assert.deepEqual(retry.warnings,[]);
+});
