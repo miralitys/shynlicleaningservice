@@ -79,8 +79,8 @@ test("three rewritten services have evidenced content, quote forms and matching 
       submit(event);
       const redirect = new URL(browser.location.href, app.baseUrl);
       assert.equal(redirect.pathname, "/quote");
-      assert.equal(redirect.searchParams.get("name"), "Local Preview Test");
-      assert.equal(redirect.searchParams.get("phone"), "+1 (202) 555-0142");
+      assert.equal(redirect.search, "", "contact details stay out of the URL");
+      assert.equal(stored.get("homeWidgetName"), "Local Preview Test");
       assert.equal(stored.get("homeWidgetPhone"), "+1 (202) 555-0142");
       inputs.phone.value = "123";
       browser.location.href = "";
