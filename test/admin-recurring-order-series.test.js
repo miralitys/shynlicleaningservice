@@ -6,6 +6,10 @@ const assert = require("node:assert/strict");
 const { createAdminOrderMutationDomain } = require("../lib/admin/domain-order-mutations");
 const { createAdminOrdersRecurringHelpers } = require("../lib/admin/handlers-orders-recurring");
 const { projectRecurringContextEntry } = require("../lib/quote-ops/recurring-context");
+const { createQuoteOpsStore } = require("../lib/quote-ops/store");
+const { createSupabaseQuoteOpsClient, mapEntryToRow, mapRowToEntry } = require("../lib/supabase-quote-ops");
+const { createAuditedQuoteOpsLedger } = require("../lib/admin-audit");
+const { gzipSync } = require("node:zlib");
 const {
   getEntryOrderState,
   getEntryPayload,
@@ -249,10 +253,225 @@ async function seededSweepEntries(domain, count = 1) {
   return structuredClone(await ledger.listEntries());
 }
 
+function quietMaintenanceEntries(domain) {
+  const entries = [];
+  for (let group = 0; group < 10; group++) {
+    const length = group < 7 ? 19 : 18;
+    const ids = Array.from({ length }, (_, index) => `00000000-0000-4000-8000-${String(group * 100 + index + 1).padStart(12, "0")}`);
+    for (let index = 0; index < length; index++) {
+      const date = index === 0 ? "2026-11-01" : domain.addRecurringScheduleDate("2026-11-01", "biweekly", index);
+      const entry = createEntry({ id: ids[index], date: index === 4 ? "2020-01-01" : date,
+        status: index === 3 ? "canceled" : index === 4 ? "completed" : "scheduled",
+        seriesId: `noop-series-${group}`, totalPrice: 300 + index });
+      entry.requestId = index ? `noop-series-${group}-next-${date.replaceAll("-", "")}` : `noop-series-${group}`;
+      entry.createdAt = "2026-10-01T12:00:00.000Z";
+      entry.payloadForRetry.adminSms = { history: Array.from({ length: 12 }, (_, n) => ({ id: `sms-${group}-${index}-${n}`, text: `QA history ${group}/${index}/${n}. `.repeat(15) })) };
+      entry.payloadForRetry.policies = { signature: "QA signature preserved" };
+      for (const key of ["orderState", "adminOrder"]) Object.assign(entry.payloadForRetry[key], {
+        recurringAnchorDate: "2026-11-01", recurringOccurrenceDate: date, recurringOccurrenceIndex: index,
+        ...(index ? { recurringSourceEntryId: ids[0], recurringSourceRequestId: `noop-series-${group}` } : {}),
+        ...(index + 1 < length ? { recurringNextEntryId: ids[index + 1], recurringGeneratedAt: entry.createdAt } : {}),
+        assignedStaff: "QA cleaner", payrollOverrides: { cleaner: "125.00" },
+        payroll: { items: [{ staffId: "cleaner", amountCents: 12500, status: "paid", paidAt: "2026-10-20" }] },
+        completion: { cleanerComments: [{ text: "QA history" }], beforePhotos: [{ data: "QA photo preserved" }] },
+      });
+      domain.applyOrderEntryUpdates(entry, { totalPrice: 300 + index, fullAddress: `QA house ${group}/${index}` });
+      entries.push(entry);
+    }
+  }
+  for (let i = 0; entries.length < 995; i++) entries.push({
+    id: `00000000-0000-4000-8000-${String(10000 + i).padStart(12, "0")}`, kind: "standalone_task", requestId: `unrelated-${i}`,
+    createdAt: "2026-10-01T12:00:00.000Z", updatedAt: "2026-10-01T12:00:00.000Z", payloadForRetry: { history: ["QA unrelated history"] },
+  });
+  return entries;
+}
+
+function createAuditedMaintenanceFixture(domain, initialEntries, { beforeRead = () => {}, beforeSave = () => {} } = {}) {
+  const rows = new Map(initialEntries.map(entry => [entry.id, mapEntryToRow(entry)]));
+  const metrics = { fullReads: 0, contextReads: 0, saves: 0, emptySaves: 0, changedSaves: 0, conflicts: 0,
+    sourceUpdateCalls: 0, linkUpdateCalls: 0, receivedJsonBytes: 0, receivedGzipBytes: 0, saveRequestBytes: 0 };
+  const audit = [], durableEvents = [];
+  const response = (body, status = 200) => {
+    const text = JSON.stringify(body);
+    metrics.receivedJsonBytes += Buffer.byteLength(text);
+    metrics.receivedGzipBytes += gzipSync(text).length;
+    return { ok: status === 200, status, headers: { get: () => null }, text: async () => text };
+  };
+  const business = row => JSON.stringify(stableSweepState([mapRowToEntry(row)]));
+  const fetch = async (url, options) => {
+    const request = new URL(url);
+    if (request.pathname.endsWith("/rpc/read_recurring_order_context")) {
+      metrics.contextReads++;
+      const p = JSON.parse(options.body);
+      await beforeRead({ rows, metrics, kind: "context", params: p });
+      const matching = [...rows.values()].filter(row => (!p.p_after || row.id > p.p_after) && (!p.p_series_id ||
+        p.p_known_entry_ids.includes(row.id) || row.payload_for_retry?.orderState?.recurringSeriesId === p.p_series_id ||
+        row.payload_for_retry?.adminOrder?.recurringSeriesId === p.p_series_id || row.request_id === p.p_series_id ||
+        row.request_id?.startsWith(`${p.p_series_id}-next-`))).sort((a, b) => a.id.localeCompare(b.id));
+      return response({ version: 1, after: p.p_after, total: matching.length, rows: matching.slice(0, p.p_limit).map(row => ({
+        ...Object.fromEntries(["id", "kind", "created_at", "updated_at", "request_id", "source_route", "service_type", "selected_date", "selected_time"].map(key => [key, row[key]])),
+        payload_for_retry: projectRecurringContextEntry(mapRowToEntry(row)).payloadForRetry,
+      })) });
+    }
+    if (request.pathname.endsWith("/quote_ops_entries") && options.method === "GET") {
+      metrics.fullReads++;
+      const id = request.searchParams.get("id")?.slice(3);
+      assert.ok(id, "only explicit full order reads are expected");
+      await beforeRead({ rows, metrics, kind: "full", id });
+      return response(rows.has(id) ? [rows.get(id)] : []);
+    }
+    if (request.pathname.endsWith("/rpc/save_quote_ops_entry")) {
+      metrics.saves++; metrics.saveRequestBytes += Buffer.byteLength(options.body);
+      const p = JSON.parse(options.body);
+      assert.equal(p.p_mode, "update", "quiet maintenance must not create orders");
+      await beforeSave({ rows, metrics, params: p });
+      const previous = rows.get(p.p_entry.id);
+      if (!previous || previous.updated_at !== p.p_expected_updated_at) { metrics.conflicts++; return response(null); }
+      if (business(previous) === business(p.p_entry)) metrics.emptySaves++;
+      else { metrics.changedSaves++; durableEvents.push({ id: previous.id, before: structuredClone(previous), after: structuredClone(p.p_entry) }); }
+      rows.set(p.p_entry.id, structuredClone(p.p_entry));
+      return response(p.p_entry);
+    }
+    assert.fail(`unexpected request ${options.method} ${request.pathname}`);
+  };
+  const store = createQuoteOpsStore({ ...domain, normalizeString, createSupabaseQuoteOpsClient, fetch,
+    env: { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test" } });
+  const update = store.updateOrderEntry;
+  store.updateOrderEntry = async (id, updates) => {
+    if (Object.hasOwn(updates, "recurringOccurrenceIndex")) metrics.sourceUpdateCalls++;
+    if (Object.hasOwn(updates, "recurringNextEntryId")) metrics.linkUpdateCalls++;
+    return update(id, updates);
+  };
+  const ledger = createAuditedQuoteOpsLedger(store, {
+    async begin(event) { const record = { ...event, id: `audit-${audit.length}` }; audit.push(record); return record; },
+    async finish(event, result) { Object.assign(event, result); },
+  }, () => {}, { previewOrderUpdate: domain.applyOrderEntryUpdates });
+  return { ledger, metrics, rows, audit, durableEvents, entries: () => [...rows.values()].map(mapRowToEntry) };
+}
+
+test("quiet maintenance skips all 197 empty saves before the real audit/store full reads", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  const domain = createSweepDomain();
+  const fixture = createAuditedMaintenanceFixture(domain, quietMaintenanceEntries(domain));
+  const before = structuredClone([...fixture.rows.values()]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  const runs = [];
+  for (let pass = 0; pass < 10; pass++) {
+    const start = performance.now(), previous = { ...fixture.metrics };
+    assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: fixture.ledger, today: "2026-10-30" }), []);
+    runs.push({ ...Object.fromEntries(Object.entries(fixture.metrics).map(([key, value]) => [key, value - previous[key]])),
+      durationMs: Number((performance.now() - start).toFixed(2)) });
+  }
+  t.diagnostic(JSON.stringify({ profile: "quiet-maintenance", entries: fixture.rows.size, series: 10, recurringOrders: 187, runs }));
+  assert.equal(fixture.metrics.saves, 0);
+  assert.equal(fixture.metrics.fullReads, 200, "each sweep must still read fresh sources rather than cache them");
+  assert.equal(fixture.metrics.contextReads, 220);
+  assert.deepEqual([...fixture.rows.values()], before, "even timestamps and old history must remain unchanged");
+  assert.deepEqual(fixture.audit, []);
+  assert.deepEqual(fixture.durableEvents, []);
+});
+
+test("narrow no-op checks retain zero indexes, empty tail links and equivalent timestamp formats without rewriting orders", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  const domain = createSweepDomain();
+  const entries = quietMaintenanceEntries(domain);
+  for (const key of ["orderState", "adminOrder"]) {
+    entries[0].payloadForRetry[key].recurringOccurrenceIndex = "0";
+    entries[0].payloadForRetry[key].recurringGeneratedAt = "2026-10-01T07:00:00-05:00";
+    entries[18].payloadForRetry[key].recurringNextEntryId = key === "orderState" ? "" : null;
+    entries[18].payloadForRetry[key].recurringGeneratedAt = key === "orderState" ? null : "";
+  }
+  const fixture = createAuditedMaintenanceFixture(domain, entries);
+  const before = structuredClone([...fixture.rows.values()]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: fixture.ledger, today: "2026-10-30" });
+  assert.equal(fixture.metrics.saves, 0);
+  assert.deepEqual([...fixture.rows.values()], before);
+});
+
+test("real metadata repairs are retained for missing zero indexes, broken links and inconsistent/legacy mirrors", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  for (const mode of ["missing-index", "null-index", "fractional-index", "missing-anchor", "link", "padded-link", "generated-at", "mirror", "legacy"]) {
+    const domain = createSweepDomain();
+    const entries = quietMaintenanceEntries(domain);
+    const source = entries[0], target = entries[5];
+    if (mode === "missing-index") for (const key of ["orderState", "adminOrder"]) delete source.payloadForRetry[key].recurringOccurrenceIndex;
+    if (mode === "null-index") for (const key of ["orderState", "adminOrder"]) source.payloadForRetry[key].recurringOccurrenceIndex = null;
+    if (mode === "fractional-index") for (const key of ["orderState", "adminOrder"]) source.payloadForRetry[key].recurringOccurrenceIndex = 0.2;
+    if (mode === "missing-anchor") for (const key of ["orderState", "adminOrder"]) delete source.payloadForRetry[key].recurringAnchorDate;
+    if (mode === "link") for (const key of ["orderState", "adminOrder"]) target.payloadForRetry[key].recurringNextEntryId = "wrong-link";
+    if (mode === "padded-link") target.payloadForRetry.adminOrder.recurringNextEntryId += " ";
+    if (mode === "generated-at") for (const key of ["orderState", "adminOrder"]) target.payloadForRetry[key].recurringGeneratedAt = "2020-01-01T00:00:00Z";
+    if (mode === "mirror") target.payloadForRetry.adminOrder.recurringNextEntryId = "wrong-mirror-link";
+    if (mode === "legacy") delete target.payloadForRetry.orderState;
+    const fixture = createAuditedMaintenanceFixture(domain, entries);
+    const original = stableSweepState(fixture.entries(), true);
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: fixture.ledger, today: "2026-10-30" });
+    assert.equal(fixture.metrics.saves, 1, `${mode}: only the necessary repair is saved`);
+    assert.equal(fixture.metrics.changedSaves, 1, mode);
+    assert.equal(fixture.metrics.emptySaves, 0, mode);
+    assert.equal(fixture.metrics.fullReads, 22, mode);
+    assert.equal(fixture.durableEvents.length, 1, "a real metadata repair still reaches durable history");
+    const repaired = fixture.entries();
+    assert.equal(getEntryOrderState(repaired[0]).recurringOccurrenceIndex, 0);
+    assert.equal(getEntryOrderState(repaired[0]).recurringAnchorDate, "2026-11-01");
+    assert.equal(getEntryOrderState(repaired[5]).recurringNextEntryId, repaired[6].id);
+    if (["link", "generated-at", "mirror"].includes(mode)) assert.deepEqual(stableSweepState(repaired, true), original, mode);
+    for (const initial of entries) {
+      const actual = repaired.find(entry => entry.id === initial.id);
+      assert.equal(actual.totalPrice, initial.totalPrice || 0, mode);
+      assert.deepEqual(actual.payloadForRetry?.adminSms, initial.payloadForRetry?.adminSms, mode);
+      assert.deepEqual(getEntryOrderState(actual).payroll, getEntryOrderState(initial).payroll, mode);
+      assert.deepEqual(getEntryOrderState(actual).payrollOverrides, getEntryOrderState(initial).payrollOverrides, mode);
+    }
+    const saved = structuredClone([...fixture.rows.values()]);
+    await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: fixture.ledger, today: "2026-10-30" });
+    assert.equal(fixture.metrics.saves, 1, `${mode}: retry is quiet`);
+    assert.deepEqual([...fixture.rows.values()], saved);
+  }
+});
+
+test("a real link repair retains fresh financial edits and cannot overwrite a version conflict", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  for (const conflict of [false, true]) {
+    const domain = createSweepDomain();
+    const entries = quietMaintenanceEntries(domain), target = entries[5];
+    for (const key of ["orderState", "adminOrder"]) target.payloadForRetry[key].recurringNextEntryId = "wrong-link";
+    let reads = 0, edited = false;
+    const edit = rows => {
+      const entry = mapRowToEntry(rows.get(target.id));
+      domain.applyOrderEntryUpdates(entry, { totalPrice: 417, assignedStaff: "New QA cleaner", payrollOverrides: { cleaner: "500.00" } });
+      entry.updatedAt = "2026-10-30T13:00:00.000Z";
+      rows.set(target.id, mapEntryToRow(entry)); edited = true;
+    };
+    const fixture = createAuditedMaintenanceFixture(domain, entries, {
+      beforeRead({ rows, kind, id }) { if (!conflict && kind === "full" && id === target.id && ++reads === 2) edit(rows); },
+      beforeSave({ rows, params }) { if (conflict && !edited && params.p_entry.id === target.id) edit(rows); },
+    });
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: fixture.ledger, today: "2026-10-30" });
+    assert.equal(fixture.metrics.saves, 1);
+    assert.equal(fixture.metrics.conflicts, Number(conflict));
+    let actual = mapRowToEntry(fixture.rows.get(target.id));
+    assert.equal(actual.totalPrice, 417);
+    assert.equal(getEntryOrderState(actual).assignedStaff, "New QA cleaner");
+    assert.deepEqual(getEntryOrderState(actual).payrollOverrides, { cleaner: "500.00" });
+    assert.deepEqual(getEntryOrderState(actual).payroll, getEntryOrderState(target).payroll);
+    assert.equal(getEntryOrderState(actual).recurringNextEntryId, conflict ? "wrong-link" : entries[6].id);
+    await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: fixture.ledger, today: "2026-10-30" });
+    actual = mapRowToEntry(fixture.rows.get(target.id));
+    assert.equal(fixture.metrics.saves, conflict ? 2 : 1);
+    assert.equal(getEntryOrderState(actual).recurringNextEntryId, entries[6].id);
+    assert.equal(actual.totalPrice, 417);
+    assert.deepEqual(getEntryOrderState(actual).payrollOverrides, { cleaner: "500.00" });
+  }
+});
+
 test("narrow maintenance matches full-context writes and complete business/history data, including gap repair and legacy chains", async t => {
   t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
   const { gzipSync } = require("node:zlib");
-  for (const mode of ["intact", "gap", "legacy", "stop-marker", "frequency-removed"]) {
+  for (const mode of ["intact", "gap", "gap-stale-calculator", "legacy", "stop-marker", "frequency-removed"]) {
     const domain = createSweepDomain();
     const initial = await seededSweepEntries(domain, 2);
     for (const [i, entry] of initial.entries()) {
@@ -266,7 +485,11 @@ test("narrow maintenance matches full-context writes and complete business/histo
       domain.applyOrderEntryUpdates(entry, { totalPrice: 300 + i, fullAddress: `QA house ${i}` });
     }
     const target = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 3);
-    if (mode === "gap") initial.splice(initial.indexOf(target), 1);
+    if (mode === "gap" || mode === "gap-stale-calculator") initial.splice(initial.indexOf(target), 1);
+    if (mode === "gap-stale-calculator") {
+      initial[0].totalPrice = 417;
+      initial[0].totalPriceCents = 41700;
+    }
     if (mode === "stop-marker") for (const key of ["orderState", "adminOrder"])
       initial[0].payloadForRetry[key].recurringSeriesCanceledFromDate = "2026-12-01";
     if (mode === "frequency-removed") for (const key of ["orderState", "adminOrder"])
@@ -303,7 +526,8 @@ test("narrow maintenance matches full-context writes and complete business/histo
     const oldCreated = await helpers.ensureAllRecurringOrderSeries({ ...options, quoteOpsLedger: baseline.ledger });
     const newCreated = await helpers.ensureAllRecurringOrderSeries({ ...options, quoteOpsLedger: candidate.ledger });
     assert.deepEqual(stableSweepState(candidate.entries), stableSweepState(baseline.entries), mode);
-    assert.deepEqual(candidateWrites, baselineWrites, mode);
+    assert.ok(candidateWrites.length <= baselineWrites.length, mode);
+    for (const write of candidateWrites) assert.ok(baselineWrites.some(old => JSON.stringify(old) === JSON.stringify(write)), `${mode}: only existing write plans`);
     assert.deepEqual(stableSweepState(newCreated), stableSweepState(oldCreated), mode);
     if (["intact", "gap", "stop-marker"].includes(mode)) for (const original of initial) {
       const actual = candidate.entries.find(entry => entry.id === original.id);
