@@ -10,6 +10,8 @@ const { createQuoteOpsStore } = require("../lib/quote-ops/store");
 const { createSupabaseQuoteOpsClient, mapEntryToRow, mapRowToEntry } = require("../lib/supabase-quote-ops");
 const { createAuditedQuoteOpsLedger } = require("../lib/admin-audit");
 const { gzipSync } = require("node:zlib");
+const { createSupabaseAdminStaffClient, mapAssignmentRecordToQuoteOpsRow, mapStaffRecordToQuoteOpsRow, mapQuoteOpsRowToAssignmentRecord } = require("../lib/supabase-admin-staff");
+const { createAdminStaffStore } = require("../lib/admin-staff-store");
 const {
   getEntryOrderState,
   getEntryPayload,
@@ -348,6 +350,150 @@ function createAuditedMaintenanceFixture(domain, initialEntries, { beforeRead = 
   }, () => {}, { previewOrderUpdate: domain.applyOrderEntryUpdates });
   return { ledger, metrics, rows, audit, durableEvents, entries: () => [...rows.values()].map(mapRowToEntry) };
 }
+
+function recurringStaffFixture(entries, { narrow = true, beforeContext = () => {}, beforeFull = () => {}, unavailable = false } = {}) {
+  const assignments = entries.filter(e => e.payloadForRetry?.orderState?.recurringSeriesId).map(e => ({
+    entryId: e.id, staffIds: ["cleaner"], status: "confirmed", notes: "QA team history",
+    scheduleDate: "", scheduleTime: "", createdAt: "2026-10-01", updatedAt: "2026-10-01",
+    calendarSync: { google: { byStaffId: { cleaner: { eventId: `event-${e.id}` } } } },
+  }));
+  for (let i = assignments.length; i < 517; i++) assignments.push({
+    entryId: `unrelated-${i}`, staffIds: ["other-cleaner"], status: "confirmed", notes: `QA unrelated assignment ${i}`,
+    createdAt: "2026-10-01", updatedAt: "2026-10-01",
+  });
+  const staff = Array.from({ length: 6 }, (_, i) => ({ id: i ? `other-${i}` : "cleaner", name: `QA cleaner ${i}`,
+    compensationValue: "500", compensationType: "fixed", status: "active",
+    smsHistory: Array.from({ length: 20 }, (_, n) => ({ message: `QA staff ${i} message ${n}`.repeat(10), sentAt: "2026-10-01" })),
+  }));
+  const metrics = { fullStaff: 0, fullAssignments: 0, narrow: 0, writes: 0, bytes: 0, gzipBytes: 0 };
+  const response = (body, status = 200) => {
+    const text = JSON.stringify(body); metrics.bytes += Buffer.byteLength(text); metrics.gzipBytes += gzipSync(text).length;
+    return { ok: status === 200, status, text: async () => text };
+  };
+  const fetch = async (url, options) => {
+    const u = new URL(url);
+    if (u.pathname.includes("/admin_staff")) return response({ code: "PGRST205", message: "Could not find the table" }, 404);
+    if (options.method === "POST") {
+      metrics.writes++;
+      const assignment = mapQuoteOpsRowToAssignmentRecord(JSON.parse(options.body));
+      const index = assignments.findIndex(a => a.entryId === assignment.entryId);
+      if (index < 0) assignments.push(assignment); else assignments[index] = assignment;
+      return response(null);
+    }
+    assert.equal(options.method, "GET");
+    if (u.pathname.endsWith("/rpc/read_recurring_assignment_context")) {
+      metrics.narrow++; await beforeContext(assignments);
+      if (unavailable) return response({ message: "DB unavailable" }, 503);
+      const ids = JSON.parse(`[${u.searchParams.get("p_entry_ids").slice(1,-1)}]`);
+      return response({ version: 1, after: null, total: assignments.filter(a => ids.includes(a.entryId)).length,
+        rows: assignments.filter(a => ids.includes(a.entryId)).map((a, index) => {
+          const row = mapAssignmentRecordToQuoteOpsRow(a);
+          return { id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`, request_id: row.request_id, warnings: row.warnings, code: row.code,
+            payload_for_retry: { assignment: { entryId: a.entryId, staffIds: a.staffIds, status: a.status } } };
+        }).sort((a,b) => a.id.localeCompare(b.id)) });
+    }
+    if (u.searchParams.get("kind") === "eq.admin_staff_member") { metrics.fullStaff++; return response(staff.map(mapStaffRecordToQuoteOpsRow)); }
+    metrics.fullAssignments++; await beforeFull(assignments);
+    return response(assignments.map(mapAssignmentRecordToQuoteOpsRow));
+  };
+  const client = createSupabaseAdminStaffClient({ env: { SUPABASE_URL: "https://example.invalid", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test" }, fetch });
+  const store = createAdminStaffStore({ createSupabaseAdminStaffClient: () => client });
+  if (!narrow) delete store.getRecurringAssignmentContext;
+  return { store, assignments, staff, metrics };
+}
+
+test("scoped recurring assignment preflight removes full employee/assignment reads without changing any records", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  const report = [];
+  for (const narrow of [false, true]) {
+    const domain = createSweepDomain(), entries = quietMaintenanceEntries(domain);
+    const orders = createAuditedMaintenanceFixture(domain, entries);
+    const staff = recurringStaffFixture(entries, { narrow });
+    const before = structuredClone({ orders: [...orders.rows.values()], assignments: staff.assignments, staff: staff.staff });
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    const runs = [];
+    for (let pass = 0; pass < 11; pass++) {
+      const old = { ...staff.metrics }, start = performance.now();
+      await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: orders.ledger, staffStore: staff.store, today: "2026-10-30" });
+      runs.push({ pass, ...Object.fromEntries(Object.entries(staff.metrics).map(([key,value]) => [key,value - old[key]])),
+        durationMs: Number((performance.now() - start).toFixed(2)) });
+    }
+    assert.deepEqual({ orders: [...orders.rows.values()], assignments: staff.assignments, staff: staff.staff }, before);
+    assert.equal(staff.metrics.writes, 0);
+    assert.equal(orders.metrics.saves, 0); assert.deepEqual(orders.audit, []);
+    for (const run of runs.slice(1)) {
+      assert.equal(run.fullStaff, narrow ? 0 : 10); assert.equal(run.fullAssignments, narrow ? 0 : 10);
+      assert.equal(run.narrow, narrow ? 10 : 0);
+    }
+    report.push({ narrow, runs, orderReadsPerSweep: orders.metrics.fullReads / 11, orderGzipBytesPerSweep: orders.metrics.receivedGzipBytes / 11 });
+  }
+  t.diagnostic(JSON.stringify({ profile: "series-assignment-context", synthetic: true, records: 995, assignments: 517, employees: 6, report }));
+});
+
+test("failed narrow assignment reads skip repairs without writes or stale-cache repair", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  const domain = createSweepDomain(), entries = quietMaintenanceEntries(domain);
+  const orders = createAuditedMaintenanceFixture(domain, entries), staff = recurringStaffFixture(entries, { unavailable: true });
+  await staff.store.getSnapshot();
+  const before = structuredClone([...orders.rows.values()]);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: orders.ledger, staffStore: staff.store, today: "2026-10-30" });
+  assert.deepEqual([...orders.rows.values()], before); assert.equal(orders.metrics.saves, 0);
+  assert.equal(staff.metrics.narrow, 10); assert.equal(staff.metrics.fullAssignments, 1);
+});
+
+test("assignment repair re-reads the full snapshot and preserves a newly assigned team", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  const domain = createSweepDomain(), entries = quietMaintenanceEntries(domain);
+  const orders = createAuditedMaintenanceFixture(domain, entries);
+  let first = true;
+  const staff = recurringStaffFixture(entries, { beforeFull: assignments => {
+    if (!first) assignments[1].staffIds = ["manager-new-team"];
+    first = false;
+  } });
+  staff.assignments[1].staffIds = [];
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: orders.ledger, staffStore: staff.store, today: "2026-10-30" });
+  assert.deepEqual(staff.assignments[1].staffIds, ["manager-new-team"]);
+  assert.equal(orders.metrics.saves, 0); assert.equal(staff.metrics.fullAssignments, 2);
+  assert.equal(staff.metrics.writes, 0);
+});
+
+test("real team repairs and canceled historical skips match the old full path exactly and remain idempotent", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  const results = [];
+  for (const narrow of [false, true]) {
+    const domain = createSweepDomain(), entries = quietMaintenanceEntries(domain);
+    const orders = createAuditedMaintenanceFixture(domain, entries), staff = recurringStaffFixture(entries, { narrow });
+    staff.assignments[1].staffIds = [];
+    staff.assignments[3].status = "canceled";
+    staff.assignments[5].status = "canceled";
+    const before = structuredClone([...orders.rows.values()]);
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    for (let pass = 0; pass < 2; pass++) {
+      await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: orders.ledger, staffStore: staff.store, today: "2026-10-30" });
+      assert.equal(staff.metrics.writes, 2, "only the two active missing/canceled team records need repair, once");
+    }
+    assert.deepEqual([...orders.rows.values()], before);
+    assert.equal(staff.assignments[3].status, "canceled");
+    assert.deepEqual(staff.assignments[1].staffIds, ["cleaner"]);
+    results.push({ assignments: staff.assignments, staff: staff.staff });
+  }
+  assert.deepEqual(results[1], results[0]);
+});
+
+test("ambiguous legacy assignment duplicates retain the old full-read precedence without changing teams", async t => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
+  const domain = createSweepDomain(), entries = quietMaintenanceEntries(domain);
+  const orders = createAuditedMaintenanceFixture(domain, entries), staff = recurringStaffFixture(entries);
+  staff.assignments.push({ ...staff.assignments[0], staffIds: ["legacy-second-team"], notes: "retain duplicate history" });
+  const before = structuredClone(staff.assignments);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: orders.ledger, staffStore: staff.store, today: "2026-10-30" });
+  assert.deepEqual(staff.assignments, before); assert.equal(staff.metrics.writes, 0);
+  assert.equal(staff.metrics.fullAssignments, 2, "one schema discovery and one old-path ambiguity fallback");
+  assert.equal(orders.metrics.saves, 0);
+});
 
 test("quiet maintenance skips all 197 empty saves before the real audit/store full reads", async t => {
   t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
