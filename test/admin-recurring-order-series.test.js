@@ -25,7 +25,7 @@ function cloneSerializable(value, fallback) {
   }
 }
 
-function createDomain() {
+function createDomain(overrides = {}) {
   return createAdminOrderMutationDomain({
     ADMIN_ORDERS_PATH: "/admin/orders",
     cloneSerializable,
@@ -65,6 +65,7 @@ function createDomain() {
     normalizeString,
     setEntryOrderState,
     setEntryPaymentState,
+    ...overrides,
   });
 }
 
@@ -176,6 +177,289 @@ function createStaffStore(status = "planned") {
     },
   };
 }
+
+function createSweepLedger(domain, initialEntries, { scoped = true, beforeRead = () => {} } = {}) {
+  const entries = structuredClone(initialEntries);
+  const ledger = createLedger(domain, entries);
+  const reads = { full: 0, scoped: 0, bytes: 0 };
+  ledger.listAllEntries = async (options = {}) => {
+    const seriesId = scoped ? options.recurringSeriesId : "";
+    reads[seriesId ? "scoped" : "full"]++;
+    await beforeRead({ entries, seriesId, reads });
+    const result = seriesId ? entries.filter(entry => {
+      const payload = getEntryPayload(entry);
+      return options.recurringSeriesEntryIds?.includes(entry.id) ||
+        payload.orderState?.recurringSeriesId === seriesId || payload.adminOrder?.recurringSeriesId === seriesId ||
+        entry.requestId === seriesId || entry.requestId?.startsWith(`${seriesId}-next-`);
+    }) : entries;
+    reads.bytes += Buffer.byteLength(JSON.stringify(result));
+    return structuredClone(result);
+  };
+  ledger.getEntry = async id => structuredClone(entries.find(entry => entry.id === id) || null);
+  const update = ledger.updateOrderEntry;
+  ledger.updateOrderEntry = async (id, updates) => structuredClone(await update(id, updates));
+  let nextId = 0;
+  ledger.recordSubmission = async submission => {
+    const existing = entries.find(entry => entry.requestId === submission.requestId);
+    if (existing) return structuredClone(existing);
+    const entry = { ...structuredClone(submission), id: `sweep-created-${++nextId}`, createdAt: "2026-10-30T12:00:00Z" };
+    entries.push(entry);
+    return structuredClone(entry);
+  };
+  return { ledger, entries, reads };
+}
+
+function createSweepDomain() {
+  return createDomain({
+    getEntryAdminSmsData: entry => getEntryPayload(entry).adminSms || {},
+    getEntrySmsHistory: entry => getEntryPayload(entry).adminSms?.history || [],
+    getPersistedOrderCompletionData: entry => getEntryOrderState(entry).completion || {},
+  });
+}
+
+function stableSweepState(entries, ignoreLinks = false) {
+  return structuredClone(entries).map(entry => {
+    delete entry.updatedAt;
+    if (entry.payloadForRetry?.adminSms) delete entry.payloadForRetry.adminSms.updatedAt;
+    for (const key of ["orderState", "adminOrder"]) if (entry.payloadForRetry?.[key]) {
+      const order = entry.payloadForRetry[key];
+      delete order.updatedAt;
+      if (order.completion) delete order.completion.updatedAt;
+      if (ignoreLinks) { delete order.recurringNextEntryId; delete order.recurringGeneratedAt; }
+    }
+    return entry;
+  });
+}
+
+async function seededSweepEntries(domain, count = 1) {
+  const ledger = createLedger(domain, []);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  for (let i = 0; i < count; i++) {
+    const root = createEntry({ id: `sweep-root-${i}`, date: "2026-11-01", seriesId: `sweep-series-${i}` });
+    (await ledger.listEntries()).push(root);
+    await helpers.ensureRecurringOrderSeries({ quoteOpsLedger: ledger, sourceEntry: root });
+  }
+  return structuredClone(await ledger.listEntries());
+}
+
+test("maintenance uses one full discovery instead of 21 full reads for ten modern series with identical orders and financial history", async t => {
+  const domain = createSweepDomain();
+  const initial = await seededSweepEntries(domain, 10);
+  for (let i = 0; i < initial.length; i++) {
+    const entry = initial[i];
+    entry.payloadForRetry.adminSms = { history: [{ id: `sms-${i}`, text: "Preserve complete history" }] };
+    for (const key of ["orderState", "adminOrder"]) Object.assign(entry.payloadForRetry[key], {
+      assignedStaff: `Cleaner ${i % 3}`, payrollOverrides: { cleaner: String(95 + i) },
+      payroll: { items: [{ staffId: "cleaner", amountCents: 9500 + i, status: i % 2 ? "paid" : "owed", paidAt: i % 2 ? "2026-10-20" : "" }] },
+      completion: { cleanerComments: [{ text: `History ${i}` }], beforePhotos: [{ id: `photo-${i}` }] },
+    });
+    domain.applyOrderEntryUpdates(entry, { totalPrice: 300 + i, fullAddress: `ISOLATED QA address ${i}` });
+  }
+  const canceled = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 3);
+  domain.applyOrderEntryUpdates(canceled, { orderStatus: "canceled" });
+  const removed = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 4);
+  domain.applyOrderEntryUpdates(removed, { removeOrder: true });
+  for (let i = 0; i < 1200; i++) initial.push({ id: `unrelated-${i}`, requestId: `unrelated-${i}`, kind: "standalone_task",
+    payloadForRetry: { history: "Unrelated history. ".repeat(10) } });
+  const staffAssignments = initial.filter(entry => Object.keys(getEntryOrderState(entry)).length)
+    .map(entry => ({ entryId: entry.id, staffIds: ["cleaner"], status: "confirmed", notes: "Preserve assignment" }));
+  const beforeStaff = structuredClone(staffAssignments);
+  const staffStore = { async getSnapshot() { return { assignments: structuredClone(staffAssignments) }; },
+    async setAssignment() { assert.fail("must not rewrite an existing team"); } };
+  const baseline = createSweepLedger(domain, initial, { scoped: false });
+  const candidate = createSweepLedger(domain, initial);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: baseline.ledger, staffStore, today: "2026-10-30" }), []);
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, staffStore, today: "2026-10-30" }), []);
+  assert.equal(baseline.reads.full, 21);
+  assert.equal(candidate.reads.full, 1);
+  assert.equal(candidate.reads.scoped, 20);
+  assert.ok(candidate.reads.bytes < baseline.reads.bytes / 3);
+  assert.deepEqual(stableSweepState(candidate.entries), stableSweepState(baseline.entries));
+  assert.deepEqual(stableSweepState(candidate.entries, true), stableSweepState(initial, true));
+  assert.deepEqual(staffAssignments, beforeStaff);
+  assert.equal(candidate.entries.length, initial.length);
+  assert.equal(new Set(candidate.entries.map(entry => entry.id)).size, initial.length);
+  t.diagnostic(JSON.stringify({ baselineReads: baseline.reads, optimizedReads: candidate.reads, entries: initial.length }));
+});
+
+test("scoped sweeps see fresh sibling edits and newly removed shells after discovery instead of recreating visits", async () => {
+  const domain = createSweepDomain();
+  const initial = await seededSweepEntries(domain);
+  const victim = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 2);
+  const editable = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 3);
+  const missing = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 4);
+  const candidate = createSweepLedger(domain, initial.filter(entry => entry.id !== missing.id), {
+    beforeRead({ entries, seriesId, reads }) {
+      if (!seriesId || reads.scoped !== 1) return;
+      domain.applyOrderEntryUpdates(entries.find(entry => entry.id === victim.id), { removeOrder: true });
+      const edited = entries.find(entry => entry.id === editable.id);
+      domain.applyOrderEntryUpdates(edited, { totalPrice: 417, selectedDate: "2026-12-16",
+        assignedStaff: "New cleaner", payrollOverrides: { cleaner: "500.00" } });
+      const shell = structuredClone(missing);
+      domain.applyOrderEntryUpdates(shell, { removeOrder: true });
+      entries.push(shell);
+    },
+  });
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" }), []);
+  assert.deepEqual(getEntryOrderState(await candidate.ledger.getEntry(victim.id)), {});
+  assert.deepEqual(getEntryOrderState(await candidate.ledger.getEntry(missing.id)), {});
+  const edited = await candidate.ledger.getEntry(editable.id);
+  assert.equal(edited.totalPrice, 417);
+  assert.equal(getEntryOrderState(edited).selectedDate, "2026-12-16");
+  assert.equal(getEntryOrderState(edited).assignedStaff, "New cleaner");
+  assert.deepEqual(getEntryOrderState(edited).payrollOverrides, { cleaner: "500.00" });
+  const before = stableSweepState(candidate.entries);
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" }), []);
+  assert.deepEqual(stableSweepState(candidate.entries), before);
+  assert.equal(candidate.reads.full, 2, "a new sweep performs fresh discovery, not a long-lived cache read");
+});
+
+test("legacy or transformed identities keep complete reads, including noncanonical children", async () => {
+  const domain = createDomain();
+  for (const mode of ["legacy", "uppercase", "long"]) {
+    const initial = await seededSweepEntries(domain);
+    for (const entry of initial) for (const key of ["orderState", "adminOrder"]) {
+      if (mode === "legacy") delete entry.payloadForRetry[key].recurringOccurrenceDate;
+      else entry.payloadForRetry[key].recurringSeriesId = mode === "uppercase" ? "RAW-SERIES" : "x".repeat(100);
+    }
+    const candidate = createSweepLedger(domain, initial);
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" });
+    assert.equal(candidate.reads.scoped, 0, mode);
+    assert.ok(candidate.reads.full >= 3, mode);
+    assert.equal(candidate.entries.length, initial.length);
+  }
+});
+
+test("a failed scoped read never becomes an empty series and retry does not duplicate visits", async () => {
+  const domain = createDomain();
+  const initial = await seededSweepEntries(domain);
+  const candidate = createSweepLedger(domain, initial, { beforeRead({ seriesId, reads }) {
+    if (seriesId && reads.scoped === 2) throw new Error("second series read failed");
+  } });
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" }), []);
+  assert.deepEqual(stableSweepState(candidate.entries), stableSweepState(initial));
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" }), []);
+  assert.equal(candidate.entries.length, initial.length);
+  assert.equal(new Set(candidate.entries.map(entry => entry.requestId)).size, initial.length);
+});
+
+test("overlapping scoped sweeps repair a missing visit once and retain all existing financial and history values", async () => {
+  const domain = createSweepDomain();
+  const initial = await seededSweepEntries(domain);
+  const missing = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 5);
+  const kept = initial.filter(entry => entry.id !== missing.id);
+  const candidate = createSweepLedger(domain, kept);
+  const deps = { ...domain, getEntryOrderState, normalizeString };
+  const results = await Promise.all([createAdminOrdersRecurringHelpers(deps), createAdminOrdersRecurringHelpers(deps)]
+    .map(helpers => helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" })));
+  assert.equal(results.flat().length, 1);
+  assert.equal(candidate.entries.length, initial.length);
+  assert.equal(candidate.entries.filter(entry => entry.requestId === missing.requestId).length, 1);
+  assert.equal(new Set(candidate.entries.map(entry => entry.requestId)).size, initial.length);
+  assert.deepEqual(stableSweepState(candidate.entries.filter(entry => kept.some(old => old.id === entry.id)), true), stableSweepState(kept, true));
+});
+
+test("a pending cadence reset discovered in a fresh scoped read stops all writes", async () => {
+  const domain = createSweepDomain();
+  const initial = await seededSweepEntries(domain);
+  const candidate = createSweepLedger(domain, initial, { beforeRead({ entries, seriesId, reads }) {
+    if (!seriesId || reads.scoped !== 1) return;
+    const sibling = entries.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 3);
+    for (const key of ["orderState", "adminOrder"]) sibling.payloadForRetry[key].recurringPendingResetFromDate = "2026-12-13";
+  } });
+  candidate.ledger.updateOrderEntry = async () => assert.fail("pending reset must block every write");
+  candidate.ledger.recordSubmission = async () => assert.fail("pending reset must block every creation");
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" }), []);
+  assert.equal(candidate.reads.full, 1);
+  assert.equal(candidate.reads.scoped, 1);
+});
+
+test("a fresh stop marker prevents a missing future visit from being created", async () => {
+  const domain = createSweepDomain();
+  const initial = await seededSweepEntries(domain);
+  const missing = initial.at(-1);
+  const kept = initial.filter(entry => entry.id !== missing.id);
+  const candidate = createSweepLedger(domain, kept, { beforeRead({ entries, seriesId, reads }) {
+    if (!seriesId || reads.scoped !== 1) return;
+    for (const key of ["orderState", "adminOrder"]) entries[0].payloadForRetry[key].recurringSeriesCanceledFromDate = missing.selectedDate;
+  } });
+  candidate.ledger.recordSubmission = async () => assert.fail("stopped continuation must stay stopped");
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" }), []);
+  assert.equal(candidate.entries.length, kept.length);
+});
+
+test("a new schedule marker and sibling edits between discovery and scoped reads apply to a repaired gap", async () => {
+  const domain = createSweepDomain();
+  const initial = await seededSweepEntries(domain);
+  const missing = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 5);
+  const candidate = createSweepLedger(domain, initial.filter(entry => entry.id !== missing.id), {
+    beforeRead({ entries, seriesId, reads }) {
+      if (!seriesId || reads.scoped !== 1) return;
+      for (const entry of entries) {
+        const index = getEntryOrderState(entry).recurringOccurrenceIndex;
+        if (!index) continue;
+        domain.applyOrderEntryUpdates(entry, { selectedDate: index === 1 ? "2026-11-22"
+          : domain.addRecurringScheduleDate("2026-11-22", "biweekly", index - 1), selectedTime: "10:00" });
+        if (index === 1) for (const key of ["orderState", "adminOrder"]) entry.payloadForRetry[key].recurringSchedule = {
+          index: 1, date: "2026-11-22", time: "10:00", frequency: "biweekly", version: 1,
+        };
+      }
+    },
+  });
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  const created = await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" });
+  assert.equal(created.length, 1);
+  assert.equal(created[0].requestId, missing.requestId);
+  assert.equal(created[0].selectedDate, domain.addRecurringScheduleDate("2026-11-22", "biweekly", 4));
+  assert.equal(created[0].selectedTime, "10:00");
+  assert.equal(created[0].recurringSourceGuard.schedule[0].schedule.version, 1);
+  assert.equal(new Set(candidate.entries.map(entry => `${entry.selectedDate}T${entry.selectedTime}`)).size, candidate.entries.length,
+    JSON.stringify(candidate.entries.map(entry => ({ index: getEntryOrderState(entry).recurringOccurrenceIndex, date: entry.selectedDate, time: entry.selectedTime }))));
+});
+
+test("known noncanonical visits remain visible when their series metadata changes during either scoped read", async () => {
+  const domain = createSweepDomain();
+  for (const phase of [1, 2]) {
+    const initial = await seededSweepEntries(domain);
+    const victim = initial.find(entry => getEntryOrderState(entry).recurringOccurrenceIndex === 3);
+    victim.requestId = "legacy-custom-request";
+    const candidate = createSweepLedger(domain, initial, { beforeRead({ entries, seriesId, reads }) {
+      if (!seriesId || reads.scoped !== phase) return;
+      const entry = entries.find(entry => entry.id === victim.id);
+      for (const key of ["orderState", "adminOrder"]) delete entry.payloadForRetry[key].recurringSeriesId;
+    } });
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" }), []);
+    assert.ok(candidate.reads.full >= 2, "changed membership must use the complete context");
+    assert.deepEqual(stableSweepState(candidate.entries, true), stableSweepState(initial, true));
+    assert.equal(candidate.entries.length, initial.length);
+  }
+});
+
+test("a large series falls back to complete reads rather than truncating known member IDs", async () => {
+  const domain = createSweepDomain();
+  const initial = Array.from({ length: 80 }, (_, index) => {
+    const date = index ? domain.addRecurringScheduleDate("2026-11-01", "biweekly", index) : "2026-11-01";
+    const entry = createEntry({ id: `large-${index}`, date, seriesId: "large-series" });
+    for (const key of ["orderState", "adminOrder"]) Object.assign(entry.payloadForRetry[key], {
+      recurringAnchorDate: "2026-11-01", recurringOccurrenceDate: date, recurringOccurrenceIndex: index,
+    });
+    domain.applyOrderEntryUpdates(entry, {});
+    return entry;
+  });
+  const candidate = createSweepLedger(domain, initial);
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  assert.deepEqual(await helpers.ensureAllRecurringOrderSeries({ quoteOpsLedger: candidate.ledger, today: "2026-10-30" }), []);
+  assert.equal(candidate.reads.full, 3);
+  assert.equal(candidate.reads.scoped, 0);
+  assert.deepEqual(stableSweepState(candidate.entries, true), stableSweepState(initial, true));
+});
 
 test("a historical root extends the moved cadence, not its old dates, without duplicating existing visits", async () => {
   const domain = createDomain();
