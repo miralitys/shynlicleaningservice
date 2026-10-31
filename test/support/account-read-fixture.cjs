@@ -99,7 +99,8 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     if (method !== "GET") throw new Error(`Account benchmark forbids writes: ${method} ${table}`);
     const accountView = table === "account_order_list_entries";
     const calendarView = table === "account_calendar_entries";
-    const adminOrderView = table === "admin_order_list_entries";
+    const adminTableView = table === "admin_order_table_entries";
+    const adminOrderView = table === "admin_order_list_entries" || adminTableView;
     const adminMenuView = table === "admin_menu_entries";
     const workspaceView = table === "admin_workspace_list_entries";
     if (workspaceView && state.missingWorkspaceView) return { ok: false, status: 404,
@@ -172,6 +173,7 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     const limit = Math.min(Number(u.searchParams.get("limit") || 1000), state.cap || 1000);
     rows = rows.slice(Number(u.searchParams.get("offset") || 0), Number(u.searchParams.get("offset") || 0) + limit);
     if (adminOrderView && !fixture.adminOrderRows) rows = rows.map(row => ({ ...row, payload_for_retry: adminOrderViewPayload(row.payload_for_retry) }));
+    if (adminTableView) rows = rows.map(row => require("./orders-table-view.cjs").tableRow(row));
     if (workspaceView && !fixture.workspaceRows) rows = rows.map(row => ({ ...row,
       payload_for_retry: require("./admin-workspace-view-model.cjs").projectWorkspaceViewPayload(row.payload_for_retry) }));
     if (adminMenuView && !fixture.adminMenuRows) rows = rows.map(row => {

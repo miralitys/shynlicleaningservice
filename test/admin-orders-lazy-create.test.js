@@ -48,7 +48,7 @@ test("orders overlap staff reads, defer creation data and load the unchanged for
     assert.ok(addressRuntime);
     assert.doesNotMatch(addressRuntime, /bindAddressInputs\(document\)/);
     const reads = (await fs.readFile(capture, "utf8")).trim().split("\n").map(JSON.parse);
-    const ledger = reads.find(x => x.table === "admin_order_list_entries");
+    const ledger = reads.find(x => x.table === "admin_order_table_entries");
     const staff = reads.filter(x => x.table === "admin_staff" || x.table === "admin_staff_assignments");
     assert.ok(ledger && staff.length >= 2);
     assert.ok(staff.every(x => x.start < ledger.end && ledger.start < x.end), "Independent reads must overlap");
