@@ -52,7 +52,7 @@ function fixture(count=1107, {cap=71, dedicated=false, failure=()=>null}={}) {
 
 function pickExpected(full){return {isOrderListSummary:true,
   staff:full.staff.map(s=>Object.fromEntries(["id","name","role","address","status","createdAt","updatedAt"].map(k=>[k,s[k]]))),
-  assignments:full.assignments.map(a=>Object.fromEntries(["entryId","scheduleDate","scheduleTime","status","notes","createdAt","updatedAt","staffIds","travelEstimates"].map(k=>[k,a[k]]))),
+  assignments:full.assignments.map(a=>Object.fromEntries(["entryId","scheduleDate","scheduleTime","status","notes","createdAt","updatedAt","staffIds"].map(k=>[k,a[k]]))),
 };}
 
 test("order list reads every assignment beyond 1000 without employee documents, pay, SMS or calendar connections",async()=>{
@@ -131,7 +131,8 @@ test("travel and legacy falsy fields keep their existing normalization",async()=
     travelEstimates:[{staffId:"staff-0",status:"ok",durationSeconds:600,distanceMeters:2000,originAddress:"QA",destinationAddress:"QA home"}]});
   const list=await f.store.getOrderListSnapshot();
   assert.deepEqual(list,pickExpected(await f.reference.getSnapshot()));
-  assert.equal(list.assignments.find(a=>a.entryId==="order-0").travelEstimates[0].durationSeconds,600);
+  assert.equal(list.assignments.find(a=>a.entryId==="order-0").travelEstimates,undefined);
+  assert.equal((await f.reference.getSnapshot()).assignments.find(a=>a.entryId==="order-0").travelEstimates[0].durationSeconds,600);
 });
 
 test("a later assignment update still reads the full record and retains dates, team and calendar sync",async()=>{
@@ -176,5 +177,41 @@ test("a disappearing second page or incomplete view record is an error, not a sm
     }});
     await assert.rejects(f.store.getOrderListSnapshot());
     assert.ok(!f.calls.some(c=>c.u.pathname.endsWith("quote_ops_entries")));
+  }
+});
+
+test("old SQL projections stay compatible without caching data or repeating missing-column probes",async()=>{
+  const f=fixture(1107,{failure:u=>u.pathname.endsWith("admin_order_staff_list_entries")&&u.searchParams.get("select").includes("planning_record")?
+    response({code:"42703",message:"column planning_record does not exist"},400):null});
+  assert.deepEqual(await f.store.getOrderListSnapshot(),pickExpected(await f.reference.getSnapshot()));
+  assert.equal(f.calls.filter(c=>c.u.searchParams.get("select")?.includes("planning_record")).length,2);
+  f.calls.length=0;f.rows[0].payload_for_retry.staff.name="Changed while using old SQL";
+  assert.ok((await f.store.getOrderListSnapshot()).staff.some(s=>s.name==="Changed while using old SQL"));
+  assert.ok(f.calls.every(c=>!c.u.searchParams.get("select")?.includes("planning_record")));
+});
+
+test("a later missing-column or permission error cannot silently change the list projection",async()=>{
+  for(const variant of ["next","denied"]){
+    const f=fixture(1107,{failure:u=>{
+      if(!u.pathname.endsWith("admin_order_staff_list_entries"))return null;
+      if(variant==="next"&&u.searchParams.has("id"))return response({code:"42703",message:"column planning_record does not exist"},400);
+      if(variant==="denied")return response({code:"42501",message:"planning_record denied"},403);
+      return null;
+    }});
+    await assert.rejects(f.store.getOrderListSnapshot());
+    assert.ok(f.calls.filter(c=>c.u.pathname.endsWith("admin_order_staff_list_entries")).every(c=>c.u.searchParams.get("select").includes("planning_record")));
+  }
+});
+
+test("compact travel probes preserve exactly which legacy travel-only assignments exist",async()=>{
+  for(const travel of [null,false,0,"",{},[],[null,false,0,"a",[]], [{staffId:" "}], [{staffId:0}], [{staffId:[]}],
+    [{staffId:{}}], [{staffId:["a",null]}], [{staffId:"\uFEFF a \n",originAddress:"QA hidden route",durationSeconds:900}],
+    [{staffId:"a"},{staffId:"a"},{staffId:" b "}]]){
+    const f=fixture(1);
+    Object.assign(f.rows[6],{selected_date:"",selected_time:"",code:"planned",warnings:[],error_message:""});
+    f.rows[6].payload_for_retry.assignment={entryId:"order-0",staffIds:[],status:"planned",travelEstimates:travel,createdAt:stamp,updatedAt:stamp};
+    const result=await f.store.getOrderListSnapshot();
+    assert.deepEqual(result,pickExpected(await f.reference.getSnapshot()),JSON.stringify(travel));
+    assert.ok(result.assignments.every(a=>!Object.hasOwn(a,"travelEstimates")));
   }
 });

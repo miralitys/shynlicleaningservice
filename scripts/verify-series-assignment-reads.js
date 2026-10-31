@@ -20,8 +20,10 @@ async function main() {
   try {
     for (const variant of ["baseline", "candidate"]) {
       await fs.writeFile(env.SERIES_TRAFFIC_CAPTURE, "");
-      const app = await startServer({ env: { ...env, ADMIN_READ_BASELINE_REF: variant === "baseline" ? report.baseline : "" },
-        nodeArgs: ["--require", path.resolve(__dirname, "../test/support/admin-read-baseline-loader.cjs")] });
+      const earlyLoader = process.env.ORDERS_STAFF_BASELINE_LOADER;
+      const app = await startServer({ env: { ...env, ADMIN_READ_BASELINE_REF: variant === "baseline" ? report.baseline : "",
+        ...(earlyLoader ? { NODE_OPTIONS: `${process.env.NODE_OPTIONS || ""} --require ${JSON.stringify(earlyLoader)}` } : {}),
+      }, nodeArgs: earlyLoader ? [] : ["--require", path.resolve(__dirname, "../test/support/admin-read-baseline-loader.cjs")] });
       try {
         const cookie = await createAdminSession(app.baseUrl, loadAdminConfig(env));
         let next = "";
@@ -47,6 +49,11 @@ async function main() {
             if (variant === "baseline") expected.set(key, hash); else assert.equal(hash, expected.get(key), `${initiator} HTML differs`);
             const calls = (await fs.readFile(env.SERIES_TRAFFIC_CAPTURE, "utf8")).split("\n").filter(Boolean).map(JSON.parse);
             assert.ok(calls.every(call => call.method === "GET"), "Benchmark must not write data");
+            if (earlyLoader && process.env.ORDERS_STAFF_TRAVEL_FIXTURE === "1") {
+              for (const call of calls.filter(call => call.table === "admin_order_staff_list_entries"))
+                assert.equal(call.select, variant === "baseline" ? "id,kind,list_record" : "id,kind,list_record:planning_record",
+                  "The baseline must load before fixtures cache current runtime modules");
+            }
             report.results.push({ variant, initiator, route, pass, ms: Number((performance.now()-start).toFixed(2)),
               htmlBytes: Buffer.byteLength(html), hash, calls, requests: calls.length,
               jsonBytes: calls.reduce((n,c) => n+c.bytes,0), gzipBytes: calls.reduce((n,c) => n+c.gzipBytes,0) });

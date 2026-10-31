@@ -5,6 +5,7 @@ as $$ select case when value is null or value in ('null'::jsonb,'false'::jsonb,'
   then fallback else value end $$;
 
 create or replace view public.admin_order_staff_list_entries with (security_invoker=true) as
+with records as (
 select q.id,q.kind,case when q.kind='admin_staff_member' then jsonb_build_object(
   'id',public.admin_order_staff_list_value(q.payload_for_retry#>'{staff,id}',to_jsonb(q.id)),
   'name',public.admin_order_staff_list_value(q.payload_for_retry#>'{staff,name}',to_jsonb(q.customer_name)),
@@ -24,7 +25,18 @@ select q.id,q.kind,case when q.kind='admin_staff_member' then jsonb_build_object
   'createdAt',public.admin_order_staff_list_value(q.payload_for_retry#>'{assignment,createdAt}',to_jsonb(q.created_at)),
   'updatedAt',public.admin_order_staff_list_value(q.payload_for_retry#>'{assignment,updatedAt}',to_jsonb(q.updated_at))
 ) end as list_record
-from public.quote_ops_entries q where q.kind in ('admin_staff_member','admin_staff_assignment');
+from public.quote_ops_entries q where q.kind in ('admin_staff_member','admin_staff_assignment')
+)
+select id,kind,list_record,
+  case when kind='admin_staff_assignment' then list_record || jsonb_build_object(
+    -- Keep raw staff IDs so the existing JS sanitizer decides whether a legacy
+    -- travel-only assignment exists, without transferring addresses or routes.
+    'travelEstimates',case when jsonb_typeof(list_record->'travelEstimates')='array' then
+      (select coalesce(jsonb_agg(jsonb_build_object('staffId',item->'staffId') order by position),'[]'::jsonb)
+        from jsonb_array_elements(list_record->'travelEstimates') with ordinality as travel(item,position))
+      else list_record->'travelEstimates' end
+  ) else list_record end as planning_record
+from records;
 
 revoke all on function public.admin_order_staff_list_value(jsonb,jsonb) from public,anon,authenticated;
 grant execute on function public.admin_order_staff_list_value(jsonb,jsonb) to service_role;

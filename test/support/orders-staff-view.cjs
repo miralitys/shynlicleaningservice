@@ -17,8 +17,18 @@ function readOrderStaffView(rows, url, cap=1000) {
   const u = new URL(url);
   const matched = rows.filter(row => `eq.${row.kind}` === u.searchParams.get("kind") &&
     (!u.searchParams.has("id") || row.id > u.searchParams.get("id").slice(3))).sort((a,b)=>a.id.localeCompare(b.id));
-  const body = matched.slice(0, Math.min(cap,Number(u.searchParams.get("limit") || 1000))).map(projectOrderStaffRow);
+  const body = matched.slice(0, Math.min(cap,Number(u.searchParams.get("limit") || 1000)))
+    .map(u.searchParams.get("select")?.includes("planning_record") ? projectOrderStaffPlanningRow : projectOrderStaffRow);
   return { ok:true,status:200,text:async()=>JSON.stringify(body),
     headers:{get:name=>name.toLowerCase()==="content-range" ? `0-${Math.max(0,body.length-1)}/${matched.length}` : null} };
 }
-module.exports = { projectOrderStaffRow,readOrderStaffView };
+function projectOrderStaffPlanningRow(row) {
+  const projected = projectOrderStaffRow(row);
+  if (row.kind === "admin_staff_assignment" && Array.isArray(projected.list_record.travelEstimates)) {
+    projected.list_record.travelEstimates = projected.list_record.travelEstimates.map(item => ({
+      staffId: item && typeof item === "object" ? item.staffId ?? null : null,
+    }));
+  }
+  return projected;
+}
+module.exports = { projectOrderStaffRow,projectOrderStaffPlanningRow,readOrderStaffView };

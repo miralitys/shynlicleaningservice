@@ -143,6 +143,23 @@ test("planning reuses exact projections without losing legacy orders or overridi
   assert.deepEqual({ entries, staff }, before);
 });
 
+test("list-only planning skips travel without changing dates, teams, counts or the default full planning path", () => {
+  const entries = fixture();
+  const staff = { staff:[{id:"cleaner",name:"Assigned Cleaner",address:"QA origin"}], assignments:[{
+    entryId:entries[0].id,staffIds:["cleaner"],scheduleDate:"2099-02-01",scheduleTime:"14:30",status:"confirmed",
+    travelEstimates:[{staffId:"cleaner",status:"ok",durationSeconds:900,distanceMeters:3000}],
+  }] };
+  const before = structuredClone({entries,staff}), d = domain();
+  const full = d.buildStaffPlanningContext(entries,staff);
+  const list = d.buildStaffPlanningContext(entries,staff,[],{includeTravel:false});
+  assert.ok(full.orderItems.some(item=>item.travelLegs.length>0));
+  assert.ok(list.orderItems.every(item=>!Object.hasOwn(item,"travelLegs")));
+  const withoutTravel = value=>JSON.parse(JSON.stringify(value,(key,value)=>key==="travelLegs"?undefined:value));
+  assert.deepEqual(withoutTravel(list),withoutTravel(full));
+  assert.deepEqual({entries,staff},before);
+  assert.deepEqual(d.buildStaffPlanningContext(entries,staff),full,"Calendar/full planning remains the default");
+});
+
 test("orders phase timing is allowlisted, accumulated, safe on failure and free of business fields", async () => {
   const res = {};
   await runAdminReadContext({ res, route: "/admin/orders" }, async () => {
