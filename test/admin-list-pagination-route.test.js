@@ -12,6 +12,7 @@ const { createListFixture } = require("./support/admin-list-fixture.cjs");
 const { mapRowToEntry } = require("../lib/supabase-quote-ops");
 const { filterQuoteOpsEntries } = require("../lib/quote-ops/store");
 const { createAdminDomainHelpers } = require("../lib/admin/domain");
+const { mapRowToStaffRecord, mapRowToAssignmentRecord } = require("../lib/supabase-admin-staff");
 
 const normalizeString = (value, length = 500) => String(value ?? "").trim().slice(0, length);
 const domain = createAdminDomainHelpers({ normalizeString });
@@ -29,7 +30,7 @@ test("orders and clients keep every logical row beyond 1000, all-address history
     SUPABASE_SERVICE_ROLE_KEY: "sb_secret_fake", GHL_API_KEY: "", GHL_LOCATION_ID: "", PROFITABILITY_ENABLED: "0",
     CLIENT_REMINDER_BOOTSTRAP_DELAY_MS: "99999999", ACCOUNT_SECTION_CONTROL: path.join(root, "control.json"),
     ACCOUNT_SECTION_CAPTURE: path.join(root, "reads.ndjson"),
-    SHYNLI_FETCH_STUB_ENTRY: path.resolve(__dirname, "support/admin-list-fixture.cjs") };
+    SHYNLI_FETCH_STUB_ENTRY: process.env.ORDERS_STAFF_LIST_FIXTURE || path.resolve(__dirname, "support/admin-list-fixture.cjs") };
   await fs.writeFile(env.ACCOUNT_SECTION_CONTROL, "{}");
   const fixture = createListFixture();
   const visible = filterQuoteOpsEntries(fixture.rows.map(mapRowToEntry), {}, normalizeString);
@@ -81,11 +82,20 @@ test("orders and clients keep every logical row beyond 1000, all-address history
     const orderRows = await walk(initialOrders, "orders-table");
     assert.deepEqual(orderRows.map(n => get(n, "data-admin-list-key")).sort(), expectedOrders.map(o => o.id).sort());
     const byOrder = new Map(expectedOrders.map(order => [order.id, order]));
+    const expectedPlanning = domain.buildStaffPlanningContext(visible, {
+      staff: fixture.staff.map(mapRowToStaffRecord), assignments: fixture.assignments.map(mapRowToAssignmentRecord),
+    }).orderItemsByEntryId;
     for (const row of orderRows) {
       const order = byOrder.get(get(row, "data-admin-list-key"));
       assert.ok(text(row).includes(domain.formatCurrencyAmount(order.totalPrice)), order.id);
       assert.ok(text(row).includes(order.fullAddress), order.id);
-      assert.ok(text(row).includes("Cleaner A") && text(row).includes("Cleaner B"), order.id);
+      const assignment = fixture.assignments.find(item => item.entry_id === order.id);
+      const names = (assignment?.staff_ids || []).map(id => fixture.staff.find(person => person.id === id)?.name).filter(Boolean);
+      const expectedTeam = names.length ? names.join(", ") : order.assignedStaff;
+      const teamCell = (row.childNodes || []).filter(node => node.nodeName === "td")[3];
+      assert.equal(text(teamCell), expectedTeam, order.id);
+      const dateCell = (row.childNodes || []).filter(node => node.nodeName === "td")[2];
+      assert.ok(text(dateCell).includes(expectedPlanning.get(order.id).scheduleLabel), order.id);
     }
     const clientRows = await walk(initialClients, "clients");
     assert.deepEqual(clientRows.map(n => get(n, "data-admin-list-key")).sort(), expectedClients.map(c => c.key).sort());

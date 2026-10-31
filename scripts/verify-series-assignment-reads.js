@@ -14,7 +14,7 @@ async function main() {
     SUPABASE_SERVICE_ROLE_KEY: "sb_secret_fake", GHL_API_KEY: "", GHL_LOCATION_ID: "",
     CLIENT_REMINDER_BOOTSTRAP_DELAY_MS: "99999999", ACCOUNT_SECTION_HEAVY_STAFF: "1",
     SERIES_TRAFFIC_CAPTURE: path.join(root, "reads.ndjson"),
-    SHYNLI_FETCH_STUB_ENTRY: path.resolve(__dirname, "../test/support/series-traffic-fetch.cjs") };
+    SHYNLI_FETCH_STUB_ENTRY: process.env.ORDERS_STAFF_FETCH_FIXTURE || path.resolve(__dirname, "../test/support/series-traffic-fetch.cjs") };
   const report = { synthetic: true, productionAccess: false, baseline: process.env.ADMIN_READ_BASELINE_REF || "HEAD", results: [] };
   const expected = new Map();
   try {
@@ -25,9 +25,11 @@ async function main() {
       try {
         const cookie = await createAdminSession(app.baseUrl, loadAdminConfig(env));
         let next = "";
-        for (const initiator of ["orders", "show-more", "full-card"]) {
-          const route = initiator === "orders" ? "/admin/orders?status=all" : initiator === "show-more" ? next
-            : "/admin/orders?fragment=order-dialog&order=order-00253";
+        const routes = ["orders", "show-more", "full-card"].map(initiator => ({ initiator }))
+          .concat(JSON.parse(process.env.ORDERS_STAFF_EXTRA_ROUTES || "[]"));
+        for (const { initiator, route: explicitRoute } of routes) {
+          const route = explicitRoute || (initiator === "orders" ? "/admin/orders?status=all" : initiator === "show-more" ? next
+            : "/admin/orders?fragment=order-dialog&order=order-00253");
           assert.ok(route);
           for (let pass = 0; pass < 11; pass++) {
             await fs.writeFile(env.SERIES_TRAFFIC_CAPTURE, "");
@@ -53,7 +55,7 @@ async function main() {
       } finally { await stopServer(app.child); }
     }
     if (process.env.SERIES_TRAFFIC_REPORT) await fs.writeFile(process.env.SERIES_TRAFFIC_REPORT, JSON.stringify(report,null,2));
-    for (const initiator of ["orders", "show-more", "full-card"]) {
+    for (const initiator of new Set(report.results.map(row => row.initiator))) {
       const row = report.results.find(r => r.variant === "candidate" && r.initiator === initiator && r.pass === 10);
       console.log(JSON.stringify({ initiator, requests: row.requests, jsonBytes: row.jsonBytes, gzipBytes: row.gzipBytes, identicalHtml: true }));
     }
