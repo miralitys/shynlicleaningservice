@@ -495,6 +495,178 @@ test("ambiguous legacy assignment duplicates retain the old full-read precedence
   assert.equal(orders.metrics.saves, 0);
 });
 
+function createQueuedSourceFixture() {
+  const domain = createSweepDomain();
+  const initial = quietMaintenanceEntries(domain).filter(entry => getEntryOrderState(entry).recurringSeriesId === "noop-series-0");
+  const fixture = createSweepLedger(domain, initial);
+  const sourceId = initial[0].id;
+  const options = () => {
+    const source = fixture.entries.find(entry => entry.id === sourceId);
+    return { quoteOpsLedger: fixture.ledger, sourceEntry: projectRecurringContextEntry(source), contextOnly: true,
+      contextSeriesId: getEntryOrderState(source).recurringSeriesId, contextEntryIds: fixture.entries.map(entry => entry.id) };
+  };
+  return { domain, fixture, sourceId, options };
+}
+
+function deferredSeriesRead() {
+  let resolve;
+  const promise = new Promise(done => { resolve = done; });
+  return { promise, resolve };
+}
+
+test("queued maintenance reads its full source only after the previous operation and uses fresh money and payouts", { timeout: 10000 }, async () => {
+  const { domain, fixture, sourceId, options } = createQueuedSourceFixture();
+  const entered = deferredSeriesRead(), release = deferredSeriesRead();
+  const contextRead = fixture.ledger.listRecurringContextEntries, fullRead = fixture.ledger.getEntry;
+  let firstContext = true, fullReads = 0;
+  fixture.ledger.listRecurringContextEntries = async input => {
+    if (firstContext) { firstContext = false; entered.resolve(); await release.promise; }
+    return contextRead(input);
+  };
+  fixture.ledger.getEntry = async (id, readOptions) => {
+    assert.equal(readOptions.allowMemoryFallback, false);
+    fullReads++; return fullRead(id);
+  };
+  fixture.ledger.updateOrderEntry = async () => assert.fail("no metadata or business writes in an intact series");
+  fixture.ledger.recordSubmission = async () => assert.fail("no duplicate visits");
+  const observedSources = [];
+  const deps = { ...domain, getEntryOrderState, normalizeString,
+    buildRecurringOrderSeriesSubmissions(source, input) {
+      observedSources.push({ price: source.totalPrice, fixed: getEntryOrderState(source).payrollOverrides,
+        summary: Boolean(source.isRecurringContextSummary) });
+      return domain.buildRecurringOrderSeriesSubmissions(source, input);
+    } };
+  const first = createAdminOrdersRecurringHelpers(deps).ensureRecurringOrderSeries(options());
+  let second;
+  try {
+    await Promise.race([entered.promise, first.then(() => assert.fail("first operation must reach its context read"))]);
+    assert.equal(fullReads, 1);
+    second = createAdminOrdersRecurringHelpers(deps).ensureRecurringOrderSeries(options());
+    await Promise.resolve();
+    assert.equal(fullReads, 1, "a waiting sweep must not pre-read the full source");
+    domain.applyOrderEntryUpdates(fixture.entries.find(entry => entry.id === sourceId), {
+      totalPrice: 417, payrollOverrides: { cleaner: "500.00" }, assignedStaff: "Updated QA cleaner",
+    });
+  } finally { release.resolve(); }
+  const expected = structuredClone(fixture.entries);
+  assert.deepEqual(await Promise.all([first, second]), [[], []]);
+  assert.equal(fullReads, 2);
+  assert.equal(observedSources[1].price, 417);
+  assert.deepEqual(observedSources[1].fixed, { cleaner: "500.00" });
+  assert(observedSources.every(source => !source.summary));
+  assert.deepEqual(fixture.entries, expected, "both sweeps preserve all externally edited money, dates, teams, payouts and history");
+});
+
+test("a stale summary cannot generate under another series queue and a fresh retry remains available", async () => {
+  const { domain, fixture, options } = createQueuedSourceFixture();
+  const stale = options();
+  for (const entry of fixture.entries) for (const key of ["orderState", "adminOrder"]) {
+    entry.payloadForRetry[key].recurringSeriesId = "changed-series";
+  }
+  const expected = structuredClone(fixture.entries);
+  fixture.ledger.updateOrderEntry = async () => assert.fail("a stale queue key cannot rewrite series membership");
+  fixture.ledger.recordSubmission = async () => assert.fail("a stale queue key cannot create duplicates");
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  await assert.rejects(helpers.ensureRecurringOrderSeries(stale), /identity changed/);
+  assert.deepEqual(fixture.entries, expected);
+  assert.deepEqual(await helpers.ensureRecurringOrderSeries(options()), []);
+  assert.deepEqual(fixture.entries, expected);
+});
+
+test("a series identity changed during the queue wait is rejected without deadlock or writes", { timeout: 10000 }, async () => {
+  const { domain, fixture, options } = createQueuedSourceFixture();
+  const entered = deferredSeriesRead(), release = deferredSeriesRead(), fullRead = fixture.ledger.getEntry;
+  let reads = 0;
+  fixture.ledger.getEntry = async id => {
+    reads++;
+    if (reads !== 1) return fullRead(id);
+    const first = await fullRead(id);
+    for (const key of ["orderState", "adminOrder"]) first.payloadForRetry[key].status = "canceled";
+    entered.resolve(); await release.promise;
+    return first;
+  };
+  fixture.ledger.updateOrderEntry = async () => assert.fail("stale identities cannot save");
+  fixture.ledger.recordSubmission = async () => assert.fail("stale identities cannot create duplicates");
+  const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+  const first = helpers.ensureRecurringOrderSeries(options());
+  let second;
+  try {
+    await Promise.race([entered.promise, first.then(() => assert.fail("first full read must hold the queue"))]);
+    second = helpers.ensureRecurringOrderSeries(options());
+    second.catch(() => {});
+    await Promise.resolve();
+    assert.equal(reads, 1);
+    for (const entry of fixture.entries) for (const key of ["orderState", "adminOrder"]) {
+      entry.payloadForRetry[key].recurringSeriesId = "new-queued-series";
+    }
+  } finally { release.resolve(); }
+  const expected = structuredClone(fixture.entries);
+  assert.deepEqual(await first, []);
+  await assert.rejects(second, /identity changed/);
+  assert.equal(reads, 2);
+  assert.deepEqual(await helpers.ensureRecurringOrderSeries(options()), []);
+  assert.deepEqual(fixture.entries, expected);
+});
+
+test("fresh cancellation, deletion, pending reset and approval changes are never overridden by the queue summary", async () => {
+  for (const mode of ["canceled", "rescheduled", "deleted", "pending-reset", "frequency-removed", "needs-approval"]) {
+    const { domain, fixture, sourceId, options } = createQueuedSourceFixture();
+    const stale = options(), source = fixture.entries.find(entry => entry.id === sourceId);
+    if (mode === "deleted") fixture.entries.splice(fixture.entries.indexOf(source), 1);
+    else for (const key of ["orderState", "adminOrder"]) {
+      const state = source.payloadForRetry[key];
+      if (["canceled", "rescheduled"].includes(mode)) state.status = mode;
+      if (mode === "pending-reset") state.recurringPendingResetFromDate = "2026-11-08";
+      if (mode === "frequency-removed") state.frequency = "";
+      if (mode === "needs-approval") { state.managerConfirmationRequired = true; delete state.managerConfirmedAt; }
+    }
+    const expected = structuredClone(fixture.entries);
+    fixture.ledger.updateOrderEntry = async () => assert.fail(`${mode}: stale summary cannot save`);
+    fixture.ledger.recordSubmission = async () => assert.fail(`${mode}: stale summary cannot create`);
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    assert.deepEqual(await helpers.ensureRecurringOrderSeries(stale), [], mode);
+    assert.deepEqual(fixture.entries, expected, mode);
+  }
+});
+
+test("failed full reads release the queue and never substitute the discovery summary", async () => {
+  for (const mode of ["unavailable", "summary", "wrong-id"]) {
+    const { domain, fixture, options } = createQueuedSourceFixture();
+    const fullRead = fixture.ledger.getEntry;
+    fixture.ledger.getEntry = async () => {
+      if (mode === "unavailable") throw new Error("DB unavailable");
+      if (mode === "wrong-id") return fullRead(fixture.entries[1].id);
+      return options().sourceEntry;
+    };
+    const expected = structuredClone(fixture.entries);
+    fixture.ledger.updateOrderEntry = async () => assert.fail("failed full reads cannot save");
+    fixture.ledger.recordSubmission = async () => assert.fail("failed full reads cannot create");
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    await assert.rejects(helpers.ensureRecurringOrderSeries(options()), /DB unavailable|full recurring source|identity changed/);
+    fixture.ledger.getEntry = fullRead;
+    assert.deepEqual(await helpers.ensureRecurringOrderSeries(options()), []);
+    assert.deepEqual(fixture.entries, expected);
+  }
+});
+
+test("manual calls, unverified summaries and incomplete queue identities retain their original full-read path", async () => {
+  for (const mode of ["manual", "full-source", "no-series-context", "no-known-source"]) {
+    const { domain, fixture, options } = createQueuedSourceFixture();
+    const input = options(), fullRead = fixture.ledger.getEntry;
+    let fullReads = 0;
+    fixture.ledger.getEntry = async id => { fullReads++; return fullRead(id); };
+    if (mode === "manual") input.contextOnly = false;
+    if (mode === "full-source") input.sourceEntry = await fullRead(input.sourceEntry.id);
+    if (mode === "no-series-context") input.contextSeriesId = "";
+    if (mode === "no-known-source") input.contextEntryIds = [];
+    const helpers = createAdminOrdersRecurringHelpers({ ...domain, getEntryOrderState, normalizeString });
+    const expected = stableSweepState(fixture.entries);
+    assert.deepEqual(await helpers.ensureRecurringOrderSeries(input), [], mode);
+    assert.equal(fullReads, 2, mode);
+    assert.deepEqual(stableSweepState(fixture.entries), expected, mode);
+  }
+});
+
 test("quiet maintenance skips all 197 empty saves before the real audit/store full reads", async t => {
   t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-30T12:00:00Z") });
   const domain = createSweepDomain();
@@ -510,7 +682,7 @@ test("quiet maintenance skips all 197 empty saves before the real audit/store fu
   }
   t.diagnostic(JSON.stringify({ profile: "quiet-maintenance", entries: fixture.rows.size, series: 10, recurringOrders: 187, runs }));
   assert.equal(fixture.metrics.saves, 0);
-  assert.equal(fixture.metrics.fullReads, 200, "each sweep must still read fresh sources rather than cache them");
+  assert.equal(fixture.metrics.fullReads, 100, "each sweep reads every full source once inside its queue, without caching between sweeps");
   assert.equal(fixture.metrics.contextReads, 220);
   assert.deepEqual([...fixture.rows.values()], before, "even timestamps and old history must remain unchanged");
   assert.deepEqual(fixture.audit, []);
@@ -557,7 +729,8 @@ test("real metadata repairs are retained for missing zero indexes, broken links 
     assert.equal(fixture.metrics.saves, 1, `${mode}: only the necessary repair is saved`);
     assert.equal(fixture.metrics.changedSaves, 1, mode);
     assert.equal(fixture.metrics.emptySaves, 0, mode);
-    assert.equal(fixture.metrics.fullReads, 22, mode);
+    const legacySource = ["missing-index", "null-index", "missing-anchor"].includes(mode);
+    assert.equal(fixture.metrics.fullReads, legacySource ? 13 : 12, `${mode}: keep guarded repair reads, remove only duplicate source reads`);
     assert.equal(fixture.durableEvents.length, 1, "a real metadata repair still reaches durable history");
     const repaired = fixture.entries();
     assert.equal(getEntryOrderState(repaired[0]).recurringOccurrenceIndex, 0);
