@@ -102,6 +102,7 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     const adminTableView = table === "admin_order_table_entries";
     const adminOrderView = table === "admin_order_list_entries" || adminTableView;
     const adminMenuView = table === "admin_menu_entries";
+    const clientDirectoryView = table === "admin_client_directory_entries";
     const workspaceView = table === "admin_workspace_list_entries";
     if (workspaceView && state.missingWorkspaceView) return { ok: false, status: 404,
       text: async () => JSON.stringify({ code: "PGRST205", message: "Missing workspace view" }) };
@@ -131,15 +132,16 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     if (calendarView && state.calendarViewError) {
       return { ok: false, status: 403, text: async () => JSON.stringify({ code: "42501", message: "Calendar view access denied" }) };
     }
-    if ((state.failOrders && (table === "quote_ops_entries" || accountView || calendarView || adminOrderView || adminMenuView || workspaceView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
+    if ((state.failOrders && (table === "quote_ops_entries" || accountView || calendarView || adminOrderView || adminMenuView || clientDirectoryView || workspaceView)) || (state.failDetail && u.searchParams.get("id")?.startsWith("eq."))) {
       return { ok: false, status: 503, text: async () => JSON.stringify({ message: "Simulated read failure" }) };
     }
-    let rows = table === "quote_ops_entries" || accountView || calendarView || adminOrderView || adminMenuView || workspaceView ? fixture.rows : table === "admin_staff" ? fixture.staff
+    let rows = table === "quote_ops_entries" || accountView || calendarView || adminOrderView || adminMenuView || clientDirectoryView || workspaceView ? fixture.rows : table === "admin_staff" ? fixture.staff
       : table === "admin_users" ? fixture.users : table === "admin_staff_assignments" ? fixture.assignments : [];
     if ((accountView || calendarView) && fixture.accountRows) rows = fixture.accountRows;
     if (calendarView && fixture.calendarRows) rows = fixture.calendarRows;
     if (adminOrderView && fixture.adminOrderRows) rows = fixture.adminOrderRows;
     if (adminMenuView && fixture.adminMenuRows) rows = fixture.adminMenuRows;
+    if (clientDirectoryView && fixture.clientDirectoryRows) rows = fixture.clientDirectoryRows;
     if (workspaceView && fixture.workspaceRows) rows = fixture.workspaceRows;
     if (state.reassigned && table === "admin_staff_assignments") rows = rows.filter(row => row.entry_id !== state.reassigned);
     for (const [key, value] of u.searchParams) {
@@ -172,6 +174,7 @@ function createReadFetch(fixture, calls = [], control = () => ({}), { allowLogin
     const total = rows.length;
     const limit = Math.min(Number(u.searchParams.get("limit") || 1000), state.cap || 1000);
     rows = rows.slice(Number(u.searchParams.get("offset") || 0), Number(u.searchParams.get("offset") || 0) + limit);
+    if (clientDirectoryView && !fixture.clientDirectoryRows) rows = rows.map(require("./client-directory-view.cjs").directoryRow);
     if (adminOrderView && !fixture.adminOrderRows) rows = rows.map(row => ({ ...row, payload_for_retry: adminOrderViewPayload(row.payload_for_retry) }));
     if (adminTableView) rows = rows.map(row => require("./orders-table-view.cjs").tableRow(row));
     if (workspaceView && !fixture.workspaceRows) rows = rows.map(row => ({ ...row,
