@@ -2,7 +2,10 @@
   "use strict";
   window.mountSimpleQuote = function () {
     const profile = document.querySelector('[data-step-card="profile"]');
-    for (const [id, label, step, max] of [["quote2Rooms", "Bedrooms", 1, 5], ["quote2Bathrooms", "Bathrooms", 0.5, 5.5]]) {
+    for (const [id, label, step, max] of [
+      ["quote2Rooms", "Bedrooms", 1, Math.max(...window.ShynliPricing.ALLOWED_ROOM_COUNTS)],
+      ["quote2Bathrooms", "Bathrooms", 0.5, Math.max(...window.ShynliPricing.ALLOWED_BATHROOM_COUNTS)],
+    ]) {
       const original = document.getElementById(id);
       if (!original) continue;
       const wrapper = document.createElement("div");

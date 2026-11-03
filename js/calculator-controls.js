@@ -78,9 +78,32 @@
       }
     }
   }
+  function mountHomeSizeOptions(quote) {
+    const engine = window.ShynliPricing;
+    for (const [id, counts, label] of [
+      [quote ? "quote2Rooms" : "bedrooms", engine.ALLOWED_ROOM_COUNTS, quote ? "bedrooms" : "Bedrooms"],
+      [quote ? "quote2Bathrooms" : "bathrooms", engine.ALLOWED_BATHROOM_COUNTS, quote ? "bathrooms" : "Bathrooms"],
+    ]) {
+      const select = document.getElementById(id);
+      for (const count of counts) {
+        const existing = Array.from(select.options).find(option => option.value === String(count));
+        if (!existing) select.add(new Option(`${count} ${label}`, String(count)));
+        else if (count === 5.5) existing.textContent = `${count} ${label}`;
+      }
+    }
+    const area = document.getElementById(quote ? "quote2SquareFeet" : "squareFeet");
+    engine.SQUARE_FEET_PRICING_BUCKETS.forEach(bucket => {
+      if (bucket.step < 7) return;
+      const label = engine.formatSquareFeetBucket(bucket.step);
+      const existing = Array.from(area.options).find(option => option.value === String(bucket.step));
+      if (existing) existing.textContent = label;
+      else area.add(new Option(label, String(bucket.step)));
+    });
+  }
   function mountQuote() {
     const profile = document.querySelector('[data-step-card="profile"]');
     if (!profile) return;
+    mountHomeSizeOptions(true);
     const grid = document.createElement("div");
     grid.className = "quote2-quantity-grid";
     grid.innerHTML = Object.entries(roomLabels)
@@ -157,6 +180,7 @@
   function mountPricing() {
     const form = document.getElementById("cleaningCalculator");
     if (!form) return;
+    mountHomeSizeOptions(false);
     const grid = document.createElement("div");
     grid.className = "quantity-section";
     grid.innerHTML =

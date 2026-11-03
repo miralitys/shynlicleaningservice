@@ -90,6 +90,9 @@ test("public submission returns and signs the rounded price", async () => {
       [quote, 397],
       [{ ...quote, serviceType: "moving", rooms: 3, bathrooms: 2 }, 509],
       [{ ...quote, serviceType: "moving", rooms: 3, bathrooms: 2, services: pricing.PRICING.moving.defaultSelectedServices.filter(key => key !== "insideCabinets") }, 464],
+      [{ ...quote, serviceType: "regular", rooms: 10, bathrooms: 10, squareMeters: 16 }, 789],
+      [{ ...quote, serviceType: "deep", rooms: 10, bathrooms: 10, squareMeters: 16 }, 1147],
+      [{ ...quote, serviceType: "moving", rooms: 10, bathrooms: 10, squareMeters: 10000 }, 1327],
     ]) {
       const response = await fetch(server.baseUrl + "/api/quote/submit", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contact: { fullName: "Test Calculator", phone: "2025550142" }, quote: selection }) });
       assert.equal(response.status, 201);
@@ -152,4 +155,13 @@ test("moving order records keep the selected cabinets and the matching $509 or $
   };
   await assertLedgerQuote(quote, 509);
   await assertLedgerQuote({ ...quote, services: pricing.PRICING.moving.defaultSelectedServices.filter(key => key !== "insideCabinets") }, 464);
+});
+
+test("large-home submissions retain 10 bedrooms, 10 bathrooms, area and the server total", async () => {
+  for (const [serviceType, expected] of [["regular", 789], ["deep", 1147], ["moving", 1327]]) {
+    await assertLedgerQuote({
+      serviceType, rooms: 10, bathrooms: 10, squareMeters: 16, hasPets: false, basementCleaning: false, totalPrice: 1,
+      selectedDate: "2026-12-01", selectedTime: "09:00", zipCode: "60540", fullAddress: "123 Test St, Naperville, IL 60540", consent: true,
+    }, expected);
+  }
 });

@@ -81,11 +81,8 @@
     deep: "Deep Cleaning",
     moving: "Move In/Move Out Clean",
   });
-  const ALLOWED_ROOM_COUNTS = new Set([1, 2, 3, 4, 5]);
-  const ALLOWED_BATHROOM_COUNTS = new Set([
-    1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5,
-  ]);
-  const ALLOWED_SQUARE_FEET_BUCKETS = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7]);
+  const ALLOWED_ROOM_COUNTS = new Set(Array.from({ length: 10 }, (_, i) => i + 1));
+  const ALLOWED_BATHROOM_COUNTS = new Set(Array.from({ length: 19 }, (_, i) => 1 + i * 0.5));
   const SQUARE_FEET_PRICING_BUCKETS = Object.freeze([
     Object.freeze({ max: 1200, step: 0 }),
     Object.freeze({ max: 2000, step: 1 }),
@@ -94,8 +91,16 @@
     Object.freeze({ max: 3500, step: 4 }),
     Object.freeze({ max: 4000, step: 5 }),
     Object.freeze({ max: 5000, step: 6 }),
-    Object.freeze({ max: Number.POSITIVE_INFINITY, step: 7 }),
+    ...Array.from({ length: 10 }, (_, i) => Object.freeze({ max: 5500 + i * 500, step: 7 + i })),
   ]);
+  const ALLOWED_SQUARE_FEET_BUCKETS = Object.freeze(SQUARE_FEET_PRICING_BUCKETS.map(bucket => bucket.step));
+
+  function formatSquareFeetBucket(value) {
+    const step = Number(value);
+    if (!Number.isInteger(step) || !ALLOWED_SQUARE_FEET_BUCKETS.includes(step)) return "";
+    const min = step === 0 ? 700 : SQUARE_FEET_PRICING_BUCKETS[step - 1].max + 1;
+    return `${min.toLocaleString("en-US")} - ${SQUARE_FEET_PRICING_BUCKETS[step].max.toLocaleString("en-US")} sq ft`;
+  }
 
   function normalizeString(value, maxLength = 500) {
     return String(value || "")
@@ -138,7 +143,7 @@
   }
 
   function normalizeRoomCount(value) {
-    const parsed = normalizeInteger(value, 1, 1, 5);
+    const parsed = normalizeInteger(value, 1, 1, 10);
     return ALLOWED_ROOM_COUNTS.has(parsed) ? parsed : 1;
   }
 
@@ -411,6 +416,7 @@
     ALLOWED_ROOM_COUNTS,
     ALLOWED_SQUARE_FEET_BUCKETS,
     PRICING,
+    SQUARE_FEET_PRICING_BUCKETS,
     SERVICE_TYPE_NAMES,
     calculateQuotePricing,
     roundCustomerQuotePricing,
@@ -419,6 +425,7 @@
     calculateBathroomPrice,
     calculateBedroomPrice,
     calculateSquareFeetPrice,
+    formatSquareFeetBucket,
     getBasementCleaningFee,
     getRegularBasePrice,
     normalizeQuotePricingInput,
