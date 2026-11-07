@@ -136,7 +136,8 @@ test("a recorded deployment date reaches schema, visible Updated and sitemap onl
     app = await startServer({ nodeArgs: ["--require", preload] });
     const sitemap = await (await fetch(app.baseUrl + "/sitemap.xml")).text();
     for (const article of BLOG_ARTICLES) {
-      const expected = article.editorialLinkCount ? simulated.deployedAt : history[article.path].modifiedAt;
+      const safetyReleased = article.safetyRevisionPending === false;
+      const expected = safetyReleased ? article.modifiedAt : article.editorialLinkCount ? simulated.deployedAt : history[article.path].modifiedAt;
       const html = await (await fetch(app.baseUrl + article.path)).text();
       const schemas = inspectHtml(html).scripts.map((script) => JSON.parse(textContent(script)));
       const schema = schemas.find((value) => value["@type"] === "Article");
@@ -144,11 +145,14 @@ test("a recorded deployment date reaches schema, visible Updated and sitemap onl
       assert.equal(schema.dateModified, expected, article.path);
       const entry = sitemap.split(`<loc>https://shynlicleaningservice.com${article.path}</loc>`)[1]?.split("</url>")[0];
       assert.ok(entry?.includes(`<lastmod>${expected}T00:00:00.000Z</lastmod>`), article.path);
-      if (article.editorialLinkCount) assert.ok(html.includes('<time datetime="2026-10-21">Updated October 21, 2026</time>'), article.path);
+      if (safetyReleased) assert.ok(html.includes(`<time datetime="${article.modifiedAt}">${article.updatedLabel}</time>`), article.path);
+      else if (article.editorialLinkCount) assert.ok(html.includes('<time datetime="2026-10-21">Updated October 21, 2026</time>'), article.path);
     }
     for (const route of ["/blog", ...new Set(BLOG_ARTICLES.map((article) => article.categoryPath))]) {
       const entry = sitemap.split(`<loc>https://shynlicleaningservice.com${route}</loc>`)[1]?.split("</url>")[0];
-      assert.ok(entry?.includes("<lastmod>2026-10-21T00:00:00.000Z</lastmod>"), route);
+      const articles = BLOG_ARTICLES.filter(article => route === "/blog" || article.categoryPath === route);
+      const expected = articles.map(article => article.safetyRevisionPending === false ? article.modifiedAt : article.editorialLinkCount ? simulated.deployedAt : history[article.path].modifiedAt).sort().at(-1);
+      assert.ok(entry?.includes(`<lastmod>${expected}T00:00:00.000Z</lastmod>`), route);
     }
   } finally {
     if (app) await stopServer(app.child);
