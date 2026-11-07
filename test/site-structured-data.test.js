@@ -20,7 +20,7 @@ test("home business keeps its ID and includes the confirmed hours and profiles w
   const graph = helpers.buildHomeSchemas()["@graph"];
   const business = graph[0];
   assert.equal(business["@id"], BUSINESS_ID);
-  assert.deepEqual(business["@type"], ["HouseCleaningService", "LocalBusiness"]);
+  assert.equal(business["@type"], "LocalBusiness");
   assert.equal(business.name, "Shynli Cleaning Service");
   assert.equal(business.telephone, "+1-630-812-7077");
   assert.equal(business.areaServed.length, CITY_PAGES.length);
@@ -167,7 +167,7 @@ test("all served city and service pages have canonical company references and vi
           assert.equal(node["@id"], BUSINESS_ID);
         }
         assert.ok(!types.includes("HouseCleaningBusiness"), route);
-        if (types.includes("HouseCleaningService")) assert.equal(route, "/");
+        assert.ok(!types.includes("HouseCleaningService"), route);
         if (node["@type"] === "Service" && node.provider) assert.deepEqual(node.provider, { "@id": BUSINESS_ID }, route);
       }));
       if (SERVICE_PAGES.includes(route) || CITY_PAGES.some(([path]) => path === route)) {
