@@ -117,8 +117,13 @@ test("all blog pages expose parsable Article dates and matching sitemap lastmod;
       assert.equal(schema.mainEntityOfPage, `https://shynlicleaningservice.com${article.path}`);
       const entry = sitemap.split(`<loc>https://shynlicleaningservice.com${article.path}</loc>`)[1]?.split("</url>")[0];
       assert.ok(entry?.includes(`<lastmod>${article.modifiedAt}T00:00:00.000Z</lastmod>`), article.path);
-      if (article.modifiedAt === article.publishedAt) assert.doesNotMatch(html, /<time[^>]*>Updated /);
+      if (article.modifiedAt === article.publishedAt) {
+        assert.doesNotMatch(html, /<time[^>]*>Updated /);
+        const label = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Chicago" }).format(new Date(`${article.publishedAt}T12:00:00Z`));
+        assert.ok(html.includes(`<time datetime="${article.publishedAt}">Published ${label}</time>`), article.path);
+      }
       else assert.ok(html.includes(`<time datetime="${article.modifiedAt}">${article.updatedLabel}</time>`), article.path);
+      assert.equal((html.match(/<time\b/g) || []).length, 1, article.path);
     }
   } finally {
     await stopServer(app.child);
