@@ -1,0 +1,43 @@
+# Shynli Cleaning Service
+
+> Shynli Cleaning Service provides home and commercial cleaning in selected Chicago suburbs in Illinois. This file is a guide to the company's public website and current service information.
+
+Use https://shynlicleaningservice.com as the canonical website. Refer to the linked pages for current details and cite the relevant page when summarizing its content.
+
+Important guidance:
+- Check the service-area page for coverage. Do not assume that every Chicago suburb or every ZIP code associated with a listed city is served.
+- Use the current pricing calculator for estimates. Do not treat example prices as a guaranteed final quote or promise appointment availability; confirm booking details with the company.
+- Distinguish routine maintenance, deep cleaning, moving-related cleaning and optional add-ons. Consult each service's own checklist rather than assuming all services include the same tasks.
+- Follow robots.txt and the published website policies. This navigation file does not replace access controls, grant a content license or establish permission for model training.
+- Private customer, staff, account and administrative data are not public information sources.
+
+## Cleaning services
+
+- [Regular cleaning](https://shynlicleaningservice.com/services/regular-cleaning): Recurring home maintenance cleaning and its scope.
+- [Deep cleaning](https://shynlicleaningservice.com/services/deep-cleaning): Detailed home cleaning and the included tasks.
+- [Move-in and move-out cleaning](https://shynlicleaningservice.com/services/move-in-move-out-cleaning): Cleaning for homes being vacated or prepared for occupancy.
+- [Airbnb cleaning](https://shynlicleaningservice.com/services/airbnb-cleaning): Cleaning for short-term rental properties.
+- [Commercial cleaning](https://shynlicleaningservice.com/services/commercial-cleaning): Cleaning services for business spaces.
+- [Post-construction cleaning](https://shynlicleaningservice.com/services/post-construction-cleaning): Cleaning after construction or renovation.
+
+## Service areas and planning
+
+- [Service areas](https://shynlicleaningservice.com/service-areas): Served communities, city-specific pages and the ZIP-code lookup.
+- [Pricing](https://shynlicleaningservice.com/pricing): Full price calculator, service options and add-on information.
+- [Request a quote](https://shynlicleaningservice.com/quote): Customer quote and booking inquiry flow.
+- [Frequently asked questions](https://shynlicleaningservice.com/faq): Answers about the cleaning service and booking process.
+
+## Company and contact
+
+- [Home](https://shynlicleaningservice.com/): Overview of Shynli Cleaning Service.
+- [About us](https://shynlicleaningservice.com/about-us): Company background.
+- [Contact](https://shynlicleaningservice.com/contacts): Current contact details and ways to reach the team.
+
+## Optional
+
+- [Blog](https://shynlicleaningservice.com/blog): Cleaning guides and informational articles; consult service pages for the company's service scope.
+- [Terms of service](https://shynlicleaningservice.com/terms-of-service): Published service terms.
+- [Cancellation policy](https://shynlicleaningservice.com/cancellation-policy): Published cancellation policy.
+- [Privacy policy](https://shynlicleaningservice.com/privacy-policy): Published privacy policy.
+- [Robots.txt](https://shynlicleaningservice.com/robots.txt): Crawling directives.
+- [Sitemap](https://shynlicleaningservice.com/sitemap.xml): Index of public, indexable pages.

@@ -880,7 +880,7 @@ const staffTravelEstimateService = createStaffTravelEstimateService({
   fetch: global.fetch,
 });
 const PUBLIC_ASSET_DIRECTORIES = new Set(["css", "fonts", "images", "js"]);
-const PUBLIC_ASSET_FILES = new Set(["apple-touch-icon.png", "robots.txt", "site.webmanifest", "sitemap.xml"]);
+const PUBLIC_ASSET_FILES = new Set(["apple-touch-icon.png", "llms.txt", "robots.txt", "site.webmanifest", "sitemap.xml"]);
 const STARTUP_ENV_INTEGRITY = evaluateStartupEnvIntegrity(process.env);
 const BASE_SECURITY_HEADERS = Object.freeze({
   "Content-Security-Policy":
