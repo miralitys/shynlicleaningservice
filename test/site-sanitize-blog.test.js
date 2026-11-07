@@ -367,7 +367,7 @@ test("renders long-form checklist article route with more than 3000 words", () =
     "/blog/checklists/house-cleaning-checklist-for-busy-homeowners"
   );
 
-  assert.match(html, /class="shynli-blog-article__crumb" href="\/blog\/checklists">Back to Checklists<\/a>/);
+  assert.match(html, /class="shynli-blog-article__crumb" href="\/blog\/checklists">Checklists<\/a>/);
   assert.match(html, /<h1 class="shynli-blog-article__title">House Cleaning Checklist for Busy Homeowners<\/h1>/);
   assert.match(html, /Quick navigation/);
   assert.match(html, /Quick Answer: House Cleaning Checklist for Busy Homeowners/);
@@ -397,7 +397,7 @@ test("renders second checklist article route with printable weekly plan", () => 
     "/blog/checklists/weekly-cleaning-checklist-for-a-3-bedroom-house"
   );
 
-  assert.match(html, /class="shynli-blog-article__crumb" href="\/blog\/checklists">Back to Checklists<\/a>/);
+  assert.match(html, /class="shynli-blog-article__crumb" href="\/blog\/checklists">Checklists<\/a>/);
   assert.match(html, /<h1 class="shynli-blog-article__title">Weekly Cleaning Checklist for a 3 Bedroom House<\/h1>/);
   assert.match(html, /Quick Answer: Weekly Cleaning Checklist for a 3 Bedroom House/);
   assert.match(html, /Printable Weekly Cleaning Checklist/);

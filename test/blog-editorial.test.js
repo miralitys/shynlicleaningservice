@@ -112,9 +112,25 @@ test("all blog pages expose parsable Article dates and matching sitemap lastmod;
       assert.equal(schema.dateModified, article.modifiedAt);
       assert.equal(schema.author.name, "Shynli Cleaning Service");
       assert.equal(schema.author["@type"], "Organization");
+      assert.equal(schema.author.url, "https://shynlicleaningservice.com/about-us", article.path);
+      assert.ok(html.includes('By <a href="/about-us" rel="author">Shynli Cleaning Service</a>'), article.path);
       assert.equal(schema.publisher.name, "Shynli Cleaning Service");
+      assert.equal(schema.publisher.url, "https://shynlicleaningservice.com/", article.path);
       assert.ok(schema.publisher.logo.url.startsWith("https://shynlicleaningservice.com/images/"));
       assert.equal(schema.mainEntityOfPage, `https://shynlicleaningservice.com${article.path}`);
+      const nodes = inspectHtml(html).nodes;
+      const breadcrumb = nodes.find(node => node.tagName === "nav" && attr(node, "aria-label") === "Breadcrumb");
+      assert.ok(breadcrumb, article.path);
+      const items = breadcrumb.childNodes.find(node => node.tagName === "ol").childNodes.filter(node => node.tagName === "li");
+      const structured = schemas.find(value => value["@type"] === "BreadcrumbList").itemListElement;
+      assert.equal(items.length, structured.length, article.path);
+      for (let index = 0; index < items.length; index++) {
+        const label = items[index].childNodes.find(node => node.tagName === "a" || attr(node, "aria-current") === "page");
+        assert.equal(textContent(label), structured[index].name, article.path);
+        assert.equal(index + 1, structured[index].position, article.path);
+        if (label.tagName === "a") assert.equal(new URL(attr(label, "href"), "https://shynlicleaningservice.com").href, structured[index].item, article.path);
+        else assert.equal(attr(label, "aria-current"), "page", article.path);
+      }
       const entry = sitemap.split(`<loc>https://shynlicleaningservice.com${article.path}</loc>`)[1]?.split("</url>")[0];
       assert.ok(entry?.includes(`<lastmod>${article.modifiedAt}T00:00:00.000Z</lastmod>`), article.path);
       if (article.modifiedAt === article.publishedAt) {
