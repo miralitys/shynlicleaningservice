@@ -132,6 +132,21 @@ function getSoftLinkSectionCount(html) {
     .length;
 }
 
+test("shows the organization byline on every article without changing its dates", () => {
+  const byline = '<p class="shynli-blog-article__author">By <a href="/about-us" rel="author">Shynli Cleaning Service</a></p>';
+  for (const article of BLOG_ARTICLES) {
+    const html = sanitizeHtml(sourceHtml, article.path);
+    assert.equal(html.split(byline).length - 1, 1, article.path);
+    assert.ok(html.indexOf(byline) < html.indexOf('<article class="shynli-blog-article__content">'), article.path);
+    if (article.updatedLabel) {
+      assert.ok(html.includes(`<time datetime="${article.modifiedAt}">${article.updatedLabel}</time>`), article.path);
+    }
+  }
+  for (const route of ["/blog", "/blog/checklists", "/blog/bathroom"]) {
+    assert.ok(!sanitizeHtml(sourceHtml, route).includes(byline), route);
+  }
+});
+
 test("renders blog hub topic links and stable CTA button styles on /blog", () => {
   const html = sanitizeHtml(sourceHtml, "/blog");
 
