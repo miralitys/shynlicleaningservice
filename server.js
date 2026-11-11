@@ -1761,6 +1761,7 @@ const handleAccountRequest = createAccountRequestHandler({
 
 const {
   handleCleanerApplicationSubmissionRequest,
+  handleEvaCallSummaryRequest,
   handleGhlInboundSmsWebhookRequest,
   handleQuoteSubmissionRequest,
   handleStripeCheckoutRequest,
@@ -1857,6 +1858,7 @@ const handleSiteRequest = createSiteRequestHandler({
   STRIPE_CHECKOUT_ENDPOINT,
   STRIPE_WEBHOOK_ENDPOINT,
   handleCleanerApplicationSubmissionRequest,
+  handleEvaCallSummaryRequest,
   handleGhlInboundSmsWebhookRequest,
   handleAccountRequest,
   handleAdminRequest,
