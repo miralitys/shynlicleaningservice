@@ -42,6 +42,14 @@
   for (const name of ["input", "change"])
     document.addEventListener(name, (event) => {
       const form = event.target.closest(".admin-order-quote-edit-form");
-      if (form && event.target.name.startsWith("quote")) calculate(form);
+      if (form && event.target.name.startsWith("quote")) {
+        if (name === "change" && event.target.name === "quoteServiceType" && event.target.value === "deep") {
+          const defaults = new Set(engine.PRICING.deep.defaultSelectedServices);
+          for (const input of form.querySelectorAll('[name="quoteServices"]')) {
+            if (defaults.has(input.value)) input.checked = true;
+          }
+        }
+        calculate(form);
+      }
     });
 })();
