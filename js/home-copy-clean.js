@@ -178,17 +178,39 @@
     });
   }
 
+  function initDeferredMedia() {
+    const sections = document.querySelectorAll("[data-deferred-media]");
+    const reveal = section => section.setAttribute("data-media-ready", "");
+    if (!("IntersectionObserver" in window)) {
+      sections.forEach(reveal);
+      return;
+    }
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        reveal(entry.target);
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: "600px 0px" });
+    sections.forEach(section => observer.observe(section));
+  }
+
+  initDeferredMedia();
+
   function initClientsSayMobileScroll() {
     const rails = Array.from(document.querySelectorAll(".clients-say-home__rail"));
     if (!rails.length || !window.matchMedia) return;
 
     const mobileQuery = window.matchMedia("(max-width: 639px)");
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const section = rails[0].closest(".clients-say-home");
+    let visible = !("IntersectionObserver" in window);
     const states = rails.map((rail, index) => ({
       rail,
       direction: index % 2 === 0 ? -1 : 1,
       pausedUntil: 0,
       initialized: false,
+      maxScroll: 0,
     }));
     let rafId = 0;
     let lastTime = 0;
@@ -210,7 +232,7 @@
 
     function syncInitialPosition(state) {
       if (state.initialized) return;
-      const maxScroll = state.rail.scrollWidth - state.rail.clientWidth;
+      const maxScroll = state.maxScroll;
       if (maxScroll <= 0) return;
       if (state.direction < 0) {
         setAutoScrollLeft(state, Math.min(maxScroll, Math.round(maxScroll * 0.18)));
@@ -219,14 +241,14 @@
     }
 
     function tick(timestamp) {
-      const enabled = mobileQuery.matches && !reducedMotionQuery.matches;
+      rafId = 0;
       const delta = Math.min(48, timestamp - (lastTime || timestamp));
       lastTime = timestamp;
 
-      if (enabled) {
+      if (visible && !document.hidden && mobileQuery.matches && !reducedMotionQuery.matches) {
         states.forEach((state) => {
           syncInitialPosition(state);
-          const maxScroll = state.rail.scrollWidth - state.rail.clientWidth;
+          const maxScroll = state.maxScroll;
           if (maxScroll <= 0 || timestamp < state.pausedUntil) return;
 
           const next = state.rail.scrollLeft + state.direction * 0.075 * delta;
@@ -240,17 +262,44 @@
             setAutoScrollLeft(state, next);
           }
         });
+        rafId = window.requestAnimationFrame(tick);
       }
+    }
 
+    function measure() {
+      states.forEach(state => { state.maxScroll = Math.max(0, state.rail.scrollWidth - state.rail.clientWidth); });
+    }
+
+    function syncMotion() {
+      const active = visible && !document.hidden && !reducedMotionQuery.matches;
+      section?.toggleAttribute("data-reviews-paused", !active);
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = 0;
+      lastTime = 0;
+      if (!active || !mobileQuery.matches || !window.requestAnimationFrame) return;
+      measure();
       rafId = window.requestAnimationFrame(tick);
     }
 
-    function start() {
-      if (rafId || !window.requestAnimationFrame) return;
-      rafId = window.requestAnimationFrame(tick);
+    if ("IntersectionObserver" in window && section) {
+      const observer = new IntersectionObserver(entries => {
+        visible = entries.some(entry => entry.isIntersecting);
+        syncMotion();
+      });
+      observer.observe(section);
     }
-
-    start();
+    if ("ResizeObserver" in window) {
+      const observer = new ResizeObserver(() => { if (visible && !document.hidden) measure(); });
+      states.forEach(state => {
+        observer.observe(state.rail);
+        const track = state.rail.querySelector(".clients-say-home__track");
+        if (track) observer.observe(track);
+      });
+    } else window.addEventListener("resize", () => { if (visible) measure(); }, { passive: true });
+    mobileQuery.addEventListener("change", syncMotion);
+    reducedMotionQuery.addEventListener("change", syncMotion);
+    document.addEventListener("visibilitychange", syncMotion);
+    syncMotion();
   }
 
   initClientsSayMobileScroll();

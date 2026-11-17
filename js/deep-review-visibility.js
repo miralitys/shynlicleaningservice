@@ -1,0 +1,22 @@
+(() => {
+  const sections = Array.from(document.querySelectorAll(".clients-say-home"));
+  const visible = new Set();
+  const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const sync = section => section.toggleAttribute("data-reviews-paused", !visible.has(section) || document.hidden || motion.matches);
+  const syncAll = () => sections.forEach(sync);
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) visible.add(entry.target);
+        else visible.delete(entry.target);
+        sync(entry.target);
+      });
+    });
+    sections.forEach(section => observer.observe(section));
+  } else sections.forEach(section => visible.add(section));
+
+  document.addEventListener("visibilitychange", syncAll);
+  motion.addEventListener("change", syncAll);
+  syncAll();
+})();

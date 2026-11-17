@@ -45,7 +45,7 @@ test("serves GTM on public site routes", async () => {
       assert.match(body, /<link rel="preload" href="\/fonts\/montserrat-latin-300-800\.woff2" as="font"/, route);
       assert.match(body, /<link rel="stylesheet" href="\/css\/shynli-fonts\.css\?v=20260522-local2">/, route);
       assert.doesNotMatch(body, /fonts\.googleapis\.com|fonts\.gstatic\.com/, route);
-      assert.match(body, /<link rel="preload" as="image" href="\/images\/home-copy-team-480\.webp"[^>]+fetchpriority="high">/, route);
+      assert.match(body, /<link rel="preload" as="image" href="\/images\/optimized\/home-hero-[a-f0-9]+-w480\.avif"[^>]+fetchpriority="high">/, route);
       assert.match(body, /<img class="hero__team"[^>]+fetchpriority="high"/, route);
       assert.doesNotMatch(body, /<img class="hero__team"[^>]+loading="lazy"/, route);
     }

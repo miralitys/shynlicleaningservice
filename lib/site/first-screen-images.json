@@ -1,0 +1,126 @@
+{
+  "home": {
+    "width": 1680,
+    "height": 747,
+    "avif": [
+      {
+        "url": "/images/optimized/home-hero-9006d65dcd-w480.avif",
+        "width": 480,
+        "height": 213,
+        "bytes": 15606
+      },
+      {
+        "url": "/images/optimized/home-hero-9006d65dcd-w720.avif",
+        "width": 720,
+        "height": 320,
+        "bytes": 26633
+      },
+      {
+        "url": "/images/optimized/home-hero-9006d65dcd-w960.avif",
+        "width": 960,
+        "height": 427,
+        "bytes": 35029
+      },
+      {
+        "url": "/images/optimized/home-hero-9006d65dcd-w1280.avif",
+        "width": 1280,
+        "height": 569,
+        "bytes": 53438
+      },
+      {
+        "url": "/images/optimized/home-hero-9006d65dcd-w1680.avif",
+        "width": 1680,
+        "height": 747,
+        "bytes": 89423
+      }
+    ],
+    "webp": [
+      {
+        "url": "/images/home-copy-team-480.webp",
+        "width": 480,
+        "height": 214,
+        "bytes": 25886
+      },
+      {
+        "url": "/images/home-copy-team-720.webp",
+        "width": 720,
+        "height": 321,
+        "bytes": 45410
+      },
+      {
+        "url": "/images/home-copy-team-960.webp",
+        "width": 960,
+        "height": 427,
+        "bytes": 68826
+      },
+      {
+        "url": "/images/home-copy-team-1280.webp",
+        "width": 1280,
+        "height": 570,
+        "bytes": 107996
+      },
+      {
+        "url": "/images/home-copy-team-1680.webp",
+        "width": 1680,
+        "height": 747,
+        "bytes": 133884
+      }
+    ]
+  },
+  "deep": {
+    "width": 1680,
+    "height": 893,
+    "avif": [
+      {
+        "url": "/images/optimized/deep-hero-9d8687c00a-w480.avif",
+        "width": 480,
+        "height": 255,
+        "bytes": 15632
+      },
+      {
+        "url": "/images/optimized/deep-hero-9d8687c00a-w960.avif",
+        "width": 960,
+        "height": 510,
+        "bytes": 34148
+      },
+      {
+        "url": "/images/optimized/deep-hero-9d8687c00a-w1440.avif",
+        "width": 1440,
+        "height": 765,
+        "bytes": 55501
+      },
+      {
+        "url": "/images/optimized/deep-hero-9d8687c00a-w1680.avif",
+        "width": 1680,
+        "height": 893,
+        "bytes": 72455
+      }
+    ],
+    "webp": [
+      {
+        "url": "/images/optimized/deep-hero-9d8687c00a-w480.webp",
+        "width": 480,
+        "height": 255,
+        "bytes": 20384
+      },
+      {
+        "url": "/images/optimized/tild3237-3730-4638-a162-393866363766__group_195_1-f280012688-w960.webp",
+        "width": 960,
+        "height": 510,
+        "bytes": 46472
+      },
+      {
+        "url": "/images/optimized/deep-hero-9d8687c00a-w1440.webp",
+        "width": 1440,
+        "height": 765,
+        "bytes": 75562
+      },
+      {
+        "url": "/images/optimized/tild3237-3730-4638-a162-393866363766__group_195_1-f280012688-w1680.webp",
+        "width": 1680,
+        "height": 893,
+        "bytes": 75222
+      }
+    ]
+  }
+}
