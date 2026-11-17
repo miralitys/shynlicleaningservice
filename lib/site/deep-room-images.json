@@ -1,0 +1,138 @@
+[
+  {
+    "name": "living",
+    "original": "/images/tild3437-3538-4663-a566-353339336265__20251223_1600____rem.png",
+    "legacy": [
+      "/images/optimized/tild3437-3538-4663-a566-353339336265__20251223_1600____rem-830139b648-w320.webp",
+      "/images/optimized/tild3437-3538-4663-a566-353339336265__20251223_1600____rem-830139b648-w354.webp"
+    ],
+    "variants": [
+      {
+        "url": "/images/optimized/deep-room-living-863b707a70-w150.webp",
+        "width": 150,
+        "height": 92,
+        "bytes": 4994
+      },
+      {
+        "url": "/images/optimized/deep-room-living-863b707a70-w225.webp",
+        "width": 225,
+        "height": 137,
+        "bytes": 9586
+      },
+      {
+        "url": "/images/optimized/deep-room-living-863b707a70-w260.webp",
+        "width": 260,
+        "height": 159,
+        "bytes": 12076
+      },
+      {
+        "url": "/images/optimized/tild3437-3538-4663-a566-353339336265__20251223_1600____rem-830139b648-w354.webp",
+        "width": 354,
+        "height": 216,
+        "bytes": 17402
+      }
+    ]
+  },
+  {
+    "name": "kitchen",
+    "original": "/images/tild6431-6233-4663-b431-643364613862__20251223_1600____rem.png",
+    "legacy": [
+      "/images/optimized/tild6431-6233-4663-b431-643364613862__20251223_1600____rem-15c34598e8-w320.webp",
+      "/images/optimized/tild6431-6233-4663-b431-643364613862__20251223_1600____rem-15c34598e8-w351.webp"
+    ],
+    "variants": [
+      {
+        "url": "/images/optimized/deep-room-kitchen-40488f92f2-w150.webp",
+        "width": 150,
+        "height": 92,
+        "bytes": 4846
+      },
+      {
+        "url": "/images/optimized/deep-room-kitchen-40488f92f2-w225.webp",
+        "width": 225,
+        "height": 138,
+        "bytes": 9200
+      },
+      {
+        "url": "/images/optimized/deep-room-kitchen-40488f92f2-w260.webp",
+        "width": 260,
+        "height": 160,
+        "bytes": 11316
+      },
+      {
+        "url": "/images/optimized/tild6431-6233-4663-b431-643364613862__20251223_1600____rem-15c34598e8-w351.webp",
+        "width": 351,
+        "height": 216,
+        "bytes": 16144
+      }
+    ]
+  },
+  {
+    "name": "bathroom",
+    "original": "/images/tild3432-6435-4564-b161-666132613636__20251223_1600____rem.png",
+    "legacy": [
+      "/images/optimized/tild3432-6435-4564-b161-666132613636__20251223_1600____rem-92e7107297-w320.webp",
+      "/images/optimized/tild3432-6435-4564-b161-666132613636__20251223_1600____rem-92e7107297-w324.webp"
+    ],
+    "variants": [
+      {
+        "url": "/images/optimized/deep-room-bathroom-8ae9794dfa-w150.webp",
+        "width": 150,
+        "height": 100,
+        "bytes": 5994
+      },
+      {
+        "url": "/images/optimized/deep-room-bathroom-8ae9794dfa-w225.webp",
+        "width": 225,
+        "height": 150,
+        "bytes": 10942
+      },
+      {
+        "url": "/images/optimized/deep-room-bathroom-8ae9794dfa-w260.webp",
+        "width": 260,
+        "height": 173,
+        "bytes": 14088
+      },
+      {
+        "url": "/images/optimized/tild3432-6435-4564-b161-666132613636__20251223_1600____rem-92e7107297-w324.webp",
+        "width": 324,
+        "height": 216,
+        "bytes": 16566
+      }
+    ]
+  },
+  {
+    "name": "bedroom",
+    "original": "/images/tild3039-6233-4634-a637-666331653162__20251223_1600____rem.png",
+    "legacy": [
+      "/images/optimized/tild3039-6233-4634-a637-666331653162__20251223_1600____rem-80e83217f7-w320.webp",
+      "/images/optimized/tild3039-6233-4634-a637-666331653162__20251223_1600____rem-80e83217f7-w324.webp"
+    ],
+    "variants": [
+      {
+        "url": "/images/optimized/deep-room-bedroom-21844cb4e8-w150.webp",
+        "width": 150,
+        "height": 100,
+        "bytes": 5866
+      },
+      {
+        "url": "/images/optimized/deep-room-bedroom-21844cb4e8-w225.webp",
+        "width": 225,
+        "height": 150,
+        "bytes": 11224
+      },
+      {
+        "url": "/images/optimized/deep-room-bedroom-21844cb4e8-w260.webp",
+        "width": 260,
+        "height": 173,
+        "bytes": 14338
+      },
+      {
+        "url": "/images/optimized/tild3039-6233-4634-a637-666331653162__20251223_1600____rem-80e83217f7-w324.webp",
+        "width": 324,
+        "height": 216,
+        "bytes": 17624
+      }
+    ]
+  }
+]
