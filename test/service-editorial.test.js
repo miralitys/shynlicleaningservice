@@ -44,7 +44,10 @@ test("three rewritten services have evidenced content, quote forms and matching 
       const schemas = facts.scripts.map(node => JSON.parse(node.childNodes.map(child => child.value || "").join("")));
       assert.deepEqual(schemas.map(value => value["@type"]), ["Service", "BreadcrumbList", "FAQPage"]);
       assert.deepEqual(schemas[0].provider, { "@id": "https://shynlicleaningservice.com/#localbusiness" });
-      assert.deepEqual(schemas[1].itemListElement.map(item => item.name), ["Home", "Services", page.name]);
+      assert.deepEqual(schemas[1].itemListElement, [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://shynlicleaningservice.com/" },
+        { "@type": "ListItem", position: 2, name: page.name, item: `https://shynlicleaningservice.com${route}` },
+      ]);
       assert.deepEqual(schemas[2].mainEntity, facts.faq);
       assert.equal(facts.faq.length, 5);
       for (const className of ["benefits-grid", "faq-wrapper", "faq-grid", "lead__panel", "lead-form", "lead__house"]) {

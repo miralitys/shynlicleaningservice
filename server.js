@@ -550,6 +550,7 @@ const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ...citySeoLastmod(),
   ...require("./lib/site/service-city").serviceCityLastmod(),
   ...require("./lib/site/service-editorial").serviceEditorialLastmod(),
+  ...Object.entries(require("./lib/site/structured-data-lastmod.json")),
   ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
   ...BLOG_CATEGORY_PAGES.map((page) => [page.path, latestBlogArticleLastmod(BLOG_ARTICLES.filter((article) => article.categoryPath === page.path))]),
   ...BLOG_ARTICLES.map((article) => [article.path, toSitemapDateOnlyIso(article.modifiedAt || article.publishedAt)]),

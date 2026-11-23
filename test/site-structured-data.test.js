@@ -23,6 +23,8 @@ test("home business keeps its ID and includes the confirmed hours and profiles w
   assert.equal(business["@type"], "LocalBusiness");
   assert.equal(business.name, "Shynli Cleaning Service");
   assert.equal(business.telephone, "+1-630-812-7077");
+  assert.equal(business.email, "info@shynli.com");
+  assert.equal(business.geo, undefined);
   assert.equal(business.areaServed.length, CITY_PAGES.length);
   assert.deepEqual(business.areaServed.map((city) => city.name), CITY_PAGES.map(([, city]) => `${city}, IL`));
   assert.deepEqual(business.hasOfferCatalog.itemListElement.map((offer) => offer.itemOffered.url), SERVICE_PAGES.map((route) => ORIGIN + route));
@@ -180,7 +182,15 @@ test("all served city and service pages have canonical company references and vi
           assert.deepEqual(service.areaServed, { "@type": "City", name: `${city}, IL` });
           assert.ok(service.hasOfferCatalog.itemListElement.length >= 3, route);
           assert.deepEqual(service.sameAs, route === "/aurora" ? ["https://www.google.com/maps?cid=5408416184318024401"] : undefined);
-        } else assert.equal(service.areaServed.length, CITY_PAGES.length, route);
+        } else {
+          assert.equal(service.areaServed.length, CITY_PAGES.length, route);
+          const breadcrumbs = pageSchemas.filter(value => value["@type"] === "BreadcrumbList");
+          assert.equal(breadcrumbs.length, 1, route);
+          assert.deepEqual(breadcrumbs[0].itemListElement.map(({ name, position, item }) => [name, position, item]), [
+            ["Home", 1, ORIGIN + "/"],
+            [service.name, 2, ORIGIN + route],
+          ], route);
+        }
       }
     }
     assert.equal(businessCount, 1);
