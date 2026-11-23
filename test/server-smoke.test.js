@@ -8,6 +8,7 @@ const vm = require("node:vm");
 const { startServer, stopServer } = require("./server-test-helpers");
 const { documentMarkup, assertNoTildaRuntime, assertSharedNavigation, jsonLdNodes } = require("./site-markup-helpers");
 const { SERVICE_AREA_ZIP_MAP } = require("../lib/service-area-zips");
+const { citySeo } = require("../lib/site/city-seo");
 
 let serverProcess = null;
 let BASE_URL = null;
@@ -532,7 +533,7 @@ test("serves city landing pages from the clean shared city template", async () =
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") || "", /text\/html/);
-  assert.match(body, /<title>House Cleaning Services in Romeoville, IL \| Shynli Cleaning<\/title>/);
+  assert.match(body, /<title>Romeoville, IL House Cleaning \| Insured Cleaners \| Shynli<\/title>/);
   assert.match(body, /House Cleaning Services in <span class="sg-accent">Romeoville<\/span>, IL/);
   assert.match(body, /Homes We Clean in <span class="sg-accent">Romeoville/);
   assert.match(body, /class="sg-page"/);
@@ -567,7 +568,7 @@ test("serves the clean Sugar Grove copy on /sugargrove", async () => {
   assert.equal(response.status, 200);
   assert.match(
     body,
-    /<title>House Cleaning Services in Sugar Grove, IL \| Shynli Cleaning<\/title>/
+    /<title>Sugar Grove, IL Residential Cleaning Services \| Shynli<\/title>/
   );
   assert.match(
     body,
@@ -700,11 +701,8 @@ test("serves all city pilot pages without zero/lazyload runtimes", async () => {
 
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("content-type") || "", /text\/html/, route);
-    assert.match(
-      body,
-      new RegExp(`<title>House Cleaning Services in ${cityPattern}, IL \\| Shynli Cleaning<\\/title>`),
-      route
-    );
+    const title = route === "/geneva" ? "House Cleaning Services in Geneva, IL | Shynli Cleaning" : citySeo[route].title;
+    assert.ok(body.includes(`<title>${title}</title>`), route);
     assert.match(
       body,
       new RegExp(`<meta property="og:url" content="https:\\/\\/shynlicleaningservice\\.com${escapeRegExp(route)}" \\/>`),

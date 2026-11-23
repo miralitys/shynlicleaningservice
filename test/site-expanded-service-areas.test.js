@@ -4,6 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const vm = require("node:vm");
 const { SERVICE_AREA_ZIP_MAP, isSupportedServiceAreaZip } = require("../lib/service-area-zips");
+const { citySeo } = require("../lib/site/city-seo");
 const { createFetchStub, startServer, stopServer } = require("./server-test-helpers");
 
 const CITIES = [
@@ -51,7 +52,7 @@ test("new city pages are localized, discoverable and indexable with the same ZIP
       assert.equal(response.status, 200, route);
       assert.doesNotMatch(response.headers.get("x-robots-tag") || "", /noindex/i, route);
       assert.doesNotMatch(html, /<meta[^>]+name="robots"[^>]+content="[^"]*noindex/i, route);
-      assert.ok(html.includes(`<title>House Cleaning Services in ${city}, IL | Shynli Cleaning</title>`), route);
+      assert.ok(html.includes(`<title>${citySeo[route].title}</title>`), route);
       assert.ok(html.includes(`<link rel="canonical" href="https://shynlicleaningservice.com${route}">`), route);
       assert.ok(sitemap.includes(`<loc>https://shynlicleaningservice.com${route}</loc>`), route);
       assert.ok(overview.split(`href="${route}"`).length >= 3, `Overview and city selector include ${city}`);

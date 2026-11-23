@@ -40,6 +40,7 @@ const { createRequestHelpers } = require("./lib/http/request");
 const { createTimingHelpers } = require("./lib/http/timing");
 const { createSiteStaticHelpers } = require("./lib/site/assets");
 const { BLOG_ARTICLES } = require("./lib/site/blog-articles");
+const { citySeo, citySeoLastmod } = require("./lib/site/city-seo");
 const { pages: SERVICE_EDITORIAL_PAGES } = require("./lib/site/service-editorial-data");
 const { DEFAULT_GOOGLE_TAG_MANAGER_CONTAINER_ID } = require("./lib/site/google-tag-manager");
 const { createSiteRequestHandler, loadSiteRoutes } = require("./lib/site/request-handler");
@@ -327,16 +328,17 @@ const CITY_ROUTE_LABELS = Object.freeze(
 );
 const CITY_ROUTE_META_OVERRIDES = Object.freeze(
   Object.fromEntries(
-    CITY_ROUTE_LABELS.map(([routePath, city]) => [
-      routePath,
-      {
-        title: `House Cleaning Services in ${city}, IL | Shynli Cleaning`,
-        description: `Professional house cleaning services in ${city}, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.`,
-        ogTitle: `House Cleaning Services in ${city}, IL | Shynli Cleaning`,
-        ogDescription: `Professional house cleaning services in ${city}, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.`,
+    CITY_ROUTE_LABELS.map(([routePath, city]) => {
+      const title = citySeo[routePath]?.title || `House Cleaning Services in ${city}, IL | Shynli Cleaning`;
+      const description = citySeo[routePath]?.description || `Professional house cleaning services in ${city}, IL. Regular, deep, move-in and move-out cleaning for local homes. Get a fast free quote from Shynli Cleaning.`;
+      return [routePath, {
+        title,
+        description,
+        ogTitle: title,
+        ogDescription: description,
         canonical: `${SITE_ORIGIN}${routePath}`,
-      },
-    ])
+      }];
+    })
   )
 );
 const BLOG_CATEGORY_PAGES = Object.freeze([
@@ -545,6 +547,7 @@ const SITEMAP_LASTMOD_OVERRIDES = new Map([
   ...require("./lib/site/city-batch-two").cityBatchTwoLastmod(),
   ...require("./lib/site/city-batch-three").cityBatchThreeLastmod(),
   ...require("./lib/site/city-batch-four").cityBatchFourLastmod(),
+  ...citySeoLastmod(),
   ...require("./lib/site/service-city").serviceCityLastmod(),
   ...require("./lib/site/service-editorial").serviceEditorialLastmod(),
   ["/blog", LATEST_BLOG_ARTICLE_LASTMOD],
