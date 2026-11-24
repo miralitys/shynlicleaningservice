@@ -73,10 +73,10 @@ test("Eva can change an existing visit's work stage and team and record full Cas
     for (const unchanged of [/value="374\.00"/, /2099-12-21/, /Cleaner A/, /Cleaner B/]) assert.match(after, unchanged);
     const report = await (await get(cookies.eva, "/admin/profitability?status=all")).text(); assert.match(report, /\$374\.00/);
     const evaCard = await card(cookies.eva);
-    assert.match(evaCard, /value="update-order-operations"/); assert.match(evaCard, /value="mark-order-paid-cash"/);
+    assert.match(evaCard, /value="update-order-operations"/); assert.match(evaCard, /value="mark-order-paid"/);
     assert.doesNotMatch(evaCard, /name="(?:totalPrice|selectedDate|selectedTime|serviceDurationHours|frequency|policyAutoSendDisabled|payrollOverrideAmount)"/);
     assert.doesNotMatch(evaCard, /value="(?:delete-order|create-manual-order|reset-order-policy|schedule-next-order)"/);
-    assert.doesNotMatch(await card(cookies.observer), /value="(?:update-order-operations|mark-order-paid-cash)"/);
+    assert.doesNotMatch(await card(cookies.observer), /value="(?:update-order-operations|mark-order-paid-cash|mark-order-paid)"/);
     for (const cookie of [cookies.observer, cookies.cleaner, ""]) {
       const response = await change({ action: "update-order-operations", orderStatus: "scheduled" }, cookie);
       assert([303, 403].includes(response.status)); assert.notEqual(response.status, 200);
