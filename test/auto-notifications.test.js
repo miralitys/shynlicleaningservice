@@ -55,6 +55,29 @@ test("formats quote confirmation SMS with sentence line breaks", () => {
   );
 });
 
+test("asks clients to confirm only the 24-hour cleaning reminder", () => {
+  const entry = {
+    customerName: "Jane Doe",
+    serviceName: "Deep",
+    selectedDate: "2026-11-25",
+    selectedTime: "09:00",
+    fullAddress: "123 Test Street, Naperville, IL 60540, USA",
+  };
+  const details = "Service: Deep. Time: 11/25/2026, 09:00 AM. Address: 123 Test Street, Naperville, IL 60540, USA.";
+
+  assert.equal(
+    buildClientVisitReminderSmsMessage(entry, 24),
+    `Hi Jane, this is a reminder from Shynli Cleaning Service. Your cleaning is in 24 hours. ${details}\nPlease reply YES to confirm your cleaning 😊`
+  );
+  for (const hours of [48, 1]) {
+    const timing = hours === 1 ? "1 hour" : "48 hours";
+    assert.equal(
+      buildClientVisitReminderSmsMessage(entry, hours),
+      `Hi Jane, this is a reminder from Shynli Cleaning Service. Your cleaning is in ${timing}. ${details}`
+    );
+  }
+});
+
 test("uses the in-home estimate name in client visit reminders", () => {
   const message = buildClientVisitReminderSmsMessage(
     {
@@ -70,6 +93,7 @@ test("uses the in-home estimate name in client visit reminders", () => {
   assert.match(message, /Your free in-home estimate is in 24 hours\./);
   assert.match(message, /Service: Free in-home estimate\./);
   assert.doesNotMatch(message, /Your cleaning is/);
+  assert.doesNotMatch(message, /Please reply YES/);
 });
 
 test("formats an updated appointment reminder with the new visit details", () => {
@@ -925,6 +949,9 @@ test("sends client reminder SMS at 48h, 24h and 1h without duplicates", async ()
   });
   assert.equal(thirdSweep.sent, 1);
   assert.equal(leadConnectorClient.calls.length, 3);
+  assert.doesNotMatch(leadConnectorClient.calls[0].message, /Please reply YES/);
+  assert.ok(leadConnectorClient.calls[1].message.endsWith("\nPlease reply YES to confirm your cleaning 😊"));
+  assert.doesNotMatch(leadConnectorClient.calls[2].message, /Please reply YES/);
 });
 
 test("does not send scheduled reminders when automatic messages are disabled", async () => {
